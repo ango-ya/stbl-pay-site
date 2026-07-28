@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 380">
+  <!-- 汎用商品プレースホルダー（sku 不明時のフォールバック） -->
+  <rect width="300" height="380" fill="#f1f3f9"/>
+  <ellipse cx="150" cy="330" rx="80" ry="10" fill="#d5d9e4" opacity="0.6"/>
+  <path d="M95 140 L205 140 L215 320 L85 320 Z" fill="#ffffff" stroke="#d5d9e4" stroke-width="2.5"/>
+  <path d="M118 168 L118 130 C118 106 132 92 150 92 C168 92 182 106 182 130 L182 168" fill="none" stroke="#9aa2b4" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="118" cy="172" r="6" fill="#6b7488"/>
+  <circle cx="182" cy="172" r="6" fill="#6b7488"/>
+</svg>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- セキュリティ: CSP (meta版)。strict script-src で XSS 注入 script を遮断、
+         object/base/form-action を封鎖、connect/img を自オリジンに限定し exfil 面を縮小。
+         本番は HTTP ヘッダ版 CSP で frame-ancestors 'none' / report-uri / Trusted-Types を
+         強制すること (meta では frame-ancestors は無効)。外部フォントは self-host + SRI 推奨。 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; require-trusted-types-for 'script'; trusted-types default" />
+    <meta name="referrer" content="no-referrer" />
+    <title>JPYC EX — 振込予約</title>
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body class="jpyc-ex">
+    <header class="ex-header">
+      <div class="ex-header-inner">
+        <div class="ex-brand">
+          <img src="assets/img/jpycex-logo.png" alt="JPYC EX" class="ex-header-logo" />
+        </div>
+        <span class="ex-step-tag" id="stepTag">ステップ 1 / 4</span>
+      </div>
+    </header>
+
+    <main class="ex-main">
+      <div class="ex-progress" id="exProgress"></div>
+      <div class="ex-card" id="exCard"></div>
+    </main>
+
+    <!-- 偽 Touch ID ダイアログ（決済サイト pay.html と同一。パスキー方式のアカウント作成で使用）-->
+    <div class="passkey-dialog-backdrop" id="passkeyDialog" role="dialog" aria-modal="true" aria-labelledby="passkeyTitle">
+      <div class="passkey-dialog">
+        <div class="passkey-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 10a2 2 0 0 1 2 2c0 3-.4 5-1.2 6.6" />
+            <path d="M8.2 5.7A7 7 0 0 1 19 12c0 1.2-.1 2.4-.3 3.5" />
+            <path d="M5 8.5A7 7 0 0 0 4 12c0 2.5-.4 4.3-1 5.8" />
+            <path d="M8 12a4 4 0 0 1 8 0c0 2.4-.3 4.3-.9 6" />
+          </svg>
+        </div>
+        <h3 id="passkeyTitle">パスワードなしでログイン</h3>
+        <p id="passkeyDesc">パスキーというパスワードに代わる簡単で安全な<br />ログイン手段を使ってログインします</p>
+        <div class="actions-row">
+          <button type="button" id="passkeyCancel">キャンセル</button>
+          <button type="button" id="passkeyConfirm">認証する</button>
+        </div>
+      </div>
+    </div>
+    <!-- 振込先のご案内に到達した2秒後に表示する案内ポップアップ（本文のみ）-->
+    <div class="passkey-dialog-backdrop" id="transferNoticeDialog" role="dialog" aria-modal="true" aria-labelledby="transferNoticeDesc">
+      <div class="passkey-dialog">
+        <div class="passkey-icon notice-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 21h16" />
+            <path d="M5 10h14" />
+            <path d="M6 10v8M10 10v8M14 10v8M18 10v8" />
+            <path d="M12 3 20 7H4Z" />
+          </svg>
+        </div>
+        <p id="transferNoticeDesc">JPYC EX での振込完了後、<br />JPYC の発行からお支払いまで自動で完了します。</p>
+      </div>
+    </div>
+    <script src="assets/compat.js"></script>
+    <script src="assets/jpyc-ex.js"></script>
+  </body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- セキュリティ: CSP (meta版)。strict script-src で XSS 注入 script を遮断、
+         object/base/form-action を封鎖、connect/img を自オリジンに限定し exfil 面を縮小。
+         本番は HTTP ヘッダ版 CSP で frame-ancestors 'none' / report-uri / Trusted-Types を
+         強制すること (meta では frame-ancestors は無効)。外部フォントは self-host + SRI 推奨。 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.google-analytics.com https://region1.google-analytics.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; require-trusted-types-for 'script'; trusted-types default" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
+    <title>kurashi mart - カート</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/styles.css" />
+    <script src="assets/analytics.js"></script>
+  </head>
+  <body class="shop">
+    <header class="site-header">
+      <div class="inner">
+        <div class="brand">
+          <span class="brand-dot" aria-hidden="true"></span>
+          kurashi mart
+        </div>
+        <nav class="shop-nav" aria-label="サイトナビゲーション">
+          <a href="#">商品一覧</a>
+          <a href="#">ギフト</a>
+          <a href="#">お問い合わせ</a>
+        </nav>
+        <div class="header-actions">
+          <a class="header-lp-link" href="index.html">すてぶるペイとは</a>
+          <a class="header-cart" href="#cart" aria-label="カートを見る">
+            <span class="ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 4h2l2.4 11.2a1.6 1.6 0 0 0 1.6 1.3h7.7a1.6 1.6 0 0 0 1.6-1.2L21 8H6" />
+                <circle cx="9.5" cy="20" r="1.2" />
+                <circle cx="17.5" cy="20" r="1.2" />
+              </svg>
+            </span>
+            <span class="count" id="cartCount">0</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a> <span aria-hidden="true">/</span>
+        <span aria-current="page">カート</span>
+      </nav>
+
+      <h1 class="cart-title">カート</h1>
+
+      <section class="checkout" id="cart">
+        <div class="checkout-card">
+          <h2>ご注文商品</h2>
+          <div id="cartItems"></div>
+          <div class="summary-row total"><span>合計</span><span id="sumTotal">¥0</span></div>
+        </div>
+
+        <aside class="checkout-card">
+          <div class="account-status">
+            <div class="account-status-head">
+              <span class="account-label">すてぶるペイ<span class="tip" tabindex="0" role="button" aria-label="仕組みの説明"><span class="tip-icon" aria-hidden="true">ⓘ</span><span class="tip-bubble" role="tooltip">銀行振込から使える JPY ステーブルコイン決済です。ウォレットやガス代を意識せず、いつもの支払い感覚でご利用いただけます。</span></span></span>
+              <span class="account-badge first" id="accountBadge">初回のお客様</span>
+            </div>
+            <div class="account-detail">
+              <button type="button" class="btn-link" id="resetDemo">デモをリセット（初回状態に戻す）</button>
+            </div>
+          </div>
+
+          <h2>お支払い方法</h2>
+          <div class="pay-methods">
+            <button class="btn-jpyc" type="button" id="openJpyc" aria-label="すてぶるペイで銀行振込をする">
+              <img src="assets/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" class="btn-jpyc-logo" />
+              <span class="btn-jpyc-text">で銀行振込をする</span>
+            </button>
+            <p class="min-pay-note" id="minPayNote" hidden>
+              すてぶるペイでは<strong>最低お支払い金額は 3,000 円</strong>です。あと少し商品を追加してください。
+            </p>
+            <div class="pay-option">
+              <div style="display:flex; align-items:center; gap:12px">
+                <span class="icon" aria-hidden="true"></span>
+                <span>クレジットカード</span>
+              </div>
+              <span class="right">準備中</span>
+            </div>
+            <div class="pay-option">
+              <div style="display:flex; align-items:center; gap:12px">
+                <span class="icon" aria-hidden="true"></span>
+                <span>コンビニ決済</span>
+              </div>
+              <span class="right">準備中</span>
+            </div>
+          </div>
+          <p class="fee-note">
+            すてぶるペイでの最低お支払い金額は 3,000 円です。
+          </p>
+        </aside>
+      </section>
+
+      <ul class="trust-badges">
+        <li>SSL 安全な決済</li>
+        <li>累計販売 12,000件</li>
+      </ul>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-cols">
+        <div><h4>kurashi mart</h4><p>暮らしを豊かにするコーヒーのデジタルコンテンツストア。</p></div>
+        <div><h4>ショッピング</h4><ul><li><a href="#">商品一覧</a></li><li><a href="#">ギフト</a></li><li><a href="#">定期便</a></li></ul></div>
+        <div><h4>サポート</h4><ul><li><a href="#">お問い合わせ</a></li><li><a href="#">ダウンロードについて</a></li><li><a href="#">よくあるご質問</a></li></ul></div>
+        <div><h4>会社情報</h4><ul><li><a href="#">会社概要</a></li><li><a href="#">特定商取引法に基づく表記</a></li><li><a href="#">プライバシーポリシー</a></li></ul></div>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-pays">対応決済：すてぶるペイ ／ クレジットカード（準備中）／ コンビニ決済（準備中）</span>
+        <span class="footer-copy">© 2026 kurashi mart</span>
+      </div>
+    </footer>
+
+    <script src="assets/compat.js"></script>
+    <script src="assets/app.js"></script>
+  </body>
+</html>

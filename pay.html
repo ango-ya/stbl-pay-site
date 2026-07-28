@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; require-trusted-types-for 'script'; trusted-types default" />
+    <meta name="referrer" content="no-referrer" />
+    <title>すてぶるペイ — お支払い</title>
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body class="pay-page">
+    <header class="ex-header">
+      <div class="ex-header-inner">
+        <div class="ex-brand"><img src="assets/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" class="stbl-logo" /></div>
+        <a class="ex-back" id="backToShop" href="/demo">ECサイトに戻る</a>
+      </div>
+    </header>
+    <main class="ex-main">
+      <div class="ex-card" id="payCard"><!-- rendered by pay.js --></div>
+      <p class="pay-disclaimer">
+        これはデモです。ブロックチェーン送金・JPYC EX 連携・着金検知はモックで、実際の通信・送金は行いません。本番は専用決済ドメイン（stbl.pay）で提供します。
+      </p>
+    </main>
+    <!-- 偽 Touch ID ダイアログ（既定モック。?passkey=real 時は実 WebAuthn を使うため非表示）-->
+    <div class="passkey-dialog-backdrop" id="passkeyDialog" role="dialog" aria-modal="true" aria-labelledby="passkeyTitle">
+      <div class="passkey-dialog">
+        <div class="passkey-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 10a2 2 0 0 1 2 2c0 3-.4 5-1.2 6.6" />
+            <path d="M8.2 5.7A7 7 0 0 1 19 12c0 1.2-.1 2.4-.3 3.5" />
+            <path d="M5 8.5A7 7 0 0 0 4 12c0 2.5-.4 4.3-1 5.8" />
+            <path d="M8 12a4 4 0 0 1 8 0c0 2.4-.3 4.3-.9 6" />
+          </svg>
+        </div>
+        <h3 id="passkeyTitle">パスワードなしでログイン</h3>
+        <p id="passkeyDesc">パスキーというパスワードに代わる簡単で安全な<br />ログイン手段を使ってログインします</p>
+        <div class="actions-row">
+          <button type="button" id="passkeyCancel">キャンセル</button>
+          <button type="button" id="passkeyConfirm">認証する</button>
+        </div>
+      </div>
+    </div>
+    <script src="assets/compat.js"></script>
+    <script src="assets/pay.js"></script>
+  </body>
+</html>

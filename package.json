@@ -1,0 +1,19 @@
+{
+  "name": "stbl-pay-site",
+  "version": "1.0.0",
+  "description": "すてぶるペイ（STBL Pay）公開サイト（LP・デモ）。stbl-pay.com として Cloudflare Pages で配信。",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:e2e": "playwright test",
+    "check": "./scripts/check-acceptance.sh && ./scripts/check-lr006-terms.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ango-ya/stbl-pay-site.git"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}

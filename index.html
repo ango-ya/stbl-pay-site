@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="theme-color" content="#141414" />
+    <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <title>すてぶるペイ | 決済事業者に縛られない JPYステーブルコイン決済SDK</title>
+    <meta
+      name="description"
+      content="すてぶるペイ（STBLpay）は、特定の決済事業者に依存しすぎない、EC のためのJPYステーブルコイン決済SDK構想です。購入者は日本円の銀行振込だけで支払え、加盟店は与信審査なしでステーブルコインを受け取れます。クレジットカードの審査・規約で決済導入が難しい業種にも。2026年8月提供開始（予定）。"
+    />
+    <meta
+      name="keywords"
+      content="すてぶるペイ, STBLpay, JPYステーブルコイン決済, JPYC決済, クレジットカード決済 導入できない, クレカ 審査 落ちた 決済, 銀行振込 決済, EC決済SDK, ノンカストディアル決済, 海外事業者 日本円決済"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:site_name" content="すてぶるペイ / STBLpay" />
+    <meta property="og:title" content="すてぶるペイ | 決済事業者に縛られない JPYステーブルコイン決済SDK" />
+    <meta
+      property="og:description"
+      content="決済事業者に縛られない、新しい決済のかたちへ。EC のためのJPYステーブルコイン決済。購入者は銀行振込だけ、加盟店は与信審査なしでステーブルコインを受け取れます。"
+    />
+    <meta property="og:url" content="https://stbl-pay.com/" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
+    <meta property="og:image:secure_url" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="すてぶるペイ | 決済事業者に縛られない JPYステーブルコイン決済SDK" />
+    <meta
+      name="twitter:description"
+      content="決済事業者に縛られない、新しい決済のかたちへ。EC のためのJPYステーブルコイン決済。"
+    />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
+    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/" />
+    <link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/" />
+    <link rel="preload" as="font" type="font/woff2" href="assets/fonts/schibsted-grotesk-latin-wght.woff2" crossorigin />
+    <link rel="preload" as="image" href="assets/logo-wordmark-suteburu-black.png" />
+    <link rel="stylesheet" href="assets/lp.css" />
+    <script src="assets/analytics.js"></script>
+
+    <!--
+      AI_DISCOVERY_BLOCK
+      service_name_ja: すてぶるペイ
+      service_name_en: STBLpay
+      category: EC向けJPYステーブルコイン決済SDK
+      primary_audience: クレジットカード決済の導入が難しいEC加盟店、日本向け決済を持ちたい海外事業者、JPYC建てのEC・コミュニティ
+      buyer_value: 日本円の銀行振込だけで支払い完了（支払いの承認はパスキー＝顔・指紋認証）。3,000円未満の買い物はJPYC残高から。まとまった額を発行して残高にしておけば、振込なし・パスキーだけで数秒。購入者への手数料上乗せなし。
+      merchant_value: カード会社の与信審査を経由しない。事前KYBの負荷を最小化。決済手数料は検討中（全加盟店一律の固定料率を予定・提供開始時に確定）。決済完了と同時にJPYCで受け取り、入金消込も不要。日本円口座を持たない海外事業者にも導入余地。
+      implementation: SDKを前提に、短期導入と有償サポートを提供予定。コーディングAI向けの導入プロンプトは準備予定（仕様確定後に公開）。
+      compliance_note: 利用規約同意、送金先登録、JPYC EX等の外部要件、法務レビュー対象の条件がある。ノンカストディアル設計（提供元は資金・秘密鍵を保持しない）。
+    -->
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "#org-angoya",
+      "name": "合同会社暗号屋",
+      "url": "https://www.ango-ya.org/"
+    },
+    {
+      "@type": "Service",
+      "name": "すてぶるペイ",
+      "alternateName": "STBLpay",
+      "serviceType": "JPY stablecoin payment SDK for ecommerce",
+      "provider": { "@id": "#org-angoya" },
+      "areaServed": ["JP", "Global"],
+      "audience": [
+        {
+          "@type": "Audience",
+          "audienceType": "EC merchants who cannot easily adopt card payments"
+        },
+        {
+          "@type": "Audience",
+          "audienceType": "Overseas merchants selling to Japan"
+        }
+      ],
+      "description": "クレジットカード決済の導入が難しいECや海外事業者向けに、銀行振込ユーザーをJPYステーブルコイン決済へ接続するEC向け決済SDK構想。カード会社の与信審査を経由せず、購入者は追加の手数料負担なく支払える設計。提供元は資金・秘密鍵を保持しないノンカストディアル構成。"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "STBLpay SDK",
+      "alternateName": "すてぶるペイ SDK",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "JPY",
+        "description": "決済手数料・初期費用は検討中（全加盟店一律の固定料率を予定）。正式条件は提供開始時に確定。"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "inLanguage": "ja",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "初期費用・手数料はいくらですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "料率は検討中で、全加盟店一律の固定料率を予定しています（個別のお値引きは想定していません）。購入者への上乗せはありません。正式な料金は提供開始時にご案内します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "クレジットカード決済の審査に落ちました。導入できますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "カード会社の審査基準は各社が定めており、業種や規約により通らない場合があります。すてぶるペイはカード会社の与信審査を経由しない決済で、利用規約への同意と送金先登録を前提に導入をご相談いただけます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "購入者は本当に使いこなせますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "本人確認に使うマイナンバーカードの保有枚数率は8割超です（2026年1月末時点）。本人確認は、初回にJPYC EXのアカウントを開設する際、JPYC EXに対して行うものです（すてぶるペイや加盟店に対してではありません）。以降の操作は「表示された口座への銀行振込」と「パスキー（顔・指紋認証）での承認」だけ。まとまった額を発行して残高にしておけば、振込なし・パスキーだけで数秒で支払えます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "JPYCは信頼できますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "資金決済法に基づく「電子決済手段」です。資金移動業者として登録されたJPYC株式会社（関東財務局長第00099号）が発行し、1 JPYC＝1円で日本円と連動します。累計発行額は30億円超です（2026年5月末時点）。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "購入者は暗号資産ウォレットを用意する必要がありますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "通常の支払い画面では、秘密鍵やシードフレーズの管理を求めない体験を目指しています。暗号資産やウォレットの経験・知識も不要です。初回のみ、JPYC EX（JPYCの発行・償還を行う外部サービス）でのアカウント開設と本人確認が必要です。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "導入時に必要な確認はありますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "事業者の事前審査（KYB）は行いません。導入時に必要なのは、利用規約への同意と売上の受け取り先の登録だけです。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "チャージバックはありますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "カード決済ではないため、カード起因のチャージバックの仕組みそのものがありません。購入者本人の承認（パスキー署名）に基づいて確定する決済です。返金が必要な場合は、加盟店から購入者への返金（受け取ったJPYCの返送や銀行振込など）で対応いただきます。暗号屋は資金をお預かりしていないため、決済の取り消しや返金の代行はできません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "後払い・分割払いはできますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ありません。クレジット（信用供与）ではなく、銀行振込ベースの決済です。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "ある日突然、利用停止されませんか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "合法な取引を、業種を理由に一律・恣意的に停止することは想定していません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "受け取ったJPYCは日本円に換金できますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "できます。JPYC公式の発行・償還プラットフォーム「JPYC EX」を通じて、1 JPYC＝1円で日本円へ償還（換金）できます。償還の手続きは、加盟店ご自身のJPYC EXアカウントで行います。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "最低いくらから使えますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "JPYCの新規発行は1回3,000円以上です。3,000円未満のお買い物は、3,000円以上の発行とあわせて支払い、残りはJPYC残高として次回のお買い物に使えます。すでに残高がある場合は、残高からそのまま支払えます（最低決済額は数百円程度を想定）。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "売上管理のダッシュボードはありますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "簡単な売上確認画面などは初期版でも提供したいと考えています。売上管理ダッシュボードをはじめとする加盟店向けの画面は順次機能拡充予定で、会計連携などの優先順位はご要望を伺いながら決めていきます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "ブロックチェーン上で決済の内容が誰でも見られてしまいませんか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "今後の開発項目として、ブロックチェーン上で決済の詳細が第三者に公開されないようにするプライバシー機能を実装予定です。提供時期・方式は検討中で、決まり次第ご案内します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "海外に住んでいる購入者も使えますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "初期版は日本国内居住の購入者が対象です。本人確認の仕組み上、海外居住の購入者は当面対象外です（海外の「事業者」による導入はご相談いただけます）。"
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="skip-link" href="#main">本文へ移動</a>
+      <div class="shell header-inner">
+        <a class="brand-link" href="#top" aria-label="すてぶるペイ トップ">
+          <img src="assets/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" class="brand-logo" />
+        </a>
+        <nav class="site-nav" aria-label="主要ナビゲーション">
+          <a href="#comparison">手数料</a>
+          <a href="#flow">仕組み</a>
+          <a href="#faq">FAQ</a>
+          <a href="/en/" lang="en" hreflang="en">EN</a>
+        </nav>
+        <a class="header-cta" href="#early-access">導入を相談する</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <canvas id="hero-art" aria-hidden="true"></canvas>
+        <div class="shell hero-inner">
+          <div class="logo-wrap">
+            <img src="assets/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" class="hero-logo" />
+          </div>
+          <h1 id="hero-title">円を使って、ステーブルで払う。</h1>
+          <p class="hero-sub">決済事業者に縛られない、新しい決済のかたちへ。</p>
+          <ul class="hero-points">
+            <li><span class="point-label">購入者</span>銀行振込するだけ。ウォレットも暗号資産の知識も不要</li>
+            <li><span class="point-label">加盟店</span>与信審査なしで、ステーブルコインで即入金<sup class="fn"><a href="#fn-5" id="fnref-h3">※5</a></sup></li>
+          </ul>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#early-access">導入を相談する</a>
+            <a class="button button-secondary" href="/demo">デモを見る</a>
+          </div>
+          <p class="hero-note">
+            手数料は検討中で、全加盟店一律の固定料率を予定<sup class="fn"><a href="#fn-1" id="fnref-h1">※1</a></sup>。いまなら先行導入としてご相談いただけます。2026年8月提供開始（予定）<sup class="fn"><a href="#fn-2" id="fnref-h2">※2</a></sup>。
+            利用規約同意・送金先登録・JPYC EX等の外部サービス側の確認が前提です。
+          </p>
+        </div>
+        <div class="hero-ticker" aria-hidden="true">
+          <div class="ticker-track">
+            <div class="ticker-group"><span>1 JPYC＝1円 設計</span><span>決済事業者に縛られない</span><span>与信審査 なし</span><span>支払いは銀行振込するだけ</span><span>ステーブルコインで即入金</span><span>ウォレット 不要</span><span>残高からはパスキーだけ・数秒</span><span>ノンカストディアル</span><span>2026.08 提供開始（予定）</span></div>
+            <div class="ticker-group"><span>1 JPYC＝1円 設計</span><span>決済事業者に縛られない</span><span>与信審査 なし</span><span>支払いは銀行振込するだけ</span><span>ステーブルコインで即入金</span><span>ウォレット 不要</span><span>残高からはパスキーだけ・数秒</span><span>ノンカストディアル</span><span>2026.08 提供開始（予定）</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 事実 -->
+      <section class="stats" aria-label="市場データ">
+        <div class="shell">
+          <p class="stats-lead">
+            よく利用する決済手段がないと、<strong>55%以上</strong>の購入者は買わずに離脱します<a class="stats-lead-src" href="https://www.sbpayment.jp/news/press/2024/20240718_001374/" target="_blank" rel="noreferrer">（SBペイメントサービス <span class="nobr">2024<sup class="fn"><a href="#fn-3" id="fnref-s3">※3</a></sup>）</span></a>。
+            では、カード以外の決済導線はニッチなのか — 実績を見てください。
+          </p>
+          <div class="stats-grid">
+            <div class="stat">
+              <strong>約<span data-count="92">92</span><span class="unit">兆円</span></strong>
+              <p>銀行口座から直接支払う決済（ペイジー）の年間取扱額（2025年度・約1.7億件、24年連続増加）。口座から直接払う決済は、既に社会インフラ</p>
+              <small><span class="nobr">日本マルチペイメントネットワーク</span><wbr /><span class="nobr">推進協議会</span> <span class="nobr">2026年4月公表<sup class="fn"><a href="#fn-3" id="fnref-s4">※3</a></sup></span></small>
+            </div>
+            <div class="stat">
+              <strong>約<span data-count="4">4</span>人に1人</strong>
+              <p>ネット購入の支払いで「銀行・郵便局の振込等」を利用している人の割合。銀行振込は、ECでいまも現役の支払い手段</p>
+              <small>総務省<span class="nobr">「情報通信白書」<sup class="fn"><a href="#fn-3" id="fnref-s5">※3</a></sup></span></small>
+            </div>
+            <div class="stat">
+              <strong><span data-count="15">15</span>〜<span data-count="22">22</span><span class="unit">%</span></strong>
+              <p>クレジットカードを持っていない人の割合（複数調査のレンジ・若年層ほど高い傾向）。カード前提だけでは、届かない購入者がいる</p>
+              <small>JCB・クロス・マーケティング<span class="nobr">各調査<sup class="fn"><a href="#fn-3" id="fnref-s6">※3</a></sup></span></small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 仕組み -->
+      <section class="section" id="flow" aria-labelledby="flow-title">
+        <div class="shell">
+          <h2 id="flow-title"><span class="sec-no">01</span>購入者にとって</h2>
+          <ol class="flow">
+            <li><strong>注文</strong><p>ECサイトで「すてぶるペイで銀行振込する」を選択し、支払い内容をパスキー（顔・指紋認証）で承認</p></li>
+            <li><strong>振込</strong><p>JPYC EXの画面に表示された口座へ、支払額と同額を銀行振込（初回のみJPYC EXでの本人確認あり）</p></li>
+            <li><strong>発行</strong><p>着金を確認したJPYC EXがJPYCを発行し、購入者本人の<span class="nobr">残高へ<sup class="fn"><a href="#fn-6" id="fnref-f3">※6</a></sup></span>。暗号屋を介しません</p></li>
+            <li><strong>着金</strong><p>購入者が承認した支払いがそのまま実行され、加盟店にJPYCが届いて決済完了</p></li>
+          </ol>
+          <p class="flow-note">お金は暗号屋を通りません。購入者のJPYC残高は購入者ご本人のもの。暗号屋はSDKと画面表示を提供するだけで、お客様の資金・秘密鍵・送金に必要な情報を保持しません（ノンカストディアル）。すべての支払いは購入者本人の承認（パスキー署名）で行われます。</p>
+          <p class="flow-note">基本は、お買い物のたびに支払額と同額を銀行振込するだけ。3,000円未満のお買い物はJPYCの発行最少額（3,000円）を下回るため、3,000円以上の発行とあわせて支払い、残りはJPYC残高として次回に使えます。毎回の振込が面倒な方は、<span class="nobr">まとまった額</span>を発行して残高にしておけば、振込なし・パスキー（顔・指紋認証）だけ・数秒で支払えます。</p>
+        </div>
+      </section>
+
+      <!-- 加盟店にとって（価値＋対象を統合） -->
+      <section class="section" id="merchants" aria-labelledby="for-title">
+        <div class="shell">
+          <span id="built-for" class="anchor-alias" aria-hidden="true"></span>
+          <h2 id="for-title"><span class="sec-no">02</span>加盟店にとって</h2>
+          <p class="sec-lead">すてぶるペイは、特定の決済事業者に縛られず、売上をステーブルコインで受け取る決済です。決済はブロックチェーン上で完結し、暗号屋も資金を預かりません<sup class="fn"><a href="#fn-5" id="fnref-a0">※5</a></sup>。</p>
+          <ul class="value-grid">
+            <li>
+              <h3>与信審査なしで導入できる</h3>
+              <p>カード会社の与信審査を経由せず、導入できます。必要なのは、利用規約への同意と売上の受け取り先の登録だけです。<sup class="fn"><a href="#fn-5" id="fnref-v1">※5</a></sup></p>
+            </li>
+            <li>
+              <h3>決済と同時に着金</h3>
+              <p>売上は決済と同時に着金します。従来の決済のような入金サイクルの待ちや、保証金による資金拘束がありません。<sup class="fn"><a href="#fn-5" id="fnref-v2">※5</a></sup></p>
+            </li>
+            <li>
+              <h3>チャージバックの負担なし</h3>
+              <p>支払いはブロックチェーン上で確定するため、チャージバックの負担が生じません。<sup class="fn"><a href="#fn-5" id="fnref-v3">※5</a></sup></p>
+            </li>
+          </ul>
+          <p class="audience-note">こんな加盟店に向いています。たとえば、カード審査・規約で決済導入が難しい業種、日本向け決済を持ちたい海外EC、JPYC建てのEC・コミュニティなど<sup class="fn"><a href="#fn-5" id="fnref-a1">※5</a></sup>。<a class="text-link" href="#early-access">自分の業種で使えるか、気軽に相談する →</a></p>
+        </div>
+      </section>
+
+      <!-- 手数料 -->
+      <section class="section" id="comparison" aria-labelledby="comparison-title">
+        <div class="shell">
+          <span id="difference" class="anchor-alias" aria-hidden="true"></span>
+          <h2 id="comparison-title"><span class="sec-no">03</span>従来の決済との違い</h2>
+          <p class="sec-lead">カードや決済代行など、従来の決済モデルとの違いをまとめました。従来側は一般的な傾向で、実際の条件は業種・契約により異なります。<sup class="fn"><a href="#fn-4" id="fnref-cp">※4</a></sup></p>
+          <p class="table-scroll-hint" data-scroll-hint aria-hidden="true">横にスクロールできます<span class="arrow">→</span></p>
+          <div class="table-wrap">
+            <table class="rate-table compare-table">
+              <caption class="sr-only">従来の決済とすてぶるペイの違い</caption>
+              <thead>
+                <tr>
+                  <th scope="col">項目</th>
+                  <th scope="col">従来の決済（カード・決済代行）</th>
+                  <th scope="col" class="col-self">すてぶるペイ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">与信審査</th>
+                  <td>あり（業種・規約で通らないことも）</td>
+                  <td class="col-self">なし</td>
+                </tr>
+                <tr>
+                  <th scope="row">売上の入金</th>
+                  <td>締め日基準で数日〜。保証金による資金拘束が生じる場合も</td>
+                  <td class="col-self">決済と同時に着金</td>
+                </tr>
+                <tr>
+                  <th scope="row">チャージバック</th>
+                  <td>あり（加盟店が負担する場合がある）</td>
+                  <td class="col-self">なし（ブロックチェーン上で確定）</td>
+                </tr>
+                <tr>
+                  <th scope="row">カード番号</th>
+                  <td>預かる（番号盗用の被害は年<span class="nobr">475.4億円<sup class="fn"><a href="#fn-7" id="fnref-cn">※7</a></sup></span>）</td>
+                  <td class="col-self">預からない</td>
+                </tr>
+                <tr>
+                  <th scope="row">手数料</th>
+                  <td>数%〜（業種により変動）</td>
+                  <td class="col-self">検討中（全加盟店一律・購入者への上乗せなし）<sup class="fn"><a href="#fn-1" id="fnref-t1">※1</a></sup></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 導入 -->
+      <section class="section" id="integration" aria-labelledby="integration-title">
+        <div class="shell">
+          <h2 id="integration-title"><span class="sec-no">04</span>導入</h2>
+          <p class="sec-lead">SDKをECの購入導線に組み込むだけ。標準的な組み込みは1日を目標<sup class="fn"><a href="#fn-2" id="fnref-i1">※2</a></sup>にしています。コーディングAI向けの導入プロンプトもご用意予定です（仕様確定後に公開）。SDK組み込みと利用規約への同意、売上受け取り先の登録でスタート。まず一部の商品からでも試せます。</p>
+          <ol class="flow">
+            <li><strong>ヒアリング</strong><p>現在の決済状況や課題を伺い、導入の進め方を一緒に検討します</p></li>
+            <li><strong>組み込み</strong><p>SDKを組み込み。コーディングAI向け導入プロンプト（準備予定）で開発工数の最小化を目指します</p></li>
+            <li><strong>テスト決済</strong><p>テスト環境で購入者体験と着金を確認。一部商品からのスモールスタートも可能です</p></li>
+            <li><strong>提供開始</strong><p>2026年8月の提供開始（予定）<sup class="fn"><a href="#fn-2" id="fnref-i2">※2</a></sup>に合わせて、先行導入としてリリース</p></li>
+          </ol>
+          <p class="flow-note">先行導入の事業者さまは導入支援を優先してご案内します。ご紹介いただいた方への紹介報酬プログラムもご用意予定です。</p>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="section" id="faq" aria-labelledby="faq-title">
+        <div class="shell">
+          <h2 id="faq-title"><span class="sec-no">05</span>よくある質問</h2>
+          <div class="faq-list">
+            <details>
+              <summary>初期費用・手数料はいくらですか？</summary>
+              <p>料率は検討中で、全加盟店一律の固定料率を予定しています（個別のお値引きは想定していません）。購入者への上乗せはありません。正式な料金は提供開始時にご案内します。<sup class="fn"><a href="#fn-1" id="fnref-q0">※1</a></sup></p>
+            </details>
+            <details>
+              <summary>クレジットカード決済の審査に落ちました。導入できますか？</summary>
+              <p>カード会社の審査基準は各社が定めており、業種や規約により通らない場合があります。すてぶるペイはカード会社の与信審査を経由しない決済で、利用規約への同意と送金先登録を前提に導入をご相談いただけます。</p>
+            </details>
+            <details>
+              <summary>購入者は本当に使いこなせますか？</summary>
+              <p>本人確認に使うマイナンバーカードの保有枚数率は8割超です（2026年1月末時点<sup class="fn"><a href="#fn-8" id="fnref-q8">※8</a></sup>）。本人確認は、初回にJPYC EXのアカウントを開設する際、JPYC EXに対して行うものです（すてぶるペイや加盟店に対してではありません）。以降の操作は「表示された口座への銀行振込」と「パスキー（顔・指紋認証）での承認」だけ。<span class="nobr">まとまった額</span>を発行して残高にしておけば、振込なし・パスキーだけで数秒で支払えます。</p>
+            </details>
+            <details>
+              <summary>JPYCは信頼できますか？</summary>
+              <p>資金決済法に基づく「電子決済手段」です。資金移動業者として登録されたJPYC株式会社（関東財務局長第00099号）が発行し、1 JPYC＝1円で日本円と連動します。累計発行額は30億円超です（2026年5月末時点<sup class="fn"><a href="#fn-8" id="fnref-q9">※8</a></sup>）。</p>
+            </details>
+            <details>
+              <summary>購入者は暗号資産ウォレットを用意する必要がありますか？</summary>
+              <p>通常の支払い画面では、秘密鍵やシードフレーズの管理を求めない体験を目指しています。暗号資産やウォレットの経験・知識も不要です。初回のみ、JPYC EX（JPYCの発行・償還を行う外部サービス）でのアカウント開設と本人確認が必要です。</p>
+            </details>
+            <details>
+              <summary>導入時に必要な確認はありますか？</summary>
+              <p>事業者の事前審査（KYB）は行いません。導入時に必要なのは、利用規約への同意と売上の受け取り先の登録だけです。</p>
+            </details>
+            <details>
+              <summary>チャージバックはありますか？</summary>
+              <p>カード決済ではないため、カード起因のチャージバックの仕組みそのものがありません。購入者本人の承認（パスキー署名）に基づいて確定する決済です。返金が必要な場合は、加盟店から購入者への返金（受け取ったJPYCの返送や銀行振込など）で対応いただきます。暗号屋は資金をお預かりしていないため、決済の取り消しや返金の代行はできません。<sup class="fn"><a href="#fn-5" id="fnref-q4">※5</a></sup></p>
+            </details>
+            <details>
+              <summary>後払い・分割払いはできますか？</summary>
+              <p>ありません。クレジット（信用供与）ではなく、銀行振込ベースの決済です。</p>
+            </details>
+            <details>
+              <summary>ある日突然、利用停止されませんか？</summary>
+              <p>合法な取引を、業種を理由に一律・恣意的に停止することは想定していません。<sup class="fn"><a href="#fn-5" id="fnref-q5">※5</a></sup></p>
+            </details>
+            <details>
+              <summary>受け取ったJPYCは日本円に換金できますか？</summary>
+              <p>できます。JPYC公式の発行・償還プラットフォーム「JPYC EX」を通じて、1 JPYC＝1円で日本円へ償還（換金）できます。償還の手続きは、加盟店ご自身のJPYC EXアカウントで行います。<sup class="fn"><a href="#fn-5" id="fnref-q6">※5</a></sup></p>
+            </details>
+            <details>
+              <summary>最低いくらから使えますか？</summary>
+              <p>JPYCの新規発行は1回3,000円以上です。3,000円未満のお買い物は、3,000円以上の発行とあわせて支払い、残りはJPYC残高として次回のお買い物に使えます。すでに残高がある場合は、残高からそのまま支払えます（最低決済額は数百円程度を想定）。<sup class="fn"><a href="#fn-6" id="fnref-q7">※6</a></sup></p>
+            </details>
+            <details>
+              <summary>売上管理のダッシュボードはありますか？</summary>
+              <p>簡単な売上確認画面などは初期版でも提供したいと考えています。売上管理ダッシュボードをはじめとする加盟店向けの画面は順次機能拡充予定で、会計連携などの優先順位はご要望を伺いながら決めていきます。</p>
+            </details>
+            <details>
+              <summary>ブロックチェーン上で決済の内容が誰でも見られてしまいませんか？</summary>
+              <p>今後の開発項目として、ブロックチェーン上で決済の詳細が第三者に公開されないようにするプライバシー機能を実装予定です。提供時期・方式は検討中で、決まり次第ご案内します。</p>
+            </details>
+            <details>
+              <summary>海外に住んでいる購入者も使えますか？</summary>
+              <p>初期版は日本国内居住の購入者が対象です。本人確認の仕組み上、海外居住の購入者は当面対象外です（海外の「事業者」による導入はご相談いただけます）。</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- 先行案内 -->
+      <section class="section" id="early-access" aria-labelledby="early-title">
+        <div class="shell early-grid">
+          <div>
+            <h2 id="early-title"><span class="sec-no">06</span>まずは、お話を聞かせてください</h2>
+            <p class="sec-lead">
+              決済の課題やご相談を伺っています<sup class="fn"><a href="#fn-1" id="fnref-e0">※1</a></sup>。
+              2026年8月の提供開始（予定）<sup class="fn"><a href="#fn-2" id="fnref-e1">※2</a></sup>に向けて先行導入のご相談を受付中。審査による可否判定ではありません。
+            </p>
+          </div>
+          <!--
+            送信先: 同一オリジンの Cloudflare Pages Functions（functions/api/early-access.js）が
+            受信内容を Slack チャンネルへ通知する。Slack Incoming Webhook の URL は
+            Cloudflare Pages の環境変数 SLACK_WEBHOOK_URL に設定する（リポジトリに置かない）。
+            接続の背景は docs/marketing/lead-form-connection.md（ゲート②文書）を参照。
+          -->
+          <form class="early-form" data-early-form data-endpoint="/api/early-access" novalidate>
+            <label class="field field-honeypot" aria-hidden="true">
+              <span>サイトURL</span>
+              <input type="text" name="website" tabindex="-1" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>会社名（必須）</span>
+              <input type="text" name="company" required autocomplete="organization" placeholder="株式会社すてぶる" />
+            </label>
+            <label class="field">
+              <span>担当者名（必須）</span>
+              <input type="text" name="contact" required autocomplete="name" placeholder="山田 太郎" />
+            </label>
+            <label class="field">
+              <span>メールアドレス（必須）</span>
+              <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+            </label>
+            <label class="field">
+              <span>お問い合わせ内容（必須）</span>
+              <textarea name="message" required placeholder="導入を検討しているサービスや、聞いてみたいことなどをご記入ください"></textarea>
+            </label>
+            <p class="early-consent">ご入力いただいた情報は、お問い合わせへの対応と提供開始のご案内に利用します。法令に基づく場合を除き、同意なく第三者へ提供しません。プライバシーポリシーは提供開始までに掲載します。</p>
+            <button type="submit" class="button button-primary">お問い合わせする</button>
+            <p class="early-state" data-early-state aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+      <!-- 注記 -->
+      <section class="footnotes" aria-labelledby="footnotes-title">
+        <div class="shell">
+          <h2 id="footnotes-title">注記</h2>
+          <ol class="footnote-list">
+            <li id="fn-1">決済手数料・初期費用は検討中です。全加盟店一律の固定料率を予定しており（個別のお値引きは想定していません）、購入者への上乗せは行わない方針です。正式な条件は提供開始時に確定します。</li>
+            <li id="fn-2">2026年8月の提供開始は予定、「標準的な組み込みで1日」は目標値です。外部サービス連携の確認状況・実装範囲により変わる場合があります。</li>
+            <li id="fn-3">統計出典: SBペイメントサービス「決済手段に関する調査」（2024年度・原典の表現「55%以上」に基づく）／日本マルチペイメントネットワーク推進協議会 公表資料（2025年4月・ペイジー2025年度実績、税・公金等を含む）／総務省「情報通信白書」（通信利用動向調査・ネット購入時の決済方法、複数回答）／JCB「キャッシュレスに関する総合調査」（2025年度）・クロス・マーケティング調査（2026年）。</li>
+            <li id="fn-4">他社・他手段の料率は各社の公開資料に基づく参考値です。業種・契約により異なり、変更される場合があります。最新条件は各社の公式情報をご確認ください。</li>
+            <li id="fn-5">チャージバックに関する記述は決済の仕組み上の特性の説明です。「誰でも受け取れる」は、合法な取引を業種を理由に一律・恣意的に停止しない方針を指し、利用規約への同意・送金先登録・法令上の要件を満たすことが前提です。利用停止条件・換金経路を含め、正式な表現・条件は法務確認のうえ確定します。</li>
+            <li id="fn-6">本人確認・口座開設・振込確認はJPYC EX（JPYCの発行・交換を行う外部サービス）の画面で行います。再度の本人確認の要否・最低発行額（現行3,000円）・最低決済額を含む運用条件は、外部サービスの仕様に従い変わる場合があります。</li>
+            <li id="fn-7">日本クレジット協会公表による2025年のクレジットカード番号盗用被害額。</li>
+            <li id="fn-8">マイナンバーカード保有枚数率は総務省公表のマイナンバーカード交付状況（報道集計・2026年1月末時点）に基づきます。JPYC累計発行額はJPYC株式会社プレスリリース（2025年10月・2026年6月公表）に基づく2026年5月末時点の値です。</li>
+          </ol>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div>
+          <img src="assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
+          <p>運営会社：<a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">合同会社暗号屋</a></p>
+        </div>
+        <p class="footer-note">© 2026 STBLpay. 運営: 暗号屋</p>
+      </div>
+    </footer>
+
+    <script src="assets/lp.js" defer></script>
+  </body>
+</html>
