@@ -1,5 +1,5 @@
 // Cloudflare Pages Functions: 先行案内フォーム受信 → Slack チャンネル通知
-// （docs/marketing/lead-form-connection.md 選択肢A・通知先をSlack Incoming Webhookにしたもの）
+// フォームから送られた問い合わせを受け取り、Slack Incoming Webhook で指定チャンネルに転送する。
 //
 // 事前準備:
 //   Cloudflare Pages のダッシュボードで環境変数（Secret）SLACK_WEBHOOK_URL に
