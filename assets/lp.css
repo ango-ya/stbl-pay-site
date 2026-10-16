@@ -1193,6 +1193,21 @@ sup.fn a:hover {
   white-space: nowrap;
 }
 
+/* 運営会社の実績（日本語・英語ページ共通）。既存の .footer-inner p に合わせた小さめの文字 */
+.footer-facts {
+  max-width: 60em;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--gray);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.footer-facts li + li {
+  margin-top: 4px;
+}
+
 /* ---------- すてぶるくん・すてぶるちゃん ----------
    正本は stbl-pay プロジェクトの設定資料（characters/character-bible.md）。
    - 呼び方は必ずフルネーム。絵は装飾（aria-hidden）、会話は本文として読ませる

@@ -37,11 +37,11 @@ test.describe("日本語LP コアコンテンツ", () => {
     await expect(
       page.getByRole("link", { name: "自分の業種で使えるか、気軽に相談する →" })
     ).toBeVisible();
-    await expect(page.locator("#flow")).toContainText("銀行振込するだけ");
+    await expect(page.locator("#flow")).toContainText("残高で足りるとき");
     await expect(page.locator("#merchants")).toContainText(
       "カード審査・規約で決済導入が難しい業種"
     );
-    await expect(page.locator("#integration")).toContainText("導入プロンプト");
+    await expect(page.locator("#integration")).toContainText("OpenAPI");
     await expect(page.locator("#faq")).toContainText("よくある質問");
 
     expect(consoleErrors).toEqual([]);
@@ -119,7 +119,9 @@ test.describe("日本語LP 手数料文言ガード（料率は検討中）", ()
 
     // 手数料は「検討中（全加盟店一律の固定料率を予定）」— 確定料率・導入費用0円は表示しない
     await expect(page.locator(".hero-note")).toContainText("検討中");
-    await expect(page.locator(".hero-note")).toContainText("先行導入");
+    // 提供開始時期は出さず、開発中のサービスであることを示す
+    await expect(page.locator(".hero-note")).toContainText("開発中");
+    await expect(page.locator(".hero-note")).not.toContainText("先行導入");
     // 「ご意見を料率設計に反映します」は撤去済み
     await expect(page.locator("body")).not.toContainText("料率設計に反映");
     // 手数料比較表は「従来の決済との違い」表に置換
@@ -420,5 +422,97 @@ test.describe("日本語LP JSON-LD 構造化データ", () => {
     expect(faqPage).toBeTruthy();
     const structured = faqPage.mainEntity.map((q) => q.name);
     expect(structured).toEqual(visible.map((s) => s.trim()));
+  });
+
+  test("FAQPage JSON-LD の答えは表示の答え（脚注の参照を除く）と同じで、16問そろっている", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    // 表示側: 各 <details> の <p> から脚注の参照（<sup>）を除いた文
+    const visible = await page.locator("#faq details > p").evaluateAll((ps) =>
+      ps.map((p) => {
+        const clone = p.cloneNode(true);
+        clone.querySelectorAll("sup").forEach((sup) => sup.remove());
+        return clone.textContent.replace(/\s+/g, " ").trim();
+      })
+    );
+    const blocks = await page
+      .locator('script[type="application/ld+json"]')
+      .allTextContents();
+    const faqPage = blocks
+      .map((block) => JSON.parse(block))
+      .flatMap((parsed) => parsed["@graph"] ?? [parsed])
+      .find((node) => node["@type"] === "FAQPage");
+
+    expect(faqPage).toBeTruthy();
+    expect(faqPage.mainEntity).toHaveLength(16);
+    expect(visible).toHaveLength(16);
+    const structured = faqPage.mainEntity.map((q) =>
+      q.acceptedAnswer.text.replace(/\s+/g, " ").trim()
+    );
+    expect(structured).toEqual(visible);
+  });
+});
+
+// ─── 運営会社の実績（フッター） ──────────────────────────────────────────────
+
+test.describe("日本語LP フッターの運営会社の実績", () => {
+  test("会社名の下に実績が4行並ぶ", async ({ page }) => {
+    await page.goto("/");
+
+    const facts = page.locator(".site-footer .footer-facts li");
+    await expect(facts).toHaveCount(4);
+    await expect(facts.nth(0)).toHaveText("2019年2月設立。本社は福岡市です。");
+    await expect(facts.nth(1)).toContainText("アステリア株式会社");
+    await expect(facts.nth(2)).toContainText("株式会社QTnet");
+    await expect(facts.nth(3)).toContainText("福岡市実証実験フルサポート事業");
+  });
+});
+
+// ─── 決定の逆戻りを防ぐガード ────────────────────────────────────────────────
+
+test.describe("日本語LP 決定の逆戻りガード", () => {
+  // 表示の文字と、head（title・meta・JSON-LD・AI_DISCOVERY_BLOCK）を含む HTML ソースの両方に出さない語。
+  // 「『事業者』による導入」は、実際の文面では鉤括弧（「事業者」）なので両方の書き方を見る
+  const BANNED_IN_PAGE = [
+    "先行導入",
+    "2026年8月",
+    "2026.08",
+    "SDK",
+    "経由せず",
+    "経由しない",
+    "銀行振込するだけ",
+    "同額を銀行振込",
+    "JPYC建て",
+    "誰でも受け取れる",
+    "『事業者』による導入",
+    "「事業者」による導入",
+  ];
+
+  test("ページ全体（表示の文字と HTML ソース）に使わない語が無い", async ({
+    page,
+  }) => {
+    const response = await page.goto("/");
+    const source = await response.text();
+    // 閉じた <details>（FAQ）の中身も含めるため innerText ではなく textContent を見る
+    const bodyText = await page.evaluate(() => document.body.textContent);
+
+    for (const term of BANNED_IN_PAGE) {
+      expect(bodyText, `body に「${term}」が残っている`).not.toContain(term);
+      expect(source, `HTML ソースに「${term}」が残っている`).not.toContain(
+        term
+      );
+    }
+  });
+
+  test("llms.txt に使わない語が無い", async ({ request }) => {
+    const response = await request.get("/llms.txt");
+    expect(response.ok()).toBe(true);
+    const text = await response.text();
+
+    for (const term of ["誰でも", "SDK", "2026年8月", "JPYC建て"]) {
+      expect(text, `llms.txt に「${term}」が残っている`).not.toContain(term);
+    }
   });
 });
