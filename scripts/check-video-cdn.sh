@@ -2,19 +2,20 @@
 # R2 に上げたつかいかた動画 10 本が、サイトから正しく配られているかを確かめる。
 #
 #   ./scripts/check-video-cdn.sh <ベース URL>
-#   例）./scripts/check-video-cdn.sh https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d/
+#   例）./scripts/check-video-cdn.sh https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d5e6f7a8b/
 #
 # 10 本それぞれに Range: bytes=0-1 を 2 回送り、1 回目・2 回目の両方で同じ必須条件を確かめる。
-#   - curl が通信できた（失敗＝000 は NG）
+#   - curl が成功した（終了コードが 0。通信できない・途中で失敗した・上限を超えた、はすべて NG）
 #   - 応答が 206（途中だけ返せる＝シークできる）
 #   - Content-Type が video/mp4
 #   - Content-Range が bytes 0-1/<総サイズ> の形
 #   - ETag が強い（W/ で始まらない。弱い ETag では、続きだけを取る If-Range が使えない）
+#     かつ形が正しい（RFC 9110 の entity-tag。引用符で囲まれ、中に引用符・空白・制御文字を含まない。例 "abc"）
 #   - Cache-Control に public・max-age=31536000・immutable がすべて入っている
 # 手元に assets/video/<ファイル> があれば（VIDEO_DIR で場所を変えられる）、さらに次も確かめる。
 #   - Content-Range の総サイズが、ファイルのサイズと一致する
-#   - ETag（引用符を外したもの）が 32 桁の 16 進なら、ファイルの MD5 と一致する
-#     （マルチパートの -N 付きなど、32 桁の 16 進でないときは MD5 の照合を飛ばし、表示だけする）
+#   - ETag の引用符の中身が 32 桁の 16 進なら、ファイルの MD5 と一致する
+#     （マルチパートの -N 付きなど、32 桁の 16 進でない強い ETag は、形が正しければ許し、MD5 の照合を飛ばして表示だけする）
 #   手元に無ければ、飛ばしたと表示する。
 # 2 回目の cf-cache-status が HIT かも見る。
 #
@@ -55,6 +56,13 @@ has_directive() {
     END { exit f ? 0 : 1 }'
 }
 
+# 強い ETag の形か（RFC 9110 の entity-tag の opaque-tag）。
+# 引用符 " で囲まれ、中に " ・空白・制御文字（タブ・DEL を含む）が無い。中は空でもよい。例 "abc"
+# （W/ で始まる弱い ETag は、ここに来る前に別に弾く。バイトで見るので LC_ALL=C）
+is_strong_etag() {
+  printf '%s' "$1" | LC_ALL=C grep -Eq '^"[^[:cntrl:] "]*"$'
+}
+
 # MD5（macOS は md5 -q、Linux は md5sum）。どちらも無ければ何も出さず失敗する
 if command -v md5 >/dev/null 2>&1; then
   md5_of() { md5 -q "$1"; }
@@ -65,7 +73,8 @@ else
 fi
 
 # Range: bytes=0-1 を送る。応答コードを標準出力に、ヘッダを $2 に書く。curl の終了コードをそのまま返す
-# （--max-filesize は、Range を無視して 200 で全部返す相手から、動画を丸ごと取らないため。超えると 63）
+# （--max-filesize は、Range を無視して 200 や 206 で全部返す相手から、動画を丸ごと取らないため。
+#   超えると curl は 63 で終わる。これも他の失敗と同じく NG にする）
 ranged() { # url ヘッダの出力先
   curl -s -o /dev/null -D "$2" -w '%{http_code}' -H 'Range: bytes=0-1' --max-time 30 --max-filesize 4096 "$1"
 }
@@ -74,18 +83,20 @@ ranged() { # url ヘッダの出力先
 #   judge <応答コード> <curl の終了コード> <ヘッダのファイル> <手元のサイズ> <手元の MD5>
 judge() {
   local code="$1" rc="$2" hf="$3" lsize="$4" lmd5="$5"
-  local ctype etag cc cr total unq d
+  local ctype etag etag_shown etag_ok cc cr total unq d
   R_NOTE=""
   R_TOTAL=""
   R_CACHE=""
 
-  # 000 は通信できなかった。63 は上の --max-filesize で止めただけ（応答は受け取れている）
+  # 000 は通信できなかった。通信できても、curl の終了コードが 0 以外なら（63＝--max-filesize の上限超えも含めて）NG
   if [ "$code" = "000" ] || [ -z "$code" ]; then
     PROBLEMS="$PROBLEMS curl が通信できませんでした（終了コード ${rc}）。"
     return
   fi
-  if [ "$rc" -ne 0 ] && [ "$rc" -ne 63 ]; then
-    PROBLEMS="$PROBLEMS curl が途中で失敗しました（終了コード ${rc}）。"
+  if [ "$rc" -eq 63 ]; then
+    PROBLEMS="$PROBLEMS curl が失敗しました（終了コード 63＝応答が上限 4096 バイトを超えた。Range を無視して全体を返した可能性）。"
+  elif [ "$rc" -ne 0 ]; then
+    PROBLEMS="$PROBLEMS curl が失敗しました（終了コード ${rc}）。"
   fi
 
   ctype="$(lower "$(header "$hf" content-type)")"
@@ -113,9 +124,19 @@ judge() {
   esac
   R_TOTAL="$total"
 
+  # 画面に出すときは、表示できない文字を ? にする（相手の返した値をそのまま端末に流さない）
+  etag_shown="$(printf '%s' "$etag" | LC_ALL=C tr -c '[:print:]' '?')"
+  etag_ok=0
   case "$etag" in
     "") PROBLEMS="$PROBLEMS ETag が無い。" ;;
-    W/* | w/*) PROBLEMS="$PROBLEMS ETag が弱い（${etag}）。" ;;
+    W/* | w/*) PROBLEMS="$PROBLEMS ETag が弱い（${etag_shown}）。" ;;
+    *)
+      if is_strong_etag "$etag"; then
+        etag_ok=1
+      else
+        PROBLEMS="$PROBLEMS ETag の形が不正（${etag_shown}）。引用符で囲まれ、中に引用符・空白・制御文字が無い値のはず。"
+      fi
+      ;;
   esac
 
   for d in public max-age=31536000 immutable; do
@@ -127,22 +148,25 @@ judge() {
     if [ -n "$total" ] && [ "$total" != "$lsize" ]; then
       PROBLEMS="$PROBLEMS 総サイズ ${total} が手元のファイルのサイズ ${lsize} と違う。"
     fi
-    unq="${etag%\"}"
-    unq="${unq#\"}"
-    case "$unq" in
-      "" | W/* | w/*) ;;
-      *[!0-9A-Fa-f]*)
-        R_NOTE="ETag が MD5 ではない形（${etag}）なので MD5 の照合は飛ばし" ;;
-      *)
-        if [ "${#unq}" -ne 32 ]; then
-          R_NOTE="ETag が 32 桁の 16 進ではない（${etag}）ので MD5 の照合は飛ばし"
-        elif [ -z "$lmd5" ]; then
-          R_NOTE="手元の MD5 を求められないので MD5 の照合は飛ばし"
-        elif [ "$(lower "$unq")" != "$lmd5" ]; then
-          PROBLEMS="$PROBLEMS ETag の MD5 ${unq} が手元のファイルの MD5 ${lmd5} と違う。"
-        fi
-        ;;
-    esac
+    # MD5 の照合は、形が正しい強い ETag の、引用符の中身が 32 桁の 16 進のときだけ
+    if [ "$etag_ok" -eq 1 ]; then
+      unq="${etag#\"}"
+      unq="${unq%\"}"
+      case "$unq" in
+        "") ;;
+        *[!0-9A-Fa-f]*)
+          R_NOTE="ETag が MD5 ではない形（${etag_shown}）なので MD5 の照合は飛ばし" ;;
+        *)
+          if [ "${#unq}" -ne 32 ]; then
+            R_NOTE="ETag が 32 桁の 16 進ではない（${etag_shown}）ので MD5 の照合は飛ばし"
+          elif [ -z "$lmd5" ]; then
+            R_NOTE="手元の MD5 を求められないので MD5 の照合は飛ばし"
+          elif [ "$(lower "$unq")" != "$lmd5" ]; then
+            PROBLEMS="$PROBLEMS ETag の MD5 ${unq} が手元のファイルの MD5 ${lmd5} と違う。"
+          fi
+          ;;
+      esac
+    fi
   fi
 }
 

@@ -6,7 +6,7 @@
 //   node scripts/set-video-base.mjs --local
 //
 // - ベース URL は https:// で始まり、/ で終わること。
-//     例）node scripts/set-video-base.mjs https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d/
+//     例）node scripts/set-video-base.mjs https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d5e6f7a8b/
 //   正規表現で形を確かめたうえで、new URL() で解析して次も確かめる。どれか外れたら何も書かずに止まる。
 //     protocol が https:、port が空か 1〜65535、パスが / で終わる、パスに . や .. のセグメントが無い
 //     （%2e のような書き方も含む）、username・password・search・hash が空。
@@ -67,7 +67,7 @@ function usage() {
   console.error(
     [
       '使いかた:',
-      '  node scripts/set-video-base.mjs <ベース URL>   例）https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d/',
+      '  node scripts/set-video-base.mjs <ベース URL>   例）https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d5e6f7a8b/',
       '  node scripts/set-video-base.mjs --local        サイトの中の置き場（assets/video/）に戻す',
       '',
       'ベース URL は https:// で始まり、/ で終わること。',

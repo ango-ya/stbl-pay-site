@@ -15,10 +15,10 @@ import { join } from "node:path";
 
 const EPISODES = ["how-00", "how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08"];
 
-// mp4 は git に入れず、Cloudflare R2 の独自ドメインから出す。版は <YYYY-MM-DD>-<h8>（h8 は mp4 10 本の sha256 から決まる 8 桁）。
+// mp4 は git に入れず、Cloudflare R2 の独自ドメインから出す。版は <YYYY-MM-DD>-<h16>（h16 は mp4 10 本の sha256 から決まる 16 桁の小文字 16 進）。
 // 作り直すたびに変わるので、版は固定で書かない。日付だけの版は認めない
 const MEDIA_ORIGIN = "https://media.stbl-pay.com";
-const MEDIA_BASE = /^https:\/\/media\.stbl-pay\.com\/how\/\d{4}-\d{2}-\d{2}-[0-9a-f]{8}\//;
+const MEDIA_BASE = /^https:\/\/media\.stbl-pay\.com\/how\/\d{4}-\d{2}-\d{2}-[0-9a-f]{16}\//;
 const VIDEO_DIR = join(process.cwd(), "assets", "video");
 
 // R2 と Google のタグ（計測）への HTTP は、ここで受けて外に出さない（保証範囲はファイル冒頭）。
@@ -41,10 +41,10 @@ test.beforeEach(async ({ context }) => {
   await routeOutside(context);
 });
 
-// href が R2 の版付きパスなら、その版の URL（…/how/2026-10-16-1a2b3c4d/）を返す
+// href が R2 の版付きパスなら、その版の URL（…/how/2026-10-16-1a2b3c4d5e6f7a8b/）を返す
 const mediaBaseOf = (href) => {
   const match = MEDIA_BASE.exec(href || "");
-  expect(match, `mp4 の href が R2 の版付きパス（日付-ハッシュ 8 桁）でない: ${href}`).not.toBeNull();
+  expect(match, `mp4 の href が R2 の版付きパス（日付-ハッシュ 16 桁）でない: ${href}`).not.toBeNull();
   return match[0];
 };
 
