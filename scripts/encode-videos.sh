@@ -20,7 +20,15 @@ LIMIT=24000000
 mkdir -p "$OUT"
 
 # ポスターに使う秒（その回の中身が分かるコマ）。無い回は 1 秒目
-declare -A POSTER_AT=([how-00]=9 [how-03]=3 [how-07]=19 [how-08]=9 [how-08en]=9)
+# （macOS の bash 3.2 には連想配列が無いので case で引く）
+poster_at() {
+  case "$1" in
+    how-00 | how-08 | how-08en) echo 9 ;;
+    how-03) echo 3 ;;
+    how-07) echo 19 ;;
+    *) echo 1 ;;
+  esac
+}
 
 id_for() {
   local name="$1" n
@@ -40,6 +48,21 @@ encode() { # src out crf
     -c:a aac -b:a 96k -ac 2 -ar 48000 -movflags +faststart -map_metadata -1 "$2"
 }
 
+# 1 コマを WebP で書き出す。ffmpeg に libwebp が無いとき（Homebrew の ffmpeg など）は cwebp で変換する
+if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q libwebp; then
+  still() { # src 秒 幅:高さ quality out
+    ffmpeg -v error -y -nostdin -ss "$2" -i "$1" -frames:v 1 -vf "scale=$3:flags=lanczos" -quality "$4" "$5"
+  }
+else
+  command -v cwebp >/dev/null || { echo "ffmpeg に WebP のエンコーダが無く、cwebp もありません（brew install webp）"; exit 1; }
+  TMP="$(mktemp -d)"
+  trap 'rm -rf "$TMP"' EXIT
+  still() {
+    ffmpeg -v error -y -nostdin -ss "$2" -i "$1" -frames:v 1 -vf "scale=$3:flags=lanczos" "$TMP/still.png"
+    cwebp -quiet -q "$4" "$TMP/still.png" -o "$5"
+  }
+fi
+
 shopt -s nullglob
 for src in "$SRC"/*.mp4; do
   name="$(basename "$src")"
@@ -54,15 +77,15 @@ for src in "$SRC"/*.mp4; do
     echo "  24MB を超えたので crf $crf で作り直します"
     encode "$src" "$dst" "$crf"
   done
-  at="${POSTER_AT[$id]:-1}"
-  ffmpeg -v error -y -nostdin -ss "$at" -i "$dst" -frames:v 1 -vf scale=1280:720:flags=lanczos -quality 80 "$OUT/$id.webp"
-  ffmpeg -v error -y -nostdin -ss "$at" -i "$dst" -frames:v 1 -vf scale=640:360:flags=lanczos -quality 74 "$OUT/$id-640.webp"
-  ffmpeg -v error -y -nostdin -ss "$at" -i "$dst" -frames:v 1 -vf scale=320:180:flags=lanczos -quality 74 "$OUT/$id-thumb.webp"
+  at="$(poster_at "$id")"
+  still "$dst" "$at" 1280:720 80 "$OUT/$id.webp"
+  still "$dst" "$at" 640:360 74 "$OUT/$id-640.webp"
+  still "$dst" "$at" 320:180 74 "$OUT/$id-thumb.webp"
 done
 
 echo
 echo "長さ（index.html の data-dur と合わせる）:"
 for f in "$OUT"/how-*.mp4; do
-  d="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")"
-  printf '  %s  %d:%02d  %s bytes\n' "$(basename "$f")" "$(( ${d%.*} / 60 ))" "$(( ${d%.*} % 60 ))" "$(stat -c %s "$f" 2>/dev/null || stat -f %z "$f")"
+  d="$(printf '%.0f' "$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")")"
+  printf '  %s  %d:%02d  %s bytes\n' "$(basename "$f")" "$(( d / 60 ))" "$(( d % 60 ))" "$(stat -c %s "$f" 2>/dev/null || stat -f %z "$f")"
 done
