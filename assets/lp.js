@@ -650,6 +650,13 @@
   // 修飾キー付き（新しいタブで開く等）か
   const isModified = (event) => event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
 
+  // 中クリック（auxclick）でも、ID が空のうちは空の watch URL を開かせない
+  facade.addEventListener("auxclick", (event) => {
+    if (!hasYt(state.yt)) {
+      event.preventDefault();
+    }
+  });
+
   facade.addEventListener("click", (event) => {
     // 修飾キー付きは、ブラウザに任せる（YouTube の動画ページが開く）。
     // ただし ID が空のうちは、空の watch URL を開かせない
@@ -745,6 +752,11 @@
   };
 
   items.forEach((item, index) => {
+    item.addEventListener("auxclick", (event) => {
+      if (!hasYt(item.getAttribute("data-youtube") || "")) {
+        event.preventDefault();
+      }
+    });
     item.addEventListener("click", (event) => {
       // 修飾キー付きは、ブラウザに任せる。ただし ID が空のうちは、空の watch URL を開かせない
       if (isModified(event) && hasYt(item.getAttribute("data-youtube") || "")) {

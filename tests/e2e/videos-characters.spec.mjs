@@ -228,11 +228,12 @@ test.describe("つかいかた動画（日本語LP）", () => {
     await expect(page.locator('script[src*="youtube"], script[src*="ytimg"]')).toHaveCount(0);
   });
 
-  test("iframe は枠に収まり（16:9・枠線なし）、押しても横スクロールが出ない（PC・スマホ）", async ({ page }) => {
+  test("iframe は枠に収まり（枠線なし）、狭い画面でも YouTube の最小寸法 200×200 を満たし、横スクロールが出ない", async ({ page }) => {
     // iframe は width=1920 height=1080 の属性で作るので、CSS（.video-frame iframe）が無いと枠からはみ出す
     for (const viewport of [
       { width: 1280, height: 800 },
       { width: 375, height: 800 },
+      { width: 320, height: 640 },
     ]) {
       await page.setViewportSize(viewport);
       await page.goto("/");
@@ -253,7 +254,13 @@ test.describe("つかいかた動画（日本語LP）", () => {
       });
       const where = `${viewport.width}px`;
       expect(m.width, `${where}: iframe の幅が枠に収まる`).toBeLessThanOrEqual(m.frameWidth);
-      expect(m.width / m.height, `${where}: iframe は 16:9`).toBeCloseTo(16 / 9, 1);
+      if (viewport.width >= 1280) {
+        expect(m.width / m.height, `${where}: iframe は 16:9`).toBeCloseTo(16 / 9, 1);
+      }
+      // YouTube の埋め込みの最小寸法（200×200px）
+      // （レイアウトの計算で 199.99997 のような端数が出るので、丸めて比べる）
+      expect(Math.round(m.width), `${where}: iframe の幅は 200px 以上`).toBeGreaterThanOrEqual(200);
+      expect(Math.round(m.height), `${where}: iframe の高さは 200px 以上`).toBeGreaterThanOrEqual(200);
       expect(m.border, `${where}: iframe に既定の枠線を付けない`).toBe("0px");
       expect(m.scrollWidth, `${where}: 横スクロールが出ない`).toBeLessThanOrEqual(m.clientWidth);
     }
@@ -531,6 +538,29 @@ test.describe("ID が空の回", () => {
     expect(youtube.map((r) => r.url), "YouTube への通信がない").toEqual([]);
     expect(opened, "新しいタブが開かない").toEqual([]);
     expect(await eventsOf(page, "video_play"), "再生を始めていないので video_play を送らない").toEqual([]);
+  });
+
+  test("ID が空のうちは、ポスターや一覧を中クリックしても空の watch URL を開かない", async ({ page, context }) => {
+    const opened = [];
+    context.on("page", (p) => opened.push(p.url()));
+    await page.goto("/");
+    // auxclick の既定の動き（新しいタブで開く）が止められているかを見る
+    const prevented = await page.evaluate(() => {
+      const fire = (el) => {
+        const ev = new MouseEvent("auxclick", { button: 1, bubbles: true, cancelable: true });
+        el.dispatchEvent(ev);
+        return ev.defaultPrevented;
+      };
+      return {
+        poster: fire(document.querySelector("[data-video-poster]")),
+        item: fire(document.querySelector('#videos .video-item[data-video="how-02"]')),
+      };
+    });
+    expect(prevented.poster, "ポスターの中クリックを止める").toBe(true);
+    expect(prevented.item, "一覧の中クリックを止める").toBe(true);
+    await page.locator('#videos .video-item[data-video="how-03"]').click({ button: "middle" });
+    await page.waitForTimeout(600);
+    expect(opened, "新しいタブが開かない").toEqual([]);
   });
 });
 

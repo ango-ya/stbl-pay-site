@@ -79,7 +79,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ### 表示速度（動画を載せても LP を遅くしない）
 
-- 読み込み時は iframe を置かない。ポスター画像（`loading="lazy"`）のリンクだけを出し、押されたら YouTube の埋め込み（iframe）を作って再生する（`assets/lp.js`）。押すまで YouTube には 1 バイトも送らず、読み込みません。接続を先に済ませる `preconnect`（`https://www.youtube-nocookie.com`）は、ポスターや一覧の回にポインタが乗ったとき（フォーカスが来たときも）だけ、1 回足します。スクロールで動画の欄に近づいただけでは足しません（再生する意思があるときだけ Google に接続するため）。
+- 読み込み時は iframe を置かない。ポスター画像（`loading="lazy"`）のリンクだけを出し、押されたら YouTube の埋め込み（iframe）を作って再生する（`assets/lp.js`）。初期表示やスクロールでは YouTube に接続せず、何も読み込みません（押したときに iframe を読み込みます）。接続を先に済ませる `preconnect`（`https://www.youtube-nocookie.com`）は、ポスターや一覧の回にポインタが乗ったとき（フォーカスが来たときも）だけ、1 回足します。スクロールで動画の欄に近づいただけでは足しません（再生する意思があるときだけ Google に接続するため）。
 - 画面外のセクションは `content-visibility: auto` で描画を後回しにし、読み込み後（またはページ内リンクを押した瞬間）に解く（`assets/lp.css`「描画の後回し」）。
 - 2026-10-16 の計測（Slow 4G・CPU 4 倍遅延のスマホ相当、6 回の中央値、brotli 圧縮あり）：
 

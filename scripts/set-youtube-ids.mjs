@@ -131,12 +131,13 @@ if (problems.length > 0) {
 }
 
 // 同じ ID が複数の回に入っているのは、貼り間違いかもしれない（止めはしない）
-const seen = {};
+// （ID が "constructor" などでも継承したプロパティとぶつからないよう Map で数える）
+const seen = new Map();
 for (const k of EPISODES) {
-  if (!seen[ids[k]]) seen[ids[k]] = [];
-  seen[ids[k]].push(k);
+  if (!seen.has(ids[k])) seen.set(ids[k], []);
+  seen.get(ids[k]).push(k);
 }
-for (const [id, list] of Object.entries(seen)) {
+for (const [id, list] of seen) {
   if (list.length > 1) console.warn(`注意: 同じ ID（${id}）が複数の回に入っています: ${list.join(' ')}`);
 }
 
