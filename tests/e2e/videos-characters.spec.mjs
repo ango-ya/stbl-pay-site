@@ -259,23 +259,26 @@ test.describe("つかいかた動画（日本語LP）", () => {
     }
   });
 
-  test("一覧から回を選ぶと、同じ iframe の src と title が差し替わり、説明も替わる", async ({ page }) => {
+  test("一覧から回を選ぶと、iframe を作り直して新しい回にし、説明も替わる（履歴は増やさない）", async ({ page }) => {
     await page.goto("/");
     await page.locator("[data-video-poster]").click();
     const player = page.locator(`#video-stage ${PLAYER}`);
     await expectEmbed(player, FAKE_ID["how-01"], "ja");
     const firstTitle = await player.getAttribute("title");
-    // 差し替えのたびに作り直さないことを見る（印を付けておく）
+    // 回を替えると iframe を作り直すことを見る（印を付けておく）。
+    // 同じ iframe の src を差し替えると履歴が増え、「戻る」でページを離れられなくなるため
     await player.evaluate((el) => {
       el.__kept = true;
     });
+    const historyBefore = await page.evaluate(() => history.length);
 
     await page.locator('#videos .video-item[data-video="how-02"]').click();
     await expectEmbed(player, FAKE_ID["how-02"], "ja");
     await expect(player).toHaveAttribute("title", /第2回.*はじめてのネット払い/);
     expect(await player.getAttribute("title")).not.toBe(firstTitle);
     await expect(page.locator("iframe")).toHaveCount(1);
-    expect(await page.locator(PLAYER).evaluate((el) => el.__kept === true), "iframe を作り直していない").toBe(true);
+    expect(await page.locator(PLAYER).evaluate((el) => el.__kept === true), "iframe を作り直している").toBe(false);
+    expect(await page.evaluate(() => history.length), "回を替えても履歴は増えない").toBe(historyBefore);
     await expect(player).toBeFocused();
     await expect(page.locator('[data-video-field="no"]')).toHaveText("第2回");
     await expect(page.locator('[data-video-field="title"]')).toHaveText("はじめてのネット払い");

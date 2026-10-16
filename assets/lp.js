@@ -591,8 +591,10 @@
   };
   warmOn(facade);
 
-  // 今の回を iframe で再生する。iframe が無ければ作り、あれば src と title を差し替える。
-  // ID が空の回は何もしない（iframe があれば、前の回のまま）。作った（差し替えた）iframe を返す
+  // 今の回を iframe で再生する。回を替えるときは iframe を作り直す
+  // （同じ iframe の src を差し替えると、そのたびにブラウザの履歴が 1 つ増え、
+  // 「戻る」でページを離れられなくなる。作ったばかりの iframe の最初の読み込みは履歴を増やさない）。
+  // ID が空の回は何もしない（iframe があれば、前の回のまま）。作った iframe を返す
   const startPlayback = () => {
     if (!hasYt(state.yt)) {
       return player;
@@ -601,22 +603,18 @@
       // もう同じ回を読んでいる。読み直さない（途中で止めない）
       return player;
     }
-    if (player) {
-      player.setAttribute("title", state.label);
-      player.setAttribute("src", embedUrl(state.yt));
-    } else {
-      player = document.createElement("iframe");
-      player.setAttribute("title", state.label);
-      player.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
-      player.setAttribute("allowfullscreen", "");
-      // サイトは Referrer-Policy: no-referrer なので、これが無いと YouTube がエラー 153 を返す
-      player.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-      player.setAttribute("width", "1920");
-      player.setAttribute("height", "1080");
-      player.setAttribute("data-video-player", "");
-      player.setAttribute("src", embedUrl(state.yt));
-      frame.replaceChild(player, facade);
-    }
+    const next = document.createElement("iframe");
+    next.setAttribute("title", state.label);
+    next.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+    next.setAttribute("allowfullscreen", "");
+    // サイトは Referrer-Policy: no-referrer なので、これが無いと YouTube がエラー 153 を返す
+    next.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+    next.setAttribute("width", "1920");
+    next.setAttribute("height", "1080");
+    next.setAttribute("data-video-player", "");
+    next.setAttribute("src", embedUrl(state.yt));
+    frame.replaceChild(next, player || facade);
+    player = next;
     playerYt = state.yt;
     if (state.id && !played[state.id]) {
       played[state.id] = true;
@@ -633,7 +631,7 @@
     }
   };
 
-  // 回を選んだことを、ポスターに映す（iframe が既にあるときは、play() が iframe を差し替える）
+  // 回を選んだことを、ポスターに映す（iframe が既にあるときは、play() が iframe を作り直す）
   const show = (id, yt, href, label) => {
     state = { id, yt, label };
     if (player) {
