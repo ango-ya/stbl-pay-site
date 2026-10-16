@@ -522,12 +522,17 @@
 })();
 
 (function () {
-  // つかいかた動画。LP 全体を遅くしないため、読み込み時は動画を一切読まない。
-  // - 最初はポスター画像（loading="lazy"）のリンクだけ。押されたら <video> を作って再生する
+  // つかいかた動画。LP 全体を遅くしないため、読み込み時は iframe も YouTube への通信も一切しない。
+  // - 最初はポスター画像（loading="lazy"）のリンクだけ。押されたら YouTube の埋め込み（iframe）を作って再生する
   // - 一覧（.video-item）や各セクションの「動画で見る」（[data-video-link]）から回を選べる
   // - URL の #video-how-NN で回を指定して開ける（共有用。開いただけでは再生しない）
-  // - JS なし：ポスターと一覧の各リンクが mp4 を直接開く
-  // 文字は textContent でしか入れない（Trusted Types / CSP を崩さない）。
+  // - JS なし：ポスターと一覧の各リンクが YouTube の動画ページを開く
+  // - 動画の ID は data-youtube（11 文字）。空の回は iframe を作らず、ポスターのリンクにも飛ばさない
+  //   （ID は scripts/set-youtube-ids.mjs で入れる）
+  // - YouTube の IFrame Player API（外部 JS）は読まない。再生の開始・終了のイベントは取れないので、
+  //   video_play は「ポスターや一覧を押して再生を始めたとき」に回ごとに 1 回だけ送る（video_complete は送らない）
+  // 文字は textContent でしか入れない。iframe も createElement と setAttribute だけで作る
+  // （innerHTML・srcdoc は使わない。Trusted Types / CSP を崩さない）。
   const frame = document.querySelector("[data-video-frame]");
   const facade = frame ? frame.querySelector("[data-video-poster]") : null;
   if (!frame || !facade) {
@@ -536,11 +541,17 @@
 
   const items = Array.prototype.slice.call(document.querySelectorAll(".video-item[data-video]"));
   const isEnglish = document.documentElement.lang === "en";
+  // 埋め込みは youtube-nocookie.com から（_headers の frame-src と同じ）
+  const EMBED_ORIGIN = "https://www.youtube-nocookie.com";
+  const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
   const played = {};
   let player = null;
-  // 今の回（一覧がないページは、ポスターのリンク先から作る）
+  // iframe が今読んでいる YouTube の ID
+  let playerYt = "";
+  // 今の回（一覧がないページは、ポスターのリンクから作る）
   let state = {
-    src: facade.getAttribute("href"),
+    id: facade.getAttribute("data-video") || "",
+    yt: facade.getAttribute("data-youtube") || "",
     label: (facade.getAttribute("aria-label") || "").replace(/^(再生する：|Play: )/, ""),
   };
 
@@ -549,106 +560,108 @@
       detail: { name, params },
     }));
   };
-  const idOf = (src) => (src || "").replace(/^.*\/|\.mp4$/g, "");
-  // ポスターは mp4 の置き場（R2 等）に関係なく、いつもサイト側（最初の img と同じフォルダ）から出す
+  const hasYt = (yt) => YOUTUBE_ID.test(yt);
+  const embedUrl = (yt) =>
+    EMBED_ORIGIN + "/embed/" + yt + "?autoplay=1&rel=0&playsinline=1&hl=" + (isEnglish ? "en" : "ja");
+  // ポスターは YouTube のサムネイルを使わず、いつもサイト側（最初の img と同じフォルダ）から出す
   const posterImg = facade.querySelector("img");
   const posterDir = posterImg ? (posterImg.getAttribute("src") || "").replace(/[^/]*$/, "") : "";
-  const posterOf = (src, size) => posterDir + idOf(src) + (size === 640 ? "-640" : "") + ".webp";
+  const posterOf = (id, size) => posterDir + id + (size === 640 ? "-640" : "") + ".webp";
 
-  // mp4 が別のドメイン（R2 の独自ドメイン等）にあるときは、動画の欄が近づいたら先に接続しておく
-  // （最初の再生で DNS・TLS の待ちを減らす）。同じオリジンなら何もしない
+  // 再生する意思があるとき（ポスターや一覧の回にポインタが乗った・フォーカスが来た）だけ、
+  // YouTube への接続を先に済ませておく（最初の再生で DNS・TLS の待ちを減らす）。1 回だけ。
+  // スクロールで近づいただけでは、Google に接続しない
+  let warmed = false;
   const warmUp = () => {
-    let origin;
-    try {
-      origin = new URL(state.src, location.href).origin;
-    } catch (error) {
+    if (warmed) {
       return;
     }
-    if (origin === location.origin || document.querySelector('link[rel="preconnect"][href="' + origin + '"]')) {
+    warmed = true;
+    if (document.querySelector('link[rel="preconnect"][href="' + EMBED_ORIGIN + '"]')) {
       return;
     }
     const link = document.createElement("link");
     link.rel = "preconnect";
-    link.href = origin;
+    link.setAttribute("href", EMBED_ORIGIN);
     document.head.appendChild(link);
   };
-  if ("IntersectionObserver" in window) {
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) {
-        warmUp();
-        io.disconnect();
-      }
-    }, { rootMargin: "400px 0px" });
-    io.observe(frame);
-  }
-  facade.addEventListener("pointerenter", warmUp, { once: true });
+  const warmOn = (el) => {
+    el.addEventListener("pointerenter", warmUp);
+    el.addEventListener("focusin", warmUp);
+  };
+  warmOn(facade);
 
-  const ensurePlayer = () => {
-    if (player) {
+  // 今の回を iframe で再生する。iframe が無ければ作り、あれば src と title を差し替える。
+  // ID が空の回は何もしない（iframe があれば、前の回のまま）。作った（差し替えた）iframe を返す
+  const startPlayback = () => {
+    if (!hasYt(state.yt)) {
       return player;
     }
-    player = document.createElement("video");
-    player.controls = true;
-    player.playsInline = true;
-    player.preload = "auto";
-    player.width = 1920;
-    player.height = 1080;
-    player.setAttribute("data-video-player", "");
-    player.setAttribute("poster", posterOf(state.src, 1280));
-    player.setAttribute("src", state.src);
-    player.setAttribute("aria-label", state.label);
-    player.addEventListener("play", () => {
-      const id = idOf(player.getAttribute("src"));
-      if (id && !played[id]) {
-        played[id] = true;
-        track("video_play", { video_id: id });
-      }
-    });
-    player.addEventListener("ended", () => {
-      track("video_complete", { video_id: idOf(player.getAttribute("src")) });
-    });
-    frame.replaceChild(player, facade);
+    if (player && playerYt === state.yt) {
+      // もう同じ回を読んでいる。読み直さない（途中で止めない）
+      return player;
+    }
+    if (player) {
+      player.setAttribute("title", state.label);
+      player.setAttribute("src", embedUrl(state.yt));
+    } else {
+      player = document.createElement("iframe");
+      player.setAttribute("title", state.label);
+      player.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+      player.setAttribute("allowfullscreen", "");
+      // サイトは Referrer-Policy: no-referrer なので、これが無いと YouTube がエラー 153 を返す
+      player.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+      player.setAttribute("width", "1920");
+      player.setAttribute("height", "1080");
+      player.setAttribute("data-video-player", "");
+      player.setAttribute("src", embedUrl(state.yt));
+      frame.replaceChild(player, facade);
+    }
+    playerYt = state.yt;
+    if (state.id && !played[state.id]) {
+      played[state.id] = true;
+      track("video_play", { video_id: state.id });
+    }
     return player;
   };
 
   const play = (focus) => {
-    const v = ensurePlayer();
-    if (focus) {
-      // 選んだ回をスクリーンリーダーにも伝える（video の aria-label が読まれる）
+    const v = startPlayback();
+    if (focus && v) {
+      // 選んだ回をスクリーンリーダーにも伝える（iframe の title が読まれる）
       v.focus({ preventScroll: true });
     }
-    const p = v.play();
-    if (p && typeof p.catch === "function") {
-      p.catch(() => {});
-    }
   };
 
-  // 回を差し替える（再生中なら video を、まだならポスターを）
-  const show = (src, label) => {
-    state = { src, label };
+  // 回を選んだことを、ポスターに映す（iframe が既にあるときは、play() が iframe を差し替える）
+  const show = (id, yt, href, label) => {
+    state = { id, yt, label };
     if (player) {
-      if (player.getAttribute("src") !== src) {
-        player.pause();
-        player.setAttribute("poster", posterOf(src, 1280));
-        player.setAttribute("src", src);
-      }
-      player.setAttribute("aria-label", label);
       return;
     }
-    facade.setAttribute("href", src);
+    facade.setAttribute("href", href);
+    facade.setAttribute("data-video", id);
+    facade.setAttribute("data-youtube", yt);
     facade.setAttribute("aria-label", (isEnglish ? "Play: " : "再生する：") + label);
     if (posterImg) {
-      posterImg.setAttribute("srcset", posterOf(src, 640) + " 640w, " + posterOf(src, 1280) + " 1280w");
-      posterImg.setAttribute("src", posterOf(src, 1280));
+      posterImg.setAttribute("srcset", posterOf(id, 640) + " 640w, " + posterOf(id, 1280) + " 1280w");
+      posterImg.setAttribute("src", posterOf(id, 1280));
     }
   };
 
+  // 修飾キー付き（新しいタブで開く等）か
+  const isModified = (event) => event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+
   facade.addEventListener("click", (event) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+    // 修飾キー付きは、ブラウザに任せる（YouTube の動画ページが開く）。
+    // ただし ID が空のうちは、空の watch URL を開かせない
+    if (isModified(event) && hasYt(state.yt)) {
       return;
     }
     event.preventDefault();
-    play(true);
+    if (!isModified(event)) {
+      play(true);
+    }
   });
 
   // 一覧がないページ（英語版は 1 本だけ）はここまで
@@ -678,6 +691,8 @@
 
   const indexOf = (id) => items.findIndex((el) => el.getAttribute("data-video") === id);
 
+  items.forEach(warmOn);
+
   const select = (index, options) => {
     const opts = options || {};
     const item = items[index];
@@ -685,10 +700,12 @@
       return;
     }
     const id = item.getAttribute("data-video");
-    const changed = idOf(state.src) !== id;
+    const changed = state.id !== id;
     current = index;
 
     show(
+      id,
+      item.getAttribute("data-youtube") || "",
       item.getAttribute("href"),
       "すてぶるペイのつかいかた " + item.getAttribute("data-no") + " " + titleOf(item) +
         "（" + item.getAttribute("data-dur") + "）"
@@ -704,9 +721,10 @@
 
     if (nextButton) {
       const last = index >= items.length - 1;
-      // 最後の回でボタンを隠すとき、フォーカスが行き場を失わないようプレイヤーへ移す
+      // 最後の回でボタンを隠すとき、フォーカスが行き場を失わないようプレイヤー（iframe）へ移す。
+      // 再生できない回（ID が空）のときは、ポスターへ
       if (last && document.activeElement === nextButton) {
-        ensurePlayer().focus({ preventScroll: true });
+        ((opts.play ? startPlayback() : player) || facade).focus({ preventScroll: true });
       }
       nextButton.hidden = last;
     }
@@ -730,12 +748,14 @@
 
   items.forEach((item, index) => {
     item.addEventListener("click", (event) => {
-      // 修飾キー付き（新しいタブで開く等）はブラウザに任せる
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+      // 修飾キー付きは、ブラウザに任せる。ただし ID が空のうちは、空の watch URL を開かせない
+      if (isModified(event) && hasYt(item.getAttribute("data-youtube") || "")) {
         return;
       }
       event.preventDefault();
-      select(index, { play: true, scroll: true, updateHash: true, focus: true, via: "list" });
+      if (!isModified(event)) {
+        select(index, { play: true, scroll: true, updateHash: true, focus: true, via: "list" });
+      }
     });
   });
 

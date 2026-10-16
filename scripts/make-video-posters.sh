@@ -1,32 +1,30 @@
 #!/usr/bin/env bash
-# 「すてぶるペイのつかいかた」の書き出し（video-studio/out/how-series/）を、
-# サイト用の mp4・ポスター・サムネイルに変換して assets/video/ に置く。
+# 「すてぶるペイのつかいかた」の書き出し（video-studio/out/how-series/）の元の mp4 から、
+# サイト用のポスター（1280・640）とサムネイル（320）を WebP で書き出して assets/video/ に置く。
 #
-#   ./scripts/encode-videos.sh <how-series のフォルダ> [回 ...]
+#   ./scripts/make-video-posters.sh <how-series のフォルダ> [回 ...]
 #
-#   例）全部：   ./scripts/encode-videos.sh <フォルダ>
-#       2 回分： ./scripts/encode-videos.sh <フォルダ> how-02 how-03
+#   例）全部：   ./scripts/make-video-posters.sh <フォルダ>
+#       2 回分： ./scripts/make-video-posters.sh <フォルダ> how-02 how-03
 #
-# - 2 つ目以降の引数で、変換する回を絞れる（how-00 / how-0N / how-0Nen）。省略すると全部。
-# - 1080p・30fps・H.264（High）＋AAC 96kbps、faststart。crf 26 で固定。
-# - mp4 は Cloudflare R2 から配る。git には入れない（.gitignore）。
-#   作ったあとは、次の順に進める（詳しくは README「つかいかた動画」）。
-#     ./scripts/upload-videos-r2.sh [日付] [--dry-run]   … R2 に上げる（版は <日付>-<中身のハッシュ>。--dry-run は版の確認だけ）
-#     node scripts/set-video-base.mjs <ベース URL>        … index.html と en/index.html の mp4 の URL を直す
-# - ポスター（1280・640）とサムネイル（320）も作る。こちらは git に入れる（サイトに残す）。
+# - 2 つ目以降の引数で、書き出す回を絞れる（how-00 / how-0N / how-0Nen）。省略すると全部。
+# - mp4 の変換はしない。動画は YouTube に上げるので、サイトに mp4 は置かない。
+#   書き出したポスターとサムネイルは git に入れる（サイトに残す。YouTube のサムネイルは使わない）。
 # - ファイル名の「予告」「第N回」「英語字幕版」から how-00 / how-0N / how-0Nen を決める。
-#   番外編は LP に載せないので変換しない（手数料の数字など営業向けの内容を含むため）。
+#   番外編は LP に載せないので書き出さない（手数料の数字など営業向けの内容を含むため）。
 # - 回の並びや題を変えたら、index.html の #videos（一覧の題・長さ・説明）も直す。
-#   長さは最後に表示する一覧を見て合わせる。
+#   長さは最後に表示する一覧（元の mp4 の長さ）を見て合わせる。
+# - YouTube の動画 ID は、このスクリプトでは扱わない。scripts/set-youtube-ids.mjs で入れる（README「つかいかた動画」）。
+# - 書き出し先は assets/video/。試すときだけ、環境変数 OUT_DIR で変えられる。
 set -euo pipefail
 
 SRC="${1:?how-series のフォルダを指定してください}"
 shift
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="$ROOT/assets/video"
+OUT="${OUT_DIR:-$ROOT/assets/video}"
 mkdir -p "$OUT"
 
-# 変換する回の絞り込み。空のままなら全部（bash 3.2 は空の配列を set -u で嫌うので、空白区切りの文字列で持つ）
+# 書き出す回の絞り込み。空のままなら全部（bash 3.2 は空の配列を set -u で嫌うので、空白区切りの文字列で持つ）
 ONLY=" "
 for a in "$@"; do
   case "$a" in
@@ -58,13 +56,6 @@ id_for() {
   esac
 }
 
-encode() { # src out crf
-  ffmpeg -v error -y -nostdin -i "$1" -vf "fps=30" \
-    -c:v libx264 -preset slow -tune animation -crf "$3" -maxrate 1600k -bufsize 3200k \
-    -profile:v high -level 4.1 -pix_fmt yuv420p \
-    -c:a aac -b:a 96k -ac 2 -ar 48000 -movflags +faststart -map_metadata -1 "$2"
-}
-
 # 1 コマを WebP で書き出す。ffmpeg に libwebp が無いとき（Homebrew の ffmpeg など）は cwebp で変換する
 if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q libwebp; then
   still() { # src 秒 幅:高さ quality out
@@ -87,14 +78,12 @@ for src in "$SRC"/*.mp4; do
   if [ "$ONLY" != " " ]; then
     case "$ONLY" in *" $id "*) ;; *) continue ;; esac
   fi
-  dst="$OUT/$id.mp4"
-  echo "encode: $name -> $id.mp4"
-  encode "$src" "$dst" 26
-  DONE="$DONE$id "
+  echo "poster: $name -> $id.webp, $id-640.webp, $id-thumb.webp"
   at="$(poster_at "$id")"
-  still "$dst" "$at" 1280:720 80 "$OUT/$id.webp"
-  still "$dst" "$at" 640:360 74 "$OUT/$id-640.webp"
-  still "$dst" "$at" 320:180 74 "$OUT/$id-thumb.webp"
+  still "$src" "$at" 1280:720 80 "$OUT/$id.webp"
+  still "$src" "$at" 640:360 74 "$OUT/$id-640.webp"
+  still "$src" "$at" 320:180 74 "$OUT/$id-thumb.webp"
+  DONE="$DONE$id "
 done
 
 # 指定した回が書き出しの中に無かったら知らせる
@@ -102,23 +91,26 @@ for a in "$@"; do
   case "$DONE" in *" $a "*) ;; *) echo "NG: ${a} に当たる書き出しが ${SRC} に見つかりません"; exit 1 ;; esac
 done
 
+# 元の mp4 の長さ。回を絞っても、番外編以外の全部を表示する
 echo
-echo "長さ（index.html の data-dur と合わせる）:"
-for f in "$OUT"/how-*.mp4; do
+echo "長さ（index.html の data-dur と合わせる。元の mp4 の長さ）:"
+for src in "$SRC"/*.mp4; do
+  name="$(basename "$src")"
+  id="$(id_for "$name")" || continue
   # ffprobe の取得と丸めは分ける（ひと続きに書くと、ffprobe が失敗しても丸めが成功して長さ 0 になる）
-  raw="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")" || {
-    echo "NG: $(basename "$f") の長さを ffprobe で取れませんでした"
+  raw="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$src")" || {
+    echo "NG: ${name} の長さを ffprobe で取れませんでした"
     exit 1
   }
   case "$raw" in
     "" | . | *[!0-9.]* | *.*.*)
-      echo "NG: $(basename "$f") の長さが数値ではありません（ffprobe の出力: 「${raw}」）"
+      echo "NG: ${name} の長さが数値ではありません（ffprobe の出力: 「${raw}」）"
       exit 1
       ;;
   esac
   d="$(LC_ALL=C printf '%.0f' "$raw")" || {
-    echo "NG: $(basename "$f") の長さ「${raw}」を秒に丸められませんでした"
+    echo "NG: ${name} の長さ「${raw}」を秒に丸められませんでした"
     exit 1
   }
-  printf '  %s  %d:%02d  %s bytes\n' "$(basename "$f")" "$(( d / 60 ))" "$(( d % 60 ))" "$(stat -c %s "$f" 2>/dev/null || stat -f %z "$f")"
+  printf '  %-8s %d:%02d  %s\n' "$id" "$(( d / 60 ))" "$(( d % 60 ))" "$name"
 done

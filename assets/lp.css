@@ -1470,13 +1470,18 @@ sup.fn a:hover {
   background: var(--paper-dim);
 }
 
-.video-frame video,
+.video-frame iframe,
 .video-poster {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
   background: var(--paper-dim);
+}
+
+/* YouTube の埋め込み。iframe の既定の枠線は消す（枠は .video-frame が持つ） */
+.video-frame iframe {
+  border: 0;
 }
 
 /* 押すまでは画像だけ。再生ボタンは角のない四角（LP の原則どおり） */
