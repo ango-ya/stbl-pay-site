@@ -40,8 +40,9 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 # ヘッダの値（名前は大文字小文字を区別しない。同じ名前が複数あれば最後のもの）
+# 消すのは行末の CR だけ。値の中の CR は残して、ETag の形の確認で NG にする
 header() { # ファイル 名前
-  tr -d '\r' < "$1" | awk -v k="$2" '
+  sed "s/$(printf '\r')\$//" < "$1" | awk -v k="$2" '
     BEGIN { k = tolower(k) }
     { i = index($0, ":"); if (i > 0 && tolower(substr($0, 1, i - 1)) == k) { v = substr($0, i + 1); sub(/^[ \t]+/, "", v); sub(/[ \t]+$/, "", v); r = v } }
     END { print r }'
@@ -153,7 +154,8 @@ judge() {
       unq="${etag#\"}"
       unq="${unq%\"}"
       case "$unq" in
-        "") ;;
+        "")
+          R_NOTE="ETag の中身が空（\"\"）なので MD5 の照合は飛ばし" ;;
         *[!0-9A-Fa-f]*)
           R_NOTE="ETag が MD5 ではない形（${etag_shown}）なので MD5 の照合は飛ばし" ;;
         *)
