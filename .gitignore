@@ -6,3 +6,7 @@ node_modules/
 test-results/
 playwright-report/
 dist/
+
+# 動画の本体は git に入れない（1 回の作り直しで約 125MB 増えるため）。
+# scripts/encode-videos.sh で video-studio の書き出しから作る。本番の置き場は README「動画とキャラクター」
+assets/video/*.mp4

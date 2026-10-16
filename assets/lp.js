@@ -1,4 +1,39 @@
 (function () {
+  // 画面外セクションの描画の後回し（lp.css の content-visibility）を解く。
+  // 後回しは最初の表示を速くするためのもので、そのままだとページ内リンクの飛び先がずれる。
+  const root = document.documentElement;
+  const release = () => root.classList.add("cv-ready");
+
+  // #… 付きで開いたとき：すぐ解いて、目的の位置へ合わせ直す
+  if (location.hash.length > 1) {
+    release();
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (target) {
+      target.scrollIntoView();
+    }
+  }
+
+  // ページ内リンクを押したとき：飛ぶ前に解く（キャプチャで先に動く）
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (event.target instanceof Element && event.target.closest('a[href^="#"]')) {
+        release();
+      }
+    },
+    true
+  );
+
+  // 読み込みが終わって手が空いたら解く
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 200));
+  if (document.readyState === "complete") {
+    idle(release, { timeout: 2000 });
+  } else {
+    window.addEventListener("load", () => idle(release, { timeout: 2000 }), { once: true });
+  }
+})();
+
+(function () {
   // ヒーロー背景「フリップドット・ボード」（Canvas 2D・依存ゼロ・CSP/Trusted Types内）。
   // ロゴと同じ前傾角の平行四辺形セルを敷き詰めた機械式掲示板。
   // 明度は5段階に量子化（機械の実直さ）。ロゴのスリット模様と同じ斜めストライプ波が
@@ -378,7 +413,7 @@
   // 単体要素: 見出し・リード文・補足・パネル類
   document
     .querySelectorAll(
-      ".section h2, .sec-lead, .stats-lead, .flow-note, .note, .table-wrap, .roi-panel, .early-form, .early-mail"
+      ".section h2, .sec-lead, .stats-lead, .flow-note, .note, .table-wrap, .roi-panel, .early-form, .early-mail, .talk, .cast, .video-stage, .video-links, .video-foot"
     )
     .forEach((el) => {
       el.classList.add("reveal");
@@ -386,7 +421,7 @@
     });
 
   // グリッド: 親ごとに 60ms 刻みのスタッガー（上限 300ms — 待たせすぎない）
-  document.querySelectorAll(".stats-grid, .flow, .audience, .value-grid").forEach((group) => {
+  document.querySelectorAll(".stats-grid, .flow, .audience, .value-grid, .video-list").forEach((group) => {
     Array.prototype.forEach.call(group.children, (el, i) => {
       el.classList.add("reveal");
       el.style.transitionDelay = Math.min(i, 5) * 60 + "ms";
@@ -484,4 +519,250 @@
     },
     { passive: true, once: true }
   );
+})();
+
+(function () {
+  // つかいかた動画。LP 全体を遅くしないため、読み込み時は動画を一切読まない。
+  // - 最初はポスター画像（loading="lazy"）のリンクだけ。押されたら <video> を作って再生する
+  // - 一覧（.video-item）や各セクションの「動画で見る」（[data-video-link]）から回を選べる
+  // - URL の #video-how-NN で回を指定して開ける（共有用。開いただけでは再生しない）
+  // - JS なし：ポスターと一覧の各リンクが mp4 を直接開く
+  // 文字は textContent でしか入れない（Trusted Types / CSP を崩さない）。
+  const frame = document.querySelector("[data-video-frame]");
+  const facade = frame ? frame.querySelector("[data-video-poster]") : null;
+  if (!frame || !facade) {
+    return;
+  }
+
+  const items = Array.prototype.slice.call(document.querySelectorAll(".video-item[data-video]"));
+  const isEnglish = document.documentElement.lang === "en";
+  const played = {};
+  let player = null;
+  // 今の回（一覧がないページは、ポスターのリンク先から作る）
+  let state = {
+    src: facade.getAttribute("href"),
+    label: (facade.getAttribute("aria-label") || "").replace(/^(再生する：|Play: )/, ""),
+  };
+
+  const track = (name, params) => {
+    document.dispatchEvent(new CustomEvent("stblpay:analytics", {
+      detail: { name, params },
+    }));
+  };
+  const idOf = (src) => (src || "").replace(/^.*\/|\.mp4$/g, "");
+  // ポスターは mp4 の置き場（R2 等）に関係なく、いつもサイト側（最初の img と同じフォルダ）から出す
+  const posterImg = facade.querySelector("img");
+  const posterDir = posterImg ? (posterImg.getAttribute("src") || "").replace(/[^/]*$/, "") : "";
+  const posterOf = (src, size) => posterDir + idOf(src) + (size === 640 ? "-640" : "") + ".webp";
+
+  // mp4 が別のドメイン（R2 の独自ドメイン等）にあるときは、動画の欄が近づいたら先に接続しておく
+  // （最初の再生で DNS・TLS の待ちを減らす）。同じオリジンなら何もしない
+  const warmUp = () => {
+    let origin;
+    try {
+      origin = new URL(state.src, location.href).origin;
+    } catch (error) {
+      return;
+    }
+    if (origin === location.origin || document.querySelector('link[rel="preconnect"][href="' + origin + '"]')) {
+      return;
+    }
+    const link = document.createElement("link");
+    link.rel = "preconnect";
+    link.href = origin;
+    document.head.appendChild(link);
+  };
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        warmUp();
+        io.disconnect();
+      }
+    }, { rootMargin: "400px 0px" });
+    io.observe(frame);
+  }
+  facade.addEventListener("pointerenter", warmUp, { once: true });
+
+  const ensurePlayer = () => {
+    if (player) {
+      return player;
+    }
+    player = document.createElement("video");
+    player.controls = true;
+    player.playsInline = true;
+    player.preload = "auto";
+    player.width = 1920;
+    player.height = 1080;
+    player.setAttribute("data-video-player", "");
+    player.setAttribute("poster", posterOf(state.src, 1280));
+    player.setAttribute("src", state.src);
+    player.setAttribute("aria-label", state.label);
+    player.addEventListener("play", () => {
+      const id = idOf(player.getAttribute("src"));
+      if (id && !played[id]) {
+        played[id] = true;
+        track("video_play", { video_id: id });
+      }
+    });
+    player.addEventListener("ended", () => {
+      track("video_complete", { video_id: idOf(player.getAttribute("src")) });
+    });
+    frame.replaceChild(player, facade);
+    return player;
+  };
+
+  const play = (focus) => {
+    const v = ensurePlayer();
+    if (focus) {
+      // 選んだ回をスクリーンリーダーにも伝える（video の aria-label が読まれる）
+      v.focus({ preventScroll: true });
+    }
+    const p = v.play();
+    if (p && typeof p.catch === "function") {
+      p.catch(() => {});
+    }
+  };
+
+  // 回を差し替える（再生中なら video を、まだならポスターを）
+  const show = (src, label) => {
+    state = { src, label };
+    if (player) {
+      if (player.getAttribute("src") !== src) {
+        player.pause();
+        player.setAttribute("poster", posterOf(src, 1280));
+        player.setAttribute("src", src);
+      }
+      player.setAttribute("aria-label", label);
+      return;
+    }
+    facade.setAttribute("href", src);
+    facade.setAttribute("aria-label", (isEnglish ? "Play: " : "再生する：") + label);
+    if (posterImg) {
+      posterImg.setAttribute("srcset", posterOf(src, 640) + " 640w, " + posterOf(src, 1280) + " 1280w");
+      posterImg.setAttribute("src", posterOf(src, 1280));
+    }
+  };
+
+  facade.addEventListener("click", (event) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    play(true);
+  });
+
+  // 一覧がないページ（英語版は 1 本だけ）はここまで
+  if (items.length === 0) {
+    return;
+  }
+
+  const stage = document.getElementById("video-stage") || frame;
+  const field = (name) => document.querySelector('[data-video-field="' + name + '"]');
+  const fields = {
+    no: field("no"),
+    title: field("title"),
+    desc: field("desc"),
+    dur: field("dur"),
+  };
+  const nextButton = document.querySelector("[data-video-next]");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let current = Math.max(
+    0,
+    items.findIndex((el) => el.getAttribute("aria-current") === "true")
+  );
+
+  const titleOf = (item) => {
+    const el = item.querySelector(".video-item-title");
+    return el ? el.textContent.trim() : "";
+  };
+
+  const indexOf = (id) => items.findIndex((el) => el.getAttribute("data-video") === id);
+
+  const select = (index, options) => {
+    const opts = options || {};
+    const item = items[index];
+    if (!item) {
+      return;
+    }
+    const id = item.getAttribute("data-video");
+    const changed = idOf(state.src) !== id;
+    current = index;
+
+    show(
+      item.getAttribute("href"),
+      "すてぶるペイのつかいかた " + item.getAttribute("data-no") + " " + titleOf(item) +
+        "（" + item.getAttribute("data-dur") + "）"
+    );
+
+    if (fields.no) fields.no.textContent = item.getAttribute("data-no") || "";
+    if (fields.title) fields.title.textContent = titleOf(item);
+    if (fields.desc) fields.desc.textContent = item.getAttribute("data-desc") || "";
+    if (fields.dur) fields.dur.textContent = item.getAttribute("data-dur") || "";
+
+    items.forEach((el) => el.removeAttribute("aria-current"));
+    item.setAttribute("aria-current", "true");
+
+    if (nextButton) {
+      const last = index >= items.length - 1;
+      // 最後の回でボタンを隠すとき、フォーカスが行き場を失わないようプレイヤーへ移す
+      if (last && document.activeElement === nextButton) {
+        ensurePlayer().focus({ preventScroll: true });
+      }
+      nextButton.hidden = last;
+    }
+
+    if (opts.updateHash && window.history && history.replaceState) {
+      history.replaceState(null, "", "#video-" + id);
+    }
+
+    if (opts.scroll) {
+      stage.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    }
+
+    if (changed) {
+      track("video_select", { video_id: id, via: opts.via || "list" });
+    }
+
+    if (opts.play) {
+      play(opts.focus);
+    }
+  };
+
+  items.forEach((item, index) => {
+    item.addEventListener("click", (event) => {
+      // 修飾キー付き（新しいタブで開く等）はブラウザに任せる
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+        return;
+      }
+      event.preventDefault();
+      select(index, { play: true, scroll: true, updateHash: true, focus: true, via: "list" });
+    });
+  });
+
+  document.querySelectorAll("[data-video-link]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const index = indexOf(link.getAttribute("data-video-link"));
+      if (index < 0) {
+        return;
+      }
+      event.preventDefault();
+      select(index, { play: true, scroll: true, updateHash: true, focus: true, via: "section-link" });
+    });
+  });
+
+  if (nextButton) {
+    nextButton.addEventListener("click", () => {
+      select(current + 1, { play: true, updateHash: true, via: "next" });
+    });
+    nextButton.hidden = current >= items.length - 1;
+  }
+
+  // 共有された #video-how-NN で開いたとき（再生はしない）
+  const match = /^#video-(how-[0-9a-z]+)$/.exec(location.hash);
+  if (match) {
+    const index = indexOf(match[1]);
+    if (index >= 0) {
+      select(index, { scroll: true });
+    }
+  }
 })();
