@@ -147,6 +147,23 @@ test.describe("英語LP", () => {
   });
 });
 
+test.describe("英語LP 手数料の料率を出さない", () => {
+  test("手数料の料率（5% など）を、表示と HTML ソースのどこにも出さない", async ({ page, request }) => {
+    // 料率は検討中（2026-10-16 ユーザー決定：5% は出さない）。fee / rate の近くに数字の % が来たら落とす
+    // （マイナンバーカードの holding rate of 84.5% は手数料ではないので除く）
+    const feeRate = /\bfees?\b[^.\n]{0,40}\d[\d.]*\s*%|\d[\d.]*\s*%[^.\n]{0,20}\bfees?\b|(?<!holding )\brate\b[^.\n]{0,20}\d[\d.]*\s*%/i;
+    await page.goto("/en/");
+    const body = await page.locator("body").innerText();
+    expect(feeRate.test(body), "英語ページの表示に手数料の料率がある").toBe(false);
+    const html = await (await request.get("/en/")).text();
+    expect(feeRate.test(html), "英語ページの HTML ソースに手数料の料率がある").toBe(false);
+    // 検査が効くこと
+    expect(feeRate.test("The payment fee is 5%.")).toBe(true);
+    expect(feeRate.test("a flat rate of 1.5%")).toBe(true);
+    expect(feeRate.test("a holding rate of 84.5%")).toBe(false);
+  });
+});
+
 test.describe("言語切替とhreflang", () => {
   test("日本語→英語→日本語のリンクが相互に張られている", async ({ page }) => {
     await page.goto("/");

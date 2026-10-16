@@ -138,6 +138,25 @@ test.describe("日本語LP 手数料文言ガード（料率は検討中）", ()
     const body = await page.locator("body").innerText();
     expect(body).not.toContain("導入費用0円");
   });
+
+  test("手数料の料率（5% など）を、表示・HTML ソース・llms.txt のどこにも出さない", async ({
+    page,
+    request,
+  }) => {
+    // 料率は検討中（2026-10-16 ユーザー決定：5% は出さない）。「手数料」の近くに数字の % が来たら落とす。
+    // 「数%〜」（03 の従来側）や 55%以上・84.5% は数字と「手数料」が離れているので当たらない
+    const feeRate = /手数料[^。\n]{0,30}[0-9０-９][0-9０-９.]*\s*[%％]|[0-9０-９][0-9０-９.]*\s*[%％][^。\n]{0,15}手数料|料率[^。\n]{0,15}[0-9０-９][0-9０-９.]*\s*[%％]/;
+    await page.goto("/");
+    const body = await page.locator("body").innerText();
+    expect(feeRate.test(body), "表示に手数料の料率がある").toBe(false);
+    const html = await (await request.get("/")).text();
+    expect(feeRate.test(html), "HTML ソース（meta・JSON-LD・AI_DISCOVERY_BLOCK）に手数料の料率がある").toBe(false);
+    const llms = await (await request.get("/llms.txt")).text();
+    expect(feeRate.test(llms), "llms.txt に手数料の料率がある").toBe(false);
+    // 検査が効くこと（料率を足した文は当たる）
+    expect(feeRate.test("決済手数料は5%です")).toBe(true);
+    expect(feeRate.test("料率 1.5%")).toBe(true);
+  });
 });
 
 // ─── マーケット統計 ──────────────────────────────────────────────────────────
