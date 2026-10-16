@@ -4,15 +4,26 @@ import { join } from "node:path";
 
 // ─── つかいかた動画 ──────────────────────────────────────────────────────────
 
+// このファイルが保証する範囲
+// - R2（media.stbl-pay.com）と計測タグ（Google）への HTTP は、context.route で受けて外に出さない。
+//   R2 の mp4 は手元の assets/video/ から返し、手元に無ければ止める
+// - preconnect による DNS・TCP・TLS の接続は、ブラウザが試みうる（route は HTTP の要求しか受けない）。
+//   ただし、テストが見るのは link 要素の有無なので、接続の成否は結果に影響しない
+// - 確かめるのは DOM と属性（href・src・poster・preconnect の有無・_headers の CSP）まで。
+//   実際の再生とシークは、公開前の手動確認（プレビューと iPhone の Safari）で見る
+// - 版の中身（mp4 のバイト列がハッシュと合うか）は見ない。route は版のディレクトリを読み飛ばして手元の mp4 を返す
+
 const EPISODES = ["how-00", "how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08"];
 
-// mp4 は git に入れず、Cloudflare R2 の独自ドメインから出す。版（YYYY-MM-DD）は作り直すたびに変わるので、日付は固定で書かない
+// mp4 は git に入れず、Cloudflare R2 の独自ドメインから出す。版は <YYYY-MM-DD>-<h8>（h8 は mp4 10 本の sha256 から決まる 8 桁）。
+// 作り直すたびに変わるので、版は固定で書かない。日付だけの版は認めない
 const MEDIA_ORIGIN = "https://media.stbl-pay.com";
-const MEDIA_BASE = /^https:\/\/media\.stbl-pay\.com\/how\/\d{4}-\d{2}-\d{2}\//;
+const MEDIA_BASE = /^https:\/\/media\.stbl-pay\.com\/how\/\d{4}-\d{2}-\d{2}-[0-9a-f]{8}\//;
 const VIDEO_DIR = join(process.cwd(), "assets", "video");
 
-// テストは外のネットワークに出さない。R2 への mp4 の取得は手元の assets/video/ で受ける（手元に無ければ止める）。
-// Google のタグ（計測）も読まない。外の応答を待たずに、動画まわりの確認だけを速く回すため
+// R2 と Google のタグ（計測）への HTTP は、ここで受けて外に出さない（保証範囲はファイル冒頭）。
+// R2 への mp4 の取得は手元の assets/video/ で受ける（手元に無ければ止める）。
+// 外の応答を待たずに、動画まわりの確認だけを速く回すため
 const ANALYTICS = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
 const routeOutside = async (context) => {
   await context.route(`${MEDIA_ORIGIN}/**`, (route) => {
@@ -30,10 +41,10 @@ test.beforeEach(async ({ context }) => {
   await routeOutside(context);
 });
 
-// href が R2 の版付きパスなら、その版の URL（…/how/2026-10-16/）を返す
+// href が R2 の版付きパスなら、その版の URL（…/how/2026-10-16-1a2b3c4d/）を返す
 const mediaBaseOf = (href) => {
   const match = MEDIA_BASE.exec(href || "");
-  expect(match, `mp4 の href が R2 の版付きパスでない: ${href}`).not.toBeNull();
+  expect(match, `mp4 の href が R2 の版付きパス（日付-ハッシュ 8 桁）でない: ${href}`).not.toBeNull();
   return match[0];
 };
 
@@ -114,7 +125,7 @@ test.describe("つかいかた動画（日本語LP）", () => {
     }
   });
 
-  test("ポスターを押すと、その場で video を作って再生する", async ({ page }) => {
+  test("ポスターを押すと、その場で video 要素ができ、src が R2 の mp4 になる", async ({ page }) => {
     await page.goto("/");
     const base = await listBase(page);
     await page.locator("[data-video-poster]").click();
@@ -167,7 +178,7 @@ test.describe("つかいかた動画（日本語LP）", () => {
     await expect(page.locator('[data-video-field="title"]')).toHaveText("お店で QR で払う");
   });
 
-  test("JS なしでも一覧のリンクから mp4 を開ける", async ({ browser }) => {
+  test("JS なしでも、一覧とポスターのリンクが R2 の mp4 を指す", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     await routeOutside(context);
     const page = await context.newPage();
@@ -307,6 +318,15 @@ test.describe("英語LP の動画とキャラクター", () => {
     for (const n of names) {
       expect(["Suteburu-kun", "Suteburu-chan"]).toContain(n.trim());
     }
+  });
+
+  test("日本語ページと英語ページの mp4 は、R2 の同じ版を指す", async ({ page }) => {
+    // 版は mp4 10 本（日本語 9 本と英語字幕版 1 本）の中身から 1 つ決まる。2 つのページで違えば、どちらかが古い
+    await page.goto("/");
+    const jaBase = await listBase(page);
+    await page.goto("/en/");
+    const enHref = await page.locator("#videos [data-video-poster]").getAttribute("href");
+    expect(mediaBaseOf(enHref)).toBe(jaBase);
   });
 
   test("最後の回で「次の回へ」を押しても、フォーカスがプレイヤーに残る", async ({ page }) => {

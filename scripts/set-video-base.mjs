@@ -6,7 +6,10 @@
 //   node scripts/set-video-base.mjs --local
 //
 // - ベース URL は https:// で始まり、/ で終わること。
-//     例）node scripts/set-video-base.mjs https://media.stbl-pay.com/how/2026-10-16/
+//     例）node scripts/set-video-base.mjs https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d/
+//   正規表現で形を確かめたうえで、new URL() で解析して次も確かめる。どれか外れたら何も書かずに止まる。
+//     protocol が https:、port が空か 1〜65535、パスが / で終わる、パスに . や .. のセグメントが無い
+//     （%2e のような書き方も含む）、username・password・search・hash が空。
 // - --local は、サイトの中の置き場（assets/video/）に戻す。
 //   index.html は assets/video/、en/index.html は /assets/video/。
 //   手元で mp4 を再生して確かめたいときに使う。戻した HTML はコミットしない。
@@ -31,11 +34,40 @@ const HREF = /href="(?:[^"]*\/)?(how-\d\d(?:en)?\.mp4)"/g;
 // https://ホスト(:ポート)/ のあとに、英数字などの名前を / でつないだもの。最後は /
 const BASE_URL = /^https:\/\/[A-Za-z0-9.-]+(?::\d+)?\/(?:[A-Za-z0-9._~%+-]+\/)*$/;
 
+// ベース URL の外れたところの一覧（空なら問題なし）。正規表現で形を見てから、new URL() で解析して確かめる
+function baseUrlProblems(value) {
+  if (!BASE_URL.test(value)) {
+    return ['https:// で始まり、ホスト名のあとに英数字などの名前を / でつないだ形で、最後が / になっていません'];
+  }
+  let u;
+  try {
+    u = new URL(value);
+  } catch {
+    return ['URL として解析できません（ポート番号が 65535 を超えている、など）'];
+  }
+  const problems = [];
+  if (u.protocol !== 'https:') problems.push(`protocol が ${u.protocol} です（https: のはず）`);
+  if (u.port !== '') {
+    const port = Number(u.port);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) problems.push(`port が ${u.port} です（空か 1〜65535 のはず）`);
+  }
+  if (!u.pathname.endsWith('/')) problems.push(`パス ${u.pathname} が / で終わっていません`);
+  // 解析で . や .. は畳まれてしまうので、書かれたままのパスで見る。%2e も . と同じ扱い
+  const rawPath = value.slice(value.indexOf('/', 'https://'.length));
+  const dotted = rawPath.split('/').filter((seg) => ['.', '..'].includes(seg.replace(/%2e/gi, '.')));
+  if (dotted.length > 0) problems.push(`パスに . か .. のセグメントがあります（${dotted.join(' ')}）`);
+  else if (u.pathname !== rawPath) problems.push(`解析するとパスが ${u.pathname} に変わります（書かれたパス: ${rawPath}）`);
+  if (u.username !== '' || u.password !== '') problems.push('username か password が入っています');
+  if (u.search !== '') problems.push(`search が入っています（${u.search}）`);
+  if (u.hash !== '') problems.push(`hash が入っています（${u.hash}）`);
+  return problems;
+}
+
 function usage() {
   console.error(
     [
       '使いかた:',
-      '  node scripts/set-video-base.mjs <ベース URL>   例）https://media.stbl-pay.com/how/2026-10-16/',
+      '  node scripts/set-video-base.mjs <ベース URL>   例）https://media.stbl-pay.com/how/2026-10-16-1a2b3c4d/',
       '  node scripts/set-video-base.mjs --local        サイトの中の置き場（assets/video/）に戻す',
       '',
       'ベース URL は https:// で始まり、/ で終わること。',
@@ -51,10 +83,14 @@ if (args.length !== 1) {
 }
 const arg = args[0];
 const isLocal = arg === '--local';
-if (!isLocal && !BASE_URL.test(arg)) {
-  console.error(`NG: ベース URL は https:// で始まり、/ で終わる必要があります（指定: ${arg}）`);
-  usage();
-  process.exit(1);
+if (!isLocal) {
+  const problems = baseUrlProblems(arg);
+  if (problems.length > 0) {
+    console.error(`NG: ベース URL が使えません（指定: ${arg}）`);
+    for (const p of problems) console.error(`  - ${p}`);
+    usage();
+    process.exit(1);
+  }
 }
 
 // 先に全部を調べて、件数が合わなければ何も書かない

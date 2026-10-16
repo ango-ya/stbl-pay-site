@@ -11,7 +11,7 @@
 # - 1080p・30fps・H.264（High）＋AAC 96kbps、faststart。crf 26 で固定。
 # - mp4 は Cloudflare R2 から配る。git には入れない（.gitignore）。
 #   作ったあとは、次の順に進める（詳しくは README「つかいかた動画」）。
-#     ./scripts/upload-videos-r2.sh [版]                 … R2 に上げる
+#     ./scripts/upload-videos-r2.sh [日付] [--dry-run]   … R2 に上げる（版は <日付>-<中身のハッシュ>。--dry-run は版の確認だけ）
 #     node scripts/set-video-base.mjs <ベース URL>        … index.html と en/index.html の mp4 の URL を直す
 # - ポスター（1280・640）とサムネイル（320）も作る。こちらは git に入れる（サイトに残す）。
 # - ファイル名の「予告」「第N回」「英語字幕版」から how-00 / how-0N / how-0Nen を決める。
@@ -105,6 +105,20 @@ done
 echo
 echo "長さ（index.html の data-dur と合わせる）:"
 for f in "$OUT"/how-*.mp4; do
-  d="$(printf '%.0f' "$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")")"
+  # ffprobe の取得と丸めは分ける（ひと続きに書くと、ffprobe が失敗しても丸めが成功して長さ 0 になる）
+  raw="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")" || {
+    echo "NG: $(basename "$f") の長さを ffprobe で取れませんでした"
+    exit 1
+  }
+  case "$raw" in
+    "" | . | *[!0-9.]* | *.*.*)
+      echo "NG: $(basename "$f") の長さが数値ではありません（ffprobe の出力: 「${raw}」）"
+      exit 1
+      ;;
+  esac
+  d="$(LC_ALL=C printf '%.0f' "$raw")" || {
+    echo "NG: $(basename "$f") の長さ「${raw}」を秒に丸められませんでした"
+    exit 1
+  }
   printf '  %s  %d:%02d  %s bytes\n' "$(basename "$f")" "$(( d / 60 ))" "$(( d % 60 ))" "$(stat -c %s "$f" 2>/dev/null || stat -f %z "$f")"
 done

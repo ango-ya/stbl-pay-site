@@ -40,23 +40,49 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
   ```sh
   # 1. 変換。回を絞るときは、あとに how-02 のように足す（省略すると全部）
   ./scripts/encode-videos.sh <video-studio/out/how-series のパス> [how-02 ...]
-  # 2. R2 に上げる。版は YYYY-MM-DD（省略すると今日）。mp4 が 10 本そろっていないと止まる
-  ./scripts/upload-videos-r2.sh [版]
-  # 3. index.html と en/index.html の mp4 の URL を、その版に向ける
+  # 2. 版を確かめる。10 本の確認と版の計算だけをして、何も上げない
+  ./scripts/upload-videos-r2.sh [YYYY-MM-DD] --dry-run
+  # 3. R2 に上げる。日付は省略すると今日。2 で出た日付を付けると、版がずれない
+  ./scripts/upload-videos-r2.sh [YYYY-MM-DD]
+  # 4. index.html と en/index.html の mp4 の URL を、その版に向ける
   node scripts/set-video-base.mjs https://media.stbl-pay.com/how/<版>/
-  # 4. 配信を確かめる（206・video/mp4・強い ETag・immutable・キャッシュの HIT）
+  # 5. 配信を確かめる。終了コードが 0 になるまで公開しない
   ./scripts/check-video-cdn.sh https://media.stbl-pay.com/how/<版>/
-  # 5. 書き換わった index.html と en/index.html をコミットする
+  # 6. 書き換わった index.html と en/index.html をコミットする
   ```
 
   - 変換は 1080p・30fps・H.264＋AAC、faststart。crf 26 で固定です（R2 には Pages の 25MiB の上限が無いため、サイズで作り直すことはしません）。ポスター（1280・640）とサムネイル（320）も同じ手順で作り直されるので、変わったら `git add` します。
-  - **版つきのパス**：作り直したら版を変えます。同じパスには上書きしません（1 年キャッシュさせる `immutable` のため、同じパスに置き直しても見る人の手元は変わりません）。`upload-videos-r2.sh` は、公開 URL にもう同じ版があると止まります。
+  - **版の考え方**：版は `<日付>-<中身のハッシュ 8 桁>`（例：`2026-10-16-78b0f288`）です。ハッシュは、10 本（`how-00` … `how-08`、`how-08en` の順）について 1 行ずつ「そのファイルの sha256（16 進 64 桁）、半角スペース 2 つ、ファイル名」を並べたテキスト（各行は LF で終わる）の sha256 の先頭 8 桁（小文字）です。中身が変われば版も変わるので、同じパスには同じバイト列しか載りません。だから 1 年キャッシュさせる `immutable` でも、作り直した動画が古いまま残ることはなく、同じ版を上げ直しても害がありません。日付は引数で決めます（省略すると今日）。日付を省略したまま日をまたぐと版が変わるので、やり直すときは `--dry-run` で出た日付を付けて打ちます。
+  - **`upload-videos-r2.sh` の確認と、途中で失敗したとき**：上げる前に、公開 URL へ HEAD を送ります。200 は「もう上がっている（同じ中身）」として飛ばし、404 は上げ、それ以外（通信できない・403・5xx など）は止まります。10 本とも 200 なら、何も上げずに次のコマンドを表示して終わります。この確認は上書きを防ぐためのものではなく、上がっているものを飛ばすためのものです（キャッシュされた 404 のせいで上げ直しても、同じ中身なので害はありません）。途中で失敗したら、同じコマンドをもう一度流せば、上がっていない分だけ上げます。
   - 上げるときのヘッダは `Content-Type: video/mp4`、`Cache-Control: public, max-age=31536000, immutable`。スクリプトが付けます。
   - 認証は `wrangler login` か、環境変数 `CLOUDFLARE_API_TOKEN`（スクリプトには鍵を書きません）。バケット名・オリジンは環境変数 `R2_BUCKET`・`MEDIA_ORIGIN` で変えられます。
   - バケット・独自ドメイン・キャッシュルールの作り方は、stbl-pay-terraform の `docs/runbooks/cloudflare-media-r2-setup.md` にあります。
+  - **`check-video-cdn.sh` の確かめと終了コード**：10 本それぞれに `Range: bytes=0-1` を 2 回送り、1 回目・2 回目の両方で、206・`Content-Type: video/mp4`・`Content-Range: bytes 0-1/<総サイズ>`・強い ETag（`W/` でない）・`Cache-Control` に `public`、`max-age=31536000`、`immutable` がすべて入っていること、を確かめます。手元に `assets/video/<ファイル>` があれば、総サイズがファイルのサイズと一致すること、ETag が 32 桁の 16 進ならファイルの MD5 と一致することも確かめます（32 桁の 16 進でない ETag は MD5 の照合を飛ばして表示だけ。手元に無ければ飛ばしたと表示します）。2 回目の `cf-cache-status` も見ます。
+
+    | 終了コード | 意味 |
+    | --- | --- |
+    | `0` | 10 本とも必須条件が OK で、2 回目がすべて `HIT`。公開してよい |
+    | `1` | 必須条件が NG の本がある。直すまで公開しない |
+    | `2` | 必須条件は OK だが、2 回目が `HIT` でない本がある。未完了なので、数分おいてやり直す |
+
   - `_headers` の CSP は `media-src 'self' https://media.stbl-pay.com` を許しています。mp4 の置き場のドメインを変えるときは、ここも直します。`<video>` に `crossorigin` は付けません（CORS は要りません）。
-  - iPhone の Safari での再生とシーク（途中へ飛ぶ）は、`check-video-cdn.sh` では確かめられません。上げたら実機で手で確かめてください。
-- **手元で mp4 を再生して確かめたいとき**：`node scripts/set-video-base.mjs --local` で、HTML の mp4 の URL をサイトの中（`assets/video/`）に戻します。`assets/video/` に mp4 を置いた状態で見られます。**この状態の HTML はコミットしません**。確かめ終わったら、手順 3 のコマンドで本番の版に向け直してください。
+  - iPhone の Safari での再生とシーク（途中へ飛ぶ）は、`check-video-cdn.sh` では確かめられません。公開前に、下のプレビューで実機を使って手で確かめます。
+- **公開の順序**：PR を main にマージすると本番にデプロイされるので、確認はマージの前に済ませます。次の順に進めます。
+  1. R2 に上げる（`upload-videos-r2.sh`）。
+  2. `set-video-base.mjs` で、`index.html` と `en/index.html` の mp4 の URL をその版に向ける。
+  3. `check-video-cdn.sh` が終了コード 0 になることを確かめる（1 なら直す。2 なら数分おいてやり直す）。
+  4. HTML をコミットして push し、PR を作る。
+  5. PR のブランチ（push 済みのもの）で、GitHub Actions の「Deploy LP demo to Cloudflare Pages」を `workflow_dispatch` で流して、プレビューを作る。
+
+     ```sh
+     gh workflow run "Deploy LP demo to Cloudflare Pages" --ref <PR のブランチ名>
+     ```
+
+     `.github/workflows/deploy-cloudflare-pages.yml` は `wrangler pages deploy` に `--branch "$GITHUB_REF_NAME"` を渡します。main 以外のブランチから流すと、プロジェクトの本番ブランチ（`main`）とは別のブランチなので、プレビューのデプロイになります。本番の `stbl-pay.com` に付いているデプロイを切り替える手順はありません（カスタムドメインの手順は、付いていなければ付けるだけです）。なお、どのブランチから流しても、Pages のシークレット（`SLACK_WEBHOOK_URL`）を GitHub の値で更新する手順は通ります。流したあと、ログの `Deploy to Cloudflare Pages` に出る URL が `stbl-pay.com` でないこと、Cloudflare のダッシュボードで環境が Preview になっていることを見ます。
+  6. プレビューの URL で、日本語版・英語版の再生と、iPhone の Safari での再生・シーク（途中へ飛ぶ）を確かめる。
+  7. main にマージする（push で本番にデプロイされる）。
+  8. 本番で `curl -I https://stbl-pay.com/` を打って、`Content-Security-Policy` に `media-src` があることを確かめる。あわせて本番で、日本語版・英語版とも再生できることを確かめる。
+- **手元で mp4 を再生して確かめたいとき**：`node scripts/set-video-base.mjs --local` で、HTML の mp4 の URL をサイトの中（`assets/video/`）に戻します。`assets/video/` に mp4 を置いた状態で見られます。**この状態の HTML はコミットしません**。確かめ終わったら、上のコマンド例の手順 4 の `set-video-base.mjs https://media.stbl-pay.com/how/<版>/` で本番の版に向け直してください。
 - 回の並び・題・長さを変えたら、`index.html` の `#videos`（一覧の題・`data-dur`・`data-desc`）と、各セクションの「動画で見る」も直してください。並びと題の正本は video-studio の `how-lib/series.json` です。
 - 回は `#video-how-NN`（例：`/#video-how-02`）で直接開けます（開いただけでは再生しない）。
 
