@@ -145,17 +145,25 @@ test.describe("日本語LP 手数料文言ガード（料率は検討中）", ()
   }) => {
     // 料率は検討中（2026-10-16 ユーザー決定：5% は出さない）。「手数料」の近くに数字の % が来たら落とす。
     // 「数%〜」（03 の従来側）や 55%以上・84.5% は数字と「手数料」が離れているので当たらない
-    const feeRate = /手数料[^。\n]{0,30}[0-9０-９][0-9０-９.]*\s*[%％]|[0-9０-９][0-9０-９.]*\s*[%％][^。\n]{0,15}手数料|料率[^。\n]{0,15}[0-9０-９][0-9０-９.]*\s*[%％]/;
+    // 改行やタグをまたいでも見逃さないよう、タグを空白に変え、空白・改行を 1 つにまとめてから調べる
+    const norm = (text) => text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+    const feeRate = /手数料[^。]{0,30}[0-9０-９][0-9０-９.]*\s*[%％]|[0-9０-９][0-9０-９.]*\s*[%％][^。]{0,15}手数料|料率[^。]{0,15}[0-9０-９][0-9０-９.]*\s*[%％]/;
     await page.goto("/");
-    const body = await page.locator("body").innerText();
-    expect(feeRate.test(body), "表示に手数料の料率がある").toBe(false);
+    // 閉じた FAQ の答えも含めるため innerText ではなく textContent
+    const body = await page.locator("body").textContent();
+    expect(feeRate.test(norm(body)), "表示に手数料の料率がある").toBe(false);
+    // 比較表の手数料の行（すてぶるペイ側）には、数字の % を置かない
+    const selfFee = await page.locator("#comparison tr", { has: page.locator('th:text-is("手数料")') }).locator("td.col-self").textContent();
+    expect(/[0-9０-９][0-9０-９.]*\s*[%％]/.test(selfFee), "比較表の手数料（すてぶるペイ側）に料率がある").toBe(false);
     const html = await (await request.get("/")).text();
-    expect(feeRate.test(html), "HTML ソース（meta・JSON-LD・AI_DISCOVERY_BLOCK）に手数料の料率がある").toBe(false);
+    expect(feeRate.test(norm(html)), "HTML ソース（meta・JSON-LD・AI_DISCOVERY_BLOCK）に手数料の料率がある").toBe(false);
     const llms = await (await request.get("/llms.txt")).text();
-    expect(feeRate.test(llms), "llms.txt に手数料の料率がある").toBe(false);
-    // 検査が効くこと（料率を足した文は当たる）
-    expect(feeRate.test("決済手数料は5%です")).toBe(true);
-    expect(feeRate.test("料率 1.5%")).toBe(true);
+    expect(feeRate.test(norm(llms)), "llms.txt に手数料の料率がある").toBe(false);
+    // 検査が効くこと（料率を足した文は、改行やタグで分かれていても当たる）
+    expect(feeRate.test(norm("決済手数料は5%です"))).toBe(true);
+    expect(feeRate.test(norm("料率 1.5%"))).toBe(true);
+    expect(feeRate.test(norm("手数料\n検討中（予定5%）"))).toBe(true);
+    expect(feeRate.test(norm("<th>手数料</th>\n<td>５％</td>"))).toBe(true);
   });
 });
 

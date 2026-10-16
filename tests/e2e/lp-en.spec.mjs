@@ -151,16 +151,24 @@ test.describe("英語LP 手数料の料率を出さない", () => {
   test("手数料の料率（5% など）を、表示と HTML ソースのどこにも出さない", async ({ page, request }) => {
     // 料率は検討中（2026-10-16 ユーザー決定：5% は出さない）。fee / rate の近くに数字の % が来たら落とす
     // （マイナンバーカードの holding rate of 84.5% は手数料ではないので除く）
-    const feeRate = /\bfees?\b[^.\n]{0,40}\d[\d.]*\s*%|\d[\d.]*\s*%[^.\n]{0,20}\bfees?\b|(?<!holding )\brate\b[^.\n]{0,20}\d[\d.]*\s*%/i;
+    // 改行やタグをまたいでも見逃さないよう、タグを空白に変え、空白・改行を 1 つにまとめてから調べる
+    const norm = (text) => text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+    const feeRate = /\bfees?\b[^.]{0,80}\d[\d.]*\s*%|\d[\d.]*\s*%[^.]{0,20}\bfees?\b|(?<!holding )\brate\b[^.]{0,20}\d[\d.]*\s*%/i;
     await page.goto("/en/");
-    const body = await page.locator("body").innerText();
-    expect(feeRate.test(body), "英語ページの表示に手数料の料率がある").toBe(false);
+    // 閉じた FAQ の答えも含めるため innerText ではなく textContent
+    const body = await page.locator("body").textContent();
+    expect(feeRate.test(norm(body)), "英語ページの表示に手数料の料率がある").toBe(false);
+    // 比較表の手数料の行（すてぶるペイ側）には、数字の % を置かない
+    const selfFee = await page.locator("#comparison tr", { has: page.locator('th:text-is("Fees")') }).locator("td.col-self").textContent();
+    expect(/\d[\d.]*\s*%/.test(selfFee), "比較表の手数料（STBLpay 側）に料率がある").toBe(false);
     const html = await (await request.get("/en/")).text();
-    expect(feeRate.test(html), "英語ページの HTML ソースに手数料の料率がある").toBe(false);
-    // 検査が効くこと
-    expect(feeRate.test("The payment fee is 5%.")).toBe(true);
-    expect(feeRate.test("a flat rate of 1.5%")).toBe(true);
-    expect(feeRate.test("a holding rate of 84.5%")).toBe(false);
+    expect(feeRate.test(norm(html)), "英語ページの HTML ソースに手数料の料率がある").toBe(false);
+    // 検査が効くこと（改行やタグで分かれていても当たる）
+    expect(feeRate.test(norm("The payment fee is 5%."))).toBe(true);
+    expect(feeRate.test(norm("a flat rate of 1.5%"))).toBe(true);
+    expect(feeRate.test(norm("Payment fee:\n5%."))).toBe(true);
+    expect(feeRate.test(norm("<th>Fees</th>\n<td>5%</td>"))).toBe(true);
+    expect(feeRate.test(norm("a holding rate of 84.5%"))).toBe(false);
   });
 });
 
