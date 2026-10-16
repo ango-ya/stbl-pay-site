@@ -3,7 +3,7 @@
 # 他ホスティングでは同等の設定を行うこと (Vercel: vercel.json headers / nginx: add_header)。
 # 本番デプロイ前 verification gate: 下記ヘッダが実応答に存在することを必ず確認する (G-2)。
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://www.googletagmanager.com 'sha256-3CxRvNUbDuHK25rj4xq/Aqa9MJPMxlm11LCwmYSiY9U='; style-src 'self'; font-src 'self'; img-src 'self' data: https://www.google-analytics.com https://region1.google-analytics.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'; worker-src 'none'; require-trusted-types-for 'script'; trusted-types default; report-uri /csp-report
+  Content-Security-Policy: default-src 'self'; media-src 'self' https://media.stbl-pay.com; script-src 'self' https://www.googletagmanager.com 'sha256-3CxRvNUbDuHK25rj4xq/Aqa9MJPMxlm11LCwmYSiY9U='; style-src 'self'; font-src 'self'; img-src 'self' data: https://www.google-analytics.com https://region1.google-analytics.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'; worker-src 'none'; require-trusted-types-for 'script'; trusted-types default; report-uri /csp-report
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
@@ -13,3 +13,5 @@
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 # COEP: require-corp は外部リソース (Google Fonts 等) が CORP/CORS 未対応だと読込を壊すため未付与。
 # クロスオリジン分離が必要になった段階で、フォントを self-host した上で COEP を追加すること。
+# media-src: つかいかた動画の mp4 は Cloudflare R2 の独自ドメイン（https://media.stbl-pay.com）から出す。
+# 動画を作り直しても、ドメインは同じ（版はパスで分ける）ので、ここは変えない。ポスターは img-src の 'self' から出る。

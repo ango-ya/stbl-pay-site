@@ -33,20 +33,36 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 ### つかいかた動画（`#videos`）
 
 - 「すてぶるペイのつかいかた」の予告と第1〜8回（英語ページは第8回の英語字幕版だけ）。番外編は手数料の数字など営業向けの内容を含むため載せていません。
-- **mp4 は git に入れていません**（`.gitignore`）。1 回作り直すたびに約 125MB 増えるためです。`scripts/encode-videos.sh` で video-studio の書き出しから作ります。
+- **mp4 は git に入れていません**（`.gitignore`）。1 回作り直すたびに約 125MB 増えるためです。本番では Cloudflare R2（バケット `stbl-pay-media`）から、独自ドメイン `https://media.stbl-pay.com` で配ります。サイトの HTML は `https://media.stbl-pay.com/how/<版>/how-NN.mp4` を指します（`r2.dev` は使いません）。
+- ポスター（`how-NN.webp`・`-640`）とサムネイル（`-thumb`）は git に入れて、サイトから配ります。R2 には置きません。
+- 動画を作り直す・入れ替えるときの流れ：
 
   ```sh
-  ./scripts/encode-videos.sh <video-studio/out/how-series のパス>
+  # 1. 変換。回を絞るときは、あとに how-02 のように足す（省略すると全部）
+  ./scripts/encode-videos.sh <video-studio/out/how-series のパス> [how-02 ...]
+  # 2. R2 に上げる。版は YYYY-MM-DD（省略すると今日）。mp4 が 10 本そろっていないと止まる
+  ./scripts/upload-videos-r2.sh [版]
+  # 3. index.html と en/index.html の mp4 の URL を、その版に向ける
+  node scripts/set-video-base.mjs https://media.stbl-pay.com/how/<版>/
+  # 4. 配信を確かめる（206・video/mp4・強い ETag・immutable・キャッシュの HIT）
+  ./scripts/check-video-cdn.sh https://media.stbl-pay.com/how/<版>/
+  # 5. 書き換わった index.html と en/index.html をコミットする
   ```
 
-  1080p・30fps・H.264＋AAC、faststart。ポスター（1280・640）とサムネイル（320）も作ります。ポスター・サムネイルは git に入れます。
-- **本番の置き場は未決**（このままでは本番に mp4 が無い）。候補は Cloudflare R2（独自ドメイン）。Git LFS は履歴は太らないが Pages の 25MiB 上限が残る。経緯と手順は引き継ぎメモを参照。
+  - 変換は 1080p・30fps・H.264＋AAC、faststart。crf 26 で固定です（R2 には Pages の 25MiB の上限が無いため、サイズで作り直すことはしません）。ポスター（1280・640）とサムネイル（320）も同じ手順で作り直されるので、変わったら `git add` します。
+  - **版つきのパス**：作り直したら版を変えます。同じパスには上書きしません（1 年キャッシュさせる `immutable` のため、同じパスに置き直しても見る人の手元は変わりません）。`upload-videos-r2.sh` は、公開 URL にもう同じ版があると止まります。
+  - 上げるときのヘッダは `Content-Type: video/mp4`、`Cache-Control: public, max-age=31536000, immutable`。スクリプトが付けます。
+  - 認証は `wrangler login` か、環境変数 `CLOUDFLARE_API_TOKEN`（スクリプトには鍵を書きません）。バケット名・オリジンは環境変数 `R2_BUCKET`・`MEDIA_ORIGIN` で変えられます。
+  - バケット・独自ドメイン・キャッシュルールの作り方は、stbl-pay-terraform の `docs/runbooks/cloudflare-media-r2-setup.md` にあります。
+  - `_headers` の CSP は `media-src 'self' https://media.stbl-pay.com` を許しています。mp4 の置き場のドメインを変えるときは、ここも直します。`<video>` に `crossorigin` は付けません（CORS は要りません）。
+  - iPhone の Safari での再生とシーク（途中へ飛ぶ）は、`check-video-cdn.sh` では確かめられません。上げたら実機で手で確かめてください。
+- **手元で mp4 を再生して確かめたいとき**：`node scripts/set-video-base.mjs --local` で、HTML の mp4 の URL をサイトの中（`assets/video/`）に戻します。`assets/video/` に mp4 を置いた状態で見られます。**この状態の HTML はコミットしません**。確かめ終わったら、手順 3 のコマンドで本番の版に向け直してください。
 - 回の並び・題・長さを変えたら、`index.html` の `#videos`（一覧の題・`data-dur`・`data-desc`）と、各セクションの「動画で見る」も直してください。並びと題の正本は video-studio の `how-lib/series.json` です。
 - 回は `#video-how-NN`（例：`/#video-how-02`）で直接開けます（開いただけでは再生しない）。
 
 ### 表示速度（動画を載せても LP を遅くしない）
 
-- 読み込み時は `<video>` を置かない。ポスター画像（`loading="lazy"`）のリンクだけを出し、押されたら `<video>` を作って再生する（`assets/lp.js`）。mp4 は押すまで 1 バイトも読まない。
+- 読み込み時は `<video>` を置かない。ポスター画像（`loading="lazy"`）のリンクだけを出し、押されたら `<video>` を作って再生する（`assets/lp.js`）。mp4 は押すまで 1 バイトも読まない。mp4 が別のオリジン（`media.stbl-pay.com`）にあるので、動画の欄が近づいたときだけ `preconnect` を足す（同じく `assets/lp.js`）。
 - 画面外のセクションは `content-visibility: auto` で描画を後回しにし、読み込み後（またはページ内リンクを押した瞬間）に解く（`assets/lp.css`「描画の後回し」）。
 - 2026-10-16 の計測（Slow 4G・CPU 4 倍遅延のスマホ相当、6 回の中央値、brotli 圧縮あり）：
 

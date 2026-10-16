@@ -2,11 +2,18 @@
 # 「すてぶるペイのつかいかた」の書き出し（video-studio/out/how-series/）を、
 # サイト用の mp4・ポスター・サムネイルに変換して assets/video/ に置く。
 #
-#   ./scripts/encode-videos.sh <how-series のフォルダ>
+#   ./scripts/encode-videos.sh <how-series のフォルダ> [回 ...]
 #
-# - 1080p・30fps・H.264（High）＋AAC 96kbps、faststart。mp4 は git に入れない（.gitignore）。
-# - ポスター（1280・640）とサムネイル（320）も作る。こちらは git に入れる。
-# - Cloudflare Pages は 1 ファイル 25MiB まで。24MB を超えたら crf を上げて作り直す。
+#   例）全部：   ./scripts/encode-videos.sh <フォルダ>
+#       2 回分： ./scripts/encode-videos.sh <フォルダ> how-02 how-03
+#
+# - 2 つ目以降の引数で、変換する回を絞れる（how-00 / how-0N / how-0Nen）。省略すると全部。
+# - 1080p・30fps・H.264（High）＋AAC 96kbps、faststart。crf 26 で固定。
+# - mp4 は Cloudflare R2 から配る。git には入れない（.gitignore）。
+#   作ったあとは、次の順に進める（詳しくは README「つかいかた動画」）。
+#     ./scripts/upload-videos-r2.sh [版]                 … R2 に上げる
+#     node scripts/set-video-base.mjs <ベース URL>        … index.html と en/index.html の mp4 の URL を直す
+# - ポスター（1280・640）とサムネイル（320）も作る。こちらは git に入れる（サイトに残す）。
 # - ファイル名の「予告」「第N回」「英語字幕版」から how-00 / how-0N / how-0Nen を決める。
 #   番外編は LP に載せないので変換しない（手数料の数字など営業向けの内容を含むため）。
 # - 回の並びや題を変えたら、index.html の #videos（一覧の題・長さ・説明）も直す。
@@ -14,10 +21,20 @@
 set -euo pipefail
 
 SRC="${1:?how-series のフォルダを指定してください}"
+shift
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/assets/video"
-LIMIT=24000000
 mkdir -p "$OUT"
+
+# 変換する回の絞り込み。空のままなら全部（bash 3.2 は空の配列を set -u で嫌うので、空白区切りの文字列で持つ）
+ONLY=" "
+for a in "$@"; do
+  case "$a" in
+    how-[0-9][0-9] | how-[0-9][0-9]en) ONLY="$ONLY$a " ;;
+    *) echo "回の指定が違います: ${a}（how-00 / how-02 / how-08en のように書いてください）"; exit 1 ;;
+  esac
+done
+DONE=" "
 
 # ポスターに使う秒（その回の中身が分かるコマ）。無い回は 1 秒目
 # （macOS の bash 3.2 には連想配列が無いので case で引く）
@@ -67,20 +84,22 @@ shopt -s nullglob
 for src in "$SRC"/*.mp4; do
   name="$(basename "$src")"
   id="$(id_for "$name")" || { echo "skip: $name"; continue; }
+  if [ "$ONLY" != " " ]; then
+    case "$ONLY" in *" $id "*) ;; *) continue ;; esac
+  fi
   dst="$OUT/$id.mp4"
   echo "encode: $name -> $id.mp4"
-  crf=26
-  encode "$src" "$dst" "$crf"
-  while [ "$(stat -c %s "$dst" 2>/dev/null || stat -f %z "$dst")" -ge "$LIMIT" ]; do
-    crf=$((crf + 2))
-    [ "$crf" -le 32 ] || { echo "NG: $id.mp4 が 24MB に収まりません"; exit 1; }
-    echo "  24MB を超えたので crf $crf で作り直します"
-    encode "$src" "$dst" "$crf"
-  done
+  encode "$src" "$dst" 26
+  DONE="$DONE$id "
   at="$(poster_at "$id")"
   still "$dst" "$at" 1280:720 80 "$OUT/$id.webp"
   still "$dst" "$at" 640:360 74 "$OUT/$id-640.webp"
   still "$dst" "$at" 320:180 74 "$OUT/$id-thumb.webp"
+done
+
+# 指定した回が書き出しの中に無かったら知らせる
+for a in "$@"; do
+  case "$DONE" in *" $a "*) ;; *) echo "NG: ${a} に当たる書き出しが ${SRC} に見つかりません"; exit 1 ;; esac
 done
 
 echo
