@@ -19,6 +19,15 @@ const config: Config = {
   // 既定の「baseUrl が合っていない」警告はインラインのスクリプトとスタイルを足すので外す（CSP を締めるため）
   baseUrlIssueBanner: false,
 
+  // 自前でライト／ダークを切り替えるので、Dark Reader などの拡張機能に色を変えさせない。
+  // 変えさせると、最初に見える高さより下だけ拡張機能の色になり、途中で背景が切り替わって見える
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {name: 'darkreader-lock'},
+    },
+  ],
+
   markdown: {
     mermaid: true,
   },
