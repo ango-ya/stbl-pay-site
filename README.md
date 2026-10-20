@@ -4,12 +4,22 @@
 
 ## ローカル確認
 
-ビルド不要の静的サイトです。
+LP・デモはビルド不要の静的ファイルです。加盟店向けドキュメント（`/docs/`）だけは `docs-site/`（Docusaurus）からビルドします。
 
 ```sh
-python3 -m http.server 4173 --directory .
-# → http://localhost:4173/ をブラウザで開く
+./scripts/build-dist.sh                        # dist/ を組み立てる（docs のビルドを含む）
+python3 -m http.server 4173 --directory dist
+# → http://localhost:4173/ と http://localhost:4173/docs/ をブラウザで開く
 ```
+
+`_headers`（CSP）込みで確認する場合は、`dist/` を `npx wrangler pages dev dist` で配信します。
+
+## 加盟店向けドキュメント（/docs/）
+
+- ソースは `docs-site/`。ページは `docs-site/docs/` の Markdown で、ページを足したら `docs-site/sidebars.ts` にも足す
+- 書きながら確認するときは `cd docs-site && npm start`（`/docs/` 以下を dev サーバーで表示）
+- `scripts/build-dist.sh` がビルドして `dist/docs/` に入れ、`_headers` の docs 用 CSP にインラインスクリプトのハッシュを書き込む（`scripts/docs-csp.mjs`）
+- 配信するのはビルド結果だけ。`docs-site/` のソースは `dist/` に入れない
 
 Cloudflare Pages Functions（`functions/api/early-access.js`）込みで確認する場合:
 
@@ -30,7 +40,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ## デプロイ
 
-`main` への push で GitHub Actions が Cloudflare Pages へ自動デプロイします（`workflow_dispatch` で手動実行も可能）。配信対象は workflow 内で `dist/` に組み立てた本番ファイルのみです。
+`main` への push で GitHub Actions が Cloudflare Pages へ自動デプロイします（`workflow_dispatch` で手動実行も可能）。配信対象は `scripts/build-dist.sh` で `dist/` に組み立てた本番ファイルのみです。
 
 必要な repository secrets / variables:
 

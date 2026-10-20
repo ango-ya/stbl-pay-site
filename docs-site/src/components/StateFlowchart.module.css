@@ -1,0 +1,206 @@
+/* 状態遷移のフローチャート。色はサイトのテーマ変数（ライト／ダークは custom.css が切り替える）だけを使う。 */
+.root {
+  --sd-ink: var(--ink);
+  --sd-gray: var(--gray);
+  --sd-line: var(--line);
+  --sd-panel: var(--paper-dim);
+  --sd-paper: var(--paper);
+  --sd-main: var(--accent);
+  --sd-warn: var(--warn);
+  --sd-danger: var(--danger);
+  margin: 1.5rem 0;
+  --sd-user: #1f7a4d;
+  --sd-merchant: #6b46c1;
+  --sd-stbl: #0f6f78;
+  --sd-issuer: #a8326c;
+  font-family: "M PLUS 1p", var(--font);
+}
+
+/* 幅が足りるときだけ横長の図を使い、それ以外は縦並びの図にする（本文の幅で切り替える） */
+.root {
+  container-type: inline-size;
+}
+.desktop,
+.mobile {
+  width: 100%;
+  height: auto;
+}
+.desktop {
+  display: none;
+}
+.mobile {
+  display: block;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+@container (min-width: 760px) {
+  .desktop {
+    display: block;
+  }
+  .mobile {
+    display: none;
+  }
+}
+
+/* 分岐（問い） */
+.diamond {
+  fill: var(--sd-panel);
+  stroke: var(--sd-ink);
+  stroke-width: 1.25;
+}
+.question {
+  fill: var(--sd-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* 状態 */
+.box {
+  fill: var(--sd-paper);
+  stroke: var(--sd-ink);
+  stroke-width: 1;
+}
+.boxMain {
+  stroke: var(--sd-main);
+  stroke-width: 2;
+}
+.boxSettled {
+  fill: var(--sd-main);
+  stroke: var(--sd-main);
+  stroke-width: 2;
+}
+.boxFail {
+  stroke: var(--sd-danger);
+}
+.boxWarn {
+  stroke: var(--sd-warn);
+  stroke-dasharray: 5 3;
+}
+.boxMuted {
+  stroke: var(--sd-gray);
+}
+.group {
+  fill: none;
+  stroke: var(--sd-gray);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.name {
+  fill: var(--sd-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.desc {
+  fill: var(--sd-gray);
+  font-size: 12.5px;
+}
+.nameOn,
+.descOn {
+  fill: var(--sd-paper);
+}
+.nameOn {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.descOn {
+  font-size: 12.5px;
+}
+.label {
+  fill: var(--sd-gray);
+  font-size: 12.5px;
+}
+.labelStrong {
+  fill: var(--sd-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* 同じ印へつながる、の印（Ⓐ・Ⓑ） */
+.mark {
+  fill: var(--sd-paper);
+  stroke: var(--sd-main);
+  stroke-width: 1.5;
+}
+.markText {
+  fill: var(--sd-main);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* 線 */
+.lMain {
+  stroke: var(--sd-main);
+  stroke-width: 1.75;
+  fill: none;
+}
+.lThin {
+  stroke: var(--sd-gray);
+  stroke-width: 1.25;
+  fill: none;
+}
+.lFail {
+  stroke: var(--sd-danger);
+  stroke-width: 1.25;
+  fill: none;
+}
+.lWarn {
+  stroke: var(--sd-warn);
+  stroke-width: 1.25;
+  stroke-dasharray: 5 3;
+  fill: none;
+}
+.hMain {
+  fill: var(--sd-main);
+}
+.hThin {
+  fill: var(--sd-gray);
+}
+.hFail {
+  fill: var(--sd-danger);
+}
+.hWarn {
+  fill: var(--sd-warn);
+}
+
+/* Webhook の印 */
+.hookYes {
+  fill: var(--sd-ink);
+  stroke: var(--sd-ink);
+  stroke-width: 1.5;
+}
+.hookYesOn {
+  fill: var(--sd-paper);
+  stroke: var(--sd-paper);
+  stroke-width: 1.5;
+}
+.hookNo {
+  fill: none;
+  stroke: var(--sd-warn);
+  stroke-width: 1.5;
+}
+
+[data-theme='dark'] .root {
+  --sd-user: #5cc28f;
+  --sd-merchant: #a98bf0;
+  --sd-stbl: #4cc3cc;
+  --sd-issuer: #ec7fb3;
+}
+
+/* 誰の操作か。枠は色、文字は同じ色 */
+.who {
+  fill: var(--sd-paper);
+  stroke-width: 1.25;
+}
+.whoText {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.whoUser { stroke: var(--sd-user); }
+.whoMerchant { stroke: var(--sd-merchant); }
+.whoStbl { stroke: var(--sd-stbl); }
+.whoIssuer { stroke: var(--sd-issuer); }
+.whoUserText { fill: var(--sd-user); }
+.whoMerchantText { fill: var(--sd-merchant); }
+.whoStblText { fill: var(--sd-stbl); }
+.whoIssuerText { fill: var(--sd-issuer); }

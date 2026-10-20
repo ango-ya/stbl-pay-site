@@ -13,3 +13,14 @@
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 # COEP: require-corp は外部リソース (Google Fonts 等) が CORP/CORS 未対応だと読込を壊すため未付与。
 # クロスオリジン分離が必要になった段階で、フォントを self-host した上で COEP を追加すること。
+
+# 加盟店向けドキュメント（/docs/ 以下・Docusaurus のビルド結果）。サイト全体の CSP を外して付け直す。
+# - script-src：Docusaurus のテーマ切り替えのインラインスクリプトだけをハッシュで許可する。
+#   __DOCS_SCRIPT_HASHES__ は scripts/build-dist.sh（docs-csp.mjs）がビルド結果から計算して置き換える
+# - style-src：Docusaurus と Mermaid が style 属性を使うため 'unsafe-inline' を許可する。docs に利用者の入力は無い
+# - font-src：小さいフォントのファイルはビルド時に data: URI として CSS に埋め込まれるため data: を許可する
+# - Trusted Types：React と Mermaid が対応していないため、/docs/ では要求しない
+# - 解析タグは docs に入れないので、Google Analytics の許可は付けない
+/docs/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self' __DOCS_SCRIPT_HASHES__; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'; worker-src 'none'; report-uri /csp-report

@@ -1,0 +1,645 @@
+/* ============================================================
+   STBLpay ドキュメント — LP（stbl-pay-site）のデザイン言語を移植
+   原則: モノクロ＋リンク青のみ / 影・角丸・装飾背景なし /
+        1px罫線と余白で構成 / 太字は階層にだけ使う
+   出典: stbl-pay-site/assets/lp.css
+   例外: ダークパレットと、警告の危険度（warning/danger）に使う
+        琥珀・赤は LP に存在しない。ドキュメント固有の要件として追加。
+   ============================================================ */
+
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("/fonts/schibsted-grotesk-latin-wght.woff2") format("woff2-variations");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2013-2014, U+2018-201A,
+    U+201C-201E, U+2026, U+2212;
+}
+
+/* ---------- トークン（ライト = LP と同値） ---------- */
+
+:root {
+  --ink: #161616;
+  --gray: #6b6b6b;
+  --gray-light: #9a9a9a;
+  --line: #e2e2e2;
+  --line-strong: #161616;
+  --paper: #ffffff;
+  --paper-dim: #f7f7f6;
+  --link: #2775ca;
+  --accent: #2775ca;
+  --accent-dark: #1f5fa8;
+  --font: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* 本文の行長。LP は 41em だが、docs は表・コードを抱えるため広めに取り、
+     はみ出させたい要素だけ個別に max-width を解除する。 */
+  --measure: 54em;
+
+  /* 危険度の色（LP 外・罫線とラベル文字にのみ使う） */
+  --warn: #a86200;
+  --danger: #b3271d;
+
+  /* --- Infima へのマッピング --- */
+  --ifm-color-primary: var(--accent);
+  --ifm-color-primary-dark: var(--accent-dark);
+  --ifm-color-primary-darker: #1d5a9f;
+  --ifm-color-primary-darkest: #184a83;
+  --ifm-color-primary-light: #3d83d0;
+  --ifm-color-primary-lighter: #4a8cd4;
+  --ifm-color-primary-lightest: #6ba1dc;
+
+  --ifm-font-family-base: var(--font);
+  --ifm-font-family-monospace: var(--font-mono);
+  --ifm-heading-font-family: var(--font);
+  --ifm-font-size-base: 15.5px;
+  --ifm-line-height-base: 1.9;
+  --ifm-heading-font-weight: 700;
+  --ifm-heading-line-height: 1.35;
+  --ifm-code-font-size: 88%;
+
+  --ifm-background-color: var(--paper);
+  --ifm-background-surface-color: var(--paper);
+  --ifm-color-content: var(--ink);
+  --ifm-color-content-secondary: var(--gray);
+  --ifm-color-emphasis-300: var(--line);
+  --ifm-toc-border-color: var(--line);
+  --ifm-table-border-color: var(--line);
+  --ifm-table-stripe-background-color: transparent;
+  --ifm-table-head-background: transparent;
+  --ifm-hr-border-color: var(--line);
+
+  --ifm-link-color: var(--link);
+  --ifm-link-hover-color: var(--accent-dark);
+  --ifm-link-decoration: underline;
+
+  /* 角丸・影は全域で排除 */
+  --ifm-global-radius: 0;
+  --ifm-button-border-radius: 0;
+  --ifm-card-border-radius: 0;
+  --ifm-global-shadow-lw: none;
+  --ifm-global-shadow-md: none;
+  --ifm-global-shadow-tl: none;
+
+  --ifm-navbar-height: 64px;
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.96);
+  --ifm-navbar-shadow: none;
+  --ifm-navbar-link-color: var(--gray);
+  --ifm-navbar-link-hover-color: var(--ink);
+
+  --ifm-menu-color: var(--gray);
+  --ifm-menu-color-active: var(--ink);
+  --ifm-menu-color-background-active: transparent;
+  --ifm-menu-color-background-hover: var(--paper-dim);
+
+  --ifm-footer-background-color: var(--paper);
+  --ifm-footer-color: var(--gray);
+  --ifm-footer-link-color: var(--gray);
+  --ifm-footer-link-hover-color: var(--ink);
+  --ifm-footer-title-color: var(--ink);
+
+  --ifm-pre-background: var(--paper-dim);
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.07);
+}
+
+/* ---------- トークン（ダーク = LP に存在しないため新規定義） ----------
+   ink と paper を入れ替え、罫線は #2e2e2e 系。
+   リンク青は #2775ca だと暗背景でコントラストが足りないので明度を上げる。 */
+
+[data-theme="dark"] {
+  --ink: #ededed;
+  --gray: #9d9d9d;
+  --gray-light: #6b6b6b;
+  --line: #2e2e2e;
+  --line-strong: #ededed;
+  --paper: #161616;
+  --paper-dim: #1e1e1e;
+  --link: #62a6f2;
+  --accent: #62a6f2;
+  --accent-dark: #8cc0f7;
+
+  --warn: #dda23c;
+  --danger: #ef6a5f;
+
+  --ifm-color-primary: var(--accent);
+  --ifm-color-primary-dark: #4b98ef;
+  --ifm-color-primary-darker: #3f91ee;
+  --ifm-color-primary-darkest: #1c76e5;
+  --ifm-color-primary-light: #79b4f5;
+  --ifm-color-primary-lighter: #85bbf6;
+  --ifm-color-primary-lightest: #a9cef9;
+
+  --ifm-link-hover-color: var(--accent-dark);
+  --ifm-navbar-background-color: rgba(22, 22, 22, 0.96);
+  --ifm-color-emphasis-300: var(--line);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.09);
+}
+
+/* ---------- 基本 ---------- */
+
+html {
+  background: var(--paper);
+}
+
+body {
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
+  line-break: strict;
+}
+
+/* 日本語の文節単位改行（Chromium系のみ。非対応環境は従来挙動にフォールバック） */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+li,
+th,
+td,
+summary,
+small,
+label {
+  word-break: auto-phrase;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  letter-spacing: 0.01em;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* 影と角丸の全域抹消（Infima が個別に指定している箇所を潰す） */
+.card,
+.navbar,
+.menu__link,
+.breadcrumbs__item,
+.breadcrumbs__link,
+.pagination-nav__link,
+.tabs__item,
+.theme-code-block,
+.theme-admonition,
+.dropdown__menu,
+.navbar-sidebar,
+.alert,
+img,
+pre,
+code,
+kbd {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ---------- ヘッダー ---------- */
+
+.navbar {
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+
+.navbar__logo {
+  width: 136px;
+  height: auto;
+  margin-right: 0;
+}
+
+.navbar__logo img {
+  width: 100%;
+  height: auto;
+}
+
+/* ワードマークは黒一色の PNG なので、ダークでは反転して白にする */
+[data-theme="dark"] .navbar__logo img {
+  filter: invert(1);
+}
+
+.navbar__link,
+.navbar__brand {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  text-decoration: none;
+  color: var(--ink);
+}
+
+/* LP ヘッダーと同じ枠付き CTA（LP は min-height 38px） */
+.navbar-cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 16px;
+  margin-left: 8px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease,
+    transform 100ms ease;
+}
+
+.navbar-cta:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  text-decoration: none;
+}
+
+.navbar-cta:active {
+  transform: translateY(1px);
+}
+
+/* ---------- サイドバー ---------- */
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--line) !important;
+}
+
+.menu {
+  padding: 16px 12px !important;
+  font-size: 14px;
+}
+
+.menu__link {
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  line-height: 1.6;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  border-left-color: var(--line-strong);
+  color: var(--ink);
+  font-weight: 700;
+  background: transparent;
+}
+
+.menu__list-item-collapsible:hover,
+.menu__link:hover {
+  background: var(--paper-dim);
+}
+
+.menu__list .menu__list {
+  border-left: 1px solid var(--line);
+  margin-left: 10px;
+  padding-left: 0;
+}
+
+.menu__caret:before,
+.menu__link--sublist-caret:after {
+  opacity: 0.5;
+}
+
+/* ---------- 目次（右カラム） ---------- */
+
+.table-of-contents {
+  border-left: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.table-of-contents__link:hover {
+  color: var(--ink);
+}
+
+.table-of-contents__link--active {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ---------- パンくず ---------- */
+
+.breadcrumbs__item--active .breadcrumbs__link {
+  background: transparent;
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.breadcrumbs__link {
+  background: transparent;
+  color: var(--gray);
+  font-size: 13px;
+}
+
+.breadcrumbs__link:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+/* ---------- 本文の行長 ----------
+   LP の「行長を管理する」思想。ただし表・コード・図版だけは
+   制限を外して幅いっぱいに逃がす。 */
+
+.markdown > p,
+.markdown > ul,
+.markdown > ol,
+.markdown > blockquote,
+.markdown > h1,
+.markdown > h2,
+.markdown > h3,
+.markdown > h4,
+.markdown > h5,
+.markdown > h6,
+.markdown > .theme-admonition,
+.markdown > details {
+  max-width: var(--measure);
+}
+
+.markdown > pre,
+.markdown > table,
+.markdown > img,
+.markdown .docusaurus-mermaid-container,
+.markdown > .theme-code-block,
+.markdown > .tabs-container {
+  max-width: none;
+}
+
+.markdown > h1 {
+  font-size: 2.1rem;
+}
+
+.markdown > h2 {
+  margin-top: 2.6rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.5rem;
+}
+
+/* 表の直後の見出しには上線を引かない。表の最後の行の下線と二重になるため */
+.markdown > table + h2 {
+  border-top: 0;
+}
+
+.markdown > h3 {
+  margin-top: 2rem;
+  font-size: 1.15rem;
+}
+
+/* ---------- 表（LP の rate-table に倣い、縦罫線と縞は使わない） ---------- */
+
+.markdown table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  margin: 0 0 1.6rem;
+  border-collapse: collapse;
+  border: 0;
+  font-size: 14px;
+}
+
+.markdown table thead tr,
+.markdown table tr:nth-child(2n) {
+  background: transparent;
+  border: 0;
+}
+
+.markdown table thead th {
+  padding: 10px 16px 10px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.markdown table tbody th,
+.markdown table tbody td {
+  padding: 14px 16px 14px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  text-align: left;
+}
+
+/* ---------- コード ---------- */
+
+.theme-code-block,
+pre[class*="language-"] {
+  border: 1px solid var(--line);
+}
+
+code {
+  border: 1px solid var(--line);
+  background: var(--paper-dim);
+  vertical-align: baseline;
+}
+
+a code {
+  color: inherit;
+}
+
+/* ブロック内の code はインラインコードの枠を継がない */
+pre code,
+.theme-code-block code {
+  border: 0;
+  background: transparent;
+}
+
+div[class*="codeBlockTitle_"] {
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--gray);
+}
+
+/* ---------- 注記（admonition） ----------
+   LP の「装飾背景なし」に寄せ、地は paper-dim のベタ一色、
+   左 2px 罫線、アイコンなし、種別は小さな大文字ラベルで示す。
+   危険度だけは罫線とラベル文字に色を許す（背景には使わない）。 */
+
+.theme-admonition {
+  border: 0;
+  border-left: 2px solid var(--line-strong);
+  background: var(--paper-dim);
+  color: var(--ink);
+  padding: 14px 18px;
+  margin-bottom: 1.6rem;
+}
+
+.theme-admonition [class*="admonitionIcon_"] {
+  display: none;
+}
+
+.theme-admonition [class*="admonitionHeading_"] {
+  margin-bottom: 6px;
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.theme-admonition [class*="admonitionContent_"] > :last-child {
+  margin-bottom: 0;
+}
+
+.theme-admonition-note,
+.theme-admonition-info,
+.theme-admonition-tip {
+  border-left-color: var(--accent);
+}
+
+.theme-admonition-note [class*="admonitionHeading_"],
+.theme-admonition-info [class*="admonitionHeading_"],
+.theme-admonition-tip [class*="admonitionHeading_"] {
+  color: var(--accent);
+}
+
+.theme-admonition-warning {
+  border-left-color: var(--warn);
+}
+
+.theme-admonition-warning [class*="admonitionHeading_"] {
+  color: var(--warn);
+}
+
+.theme-admonition-danger {
+  border-left-color: var(--danger);
+}
+
+.theme-admonition-danger [class*="admonitionHeading_"] {
+  color: var(--danger);
+}
+
+/* ---------- カード・ページネーション・タブ ---------- */
+
+.card {
+  border: 1px solid var(--line);
+}
+
+.pagination-nav__link {
+  border: 1px solid var(--line);
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--line-strong);
+}
+
+.pagination-nav__sublabel {
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pagination-nav__label {
+  font-weight: 600;
+}
+
+.tabs__item {
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+}
+
+.tabs__item--active {
+  border-bottom-color: var(--line-strong);
+  color: var(--ink);
+}
+
+/* ---------- フッター ---------- */
+
+.footer {
+  border-top: 1px solid var(--line-strong);
+  padding: 40px 0 48px;
+}
+
+.footer__title {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.footer__link-item {
+  font-size: 14px;
+}
+
+.footer__copyright {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--gray);
+  font-size: 13px;
+  text-align: left;
+}
+
+.footer-wordmark {
+  width: 120px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+[data-theme="dark"] .footer-wordmark {
+  filter: invert(1);
+}
+
+.footer__copyright a {
+  color: var(--gray);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer__copyright a:hover {
+  color: var(--ink);
+}
+
+/* ---------- トップページのブランド帯 ---------- */
+
+.brand-band {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-band img {
+  width: 132px;
+  height: auto;
+}
+
+[data-theme="dark"] .brand-band img {
+  filter: invert(1);
+}
+
+.brand-band span {
+  color: var(--gray);
+  font-size: 13px;
+}
