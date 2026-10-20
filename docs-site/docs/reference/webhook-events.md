@@ -30,7 +30,7 @@ sidebar_position: 3
 | `merchant_id` / `payout` | 加盟店（`m_` で始まる ID）と受取先（小文字の `0x` 付き 20 バイトのアドレス） |
 | `amount_jpy` / `fee_jpy` / `net_received_jpy` | すべて円建ての文字列。数値型へ無造作に変換しない。イベントごとの値は[金額の扱い](#金額の扱い)を参照 |
 | `tx_hash` / `settled_at` | null 許容。`tx_hash` は小文字の `0x` 付き 32 バイト、`settled_at` は UTC の `Z` で終わる ISO 8601。取消・失効では両方 null とし、キーは省略しない |
-| `failed_reason` | null 許容の文字列。値は[分類コード](/reference/rest#failed_reason-の分類コード)の閉じた集合。受け手は未知の値を失敗のフォールバックに落とす。発行体の取引可否判断の理由は含まない |
+| `failed_reason` | null 許容の文字列。値は、現時点で定義されている[分類コード](/reference/rest#failed_reason-の分類コード)のどれか。コードは増えることがあるので、受け手は未知の値でも Webhook を拒否せず、失敗のフォールバックに落とす。発行体の取引可否判断の理由は含まない |
 
 ## 金額の扱い
 

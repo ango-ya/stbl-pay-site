@@ -45,7 +45,7 @@ export function verifyStblPaySignature(rawBody, header, secret, now = Date.now()
 }
 ```
 
-Express では Webhook ルートに `express.raw()` を使い、汎用の `express.json()` より先に登録します。検証後に `JSON.parse` と Webhook の形の検証を行ってください。
+STBLpay は Webhook を `Content-Type: application/json; charset=utf-8` で送ります。Express では Webhook ルートに `express.raw({ type: 'application/json' })` を使い、汎用の `express.json()` より先に登録します。`express.raw()` は既定では `application/octet-stream` しか受け取らないので、`type` を指定しないと受信バイト列が空になり、署名の検証に失敗します。検証後に `JSON.parse` と Webhook の形の検証を行ってください。
 
 JSON をパースして再シリアライズすると、空白やキー順が変わります。検証には受信バイト列をそのまま使います。署名の比較はタイミング安全に行い、長さが違う値で `timingSafeEqual` を呼ばないでください。
 

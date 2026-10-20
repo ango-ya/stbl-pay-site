@@ -12,7 +12,6 @@ python3 -m http.server 4173 --directory dist
 # → http://localhost:4173/ と http://localhost:4173/docs/ をブラウザで開く
 ```
 
-`_headers`（CSP）込みで確認する場合は、`dist/` を `npx wrangler pages dev dist` で配信します。
 
 ## 加盟店向けドキュメント（/docs/）
 
@@ -21,10 +20,11 @@ python3 -m http.server 4173 --directory dist
 - `scripts/build-dist.sh` がビルドして `dist/docs/` に入れ、`_headers` の docs 用 CSP にインラインスクリプトのハッシュを書き込む（`scripts/docs-csp.mjs`）
 - 配信するのはビルド結果だけ。`docs-site/` のソースは `dist/` に入れない
 
-Cloudflare Pages Functions（`functions/api/early-access.js`）込みで確認する場合:
+`_headers`（CSP）と Cloudflare Pages Functions（`functions/api/early-access.js`）込みで確認する場合は、組み立てた `dist/` を配信します（`dist/` には `functions/` も入る）:
 
 ```sh
-npx wrangler pages dev . --compatibility-date=2026-07-07
+./scripts/build-dist.sh
+npx wrangler pages dev dist --compatibility-date=2026-07-07
 ```
 
 ## テスト・チェック
