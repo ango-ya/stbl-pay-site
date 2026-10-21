@@ -1346,7 +1346,9 @@ sup.fn a:hover {
   margin-top: 32px;
 }
 
+/* thigh-stand の絵は左の透明な余白が広いので、見えている左端を床線の左端にそろえる */
 .cast-guest .cast-chan {
+  margin-left: -25px;
   margin-bottom: -12px;
 }
 
