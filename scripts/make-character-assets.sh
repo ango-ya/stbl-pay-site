@@ -12,7 +12,7 @@
 #   すてぶるくんは rig の部品を奥から重ねて（足・腕・体・ほほ・目・口）、顔の範囲を切り出す。
 # - 縮小と切り抜きは cwebp の -crop・-resize（透過を正しく扱う）。ffmpeg は重ね合わせと余白だけに使う。
 #   重ねる部品は dwebp で PNG に戻してから ffmpeg に渡す（ffmpeg 自前の WebP デコーダは色が少しずれるため）。
-# - 何度流しても同じ結果になる。書き出した絵は git に入れる（サイトから配る）。
+# - 同じ素材集と同じ版のツールなら、何度流しても同じ結果になる（README に使った版を書いてある）。書き出した絵は git に入れる（サイトから配る）。
 #   素材集が新しくなったら、流し直して git add する（README「キャラクターの素材と動き」）。
 # - assets/char/ 直下の sleep-kun.webp・zabuton.webp（FAQ の寝ている絵）は、このスクリプトの対象外（作らない・消さない）。
 # - 書き出し先は assets/char/。試すときだけ、環境変数 OUT_DIR で変えられる。
@@ -44,13 +44,15 @@ size_of() {
 
 # 1 枚を書き出す。入力の大きさと出力の大きさが想定どおりかを確かめる（素材集の仕様が変わったときに黙って崩れないように）
 #   enc 入力 入力の大きさ 出力 出力の大きさ [cwebp の -crop・-resize ...]
+# 品質は QUALITY（ふだん 90。すてぶるちゃんの立ち絵だけ、大きくて重いので 80）
+QUALITY=90
 enc() {
   local in="$1" insize="$2" out="$3" outsize="$4" got
   shift 4
   [ -f "$in" ] || { echo "NG: ${in} がありません"; exit 1; }
   got="$(size_of "$in")"
   [ "$got" = "$insize" ] || { echo "NG: ${in} の大きさが ${got} です（${insize} のはず）"; exit 1; }
-  cwebp -quiet -q 90 -m 6 -alpha_q 100 -sharp_yuv -metadata none "$@" "$in" -o "$out"
+  cwebp -quiet -q "$QUALITY" -m 6 -alpha_q 100 -sharp_yuv -metadata none "$@" "$in" -o "$out"
   got="$(size_of "$out")"
   [ "$got" = "$outsize" ] || { echo "NG: ${out} の大きさが ${got} です（${outsize} のはず）"; exit 1; }
 }
@@ -64,10 +66,12 @@ for p in $KUN_PARTS; do
   enc "$RIG/kun_${p#*:}.webp" 748x522 "$TMP/out/kun/${p%%:*}.webp" 374x261 -resize 374 261
 done
 
-# --- chan/：太ももまで（566×800 → 340×480）
+# --- chan/：太ももまで（566×800 → 340×480）。1 枚が大きいので品質 80（拡大して見比べても 90 と見分けがつかない）
+QUALITY=80
 for p in stand:stand reach:reach reach-wink:reach_wink; do
   enc "$THIGH/chan_thigh_${p#*:}.webp" 566x800 "$TMP/out/chan/thigh-${p%%:*}.webp" 340x480 -resize 340 480
 done
+QUALITY=90
 
 # --- talk/：すてぶるちゃんの顔（660×640 から、以前の face-chan-*.webp と同じ範囲を 112×112 に）
 for e in normal proud troubled serious; do
@@ -100,7 +104,8 @@ for m in a i o n; do
   kun_face wide "talk_$m" "kun-wide-talk-$m"
 done
 
-# --- 出来上がりを置く（途中で止まったときに、半端な絵を置かないよう最後にまとめて）
+# --- 出来上がりを置く。書き出しが途中で失敗したときは、ここまで来ないので assets/char/ は変わらない
+#     （置いている途中で止まったときは、新旧が混ざるので、もう一度流す）
 mkdir -p "$OUT/kun" "$OUT/chan" "$OUT/talk"
 count=0
 bytes=0
