@@ -97,7 +97,38 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 - 設定（性格・話し方・やらないこと）の正本は、stbl-pay プロジェクトの `characters/character-bible.md` です。セリフを足すときは先に読んでください。
 - 呼び方は必ず「すてぶるくん」「すてぶるちゃん」（英語ページは動画の字幕と同じ Suteburu-kun / Suteburu-chan）。
 - 二人は説明係ではなく、すてぶるちゃんが張り切って説明し、すてぶるくんが一段ずつ聞き返す枠で出しています。セリフで言ってよい主張は LP 本文と video-studio の `docs/claims.md` にあるものだけです。
-- 絵は `assets/char/`（video-studio の `assets/char/how/` と `sprites/` から切り出し）。装飾なので `alt=""`・`aria-hidden="true"`、会話は本文として読み上げます。
+- 絵は `assets/char/` にあります。立ち絵と会話の顔は素材集から書き出したもの（`kun/`・`chan/`・`talk/`。下の「キャラクターの素材と動き」）、FAQ の寝ている絵（`sleep-kun.webp`・`zabuton.webp`）は video-studio の `assets/char/how/` と `sprites/` から切り出したものです。装飾なので `alt=""`・`aria-hidden="true"`、会話は本文として読み上げます。
+
+### キャラクターの素材と動き
+
+- 二人の絵は、素材集 `stbl-pay-characters_YYYYMMDD.zip`（正本は video-studio）から書き出します。zip を展開して、`scripts/make-character-assets.sh` にそのフォルダを渡します。
+
+  ```sh
+  ./scripts/make-character-assets.sh <展開した stbl-pay-characters のフォルダ>
+  ```
+
+  書き出す先は 3 つのフォルダで、すべて透過 WebP です（合計 51 枚・約 316 KB）。何度流しても同じ結果になります。書き出した絵は git に入れます（素材集が新しくなったら、流し直して `git add` します）。
+
+  | フォルダ | 中身 | 大きさ |
+  |---|---|---|
+  | `assets/char/kun/`（19 枚） | すてぶるくんの部品（足・腕・体・ほほ・目 6 種・口 7 種）。左上をそろえて重ねると組み上がる | 374×261 |
+  | `assets/char/chan/`（3 枚） | すてぶるちゃん（太ももまで）。thigh-stand・thigh-reach・thigh-reach-wink | 340×480 |
+  | `assets/char/talk/`（29 枚） | 会話の顔のコマ。すてぶるちゃん 16 枚（表情 4 種 × 口 3 段階 ＋ まばたき 4）、すてぶるくん 13 枚（部品を重ねて顔だけ切り出したもの） | 112×112 |
+
+  縮小と切り抜きは `cwebp`（透過を正しく扱う）、部品の重ね合わせは `ffmpeg` です。ファイル名と大きさは HTML の `width`・`height` と `assets/characters.js` が決め打ちで使うので、変えないでください（素材集の大きさが想定と違うと、スクリプトが止まります）。
+- **`assets/characters.js` が動かすもの**（`lp.js` のあとに `defer` で読む。画面に入っていて、タブが表示中のあいだだけ動く）：
+  - すてぶるくん：呼吸と腕の揺れ（CSS の `@keyframes`。JS は `is-live` を付けるだけ）、まばたき、ときどき横を見る目線、ヒーローでは最初に 1 回だけ手を振る。
+  - すてぶるちゃん：ヒーローでは登場のポーズ送り（stand → reach → wink → reach）のあと、ときどきウインク。動画欄の立ち絵もウインクする。相談欄の立ち絵は、会話ですてぶるちゃんが話す間だけ手を差し伸べる。
+  - 会話（`.talk`）：画面に入ると 1 回だけ、セリフの長さに合わせて話す側の口をぱくぱくさせる（まばたきは再生の前後も続ける）。同じセクションの立ち絵が見えているときは、話す側の立ち絵も同じ時間だけ動く（すてぶるくんは口パク、すてぶるちゃんは手を差し伸べる）。
+  - 画面外・タブが非表示のときはタイマーを止めます。幅が狭くて立ち絵を隠しているときは、立ち絵の絵を読み込みません。JS が無いときは、顔も立ち絵も HTML に書いた絵のまま止まります。
+- **`prefers-reduced-motion: reduce` のとき止めるもの**：体が動くもの（呼吸・腕の揺れ・手を振る・ヒーローの登場のポーズ送り）。まばたき・口パク・目線は絵の差し替えだけなので続けます。
+- **守る決まり**（設定資料どおり）：
+  - 左右反転しない（`scaleX(-1)` や負の scale を使わない）。色を変えない（`filter`・`hue-rotate` を使わない）。
+  - すてぶるくんが浮くのは寝ているときだけ（FAQ の `.faq-nap` の絵。ここは動かさない）。
+  - セリフ（文字）は変えない・足さない。動かすのは絵だけです。
+  - CSP と Trusted Types に合わせて、JS は「クラスの付け外し」と「`<img>` の `src` の差し替え」だけで動かします（`innerHTML`・`style` 属性・`el.style.*` を使わない）。
+  - 主なブラウザ（Chrome・Edge・Firefox・Safari 14 以降・iOS Safari 14 以降）でそのまま動く範囲に収めます。2D の `transform`・`@keyframes`・`transition` だけを使い、`aspect-ratio`・`inset`・flex の `gap`・個別の transform プロパティ・Web Animations API・Canvas は使いません。JS は ES2017 までです。
+- テストは `tests/e2e/characters-motion.spec.mjs`（素材のそろい・組み立て・会話の再生・生きている間だけ動く・reduce・手を振る・狭い幅・JS なし・本番ヘッダの CSP）。
 
 ## デプロイ
 
