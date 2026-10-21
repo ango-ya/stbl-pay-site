@@ -76,6 +76,7 @@ const config: Config = {
     navbar: {
       logo: {
         alt: en ? 'STBLpay' : 'すてぶるペイ',
+        // ロゴは LP へ戻る（src/theme/Logo）
         src: en ? 'img/logo-wordmark-stblpay-black.png' : 'img/logo-wordmark-suteburu-black.png',
       },
       items: [
@@ -95,15 +96,17 @@ const config: Config = {
           label: en ? 'Reference' : 'リファレンス',
           position: 'left',
         },
-        {
-          type: 'localeDropdown',
-          position: 'right',
-        },
+
         // 同じサイトの LP へ戻る。Docusaurus のリンクは baseUrl（/docs/）を付けてしまうので、html で書く
         {
           type: 'html',
           position: 'right',
           value: `<a class="navbar__item navbar__link" href="${lp}">${en ? 'Home' : 'トップ'}</a>`,
+        },
+        // LP と同じく、もう一方の言語へのリンクだけを出す（src/components/LocaleToggleNavbarItem.tsx）
+        {
+          type: 'custom-localeToggle',
+          position: 'right',
         },
         {
           type: 'html',

@@ -64,6 +64,23 @@ test.describe("加盟店向けドキュメント", () => {
     expect(consoleErrors).toEqual([]);
   });
 
+  test("ロゴから LP へ戻れる", async ({ page }) => {
+    await page.goto("/docs/server/create-payment");
+    await expect(page.locator(".navbar__brand")).toHaveAttribute("href", "/");
+    await page.goto("/docs/en/server/create-payment");
+    await expect(page.locator(".navbar__brand")).toHaveAttribute("href", "/en/");
+  });
+
+  test("言語の切り替えは LP と同じく、もう一方の言語の同じページへのリンク 1 つ", async ({ page }) => {
+    const nav = page.locator(".navbar__items--right");
+    await page.goto("/docs/lifecycle/transitions");
+    await expect(nav.getByRole("link", { name: "EN", exact: true })).toHaveAttribute("href", "/docs/en/lifecycle/transitions");
+    await expect(nav.getByRole("link", { name: "日本語", exact: true })).toHaveCount(0);
+    await page.goto("/docs/en/lifecycle/transitions");
+    await expect(nav.getByRole("link", { name: "日本語", exact: true })).toHaveAttribute("href", "/docs/lifecycle/transitions");
+    await expect(nav.getByRole("link", { name: "EN", exact: true })).toHaveCount(0);
+  });
+
   test("英語版の状態遷移の図は英語で描かれる", async ({ page }) => {
     await page.goto("/docs/en/lifecycle/transitions");
     const chart = page.locator('svg[role="img"]:visible');
