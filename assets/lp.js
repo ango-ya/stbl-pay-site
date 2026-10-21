@@ -7,7 +7,14 @@
   // #… 付きで開いたとき：すぐ解いて、目的の位置へ合わせ直す
   if (location.hash.length > 1) {
     release();
-    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    // 不正な % を含む URL（途中で切れた共有 URL など）でも例外で止めない。デコードできなければそのまま使う
+    let id = location.hash.slice(1);
+    try {
+      id = decodeURIComponent(id);
+    } catch (error) {
+      // そのまま使う
+    }
+    const target = document.getElementById(id);
     if (target) {
       target.scrollIntoView();
     }

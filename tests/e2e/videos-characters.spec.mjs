@@ -332,6 +332,16 @@ test.describe("つかいかた動画（日本語LP）", () => {
     await expectEmbed(page.locator(PLAYER), FAKE_ID["how-04"], "ja");
   });
 
+  test("不正な % を含む #… で開いても、JS は止まらず動画を選べる", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("/#%E0%A4%A");
+    await page.locator('#videos a.video-item[data-video="how-03"]').click();
+    await expect(page.locator('.video-item[aria-current="true"]')).toHaveAttribute("data-video", "how-03");
+    await expectEmbed(page.locator(PLAYER), FAKE_ID["how-03"], "ja");
+    expect(errors).toEqual([]);
+  });
+
   test("video_play は、押して再生を始めたときに回ごとに 1 回だけ送り、video_complete は送らない", async ({
     page,
   }) => {
