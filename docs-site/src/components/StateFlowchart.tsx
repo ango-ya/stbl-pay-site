@@ -283,10 +283,10 @@ function Desktop() {
       <Label x={70} y={c2 - 30} lines={['はい：残高で払う']} strong />
       <Act x={70} y={c2 - 10} who="stbl" text="が確認" />
       <Line p={p} kind="main" d={down(c2 + DH / 2, yIssue)} />
-      <Act x={MX + 10} y={yIssue - 13} pre="いいえ" who="user" text="JPYC EX で発行を申し込む" />
+      <Act x={MX + 10} y={yIssue - 13} pre="いいえ" who="user" text="JPYC EX の手続きへ進む" />
 
       {/* 振込の経路 */}
-      <StateBox x={BX} y={yIssue} w={BW} h={H} name="issue_pending" desc={['申し込みを受理・着金待ち']} />
+      <StateBox x={BX} y={yIssue} w={BW} h={H} name="issue_pending" desc={['予約開始を受けた・着金待ち']} />
       <Line p={p} kind="main" d={down(yIssue + H, c3 - DH / 2)} />
       <Diamond cx={MX} cy={c3} w={DW} h={DH} lines={['期限内に支払える', '額がそろった？']} />
       <Line p={p} kind="thin" d={`M${DR},${c3} H${CX - 3}`} />
@@ -374,7 +374,7 @@ function Mobile() {
       <Line p={p} kind="main" d={`M${MX},356 V383`} />
       <Act x={MX + 8} y={374} pre="いいえ" who="user" />
 
-      <StateBox x={BX} y={386} w={BW} h={H} name="issue_pending" desc={['JPYC EX で発行を申込']} />
+      <StateBox x={BX} y={386} w={BW} h={H} name="issue_pending" desc={['JPYC EX へ進んだ']} />
       <Mark x={BX + BW - 14} y={400} letter="C" />
       <Line p={p} kind="main" d={`M${MX},438 V465`} />
       <Diamond cx={MX} cy={506} w={DW} h={DH} lines={['期限内に支払える', '額がそろった？']} />
