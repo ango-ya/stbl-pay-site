@@ -276,10 +276,21 @@
             利用規約への同意と、JPYC EX など外部サービスの要件が前提です。
           </p>
         </div>
-        <!-- すてぶるくん（左下）とすてぶるちゃん（右下）。動画と同じ立ち位置。装飾なので読み上げない -->
+        <!-- すてぶるくん（左下）とすてぶるちゃん（右下）。動画と同じ立ち位置。装飾なので読み上げない。すてぶるくんは部品を重ねて組む（assets/characters.js が動かす） -->
         <div class="hero-cast" aria-hidden="true">
-          <img class="hero-cast-kun" src="assets/char/stand-kun-blank.webp" alt="" width="282" height="240" loading="lazy" decoding="async" fetchpriority="low" />
-          <img class="hero-cast-chan" src="assets/char/hero-chan.webp" alt="" width="333" height="480" loading="lazy" decoding="async" fetchpriority="low" />
+          <span class="kun-rig hero-cast-kun" data-kun="hero">
+            <img class="kun-part kun-foot-l" src="assets/char/kun/foot-l.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+            <img class="kun-part kun-foot-r" src="assets/char/kun/foot-r.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+            <img class="kun-part kun-arm-l" src="assets/char/kun/arm-l.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+            <img class="kun-part kun-arm-r" src="assets/char/kun/arm-r.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+            <span class="kun-body">
+              <img class="kun-part" src="assets/char/kun/body.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+              <img class="kun-part" src="assets/char/kun/cheeks.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+              <img class="kun-part kun-eyes" src="assets/char/kun/eyes-open.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+              <img class="kun-part kun-mouth" src="assets/char/kun/mouth-rest.webp" alt="" width="374" height="261" loading="lazy" decoding="async" fetchpriority="low" />
+            </span>
+          </span>
+          <img class="hero-cast-chan" src="assets/char/chan/thigh-reach-wink.webp" alt="" width="340" height="480" loading="lazy" decoding="async" fetchpriority="low" data-chan="hero" />
         </div>
         <div class="hero-ticker" aria-hidden="true">
           <div class="ticker-track">
@@ -327,14 +338,25 @@
               <h2 id="videos-title"><span class="sec-no">VIDEO</span>動画でわかる、すてぶるペイ</h2>
               <p class="sec-lead">お支払いの流れと、お店での始め方。すてぶるちゃんが説明して、すてぶるくんが聞き返します。1本1〜3分ほど。画面は開発中のものです。</p>
               <div class="talk" role="group" aria-label="すてぶるちゃんとすてぶるくんの会話">
-                <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/face-chan-y1-2.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">つかいかたの動画、撮りました。</span></p>
-                <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/face-kun-5.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">ぼくも、映ってる？</span></p>
-                <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/face-chan-y2-1.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">左下に、ずっと。</span></p>
+                <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/talk/chan-normal-1.webp" alt="" width="112" height="112" loading="lazy" data-face="chan normal" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">つかいかたの動画、撮りました。</span></p>
+                <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" data-face="kun o" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">ぼくも、映ってる？</span></p>
+                <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/talk/chan-serious-0.webp" alt="" width="112" height="112" loading="lazy" data-face="chan serious" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">左下に、ずっと。</span></p>
               </div>
             </div>
             <div class="cast cast-videos" aria-hidden="true">
-              <img class="cast-chan" src="assets/char/present-chan.webp" alt="" width="331" height="480" loading="lazy" />
-              <img class="cast-kun" src="assets/char/stand-kun-o.webp" alt="" width="281" height="240" loading="lazy" />
+              <img class="cast-chan" src="assets/char/chan/thigh-reach.webp" alt="" width="340" height="480" loading="lazy" data-chan="wink" />
+              <span class="kun-rig cast-kun" data-kun="cast">
+                <img class="kun-part kun-foot-l" src="assets/char/kun/foot-l.webp" alt="" width="374" height="261" loading="lazy" />
+                <img class="kun-part kun-foot-r" src="assets/char/kun/foot-r.webp" alt="" width="374" height="261" loading="lazy" />
+                <img class="kun-part kun-arm-l" src="assets/char/kun/arm-l.webp" alt="" width="374" height="261" loading="lazy" />
+                <img class="kun-part kun-arm-r" src="assets/char/kun/arm-r.webp" alt="" width="374" height="261" loading="lazy" />
+                <span class="kun-body">
+                  <img class="kun-part" src="assets/char/kun/body.webp" alt="" width="374" height="261" loading="lazy" />
+                  <img class="kun-part" src="assets/char/kun/cheeks.webp" alt="" width="374" height="261" loading="lazy" />
+                  <img class="kun-part kun-eyes" src="assets/char/kun/eyes-open.webp" alt="" width="374" height="261" loading="lazy" />
+                  <img class="kun-part kun-mouth" src="assets/char/kun/mouth-o.webp" alt="" width="374" height="261" loading="lazy" />
+                </span>
+              </span>
             </div>
           </div>
 
@@ -408,9 +430,9 @@
           <p class="flow-note">JPYC残高で足りるときは、振込なし・パスキー（顔・指紋認証）だけで支払えます。足りないときは、発行する額を決めて銀行振込します。発行は1回3,000円〜100万円で、余りは次回のお支払いに使える残高になります。お店のレジでは、QR を読んで残高から払えます（常連さん向け。残高はマイページから追加）。</p>
           <div class="aside-row">
             <div class="talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
-              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/face-kun-5.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">振り込むのは、だれ？</span></p>
-              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/face-chan-y1-3.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">お客さま。振込先は、JPYC EX の画面に出ます。</span></p>
-              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/face-kun-1.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">そうなんだ。</span></p>
+              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" data-face="kun o" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">振り込むのは、だれ？</span></p>
+              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/talk/chan-normal-2.webp" alt="" width="112" height="112" loading="lazy" data-face="chan normal" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">お客さま。振込先は、JPYC EX の画面に出ます。</span></p>
+              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/talk/kun-open-rest.webp" alt="" width="112" height="112" loading="lazy" data-face="kun smile" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">そうなんだ。</span></p>
             </div>
             <nav class="video-links" aria-label="お客さま向けの動画">
               <p class="video-links-label">動画で見る</p>
@@ -445,10 +467,10 @@
           <p class="audience-note">こんな加盟店に向いています。たとえば、デジタルの作品を売るクリエイターなどの個人事業主、フリーの美容師・ネイリスト、カード審査・規約で決済導入が難しい業種、日本向け決済を持ちたい海外のネットショップなど<sup class="fn"><a href="#fn-5" id="fnref-a1">※5</a></sup>。<a class="text-link" href="#early-access">自分の業種で使えるか、気軽に相談する →</a></p>
           <div class="aside-row">
             <div class="talk" role="group" aria-label="すてぶるちゃんとすてぶるくんの会話">
-              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/face-chan-y1-6.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">決済と同時に、着金。<sup class="fn"><a href="#fn-5" id="fnref-t5">※5</a></sup></span></p>
-              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/face-kun-8.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text"><span class="ja-ellipsis">……</span>ちゃっきんって、音？</span></p>
-              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/face-chan-y1-7.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text"><span class="ja-ellipsis">……</span>お店に、入金されること。</span></p>
-              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/face-kun-1.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">そうなんだ。</span></p>
+              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/talk/chan-proud-2.webp" alt="" width="112" height="112" loading="lazy" data-face="chan proud" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">決済と同時に、着金。<sup class="fn"><a href="#fn-5" id="fnref-t5">※5</a></sup></span></p>
+              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/talk/kun-wide-o.webp" alt="" width="112" height="112" loading="lazy" data-face="kun wide" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text"><span class="ja-ellipsis">……</span>ちゃっきんって、音？</span></p>
+              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/talk/chan-troubled-0.webp" alt="" width="112" height="112" loading="lazy" data-face="chan troubled" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text"><span class="ja-ellipsis">……</span>お店に、入金されること。</span></p>
+              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/talk/kun-open-rest.webp" alt="" width="112" height="112" loading="lazy" data-face="kun smile" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">そうなんだ。</span></p>
             </div>
             <nav class="video-links" aria-label="お店の方向けの動画">
               <p class="video-links-label">動画で見る</p>
@@ -611,13 +633,24 @@
               使い方や組み込みなど、困ったことがあれば、暗号屋にご相談ください。決済の課題も伺っています。審査による可否判定ではありません。
             </p>
             <div class="talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
-              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/face-kun-5.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">だれか、来るの？</span></p>
-              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/face-chan-y1-1.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">相談したい人が。</span></p>
-              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/face-kun-2.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">お茶、ぬるめでいい？</span></p>
+              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" data-face="kun o" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">だれか、来るの？</span></p>
+              <p class="talk-line talk-chan"><img class="talk-face" src="assets/char/talk/chan-normal-0.webp" alt="" width="112" height="112" loading="lazy" data-face="chan normal" /><span class="talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="talk-text">相談したい人が。</span></p>
+              <p class="talk-line talk-kun"><img class="talk-face" src="assets/char/talk/kun-open-talk-a.webp" alt="" width="112" height="112" loading="lazy" data-face="kun smile" /><span class="talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="talk-text">お茶、ぬるめでいい？</span></p>
             </div>
             <div class="cast cast-guest" aria-hidden="true">
-              <img class="cast-chan" src="assets/char/guest-chan.webp" alt="" width="285" height="480" loading="lazy" />
-              <img class="cast-kun" src="assets/char/stand-kun-smile.webp" alt="" width="281" height="240" loading="lazy" />
+              <img class="cast-chan" src="assets/char/chan/thigh-stand.webp" alt="" width="340" height="480" loading="lazy" data-chan="greet" />
+              <span class="kun-rig cast-kun" data-kun="cast">
+                <img class="kun-part kun-foot-l" src="assets/char/kun/foot-l.webp" alt="" width="374" height="261" loading="lazy" />
+                <img class="kun-part kun-foot-r" src="assets/char/kun/foot-r.webp" alt="" width="374" height="261" loading="lazy" />
+                <img class="kun-part kun-arm-l" src="assets/char/kun/arm-l.webp" alt="" width="374" height="261" loading="lazy" />
+                <img class="kun-part kun-arm-r" src="assets/char/kun/arm-r.webp" alt="" width="374" height="261" loading="lazy" />
+                <span class="kun-body">
+                  <img class="kun-part" src="assets/char/kun/body.webp" alt="" width="374" height="261" loading="lazy" />
+                  <img class="kun-part" src="assets/char/kun/cheeks.webp" alt="" width="374" height="261" loading="lazy" />
+                  <img class="kun-part kun-eyes" src="assets/char/kun/eyes-open.webp" alt="" width="374" height="261" loading="lazy" />
+                  <img class="kun-part kun-mouth" src="assets/char/kun/mouth-rest.webp" alt="" width="374" height="261" loading="lazy" />
+                </span>
+              </span>
             </div>
           </div>
           <!--
@@ -701,5 +734,6 @@
     </footer>
 
     <script src="assets/lp.js" defer></script>
+    <script src="assets/characters.js" defer></script>
   </body>
 </html>
