@@ -240,8 +240,8 @@ function Desktop() {
   const c2 = ySigned + H + G + DH / 2;
   const yIssue = c2 + DH / 2 + G + 4;
   const c3 = yIssue + H + G + DH / 2;
-  const ySeen = c3 + DH / 2 + G + 4;
-  const yConf = ySeen + H + G;
+  // 「はい」の矢印には 2 行のラベルを置くので、ほかの矢印より長くする
+  const yConf = c3 + DH / 2 + G + 22;
   const c4 = yConf + H + G + DH / 2;
   const yExec = c4 + DH / 2 + G;
   const c5 = yExec + H + G + DH / 2;
@@ -280,25 +280,23 @@ function Desktop() {
       <Diamond cx={MX} cy={c2} w={DW} h={DH} lines={['残高は', '足りる？']} />
       {/* 取消の括弧（x=205）と交わるところは、半円で飛び越える */}
       <Line p={p} kind="main" d={`M${DL},${c2} H212 A7,7 0 0 0 198,${c2} H60 V${yConf + 18} H${BX - 3}`} />
-      <Label x={70} y={c2 - 10} lines={['はい：残高で払う']} strong />
+      <Label x={70} y={c2 - 30} lines={['はい：残高で払う']} strong />
+      <Act x={70} y={c2 - 10} who="stbl" text="が確認" />
       <Line p={p} kind="main" d={down(c2 + DH / 2, yIssue)} />
       <Act x={MX + 10} y={yIssue - 13} pre="いいえ" who="user" text="JPYC EX で発行を申し込む" />
 
       {/* 振込の経路 */}
       <StateBox x={BX} y={yIssue} w={BW} h={H} name="issue_pending" desc={['申し込みを受理・着金待ち']} />
-      <Line p={p} kind="fail" d={`M${BX + BW},${yIssue + H / 2} H${CX - 3}`} />
-      <StateBox x={CX} y={chip(yIssue + H / 2)} w={CW} h={CH} name="failed" desc={['送金元・宛先が違う']} kind="fail" hook="yes" />
       <Line p={p} kind="main" d={down(yIssue + H, c3 - DH / 2)} />
-      <Diamond cx={MX} cy={c3} w={DW} h={DH} lines={['期限内に', '着金した？']} />
+      <Diamond cx={MX} cy={c3} w={DW} h={DH} lines={['期限内に支払える', '額がそろった？']} />
       <Line p={p} kind="thin" d={`M${DR},${c3} H${CX - 3}`} />
       <Label x={(DR + CX) / 2} y={c3 - 8} anchor="middle" lines={['いいえ']} />
       <StateBox x={CX} y={chip(c3)} w={CW} h={CH} name="expired" desc={['着金期限を過ぎた']} kind="muted" hook="yes" />
-      <Line p={p} kind="main" d={down(c3 + DH / 2, ySeen)} />
-      <Act x={MX + 10} y={ySeen - 13} pre="はい" who="user" text="振込む、" />
-      <Act x={MX + 10 + textW('はい') + 6 + WHO.user.w + 6 + textW('振込む、') + 4} y={ySeen - 13} who="issuer" text="が発行" />
-      <StateBox x={BX} y={ySeen} w={BW} h={H} name="deposit_seen" desc={['着金を検知・確定待ち']} />
-      <Line p={p} kind="main" d={down(ySeen + H, yConf)} />
-      <Act x={MX + 10} y={yConf - 11} who="stbl" text="確定を待つ" />
+      {/* 着金は取り消されない状態になるまで issue_pending のまま待ち、deposit_confirmed へ 1 度に進む */}
+      <Line p={p} kind="main" d={down(c3 + DH / 2, yConf)} />
+      <Act x={MX + 10} y={c3 + DH / 2 + 22} pre="はい" who="user" text="振込む、" />
+      <Act x={MX + 10 + textW('はい') + 6 + WHO.user.w + 6 + textW('振込む、') + 4} y={c3 + DH / 2 + 22} who="issuer" text="が発行" />
+      <Label x={MX + 10 + textW('はい') + 6} y={c3 + DH / 2 + 42} lines={['今の残高と合わせて足りればよい']} />
 
       {/* 実行の前 */}
       <StateBox x={BX} y={yConf} w={BW} h={H} name="deposit_confirmed" desc={['着金・残高を確定した']} kind="main" />
@@ -378,16 +376,14 @@ function Mobile() {
 
       <StateBox x={BX} y={386} w={BW} h={H} name="issue_pending" desc={['JPYC EX で発行を申込']} />
       <Mark x={BX + BW - 14} y={400} letter="C" />
-      <Line p={p} kind="fail" d={`M${BX + BW},412 H${CX - 3}`} />
-      <StateBox x={CX} y={412 - 31} w={CW} h={62} name="failed" desc={['送金元・宛先が', '違う']} kind="fail" hook="yes" hookBottom />
       <Line p={p} kind="main" d={`M${MX},438 V465`} />
-      <Diamond cx={MX} cy={506} w={DW} h={DH} lines={['期限内に', '着金した？']} />
+      <Diamond cx={MX} cy={506} w={DW} h={DH} lines={['期限内に支払える', '額がそろった？']} />
       <Line p={p} kind="thin" d={`M${DR},506 H${CX - 3}`} />
       <StateBox x={CX} y={chip(506)} w={CW} h={CH} name="expired" desc={['着金期限切れ']} kind="muted" hook="yes" hookBottom />
-      <Line p={p} kind="main" d={`M${MX},544 V571`} />
-      <Act x={MX + 8} y={562} pre="はい" who="user" />
-      <StateBox x={BX} y={574} w={BW} h={H} name="deposit_seen" desc={['振込で JPYC が届いた']} />
-      <Line p={p} kind="main" d={`M${MX},626 V659`} />
+      <Line p={p} kind="main" d={`M${MX},544 V659`} />
+      <Act x={MX + 8} y={568} pre="はい" who="user" text="振込む" />
+      <Act x={MX + 8} y={592} who="issuer" text="が発行" />
+      <Label x={MX + 8} y={616} lines={['残高と合算でもよい']} />
 
       <StateBox x={BX} y={662} w={BW} h={H} name="deposit_confirmed" desc={['着金・残高を確定']} kind="main" />
       <Mark x={BX + BW - 34} y={652} letter="A" />

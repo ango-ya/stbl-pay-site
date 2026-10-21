@@ -26,7 +26,8 @@ sidebar_position: 2
 ## 状態の進み方
 
 - [ ] 残高で支払ったとき、`signed` から `deposit_confirmed` に進み、着金の検知は待たない
-- [ ] JPYC EX で発行した JPYC の着金で支払ったとき、`issue_pending`、`deposit_seen`、`deposit_confirmed` の順に進む
+- [ ] JPYC EX で発行した JPYC の着金で支払ったとき、`issue_pending` から `deposit_confirmed` に進む
+- [ ] 足りない分だけを発行したとき、今の残高と合わせて足りれば `deposit_confirmed` に進む
 - [ ] 初めてウォレットを使う決済のとき、`deploying` のあと `deposit_confirmed` に戻り、その後に実行される
 - [ ] 署名しないまま操作の期限が来たとき、`created` から `expired` になる
 - [ ] 発行予約のあとに期限が来たとき、発行予約の期限に 14 日を足した期間、加盟店が指定した上限、着金の確定待ちの猶予が適用される

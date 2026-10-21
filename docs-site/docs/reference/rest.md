@@ -165,10 +165,10 @@ GET /payment_status/pi_0123456789abcdef
 | `created` | 途中 | 決済を作成した。署名を待っている |
 | `signed` | 途中 | 利用者の署名が済んだ |
 | `issue_pending` | 途中 | 利用者が JPYC の発行手続きを始めた |
-| `deposit_seen` | 途中 | 着金を検知した。確定を待っている |
+| `deposit_seen` | 途中 | 定義はあるが、今は返らない（[状態遷移](/lifecycle/transitions#遷移の一覧)） |
 | `deposit_confirmed` | 途中 | 着金（または残高）を確認した。決済の実行前 |
 | `deploying` | 途中 | 利用者のウォレットを作成している |
-| `executing` | 途中 | 決済を実行した。結果を確認している |
+| `executing` | 途中 | 決済の実行を始めた。結果を確認している |
 | `settled` | 成立 | 決済が成立し、加盟店へ送金された |
 | `canceled` | 成立しなかった | 決済が取り消された |
 | `expired` | 成立しなかった | 期限内に着金がなく終了した |

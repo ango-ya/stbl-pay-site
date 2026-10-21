@@ -35,9 +35,8 @@ import StateFlowchart from '@site/src/components/StateFlowchart';
 |---|---|---|
 | `created` | 決済を作った。署名待ち | 加盟店のサーバー |
 | `signed` | 支払い操作に署名した | 利用者（決済ページでパスキーで承認） |
-| `issue_pending` | JPYC の発行を申し込んだ。振込待ち | 利用者（JPYC EX の画面） |
-| `deposit_seen` | 振込を受けて発行された JPYC が、利用者のウォレットに届いた | 利用者が振込み、JPYC EX が発行 |
-| `deposit_confirmed` | 着金が取り消されない状態になるのを待って確定した | STBLpay |
+| `issue_pending` | JPYC の発行を申し込んだ。振込と、着金が取り消されない状態になるのを待っている | 利用者（JPYC EX の画面） |
+| `deposit_confirmed` | 発行された JPYC が届き、支払える額がそろったことを確認した | 利用者が振込み、JPYC EX が発行。確認は STBLpay |
 | `deploying` 以降 | 残高が足りる場合と同じ | STBLpay |
 
 Webhook が届くのは、`settled` などの[終端](/reference/glossary)に着いたときだけです。ただし、終端のうち `nonce_conflict` では Webhook が届きません。途中の状態と `nonce_conflict` は[状態照会](/reference/rest#状態照会)で確かめます。振込が必要な場合は利用者の振込を待つため、`issue_pending` のまま時間がかかることがありますが、失敗ではありません。
@@ -49,16 +48,15 @@ Webhook が届くのは、`settled` などの[終端](/reference/glossary)に着
 | `created` | 署名を受け取った | `signed` |
 | `created` | 操作期限に達した | `expired` |
 | `signed` | 振込が必要で、発行体の予約開始通知を受理した | `issue_pending` |
-| `signed` | 残高が足りる | `deposit_confirmed` |
+| `signed` | 残高が足りることを STBLpay が確認した | `deposit_confirmed` |
 | `signed` | 操作期限に達した | `expired` |
 | `signed` | 利用者がマイページで取り消した | `canceled` |
-| `issue_pending` | 期限内に、条件の合う着金を決済に充てた | `deposit_seen` |
-| `issue_pending` | 送金元または宛先が合わない | `failed` |
+| `issue_pending` | 期限内に支払える額がそろった（発行された JPYC の着金、または今の残高との合計） | `deposit_confirmed` |
+| `issue_pending` | 着金の宛先が、保存している支払い操作のウォレットと食い違う | `failed` |
 | `issue_pending` | 着金期限と確定までの猶予を過ぎた | `expired` |
 | `issue_pending` | 着金が確認される前に、利用者がマイページで取り消した | `canceled` |
-| `deposit_seen` | 着金が取り消されない状態になった | `deposit_confirmed` |
 | `deposit_confirmed` | ウォレットがまだ作られていない | `deploying` |
-| `deposit_confirmed` | 実行の権利を得て、実行を送信した | `executing` |
+| `deposit_confirmed` | STBLpay が実行を始めた | `executing` |
 | `deposit_confirmed` | 実行の前に、やり直せない失敗が確定した、またはリトライを使い切った | `failed` |
 | `deposit_confirmed` | 送金の結果が確定できない | `nonce_conflict` |
 | `deploying` | 2 つのウォレットの準備が終わった | `deposit_confirmed` |
@@ -67,20 +65,29 @@ Webhook が届くのは、`settled` などの[終端](/reference/glossary)に着
 | `executing` | 失敗した、またはリトライを使い切った | `failed` |
 | `executing` | 送金の結果が確定できない | `nonce_conflict` |
 
+図と一覧では、次の 2 つを省いたり、まとめたりしています。
+
+- `issue_pending` から `failed`（着金の宛先の食い違い）は、保存しているデータの食い違いに備えた防御で、通常の操作では起きません。そのため、図からは省いています。
+- 加盟店が利用停止になると、まだ送金を始めていない決済は `failed`（`failed_reason` は `merchant_suspended`）になります。図と一覧では省いています。詳しくは[加盟店の利用停止](/lifecycle/edge-cases#加盟店の利用停止)を参照してください。
+
+`deposit_seen` は状態の値として定義されていますが、今は外から見えません。着金は `issue_pending` のまま取り消されない状態になるまで待ち、`deposit_confirmed` へ 1 度に進むためです。
+
 `deploying` と `executing` は確認や一時的失敗の間、同じ状態に留まることがあります。`deploying` から直接 `executing` へ進めません。終端状態からの遷移はありません。
 
 ## 着金と残高払い
 
-振込の経路では、宛先・金額・送金元（JPYC の発行体）・チェーン・着金の時刻が期限内であることを照合し、その決済に[充当](/reference/glossary)できた着金だけで `deposit_seen` に進みます。着金は、取り消されない状態になるまで待ってから確定します（[技術的な詳細](#技術的な詳細)）。
+振込の経路では、宛先・金額・送金元（JPYC の発行体）・チェーン・着金の時刻が期限内であることを照合し、その決済に[充当](/reference/glossary)できた着金で `deposit_confirmed` に進みます。送金元が発行体でない着金は充てません。決済は `issue_pending` のまま残り、期限までに額がそろわなければ `expired` になります。着金は、取り消されない状態になってから検知します（[技術的な詳細](#技術的な詳細)）。
 
-残高払いは `signed` から `deposit_confirmed` へ進み、着金の検知を待ちません。同じ残高を複数の決済へ重複充当しない制御は STBLpay 側が行います。
+足りない分だけを発行した場合（残高 ¥1,000 で ¥3,500 の決済をし、¥3,000 を発行したなど）は、着金 1 件では決済額に届きません。この場合も、今の残高と合わせて足りれば `deposit_confirmed` に進みます。
+
+残高払いは `signed` から `deposit_confirmed` へ進み、着金の検知を待ちません。残高が足りるかは STBLpay が定期的に確認するので、承認の直後ではなく、少し遅れて進むことがあります。同じ残高を複数の決済へ重複充当しない制御は STBLpay 側が行います。
 
 ## 操作期限と着金期限
 
 - `created` と予約開始前の `signed` は `checkoutExpiresAt` で失効します。作成したまま永久に残ることはありません。
 - 予約開始通知の初回受理時に、発行予約期限に **14日 buffer** を加えた着金期限を確定します。着金期限の具体的な日時を知りたいときは、[問い合わせ先](/support/troubleshooting#問い合わせ先)に問い合わせてください。
 - `issue_pending` は着金期限に確定待ちの猶予を加えても一致する着金が見つからない場合に失効します。着金が期限内かは、ブロックの時刻で判定します。
-- 着金を観測した `deposit_seen` 以降を、時計だけで `expired` にしません。
+- 期限内に届いた着金は、検知が期限の後になっても決済に充てます。そのための猶予が、上の「確定待ちの猶予」です。
 
 任意の `merchantExpiresAt` を指定した場合は、操作期限・着金期限それぞれと指定値の最小値を使います。省略時はサーバーの期限をそのまま使います。作成時点から3日以内に切れる指定は拒否されます。同じ `orderId` の再作成で指定値を上書きできません。
 
@@ -99,8 +106,8 @@ Webhook が届くのは、`settled` などの[終端](/reference/glossary)に着
 - **`validUntil`**：署名済みの UserOperation の実行期限です。着金期限とは別に決まり、加盟店指定期限では縮めません。
 - **revert**：ブロックチェーンへ送った操作が実行の途中で拒否され、なかったことになること。状態が `failed` になる理由の 1 つです。
 - **デプロイ**：ウォレットをブロックチェーン上に作ること。初回の決済では、利用者のウォレットと加盟店の受取ウォレットが必要になり、状態が `deploying` を経ます。本文の「ウォレットの作成」はこれを指します。
-- **64 ブロック（finality）**：着金を含むブロックの後ろに 64 ブロックが積まれると、取り消されない状態になったと扱います。この状態を finality と呼びます。`deposit_seen` はこの確認中の状態です。
+- **64 ブロック（finality）**：着金を含むブロックの後ろに 64 ブロックが積まれると、取り消されない状態になったと扱います。この状態を finality と呼びます。着金はこの状態になってから検知するので、その間、決済は `issue_pending` のままです。
 - **minter**：JPYC を発行する権限を持つアドレス。振込の照合では、送金元が発行体の minter と一致するかを確かめます。
-- **sender**：操作を出したウォレットのアドレス。宛先との不一致があると `failed` になります。
+- **sender**：操作を出したウォレットのアドレス。着金の宛先がこれと食い違うと `failed` になります（通常の操作では起きません）。
 - **Transfer**：JPYC の移動を記録したイベント。着金の検知は、この記録を見て行います。
 - **`txHash`**：ブロックチェーン上の取引番号です。問い合わせに使います。
