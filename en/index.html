@@ -7,23 +7,23 @@
     <meta name="theme-color" content="#141414" />
     <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
     <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
-    <title>STBLpay | A JPY Stablecoin Payment SDK Not Tied to Payment Processors</title>
+    <title>STBLpay | JPY Stablecoin Payments Not Tied to Payment Processors</title>
     <meta
       name="description"
-      content="STBLpay is a JPY stablecoin payment SDK concept for ecommerce that avoids over-dependence on any single payment processor. Buyers pay with nothing but a Japanese-yen bank transfer, and merchants receive stablecoin with no credit screening. It also suits industries where card screening and rules make payments hard to adopt. Planned launch: August 2026."
+      content="STBLpay is a JPY stablecoin payment service (under development) that avoids over-dependence on any single payment processor. Buyers can pay by Japanese-yen bank transfer, and merchants receive their sales in stablecoin (JPYC) without relying on card companies' credit screening. It also suits sole proprietors such as creators selling digital works, and industries where card screening and rules make payments hard to adopt."
     />
     <meta
       name="keywords"
-      content="STBLpay, JPY stablecoin payments, JPYC payments, accept payments without card screening, bank transfer payments Japan, ecommerce payment SDK, non-custodial payments, JPY payments for overseas merchants"
+      content="STBLpay, JPY stablecoin payments, JPYC payments, accept payments without card screening, bank transfer payments Japan, online shop payments, sole proprietor payments, creator digital sales payments, non-custodial payments, JPY payments for overseas merchants"
     />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="ja_JP" />
     <meta property="og:site_name" content="STBLpay" />
-    <meta property="og:title" content="STBLpay | A JPY Stablecoin Payment SDK Not Tied to Payment Processors" />
+    <meta property="og:title" content="STBLpay | JPY Stablecoin Payments Not Tied to Payment Processors" />
     <meta
       property="og:description"
-      content="Toward a new way to pay, not tied to payment processors. JPY stablecoin payments for ecommerce. Buyers just make a bank transfer; merchants receive stablecoin with no credit screening."
+      content="Toward a new way to pay, not tied to payment processors. Buyers pay by Japanese-yen bank transfer; merchants receive their sales in stablecoin without relying on card companies' credit screening. STBLpay is under development."
     />
     <meta property="og:url" content="https://stbl-pay.com/en/" />
     <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
@@ -33,10 +33,10 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="STBLpay | A JPY Stablecoin Payment SDK Not Tied to Payment Processors" />
+    <meta name="twitter:title" content="STBLpay | JPY Stablecoin Payments Not Tied to Payment Processors" />
     <meta
       name="twitter:description"
-      content="Toward a new way to pay, not tied to payment processors. JPY stablecoin payments for ecommerce."
+      content="Toward a new way to pay, not tied to payment processors. JPY stablecoin payments (under development)."
     />
     <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
     <meta name="twitter:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
@@ -52,12 +52,12 @@
       AI_DISCOVERY_BLOCK
       service_name_ja: すてぶるペイ
       service_name_en: STBLpay
-      category: JPY stablecoin payment SDK for ecommerce
-      primary_audience: EC merchants that struggle to adopt card payments, overseas businesses that want a payment method for Japan, JPYC-denominated shops and communities
-      buyer_value: Pay with nothing but a Japanese-yen bank transfer (payments approved with a passkey = Face/fingerprint). Purchases under 3,000 yen are paid from JPYC balance. Issue a larger amount once and keep it as balance to pay in seconds with just a passkey, no transfer. No fees added to the buyer.
-      merchant_value: No card-company credit screening. Minimal up-front KYB burden. Payment fees under consideration (a single flat rate for all merchants is planned, finalized at launch). Receive JPYC the moment the payment completes, no payment reconciliation. Adoption potential for overseas businesses without a Japanese-yen bank account.
-      implementation: SDK-based, with fast integration and paid support planned. An integration prompt for coding AIs is planned (published once the spec is finalized).
-      compliance_note: Requires agreement to the terms of service, payout-destination registration, external requirements such as JPYC EX, and conditions subject to legal review. Non-custodial design (the provider holds no funds or private keys).
+      category: JPY stablecoin payments (under development)
+      primary_audience: Sole proprietors (creators selling digital works, freelance hairdressers and nail artists, and others), online shops that cannot easily adopt card payments, overseas online shops that want a payment method for Japan
+      buyer_value: Payments are approved with a passkey (Face/fingerprint). When your JPYC balance is enough, no transfer is needed. When it is not, decide the amount to issue (¥3,000 to ¥1,000,000 per issuance) and make a bank transfer in Japanese yen; the remainder stays as a balance for your next payment. From transfer to reflection takes about 5 to 10 minutes as a guide. At a shop's register, scan a QR code and pay from your balance. No fees added to the buyer.
+      merchant_value: No reliance on card companies' credit screening. No up-front KYB or KYC (open a merchant account on the web by yourself). Payment fees under consideration (a single flat rate for all merchants is planned, finalized at launch). Funds arrive in JPYC the moment the payment is made, and no reconciliation of deposits is needed. Withdrawal to Japanese yen is done from the merchant's own JPYC EX account.
+      implementation: Your site does three things: place a button, guide customers to the payment screen, and receive the result. An API specification (OpenAPI) and a document of implementation notes are planned (an AI coding agent can read them to help you integrate). A plugin for WordPress (WooCommerce) is in preparation. You can also start with QR codes alone.
+      compliance_note: Requires agreement to the terms of use and the requirements of external services such as JPYC EX. Non-custodial design (the provider holds no funds or private keys).
     -->
 
     <script type="application/ld+json">
@@ -74,27 +74,24 @@
       "@type": "Service",
       "name": "STBLpay",
       "alternateName": "すてぶるペイ",
-      "serviceType": "JPY stablecoin payment SDK for ecommerce",
+      "serviceType": "JPY stablecoin payment service for online shops and sole proprietors",
       "provider": { "@id": "#org-angoya" },
       "areaServed": ["JP", "Global"],
       "audience": [
         {
           "@type": "Audience",
-          "audienceType": "EC merchants who cannot easily adopt card payments"
+          "audienceType": "Sole proprietors such as creators selling digital works, freelance hairdressers and nail artists"
         },
         {
           "@type": "Audience",
-          "audienceType": "Overseas merchants selling to Japan"
+          "audienceType": "Online shops that cannot easily adopt card payments"
+        },
+        {
+          "@type": "Audience",
+          "audienceType": "Merchants outside Japan selling to customers in Japan"
         }
       ],
-      "description": "A payment SDK concept for ecommerce that connects bank-transfer users to JPY stablecoin payments, aimed at merchants that struggle to adopt card payments and at overseas businesses. No card-company credit screening, and it is designed so that buyers pay no extra fees. Non-custodial architecture: the provider holds no funds or private keys."
-    },
-    {
-      "@type": "SoftwareApplication",
-      "name": "STBLpay SDK",
-      "alternateName": "すてぶるペイ SDK",
-      "applicationCategory": "FinanceApplication",
-      "operatingSystem": "Web",
+      "description": "A service (under development) that connects customers paying by Japanese-yen bank transfer to JPY stablecoin payments, for sole proprietors (creators selling digital works, freelance hairdressers and nail artists, and others) and online shops that cannot easily adopt card payments. It does not rely on card companies' credit screening, and no extra fees are added for buyers. Non-custodial architecture: the provider holds no funds or private keys.",
       "offers": {
         "@type": "Offer",
         "priceCurrency": "JPY",
@@ -118,7 +115,7 @@
           "name": "We failed a credit-card payment screening. Can we still integrate?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Card companies set their own screening criteria, and depending on the industry or their rules, an application may not be approved. STBLpay is a payment method that does not go through card-company credit screening; provided you agree to the terms of service and register a payout destination, integration is open for discussion."
+            "text": "Card companies set their own screening criteria, and depending on the industry or their rules, an application may not be approved. STBLpay is a payment method that does not rely on a card company's credit screening. Open a merchant account on the web by yourself: agree to the terms of use and create a passkey. If you are unsure about your industry, feel free to ask us."
           }
         },
         {
@@ -126,7 +123,7 @@
           "name": "Can buyers really handle this?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The My Number card, the ID used for identity verification, has a holding rate above 80% in Japan (as of the end of January 2026). Identity verification happens when you first open a JPYC EX account, and it is done with JPYC EX — not with STBLpay or the merchant. After that, the only steps are transferring to the displayed bank account and approving with a passkey (Face/fingerprint). Issue a larger amount once and keep it as balance, and payments take seconds with just a passkey — no transfer."
+            "text": "The My Number card, the ID used for identity verification, has a holding rate of 84.5% in Japan (Ministry of Internal Affairs and Communications, as of the end of September 2026). Identity verification happens when you first open a JPYC EX account, and it is done with JPYC EX — not with STBLpay or the merchant. From the second time on, you approve with a passkey (Face/fingerprint) and make a bank transfer. If your JPYC balance is enough, no transfer is needed either."
           }
         },
         {
@@ -134,7 +131,7 @@
           "name": "Is JPYC trustworthy?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "JPYC is an 'electronic payment instrument' under Japan's Payment Services Act. It is issued by JPYC Inc., a registered funds transfer service provider (Kanto Local Finance Bureau No. 00099), and tracks the Japanese yen at 1 JPYC = ¥1. Cumulative issuance exceeds ¥3 billion (as of the end of May 2026)."
+            "text": "JPYC is an \"electronic payment instrument\" under Japan's Payment Services Act. It is issued by JPYC Inc., a registered funds transfer service provider (Kanto Local Finance Bureau No. 00099), and tracks the Japanese yen at 1 JPYC = ¥1. Cumulative issuance has surpassed ¥10 billion (as of September 18, 2026)."
           }
         },
         {
@@ -150,7 +147,7 @@
           "name": "What checks are required to integrate?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "We do not run merchant pre-screening (KYB). All that integration requires is agreement to the terms of service and registration of where you will receive your sales."
+            "text": "There is no merchant pre-screening (KYB) or identity verification (KYC). Open a merchant account on the web by yourself: agree to the terms of use and create a passkey, and the place where you receive your sales is created too. In the terms of use, you will be asked to declare that your business is not illegal under Japanese law."
           }
         },
         {
@@ -158,7 +155,7 @@
           "name": "Are there chargebacks?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Because this is not a card payment, the card-originated chargeback mechanism itself does not exist. Payments are finalized based on the buyer's own approval (a passkey signature). When a refund is needed, the merchant refunds the buyer directly (for example, returning the received JPYC or making a bank transfer). Because Ango-ya never holds funds, it cannot cancel payments or process refunds on anyone's behalf."
+            "text": "Because this is not a card payment, the card-originated chargeback mechanism itself does not exist. Payments are finalized based on the buyer's own approval (a passkey signature). Subject to what the law requires, whether to offer refunds, and on what conditions, is up to the merchant; please tell buyers in advance. Refunds are made by the merchant to the buyer (for example, returning the received JPYC or making a bank transfer). Even if you refund, the payment fee is not returned. Because Ango-ya never holds funds, it cannot cancel payments or process refunds on anyone's behalf."
           }
         },
         {
@@ -182,7 +179,7 @@
           "name": "Can received JPYC be converted to Japanese yen?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Through JPYC EX, JPYC's official issuance and redemption platform, JPYC can be redeemed for Japanese yen at 1 JPYC = ¥1. Redemption is done from the merchant's own JPYC EX account."
+            "text": "Yes (from launch). Through JPYC EX, JPYC's official issuance and redemption platform, JPYC can be withdrawn to Japanese yen at 1 JPYC = ¥1. Withdrawal requires the merchant's own JPYC EX account (an individual residing in Japan or a Japanese corporation), and the amount is ¥3,000 to ¥1,000,000 per withdrawal. Withdrawals incur no Ango-ya fee and no JPYC EX redemption fee (as of September 2026)."
           }
         },
         {
@@ -190,7 +187,7 @@
           "name": "What is the minimum amount?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "New JPYC issuance is ¥3,000 or more per issuance. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as JPYC balance for your next purchase. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen)."
+            "text": "JPYC is issued in amounts of ¥3,000 to ¥1,000,000 per issuance. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as a balance for your next payment. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen)."
           }
         },
         {
@@ -199,6 +196,22 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "We would like to provide a simple sales-check screen even in the first release. Merchant-facing screens, including a sales dashboard, will be expanded step by step, and priorities such as accounting integrations will be decided based on merchant feedback."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is received JPYC treated for accounting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on the nature of the transaction and your accounting policy. Please check with a professional such as your tax accountant."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens to my passkey if I replace my smartphone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A passkey synced through iCloud Keychain, Google Password Manager, or similar can be used on your new device too. If you lose a passkey that was not synced, Ango-ya cannot restore it. Before you part with your device, check that your passkey is synced."
           }
         },
         {
@@ -214,7 +227,7 @@
           "name": "Can buyers living outside Japan use this?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The initial release targets buyers residing in Japan. Due to how identity verification works, buyers residing overseas are out of scope for the time being (integration by overseas businesses is open for discussion)."
+            "text": "The initial release targets buyers residing in Japan. Due to how identity verification works, buyers residing overseas are out of scope for the time being."
           }
         }
       ]
@@ -233,6 +246,7 @@
         <nav class="site-nav" aria-label="Primary navigation">
           <a href="#comparison">Fees</a>
           <a href="#flow">How it works</a>
+          <a href="#videos">Video</a>
           <a href="#faq">FAQ</a>
           <a href="/" lang="ja" hreflang="ja">日本語</a>
         </nav>
@@ -251,22 +265,27 @@
           <h1 id="hero-title">Pay in yen. Settle in stablecoin.</h1>
           <p class="hero-sub">Toward a new way to pay, not tied to payment processors.</p>
           <ul class="hero-points">
-            <li><span class="point-label">Buyers</span>Just make a bank transfer. No wallet, no crypto knowledge</li>
-            <li><span class="point-label">Merchants</span>No credit screening. Instant stablecoin settlement<sup class="fn"><a href="#fn-5" id="fnref-h3">*5</a></sup></li>
+            <li><span class="point-label">Buyers</span>Approve with a passkey and pay by bank transfer in yen. No wallet, no crypto knowledge</li>
+            <li><span class="point-label">Merchants</span>No credit screening to get started. Funds arrive in stablecoin the moment the payment is made<sup class="fn"><a href="#fn-5" id="fnref-h3">*5</a></sup></li>
           </ul>
           <div class="hero-actions">
             <a class="button button-primary" href="#early-access">Talk to us about integrating</a>
             <a class="button button-secondary" href="/demo">View demo (Japanese)</a>
           </div>
           <p class="hero-note">
-            Fees are under consideration; a single flat rate for all merchants is planned<sup class="fn"><a href="#fn-1" id="fnref-h1">*1</a></sup>. Early-access consultations are open now. Planned launch: August 2026<sup class="fn"><a href="#fn-2" id="fnref-h2">*2</a></sup>.
-            Subject to agreement to the terms of service, payout-destination registration, and checks by external services such as JPYC EX.
+            Fees are under consideration; a single flat rate for all merchants is planned<sup class="fn"><a href="#fn-1" id="fnref-h1">*1</a></sup>. STBLpay is under development<sup class="fn"><a href="#fn-2" id="fnref-h2">*2</a></sup>.
+            Subject to agreement to the terms of use and the requirements of external services such as JPYC EX.
           </p>
+        </div>
+        <!-- Suteburu-kun (bottom left) and Suteburu-chan (bottom right), as in the videos. Decorative -->
+        <div class="hero-cast" aria-hidden="true">
+          <img class="hero-cast-kun" src="/assets/char/stand-kun-blank.webp" alt="" width="282" height="240" loading="lazy" decoding="async" fetchpriority="low" />
+          <img class="hero-cast-chan" src="/assets/char/hero-chan.webp" alt="" width="333" height="480" loading="lazy" decoding="async" fetchpriority="low" />
         </div>
         <div class="hero-ticker" aria-hidden="true">
           <div class="ticker-track">
-            <div class="ticker-group"><span>1 JPYC = ¥1 by design</span><span>Not bound to payment processors</span><span>No credit screening</span><span>Pay with just a bank transfer</span><span>Instant stablecoin settlement</span><span>No wallet required</span><span>From balance: passkey only, seconds</span><span>Non-custodial</span><span>Launching 2026.08 (planned)</span></div>
-            <div class="ticker-group"><span>1 JPYC = ¥1 by design</span><span>Not bound to payment processors</span><span>No credit screening</span><span>Pay with just a bank transfer</span><span>Instant stablecoin settlement</span><span>No wallet required</span><span>From balance: passkey only, seconds</span><span>Non-custodial</span><span>Launching 2026.08 (planned)</span></div>
+            <div class="ticker-group"><span>1 JPYC = ¥1 by design</span><span>Not bound to payment processors</span><span>No credit screening</span><span>Pay by bank transfer in yen</span><span>Funds arrive at payment</span><span>No wallet required</span><span>No transfer if your balance covers it</span><span>Non-custodial</span><span>STBLpay is under development</span></div>
+            <div class="ticker-group"><span>1 JPYC = ¥1 by design</span><span>Not bound to payment processors</span><span>No credit screening</span><span>Pay by bank transfer in yen</span><span>Funds arrive at payment</span><span>No wallet required</span><span>No transfer if your balance covers it</span><span>Non-custodial</span><span>STBLpay is under development</span></div>
           </div>
         </div>
       </section>
@@ -298,18 +317,66 @@
         </div>
       </section>
 
+      <!-- Video: "How to use STBL Pay" Episode 8 (Japanese audio, English subtitles).
+           Other episodes are Japanese only and live on the Japanese page (/#videos). -->
+      <section class="section videos" id="videos" aria-labelledby="videos-title">
+        <div class="shell">
+          <div class="videos-head">
+            <div class="videos-intro">
+              <h2 id="videos-title"><span class="sec-no">VIDEO</span>See how it works</h2>
+              <p class="sec-lead">Suteburu-chan explains; Suteburu-kun asks. This episode is for shops outside Japan that sell to customers in Japan. Japanese audio with English subtitles. Screens shown are from a service under development.</p>
+              <div class="talk" role="group" aria-label="A conversation between Suteburu-chan and Suteburu-kun">
+                <p class="talk-line talk-chan"><img class="talk-face" src="/assets/char/face-chan-y1-2.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">Suteburu-chan</span><span class="sr-only">: </span><span class="talk-text">We made a how-to video. This one has English subtitles.</span></p>
+                <p class="talk-line talk-kun"><img class="talk-face" src="/assets/char/face-kun-5.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">Suteburu-kun</span><span class="sr-only">: </span><span class="talk-text">Am I in it?</span></p>
+                <p class="talk-line talk-chan"><img class="talk-face" src="/assets/char/face-chan-y2-1.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">Suteburu-chan</span><span class="sr-only">: </span><span class="talk-text">Bottom left. The whole time.</span></p>
+              </div>
+            </div>
+            <div class="cast cast-videos" aria-hidden="true">
+              <img class="cast-chan" src="/assets/char/present-chan.webp" alt="" width="331" height="480" loading="lazy" />
+              <img class="cast-kun" src="/assets/char/stand-kun-o.webp" alt="" width="281" height="240" loading="lazy" />
+            </div>
+          </div>
+
+          <div class="video-stage" id="video-stage">
+            <!-- No iframe is made and nothing is sent to YouTube until the poster is pressed (assets/lp.js). Without JS the link opens the YouTube page -->
+            <div class="video-frame" data-video-frame>
+              <a class="video-poster" href="https://www.youtube.com/watch?v=eJkb02Rl4k4" data-video="how-08en" data-youtube="eJkb02Rl4k4" data-video-poster aria-label="Play: How to use STBL Pay, Episode 8: Overseas Shops: Bank Transfers from Customers in Japan (1:19)">
+                <img
+                  src="/assets/video/how-08en.webp"
+                  srcset="/assets/video/how-08en-640.webp 640w, /assets/video/how-08en.webp 1280w"
+                  sizes="(max-width: 900px) 100vw, 680px"
+                  alt=""
+                  width="1280"
+                  height="720"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="video-play" aria-hidden="true"></span>
+              </a>
+            </div>
+            <div class="video-now">
+              <p class="video-now-series">How to use STBL Pay</p>
+              <h3 class="video-now-title"><span class="video-now-no">Episode 8</span>Overseas Shops: Bank Transfers from Customers in Japan</h3>
+              <p class="video-now-desc">Why bank transfer matters to shoppers in Japan, and how paying by bank transfer works with STBLpay.</p>
+              <p class="video-now-meta">Length 1:19 · Japanese audio, English subtitles</p>
+              <p class="video-now-meta"><a class="text-link" href="/#videos" hreflang="ja">All episodes (Japanese only) →</a></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- How it works -->
       <section class="section" id="flow" aria-labelledby="flow-title">
         <div class="shell">
           <h2 id="flow-title"><span class="sec-no">01</span>For buyers</h2>
           <ol class="flow">
             <li><strong>Order</strong><p>Choose "Pay by bank transfer with STBLpay" on the shop's checkout, and approve the payment with a passkey (Face/fingerprint)</p></li>
-            <li><strong>Transfer</strong><p>Make a bank transfer of the exact purchase amount to the account shown on the JPYC EX screen (identity verification at JPYC EX is required only the first time)</p></li>
-            <li><strong>Issuance</strong><p>Once the transfer arrives, JPYC EX issues JPYC into the buyer's <span class="nobr">own balance<sup class="fn"><a href="#fn-6" id="fnref-f3">*6</a></sup></span>. Ango-ya is never in between</p></li>
+            <li><strong>Transfer</strong><p>If your balance is not enough, decide the amount to issue and make a bank transfer to the account shown on the JPYC EX screen (¥3,000 to ¥1,000,000 per issuance; identity verification at JPYC EX is required only the first time). If your balance is enough, no transfer is needed</p></li>
+            <li><strong>Issuance</strong><p>Once JPYC EX confirms the transfer, it issues JPYC into the buyer's <span class="nobr">own balance<sup class="fn"><a href="#fn-6" id="fnref-f3">*6</a></sup></span>. Ango-ya is never in between. From transfer to reflection takes about 5 to 10 minutes as a guide</p></li>
             <li><strong>Settlement</strong><p>The payment goes through exactly as the buyer approved it, the JPYC reaches the merchant, and the payment is complete</p></li>
           </ol>
-          <p class="flow-note">Funds never pass through Ango-ya. The buyer's JPYC balance belongs to the buyer. Ango-ya only provides the SDK and the screens — it holds none of the customer's funds, private keys, or information needed to move money (non-custodial). Every payment is executed with the buyer's own approval (a passkey signature).</p>
-          <p class="flow-note">Normally, you just transfer the same amount as your purchase each time you shop. Purchases under ¥3,000 fall below the minimum JPYC issuance amount (¥3,000), so you pay by issuing ¥3,000 or more and the remainder stays as JPYC balance for next time. If transferring every time feels like a chore, issue a <span class="nobr">larger amount</span> once and keep it as balance — then pay with no transfer, just a passkey (Face/fingerprint), in seconds.</p>
+          <p class="flow-note">Funds never pass through Ango-ya. The buyer's JPYC balance belongs to the buyer. What Ango-ya provides is the payment screens and the system. It does not hold the customer's funds, private keys, or information needed to move money (non-custodial). Every payment is executed with the buyer's own approval (a passkey signature).</p>
+          <p class="flow-note">When your JPYC balance is enough, you can pay with just a passkey (Face/fingerprint), with no transfer. When it is not, decide the amount to issue and make a bank transfer. Each issuance is ¥3,000 to ¥1,000,000, and the remainder stays as a balance you can use for your next payment. At a shop's register, you can scan a QR code and pay from your balance (for regular customers; add to your balance from My Page).</p>
         </div>
       </section>
 
@@ -322,7 +389,7 @@
           <ul class="value-grid">
             <li>
               <h3>Integrate with no credit screening</h3>
-              <p>No card-company credit screening is involved. All you need is to agree to the terms of service and register where you will receive your sales.<sup class="fn"><a href="#fn-5" id="fnref-v1">*5</a></sup></p>
+              <p>You can integrate without relying on card companies' credit screening. Open a merchant account on the web by yourself: agree to the terms of use and create a passkey.<sup class="fn"><a href="#fn-5" id="fnref-v1">*5</a></sup></p>
             </li>
             <li>
               <h3>Settled the moment you're paid</h3>
@@ -333,7 +400,7 @@
               <p>Payments are finalized on the blockchain, so no chargeback burden arises.<sup class="fn"><a href="#fn-5" id="fnref-v3">*5</a></sup></p>
             </li>
           </ul>
-          <p class="audience-note">A good fit for merchants like these: industries where card screening or card rules make payments hard to adopt, overseas ecommerce that wants a payment method for Japan, JPYC-denominated shops and communities, and more<sup class="fn"><a href="#fn-5" id="fnref-a1">*5</a></sup>. <a class="text-link" href="#early-access">Feel free to ask whether it's a fit for your industry →</a></p>
+          <p class="audience-note">A good fit for merchants like these: sole proprietors such as creators selling digital works, freelance hairdressers and nail artists, industries where card screening or card rules make payments hard to adopt, overseas online shops that want a payment method for Japan, and more<sup class="fn"><a href="#fn-5" id="fnref-a1">*5</a></sup>. <a class="text-link" href="#early-access">Feel free to ask whether it's a fit for your industry →</a></p>
         </div>
       </section>
 
@@ -390,20 +457,20 @@
       <section class="section" id="integration" aria-labelledby="integration-title">
         <div class="shell">
           <h2 id="integration-title"><span class="sec-no">04</span>Integration</h2>
-          <p class="sec-lead">Just embed the SDK into your store's checkout flow. Our target for a standard integration is one day<sup class="fn"><a href="#fn-2" id="fnref-i1">*2</a></sup>. An integration prompt for coding AIs is also planned (published once the spec is finalized). Start with the SDK embed, agreement to the terms of service, and payout-destination registration — trying it on just part of your catalog is fine.</p>
+          <p class="sec-lead">Your site does three things: place a button, guide customers to the payment screen, and receive the result. Our target for a standard integration is one day<sup class="fn"><a href="#fn-2" id="fnref-i1">*2</a></sup>. An API specification (OpenAPI) and a document of implementation notes are planned. Give them to an AI coding agent and it can help you write the integration code. For those who find building a site hard, a plugin for WordPress (WooCommerce) is also in preparation. You can try it on just part of your catalog.</p>
           <ol class="flow">
-            <li><strong>Consultation</strong><p>We hear about your current payment setup and challenges, and work out the integration path together</p></li>
-            <li><strong>Embed</strong><p>Embed the SDK. The planned coding-AI integration prompt aims to minimize engineering effort</p></li>
-            <li><strong>Test payments</strong><p>Verify the buyer experience and settlement in a test environment. A small start with part of your catalog works too</p></li>
-            <li><strong>Launch</strong><p>Release as an early adopter, timed with the planned August 2026 launch<sup class="fn"><a href="#fn-2" id="fnref-i2">*2</a></sup></p></li>
+            <li><strong>Open an account</strong><p>On the web, by yourself. Agree to the terms of use and create a passkey, and the place where you receive your sales is created too</p></li>
+            <li><strong>Embed</strong><p>Place a button, guide customers to the payment screen, and receive the result. The specification and implementation-notes document (planned) keep development effort small</p></li>
+            <li><strong>Test payments</strong><p>Check the customer's flow and the arrival of funds in a test environment. You can also start small with part of your catalog</p></li>
+            <li><strong>Start accepting payments</strong><p>Publish the button and start accepting payments. With QR codes, you can start by putting one up in your shop, with no integration into a site</p></li>
           </ol>
-          <p class="flow-note">Early-access merchants receive priority integration support. A referral reward program is also planned for merchants who refer others.</p>
+          <p class="flow-note">If you have any questions, such as how to use it or how to integrate it, talk to Ango-ya. A referral reward program is also planned for those who refer others.</p>
         </div>
       </section>
 
       <!-- FAQ -->
       <section class="section" id="faq" aria-labelledby="faq-title">
-        <div class="shell">
+        <div class="shell faq-shell">
           <h2 id="faq-title"><span class="sec-no">05</span>Frequently asked questions</h2>
           <div class="faq-list">
             <details>
@@ -412,15 +479,15 @@
             </details>
             <details>
               <summary>We failed a credit-card payment screening. Can we still integrate?</summary>
-              <p>Card companies set their own screening criteria, and depending on the industry or their rules, an application may not be approved. STBLpay is a payment method that does not go through card-company credit screening; provided you agree to the terms of service and register a payout destination, integration is open for discussion.</p>
+              <p>Card companies set their own screening criteria, and depending on the industry or their rules, an application may not be approved. STBLpay is a payment method that does not rely on a card company's credit screening. Open a merchant account on the web by yourself: agree to the terms of use and create a passkey. If you are unsure about your industry, feel free to ask us.</p>
             </details>
             <details>
               <summary>Can buyers really handle this?</summary>
-              <p>The My Number card, the ID used for identity verification, has a holding rate above 80% in Japan (as of the end of January 2026<sup class="fn"><a href="#fn-8" id="fnref-q8">*8</a></sup>). Identity verification happens when you first open a JPYC EX account, and it is done with JPYC EX — not with STBLpay or the merchant. After that, the only steps are transferring to the displayed bank account and approving with a passkey (Face/fingerprint). Issue a <span class="nobr">larger amount</span> once and keep it as balance, and payments take seconds with just a passkey — no transfer.</p>
+              <p>The My Number card, the ID used for identity verification, has a holding rate of 84.5% in Japan (Ministry of Internal Affairs and Communications, as of the end of September 2026<sup class="fn"><a href="#fn-8" id="fnref-q8">*8</a></sup>). Identity verification happens when you first open a JPYC EX account, and it is done with JPYC EX — not with STBLpay or the merchant. From the second time on, you approve with a passkey (Face/fingerprint) and make a bank transfer. If your JPYC balance is enough, no transfer is needed either.</p>
             </details>
             <details>
               <summary>Is JPYC trustworthy?</summary>
-              <p>JPYC is an "electronic payment instrument" under Japan's Payment Services Act. It is issued by JPYC Inc., a registered funds transfer service provider (Kanto Local Finance Bureau No. 00099), and tracks the Japanese yen at 1 JPYC = ¥1. Cumulative issuance exceeds ¥3 billion (as of the end of May 2026<sup class="fn"><a href="#fn-8" id="fnref-q9">*8</a></sup>).</p>
+              <p>JPYC is an "electronic payment instrument" under Japan's Payment Services Act. It is issued by JPYC Inc., a registered funds transfer service provider (Kanto Local Finance Bureau No. 00099), and tracks the Japanese yen at 1 JPYC = ¥1. Cumulative issuance has surpassed ¥10 billion (as of September 18, 2026<sup class="fn"><a href="#fn-8" id="fnref-q9">*8</a></sup>).</p>
             </details>
             <details>
               <summary>Do buyers need a crypto wallet?</summary>
@@ -428,11 +495,11 @@
             </details>
             <details>
               <summary>What checks are required to integrate?</summary>
-              <p>We do not run merchant pre-screening (KYB). All that integration requires is agreement to the terms of service and registration of where you will receive your sales.</p>
+              <p>There is no merchant pre-screening (KYB) or identity verification (KYC). Open a merchant account on the web by yourself: agree to the terms of use and create a passkey, and the place where you receive your sales is created too. In the terms of use, you will be asked to declare that your business is not illegal under Japanese law.</p>
             </details>
             <details>
               <summary>Are there chargebacks?</summary>
-              <p>Because this is not a card payment, the card-originated chargeback mechanism itself does not exist. Payments are finalized based on the buyer's own approval (a passkey signature). When a refund is needed, the merchant refunds the buyer directly (for example, returning the received JPYC or making a bank transfer). Because Ango-ya never holds funds, it cannot cancel payments or process refunds on anyone's behalf.<sup class="fn"><a href="#fn-5" id="fnref-q4">*5</a></sup></p>
+              <p>Because this is not a card payment, the card-originated chargeback mechanism itself does not exist. Payments are finalized based on the buyer's own approval (a passkey signature). Subject to what the law requires, whether to offer refunds, and on what conditions, is up to the merchant; please tell buyers in advance. Refunds are made by the merchant to the buyer (for example, returning the received JPYC or making a bank transfer). Even if you refund, the payment fee is not returned. Because Ango-ya never holds funds, it cannot cancel payments or process refunds on anyone's behalf.<sup class="fn"><a href="#fn-5" id="fnref-q4">*5</a></sup></p>
             </details>
             <details>
               <summary>Is deferred or installment payment available?</summary>
@@ -444,15 +511,23 @@
             </details>
             <details>
               <summary>Can received JPYC be converted to Japanese yen?</summary>
-              <p>Yes. Through JPYC EX, JPYC's official issuance and redemption platform, JPYC can be redeemed for Japanese yen at 1 JPYC = ¥1. Redemption is done from the merchant's own JPYC EX account.<sup class="fn"><a href="#fn-5" id="fnref-q6">*5</a></sup></p>
+              <p>Yes (from launch). Through JPYC EX, JPYC's official issuance and redemption platform, JPYC can be withdrawn to Japanese yen at 1 JPYC = ¥1. Withdrawal requires the merchant's own JPYC EX account (an individual residing in Japan or a Japanese corporation), and the amount is ¥3,000 to ¥1,000,000 per withdrawal. Withdrawals incur no Ango-ya fee and no JPYC EX redemption fee (as of September 2026).<sup class="fn"><a href="#fn-5" id="fnref-q6">*5</a></sup></p>
             </details>
             <details>
               <summary>What is the minimum amount?</summary>
-              <p>New JPYC issuance is ¥3,000 or more per issuance. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as JPYC balance for your next purchase. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen).<sup class="fn"><a href="#fn-6" id="fnref-q7">*6</a></sup></p>
+              <p>JPYC is issued in amounts of ¥3,000 to ¥1,000,000 per issuance. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as a balance for your next payment. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen).<sup class="fn"><a href="#fn-6" id="fnref-q7">*6</a></sup></p>
             </details>
             <details>
               <summary>Is there a sales dashboard?</summary>
               <p>We would like to provide a simple sales-check screen even in the first release. Merchant-facing screens, including a sales dashboard, will be expanded step by step, and priorities such as accounting integrations will be decided based on merchant feedback.</p>
+            </details>
+            <details>
+              <summary>How is received JPYC treated for accounting?</summary>
+              <p>It depends on the nature of the transaction and your accounting policy. Please check with a professional such as your tax accountant.</p>
+            </details>
+            <details>
+              <summary>What happens to my passkey if I replace my smartphone?</summary>
+              <p>A passkey synced through iCloud Keychain, Google Password Manager, or similar can be used on your new device too. If you lose a passkey that was not synced, Ango-ya cannot restore it. Before you part with your device, check that your passkey is synced.</p>
             </details>
             <details>
               <summary>Won't the details of payments be visible to anyone on the blockchain?</summary>
@@ -460,21 +535,34 @@
             </details>
             <details>
               <summary>Can buyers living outside Japan use this?</summary>
-              <p>The initial release targets buyers residing in Japan. Due to how identity verification works, buyers residing overseas are out of scope for the time being (integration by overseas businesses is open for discussion).</p>
+              <p>The initial release targets buyers residing in Japan. Due to how identity verification works, buyers residing overseas are out of scope for the time being.</p>
             </details>
+          </div>
+          <!-- Suteburu-kun floats when he falls asleep; someone put a cushion under him. Not explained -->
+          <div class="faq-nap" aria-hidden="true">
+            <img class="faq-nap-kun" src="/assets/char/sleep-kun.webp" alt="" width="360" height="324" loading="lazy" />
+            <img class="faq-nap-zabuton" src="/assets/char/zabuton.webp" alt="" width="280" height="207" loading="lazy" />
           </div>
         </div>
       </section>
 
-      <!-- Early access -->
+      <!-- Contact -->
       <section class="section" id="early-access" aria-labelledby="early-title">
         <div class="shell early-grid">
           <div>
             <h2 id="early-title"><span class="sec-no">06</span>First, tell us your story</h2>
             <p class="sec-lead">
-              We're here to listen to your payment challenges and answer any questions<sup class="fn"><a href="#fn-1" id="fnref-e0">*1</a></sup>.
-              Early-access consultations are open ahead of the planned August 2026 launch<sup class="fn"><a href="#fn-2" id="fnref-e1">*2</a></sup>. This is a conversation, not a pass/fail screening.
+              If you have any questions, such as how to use it or how to integrate it, talk to Ango-ya. We are also here to listen to your payment challenges. This is not a pass/fail decision based on screening.
             </p>
+            <div class="talk" role="group" aria-label="A conversation between Suteburu-kun and Suteburu-chan">
+              <p class="talk-line talk-kun"><img class="talk-face" src="/assets/char/face-kun-5.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">Suteburu-kun</span><span class="sr-only">: </span><span class="talk-text">Is someone coming?</span></p>
+              <p class="talk-line talk-chan"><img class="talk-face" src="/assets/char/face-chan-y1-1.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">Suteburu-chan</span><span class="sr-only">: </span><span class="talk-text">Someone who'd like to talk.</span></p>
+              <p class="talk-line talk-kun"><img class="talk-face" src="/assets/char/face-kun-2.webp" alt="" width="112" height="112" loading="lazy" /><span class="talk-name">Suteburu-kun</span><span class="sr-only">: </span><span class="talk-text">Is lukewarm tea okay?</span></p>
+            </div>
+            <div class="cast cast-guest" aria-hidden="true">
+              <img class="cast-chan" src="/assets/char/guest-chan.webp" alt="" width="285" height="480" loading="lazy" />
+              <img class="cast-kun" src="/assets/char/stand-kun-smile.webp" alt="" width="281" height="240" loading="lazy" />
+            </div>
           </div>
           <!--
             送信先: 同一オリジンの Cloudflare Pages Functions（functions/api/early-access.js）が
@@ -516,13 +604,14 @@
           <h2 id="footnotes-title">Notes</h2>
           <ol class="footnote-list">
             <li id="fn-1">Payment fees and initial costs are under consideration. We plan a single flat rate for all merchants (no individual discounts) and do not intend to add anything on the buyer's side. Official terms will be finalized at launch.</li>
-            <li id="fn-2">The August 2026 launch is a plan, and "one day for a standard integration" is a target. Both may change depending on the status of external-service checks and the scope of implementation.</li>
-            <li id="fn-3">Statistics sources: SB Payment Service, survey on payment methods (FY2024; based on the original wording "55% or more") / Japan Multi-Payment Network Promotion Council publications (April 2025; Pay-easy FY2025 results, including taxes and other public-sector payments) / Ministry of Internal Affairs and Communications, "Information and Communications in Japan" (Communications Usage Trend Survey; payment methods for online purchases, multiple answers) / JCB, "Comprehensive Survey on Cashless Payments" (FY2025) and a Cross Marketing survey (2026).</li>
+            <li id="fn-2">STBLpay is under development. Screens, features, and conditions may change depending on the status of checks on integration with external services and the scope of implementation. "One day for a standard integration" is a target.</li>
+            <li id="fn-3">Statistics sources: SB Payment Service, survey on payment methods (FY2024; based on the original wording "55% or more") / Japan Multi-Payment Network Promotion Council publications (April 2026; Pay-easy FY2025 results, including taxes and other public-sector payments) / Ministry of Internal Affairs and Communications, "Information and Communications in Japan" (Communications Usage Trend Survey; payment methods for online purchases, multiple answers) / JCB, "Comprehensive Survey on Cashless Payments" (FY2025) and a Cross Marketing survey (2026).</li>
             <li id="fn-4">Rates of other companies and payment methods are reference values based on their public materials. They vary by industry and contract and are subject to change. Check each company's official information for the latest terms.</li>
-            <li id="fn-5">Statements about chargebacks describe structural characteristics of the payment mechanism. "Anyone can receive payments" refers to the policy of not suspending lawful transactions uniformly or arbitrarily based on industry, and assumes agreement to the terms of service, payout-destination registration, and satisfaction of legal requirements. Final wording and conditions — including suspension conditions and redemption paths — will be finalized after legal review.</li>
-            <li id="fn-6">Identity verification, account opening, and transfer confirmation take place on the screens of JPYC EX (an external service that issues and exchanges JPYC). Operational conditions — including whether re-verification is required, the minimum issuance amount (currently ¥3,000), and the minimum payment amount — may change according to the external service's specifications.</li>
+            <li id="fn-5">Statements about chargebacks describe structural characteristics of the payment mechanism. Our policy is not to suspend lawful transactions uniformly or arbitrarily based on industry, but this assumes agreement to the terms of use and satisfaction of legal requirements. Official conditions, including the conditions for suspension, will be set out in the terms of use.</li>
+            <li id="fn-6">Identity verification, account opening, and transfer confirmation take place on the screens of JPYC EX (an external service that issues and exchanges JPYC). Operational conditions — including whether re-verification is required, the issuance amount (currently ¥3,000 to ¥1,000,000 per issuance), and the minimum payment amount — may change according to the external service's specifications.</li>
             <li id="fn-7">Credit-card-number theft damage in 2025 as published by the Japan Consumer Credit Association.</li>
-            <li id="fn-8">The My Number card holding rate is based on card issuance figures published by the Ministry of Internal Affairs and Communications (media tallies; as of the end of January 2026). Cumulative JPYC issuance is the value as of the end of May 2026, based on JPYC Inc. press releases (published October 2025 and June 2026).</li>
+            <!-- Sources for the figures: https://prtimes.jp/main/html/rd/p/000000331.000054018.html / https://www.soumu.go.jp/main_content/001095357.pdf -->
+            <li id="fn-8">The My Number card holding rate is based on the Ministry of Internal Affairs and Communications' published figures on My Number card holdings (「マイナンバーカードの保有状況について」, as of the end of September 2026), expressed as a share of the resident-register population as of January 1, 2026. Cumulative JPYC issuance is the value as of September 18, 2026, based on a JPYC Inc. press release (announced September 18, 2026; cumulative issuance on JPYC EX).</li>
           </ol>
         </div>
       </section>
@@ -533,6 +622,13 @@
         <div>
           <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
           <p>Operated by <a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">Ango-ya LLC</a></p>
+          <!-- Sources: https://www.ango-ya.org/company/about / https://jp.asteria.com/news/2026031328233/ / https://prtimes.jp/main/html/rd/p/000000030.000062107.html / https://www.city.fukuoka.lg.jp/keizai/kigyo-renkei/mirai/fullsup/saitaitiran/documents/fullsupport_angoya.pdf -->
+          <ul class="footer-facts">
+            <li>Founded in February 2019, headquartered in Fukuoka City.</li>
+            <li>Co-developed "JPYC Explorer," an accounting audit support tool for JPYC, with Asteria Corporation (announced by Asteria on March 13, 2026).</li>
+            <li>Began a joint proof-of-concept of Web3 infrastructure, including validator node operation, with QTnet, Inc. (announced February 19, 2024).</li>
+            <li>A proof-of-concept project using the IoT data trading platform "PTPF" was selected for the Fukuoka City Demonstration Experiment Full Support Program (announced by Fukuoka City on January 31, 2022).</li>
+          </ul>
         </div>
         <p class="footer-note">© 2026 STBLpay. Operated by Ango-ya</p>
       </div>
