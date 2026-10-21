@@ -83,7 +83,8 @@
   --ifm-global-shadow-md: none;
   --ifm-global-shadow-tl: none;
 
-  --ifm-navbar-height: 64px;
+  /* LP のヘッダーと同じく、高さ 64px ＋下の罫線 1px */
+  --ifm-navbar-height: 65px;
   --ifm-navbar-background-color: rgba(255, 255, 255, 0.96);
   --ifm-navbar-shadow: none;
   --ifm-navbar-link-color: var(--gray);
@@ -227,6 +228,7 @@ kbd {
 }
 
 .navbar__logo {
+  display: flex;
   width: 136px;
   height: auto;
   margin-right: 0;
@@ -288,6 +290,7 @@ kbd {
 }
 
 .navbar__link.lp-nav {
+  display: inline-block;
   padding: 0 14px;
   font-size: 14px;
   font-weight: 500;
@@ -306,7 +309,6 @@ kbd {
   align-items: center;
   min-height: 38px;
   padding: 0 16px;
-  margin-left: 8px;
   border: 1px solid var(--ink);
   color: var(--ink);
   font-size: 13.5px;
@@ -330,9 +332,16 @@ kbd {
   text-decoration: none;
 }
 
-/* CTA の右のダークモードの切り替えと間を空ける */
-.navbar__items--right .navbar__item:has(> .navbar-cta) {
-  margin-right: 8px;
+
+/* LP は 600px 以下でヘッダーの高さを 58px（＋罫線 1px）にする */
+@media (max-width: 600px) {
+  :root {
+    --ifm-navbar-height: 59px;
+  }
+
+  .navbar__logo {
+    width: 118px;
+  }
 }
 
 /* LP と同じく、狭い画面でもヘッダーに CTA を残す（ほかの項目はメニューに入る） */

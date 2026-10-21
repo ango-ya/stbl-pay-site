@@ -72,6 +72,8 @@ const config: Config = {
   themeConfig: {
     colorMode: {
       respectPrefersColorScheme: true,
+      // 切り替えのボタンは出さない（ヘッダーを LP と同じ並びにするため）。ライト／ダークは OS の設定に従う
+      disableSwitch: true,
     },
     navbar: {
       logo: {
