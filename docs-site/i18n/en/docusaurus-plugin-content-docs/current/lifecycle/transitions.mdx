@@ -50,11 +50,11 @@ A Webhook arrives only when the payment reaches a [terminal](/reference/glossary
 | `signed` | A bank transfer is needed, and the checkout page's reservation-start notification was received (the outcome of the JPYC EX procedure is not checked) | `issue_pending` |
 | `signed` | STBLpay confirmed that the balance is sufficient | `deposit_confirmed` |
 | `signed` | The operation expiry was reached | `expired` |
-| `signed` | The buyer canceled on My Page | `canceled` |
+| `signed` | The buyer canceled on My Page (マイページ) | `canceled` |
 | `issue_pending` | The payable amount became available within the deadline (the deposit of issued JPYC, or its sum with the current balance) | `deposit_confirmed` |
 | `issue_pending` | The destination of the deposit from JPYC EX does not match the `sender` of the payment operation the buyer signed (the buyer's wallet used for this payment) | `failed` |
 | `issue_pending` | The deposit deadline and the finalization grace period have passed | `expired` |
-| `issue_pending` | The buyer canceled on My Page before the deposit was confirmed | `canceled` |
+| `issue_pending` | The buyer canceled on My Page (マイページ) before the deposit was confirmed | `canceled` |
 | `deposit_confirmed` | The wallets have not been created yet | `deploying` |
 | `deposit_confirmed` | STBLpay started execution | `executing` |
 | `deposit_confirmed` | Before execution, an unrecoverable failure was determined, or retries were used up | `failed` |
@@ -93,7 +93,7 @@ The deposit deadline is separate from the execution deadline of the payment oper
 
 ## Cancellation
 
-Only the buyer can cancel a payment. The buyer approves with a passkey and cancels on STBLpay's My Page. A payment can be canceled in `signed` and in `issue_pending` before the deposit is confirmed. There is no way for the merchant or STBLpay to cancel. When a payment is canceled, a `payment.canceled` Webhook is sent to the merchant. Do not equate the issuer's reservation cancellation with STBLpay's `canceled`.
+Only the buyer can cancel a payment. The buyer approves with a passkey and cancels on STBLpay's My Page (マイページ). A payment can be canceled in `signed` and in `issue_pending` before the deposit is confirmed. There is no way for the merchant or STBLpay to cancel. When a payment is canceled, a `payment.canceled` Webhook is sent to the merchant. Do not equate the issuer's reservation cancellation with STBLpay's `canceled`.
 
 ## Technical details {/* #technical-details */}
 

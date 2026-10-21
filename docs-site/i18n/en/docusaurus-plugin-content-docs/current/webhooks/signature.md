@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Signature verification
 
-If you rely on a Webhook to confirm an order, you must verify the signature and timestamp, and process events idempotently by event ID.
+If you use a Webhook to confirm orders, you must verify the signature and timestamp, and process events idempotently by event ID.
 
 ## Values to verify
 
@@ -51,23 +51,23 @@ Parsing JSON and serializing it again changes whitespace and key order. Use the 
 
 ## Issuing and regenerating the signing secret
 
-Configure the Webhook in the merchant console: open the target online store from the menu item 「お店と QR コード」 (Store & QR code), then use 「お支払い完了のお知らせ先」 (Payment completion notification endpoint) in the 「組み込みの準備」 (Integration setup) tab.
+Configure the Webhook in the merchant console. Open Store & QR code (お店と QR コード) from the menu and select your online store. Then use Payment completion notification endpoint (お支払い完了のお知らせ先) in the Integration setup (組み込みの準備) tab.
 
-- **The signing secret is issued when you first set the endpoint URL, and it is shown only then.** It cannot be shown again after you close the screen. Store it in the secret management system of your receiving server. If you fail to save it, regenerate the signing secret.
-- **Changing the URL does not change the signing secret.** 「URL を変更」 (Change URL) does not issue a secret.
-- **When you press 「署名鍵を作り直す」 (Regenerate signing secret), both the new secret and the current secret are valid for only 24 hours.** The current secret remains as the previous signing secret, and its expiry time is shown on the screen. During this period, the signature header contains two `v1` values. The receiver collects both, and accepts the request if the value computed with a secret it holds matches either one. Switch your receiver to the new secret within the 24 hours.
-- **While the previous signing secret is still valid, you cannot regenerate again** (409 `merchant/webhook_rotation_pending`; the expiry is in `details.previousSecretExpiresAt`). You can regenerate once the expiry has passed. Requests are not signed with a previous secret past its expiry.
+- **The signing secret is issued when you first set the endpoint URL, and it is shown only then.** You cannot view it again after you close the screen. Store it in the secret management system of your receiving server. If you fail to save it, regenerate the signing secret.
+- **Changing the URL does not change the signing secret.** Change URL (URL を変更) does not issue a secret.
+- **When you click Regenerate signing secret (署名鍵を作り直す), both the new secret and the current secret are valid for only 24 hours.** The current secret remains as the previous signing secret, and its expiry time is shown on the screen. During this period, the signature header contains two `v1` values. Your receiver collects both values and accepts the request if the value computed with a secret it holds matches either one. Switch your receiver to the new secret within the 24 hours.
+- **While the previous signing secret is still valid, you cannot regenerate again** (409 `merchant/webhook_rotation_pending`; the expiry is in `details.previousSecretExpiresAt`). You can regenerate once the expiry has passed. STBLpay does not sign with a previous secret after it expires.
 
 ## If the key is compromised {/* #if-the-key-is-compromised */}
 
-Regenerating the signing secret keeps the previous signing secret for 24 hours, so it cannot be used to respond to a leak. **Use 「webhook を解除」 (Remove webhook), then set it up again.**
+Regenerating the signing secret keeps the previous signing secret valid for 24 hours, so it does not address a leak. **Use Remove webhook (webhook を解除), then set it up again.**
 
 - Removing it deletes both the new and previous signing secrets (the previous one is also invalidated immediately).
 - Undelivered and pending-retry notifications are discarded. **Setting up again does not resume discarded notifications.** Setting up again issues a new signing secret.
-- Notifications already being sent may not be cancelable.
+- Notifications already in flight may not be cancelable.
 - Reconcile the results of discarded payments with the [status lookup](/server/retrieve-payment) (`GET /payment_status/:paymentIntentId`). The payments themselves are not canceled.
-- On the receiving side as well, delete the old signing secret.
+- On your receiving side, also delete the old signing secret.
 
 Notifications for payments that occurred while no Webhook was configured are not sent even if you configure one later. Likewise, reconcile them with the status lookup.
 
-Do not output the signing secret to the browser or logs. [Event persistence and deduplication](/webhooks/idempotency) are also required.
+Do not expose the signing secret in the browser or logs. You also need [event persistence and deduplication](/webhooks/idempotency).

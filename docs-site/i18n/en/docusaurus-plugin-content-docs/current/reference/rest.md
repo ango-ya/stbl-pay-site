@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # REST API Reference
 
-This page covers the methods, paths, authentication, fields, and errors of the API that the merchant server calls. Ask your STBLpay contact for the endpoint URL when you onboard ([contact](/support/troubleshooting#contact)). Do not assume a public URL or a localhost default.
+This page lists the methods, paths, authentication, fields, and errors of the API that your server calls. You get the endpoint URL from your STBLpay contact when you onboard ([contact](/support/troubleshooting#contact)). Don't assume a public URL or a localhost default.
 
 ## Endpoint list
 
@@ -53,12 +53,12 @@ Creates a payment and returns the `checkoutUrl` that you send the buyer to.
   - The hostname **exactly matches** a domain registered in the merchant console (case-insensitive). Subdomains are treated as different domains, so if you registered `shop.example.com`, `www.shop.example.com` cannot be used. For domain registration, see [Domain registration](/security/domain).
   - There are no restrictions on the path and query (example: `https://shop.example.com/orders/ord_0001/return`).
 
-  When a payment reaches a terminal state, the checkout page shows a link back (when the payment succeeded, 「ショップに戻る」 (Back to the shop); in other terminal states, 「お支払い先に戻る」 (Back to the payee)). When the buyer clicks it, `returnUrl` opens with a `stbl_pay_intent` query parameter appended (example: `https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_xxx`). The value is the payment ID. If `returnUrl` already has a query parameter with the same name, it is overwritten.
+  When a payment reaches a terminal state, the checkout page shows a link back: "Back to the shop" (ショップに戻る) if the payment succeeded, or "Back to the payee" (お支払い先に戻る) in any other terminal state. When the buyer clicks it, `returnUrl` opens with a `stbl_pay_intent` query parameter appended (example: `https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_xxx`). The value is the payment ID. If `returnUrl` already has a query parameter with the same name, it is overwritten.
 - `merchantExpiresAt` is used as the upper limit of the deposit deadline (which is determined when the buyer proceeds to the JPYC EX procedure). It does not shorten the operation deadline (`checkoutExpiresAt`). You can only specify a datetime more than 3 days after creation. Only the form ending in UTC `Z` is accepted (example: `"2026-10-20T03:00:00Z"`). A value with an offset such as `+09:00` returns 400 `common/invalid_request`. Even if you create again with the same `orderId`, the value received first is not overwritten. See [How deadlines work](/lifecycle/transitions).
 
 ### Response
 
-On success, returns 201 (also 201 when it returns an existing payment for the same `orderId`) with the following JSON.
+On success, the API returns 201 with the following JSON. It also returns 201 when it returns an existing payment for the same `orderId`.
 
 | Field | Type | Description |
 |---|---|---|
@@ -122,7 +122,7 @@ Returns the current status of a payment. **There is no authentication.** No API 
 
 ### Response
 
-On success, returns 200 with the following JSON.
+On success, the API returns 200 with the following JSON.
 
 | Field | Type | Description |
 |---|---|---|
@@ -158,7 +158,7 @@ GET /payment_status/pi_0123456789abcdef
 
 ## Status values {/* #status-values */}
 
-`status` is one of the following. Only `settled` means the payment succeeded; base delivery of goods and recording of revenue on this status. For the meaning of the categories and the transitions, see the [status list](/lifecycle/statuses).
+`status` is one of the following. Only `settled` means the payment succeeded. Base delivery of goods and recording of revenue on this status. For the meaning of the categories and the transitions, see the [status list](/lifecycle/statuses).
 
 | Value | Category | Short meaning |
 |---|---|---|
@@ -204,14 +204,14 @@ The value in `failedReason` (status lookup) and in the Webhook `failed_reason` i
 | `not_pay_call` / `not_allowed_call` | The payment operation was not in an allowed form |
 | `fee_amount_mismatch` | The fee amount does not match |
 | `fee_not_collected` | The fee was not collected |
-| `merchant_wallet_outdated` | The implementation of the merchant's receiving wallet is outdated and the grace period has passed. 「アップデート」 (Update) in the merchant console is required |
+| `merchant_wallet_outdated` | The implementation of the merchant's receiving wallet is outdated and the grace period has passed. You must run "Update" (アップデート) in the merchant console |
 | `unexpected_implementation` | The wallet implementation differs from what was expected |
 | `userop_reverted` | A failure of the payment operation that matches none of the above |
 | `nonce_conflict` | The outcome could not be determined (the status is also `nonce_conflict`). **No Webhook is delivered; it is visible only through a status lookup.** [Referred for investigation](/lifecycle/edge-cases) |
 | `merchant_suspended` | Because of a merchant suspension, a payment whose sending had not started was moved to a terminal state. JPYC already deposited remains in the buyer's wallet. [Merchant suspension](/lifecycle/edge-cases#merchant-suspension) |
 | `unclassified` | A failure that has not been classified yet |
 
-With any code, the payment ends as `failed` and has not succeeded. The code is a clue for closing the order as failed and then separating investigation from guidance to the buyer. The meaning of a code does not change, and codes may be added.
+With any code, the payment ends as `failed` and has not succeeded. Close the order as failed, then use the code to decide what to investigate and what to tell the buyer. The meaning of a code does not change, and codes may be added.
 
 ## Errors {/* #errors */}
 
@@ -246,6 +246,6 @@ The status lookup (`GET /payment_status/:paymentIntentId`) returns `payment/not_
 
 When a 429 is returned, retry after a pause, regardless of the body's shape. Payment creation and status lookup have no application-level rate limit. However, rate limiting may be applied by the network layer in front, and in that case the body does not contain a `code`.
 
-Branch on `code`, and use the HTTP status as a supplement. **Fall back to your common error handling for unknown codes.** Codes may be added. `details` is optional structured information. The merchant decides the display text.
+Branch on `code`, and use the HTTP status only as a supplement. **Fall back to your common error handling for unknown codes.** Codes may be added. `details` is optional structured information. You decide the text to display.
 
 Refunds are a merchant console feature, and there is no refund API that the merchant server can call ([scope of refunds](/refunds/overview)).

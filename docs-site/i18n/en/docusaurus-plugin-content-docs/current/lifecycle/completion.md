@@ -22,7 +22,7 @@ None of the following can be used as a basis for success: a `status` from the br
 ## Matching the order and providing exactly once
 
 1. Confirm that it matches the payment ID saved on your own order.
-2. For a Webhook, also confirm that it matches the merchant, the order, and the amount at creation. Send any mismatch to investigation.
+2. For a Webhook, also confirm that it matches the merchant, the order, and the amount at creation. Route any mismatch to investigation.
 3. Update the order status conditionally, and create the outbox for providing goods in the same DB transaction.
 4. Run external delivery of goods and email sending using an idempotency key such as the order ID.
 
@@ -32,4 +32,4 @@ If you only mark the received event as "processed" first and then run external p
 
 Amounts in a Webhook are strings. For a settled payment, check the received amount in `net_received_jpy` and the fee in `fee_jpy`. In `payment.settled` these are the actual on-chain amounts; only when the actual amounts could not be obtained are they the estimates from creation. In `payment.failed`, `payment.canceled`, and `payment.expired`, no funds moved, so both are `"0"` (`amount_jpy` stays the order amount). Do not record the amount in a failed, canceled, or expired notification as a deposit. The status lookup API has no amounts, so match against your saved order and the creation response, and do not infer amounts from the lookup response.
 
-`settled` is terminal. A delivery failure of a notification or a later refund does not change the original payment to another status. Send a settled notification for an order that cannot be fulfilled to operational handling.
+`settled` is terminal. A delivery failure of a notification or a later refund does not change the original payment to another status. Route a settled notification for an order that cannot be fulfilled to operational handling.

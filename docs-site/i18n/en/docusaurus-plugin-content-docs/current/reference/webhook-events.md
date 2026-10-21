@@ -41,7 +41,7 @@ The four types `payment.settled`, `payment.failed`, `payment.canceled`, and `pay
 | `payment.settled` | Order amount | The fee actually deducted on-chain and the amount the merchant receives (actual amounts) |
 | `payment.failed` / `payment.canceled` / `payment.expired` | Order amount | Both are `"0"` |
 
-The actual amounts in `payment.settled` are taken from the result of executing the payment. Only when the fee could not be obtained from the execution result, a value calculated from the estimate made at payment creation is used instead. For that reason, `fee_jpy` in `payment.settled` may differ from `feeJpy` in the creation response. Use `net_received_jpy` in `payment.settled` to record the deposit.
+The actual amounts in `payment.settled` are taken from the result of executing the payment. Only when the fee cannot be obtained from the execution result is a value calculated from the estimate made at payment creation used instead. For that reason, `fee_jpy` in `payment.settled` may differ from `feeJpy` in the creation response. Use `net_received_jpy` in `payment.settled` to record the deposit.
 
 Notifications for failure, cancellation, and expiry mean no funds moved, so `fee_jpy` and `net_received_jpy` are `"0"`. Even though `amount_jpy` still holds the order amount, it does not mean that a deposit to the merchant succeeded. Base your deposit recording on `payment.settled` or on `settled` from a server-to-server lookup.
 

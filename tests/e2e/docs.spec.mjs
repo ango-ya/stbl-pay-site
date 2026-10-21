@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // 加盟店向けドキュメント（/docs/・docs-site のビルド結果）
@@ -101,11 +101,19 @@ test.describe("加盟店向けドキュメント", () => {
     expect(await chart.textContent()).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
   });
 
-  test("英語版の本文に日本語が残っていない（画面の名前の「」は除く）", async ({ page }) => {
-    for (const path of ["/docs/en/", "/docs/en/reference/rest", "/docs/en/lifecycle/statuses"]) {
+  test("英語版の本文に日本語が残っていない（画面の名前を添えた括弧の中は除く）", async ({ page }) => {
+    // 画面は日本語だけなので、英語の後ろに画面の日本語を括弧で添える（例：Store & QR code (お店と QR コード)）。
+    // それ以外の場所に日本語があれば訳し漏れ
+    const root = fileURLToPath(new URL("../../docs-site/i18n/en/docusaurus-plugin-content-docs/current/", import.meta.url));
+    const pages = readdirSync(root, { recursive: true })
+      .filter((f) => /\.mdx?$/.test(f))
+      .map((f) => `/docs/en/${f.replace(/\.mdx?$/, "").replace(/^overview$/, "")}`);
+    expect(pages.length).toBeGreaterThan(30);
+    test.setTimeout(pages.length * 5000);
+    for (const path of pages) {
       await page.goto(path);
-      const text = (await page.locator("article").textContent()).replace(/「[^」]*」/g, "");
-      expect(text, path).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+      const text = (await page.locator("article").textContent()).replace(/\((?:[^()]|\([^()]*\))*\)/g, "");
+      expect(text, path).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff「」]/);
     }
   });
 

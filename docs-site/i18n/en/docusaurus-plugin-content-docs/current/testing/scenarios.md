@@ -6,12 +6,12 @@ sidebar_position: 2
 
 # Test scenarios
 
-This is a checklist for confirming that behavior matches this guide. Record items you cannot reproduce as unverified, not as successful.
+Use this checklist to confirm that behavior matches this guide. Record items you cannot reproduce as unverified, not as successful.
 
 ## Creating a payment
 
 - [ ] When you create a payment with `amountJpy` as a string, the create response and `checkoutUrl` are returned
-- [ ] When you pass the amount as a JSON number, or create with only the legacy field, the request is rejected
+- [ ] When you pass the amount as a JSON number, or create a payment with only the legacy field, the request is rejected
 - [ ] When you resend the same `orderId` consecutively or concurrently, the same payment is returned and no duplicate is created
 - [ ] When you call with a nonexistent ID or invalid input, the error is returned in the form `{ code, details? }`
 
@@ -30,9 +30,9 @@ This is a checklist for confirming that behavior matches this guide. Record item
 - [ ] When only the missing amount is issued, the status goes to `deposit_confirmed` if the current balance plus the issued amount is enough
 - [ ] For a payment that uses a wallet for the first time, the status goes through `deploying`, returns to `deposit_confirmed`, and the payment is executed after that
 - [ ] When the operation deadline passes without a signature, the status goes from `created` to `expired`
-- [ ] When the deadline passes after an issuance reservation, the issuance reservation deadline plus 14 days, the upper limit specified by the merchant, and the grace period for deposit confirmation apply
-- [ ] When a deposit arrives for a payment whose `canceled` is final, the payment is not revived and the funds remain in the buyer's wallet
-- [ ] When STBLpay cannot observe a cancellation at JPYC EX, it is not treated as STBLpay's `canceled`, and monitoring continues
+- [ ] When the deadline passes after an issuance reservation, the following apply: the issuance reservation deadline plus 14 days, the upper limit the merchant specified, and the grace period for deposit confirmation
+- [ ] When a deposit arrives for a payment whose `canceled` status is final, the payment is not revived and the funds remain in the buyer's wallet
+- [ ] When STBLpay cannot observe a cancellation at JPYC EX, it does not treat it as STBLpay's `canceled`, and monitoring continues
 
 ## Receiving Webhooks
 
@@ -50,4 +50,4 @@ This is a checklist for confirming that behavior matches this guide. Record item
 
 - [ ] When you tamper with the query of the browser's return destination, the order is not marked as paid
 
-Refunds are only through the payment detail screen of the merchant console. To test a refund, prepare the owner's passkey approval and a balance in the receiving wallet.
+Refunds are available only through the payment detail screen of the merchant console. To test a refund, prepare the owner's passkey approval and a balance in the receiving wallet.

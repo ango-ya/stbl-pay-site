@@ -6,11 +6,11 @@ sidebar_position: 4
 
 # Quick Start
 
-These are the minimal steps to check payment creation, navigation, and status lookup against an endpoint that behaves as this guide describes. Prepare the [connection information](/getting-started/prerequisites). The environment for merchants to try is in preparation ([Sandbox](/testing/sandbox)).
+These are the minimal steps to check payment creation, navigation, and status lookup against an endpoint that behaves as this guide describes. Prepare the [connection information](/getting-started/prerequisites) first. The environment for merchants to try is in preparation ([Sandbox](/testing/sandbox)).
 
 ## 1. Create a payment from the server
 
-The following is an example to run on the server side. Set `STBL_PAY_BACKEND` and `STBL_PAY_API_KEY` to the values for your target environment. Replace the example `returnUrl` with a URL on your registered domain (for requirements, see [Domain registration](/security/domain#returnurl-requirements)).
+The following example runs on the server side. Set `STBL_PAY_BACKEND` and `STBL_PAY_API_KEY` to the values for your target environment. Replace the example `returnUrl` with a URL on your registered domain (for requirements, see [Domain registration](/security/domain#returnurl-requirements)).
 
 ```bash
 curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \
@@ -28,7 +28,7 @@ Save the mapping between the order and `paymentIntentId`, and pass the `checkout
 window.location.assign(checkoutUrl);
 ```
 
-Do not embed the API key in HTML or JavaScript. Do not put the dedicated checkout page in an iframe or popup; navigate the whole page.
+Do not embed the API key in HTML or JavaScript. Do not put the dedicated checkout page in an iframe or popup. Navigate the whole page.
 
 ## 3. Check the status on the server
 

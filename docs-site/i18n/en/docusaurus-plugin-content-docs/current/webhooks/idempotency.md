@@ -12,7 +12,7 @@ Retries do not change the event body or `id`. **Deduplicate by putting a UNIQUE 
 
 ## Separate test notifications first
 
-After signature verification, before saving to the inbox, check whether `test === true` on the value obtained by running `JSON.parse` on the raw body. For a test notification, change no order and return only `2xx` ([Test notifications](/webhooks/events#test-notifications)).
+After signature verification, before saving to the inbox, check whether `test === true` on the value you get from running `JSON.parse` on the raw body. For a test notification, change no order and return only `2xx` ([Test notifications](/webhooks/events#test-notifications)).
 
 ## Separate receiving from processing
 
@@ -38,10 +38,10 @@ Do the following in the same DB transaction.
 3. Update the order conditionally, and record the outbox for fulfillment and similar actions under a unique order key.
 4. Record the processed time on the event.
 
-Call external processing from a worker after the commit, and pass an idempotency key to external services too. Route status lookups and manual handling through the same order update path, so that goods are not shipped twice even when the event IDs differ.
+Call external processing from a worker after the commit, and pass an idempotency key to external services too. Route status lookups and manual handling through the same order update path, so that you never ship goods twice, even when the event IDs differ.
 
 ## Ordering
 
-Arrival order is not guaranteed, including retries. Do not overwrite an order based only on the magnitude of `created_at`; verify the terminal state of the payment against the order. Route inconsistencies, such as different terminal results arriving for the same payment, to status lookup and investigation instead of processing them automatically.
+Arrival order is not guaranteed, including retries. Do not overwrite an order based only on `created_at` ordering. Verify the terminal state of the payment against the order. If events are inconsistent, for example different terminal results arrive for the same payment, do not process them automatically. Route them to status lookup and investigation.
 
 See also [completion criteria](/lifecycle/completion) and the [event list](/webhooks/events).

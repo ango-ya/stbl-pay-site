@@ -6,6 +6,6 @@ sidebar_position: 1
 
 # Sandbox
 
-**The environment for merchants to test in is in preparation.** For details, contact the [contact](/support/troubleshooting#contact).
+**The environment for merchants to test in is in preparation.** For details, reach out through the [contact](/support/troubleshooting#contact).
 
 The items to check are in [Test scenarios](/testing/scenarios).

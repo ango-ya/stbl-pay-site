@@ -10,8 +10,8 @@ Terms used in the guide, grouped by theme. For more on the blockchain side, see 
 
 ## How a payment progresses
 
-- **Create a payment**: Registering the amount and order number with STBLpay and getting a payment slip made. This is the operation of calling `POST /payment_intents`, and you send the buyer to the `checkoutUrl` it returns.
-- **Payment intent**: The slip for a payment you created. You tell them apart by `paymentIntentId`. Example: for order `order-123`, one `paymentIntentId` is decided.
+- **Create a payment**: Registering the amount and order number with STBLpay so that it issues a payment slip. This is the operation of calling `POST /payment_intents`, and you send the buyer to the `checkoutUrl` it returns.
+- **Payment intent**: The slip for a payment you created. You tell them apart by `paymentIntentId`. Example: order `order-123` gets exactly one `paymentIntentId`.
 - **Settled (succeeded)**: The state in which the merchant may deliver the goods. It refers only to when the status becomes `settled`.
 - **Terminal**: The state in which the payment goes no further. `settled`, `failed`, `canceled`, `expired`, and `nonce_conflict` apply. Their meanings are in [Status values](/reference/rest#status-values). A payment that has reached a terminal state never changes to another status.
 - **Transition**: The status of a payment changing to another status. Example: changing from `created` to `signed`.

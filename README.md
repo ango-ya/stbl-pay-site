@@ -20,6 +20,7 @@ python3 -m http.server 4173 --directory dist
 - 英語版は `/docs/en/`。訳は `docs-site/i18n/en/docusaurus-plugin-content-docs/current/` に、日本語と同じパスで置く。日本語のページを直したら英語も直す
   - 書きながら確認するときは `cd docs-site && npm start -- --locale en`（dev サーバーは 1 言語ずつしか出さない）
   - リンク先になる見出しは、英語では `## Idempotency {/* #idempotency */}` のように id を明示する。リンク切れ・アンカー切れはビルドで落ちる
+  - 画面（加盟店コンソール・決済ページ）は日本語だけなので、画面の名前は英語の後ろに日本語を括弧で添える（例：`Store & QR code (お店と QR コード)`）。それ以外に日本語を残さない（E2E で確かめる）
   - ナビ・フッター・サイドバーのカテゴリ名は `docusaurus.config.ts`・`sidebars.ts` で、状態遷移の図の文は `StateFlowchart.tsx` の `EN` で書き分ける
 - `scripts/build-dist.sh` がビルドして `dist/docs/` に入れ、`_headers` の docs 用 CSP にインラインスクリプトのハッシュを書き込む（`scripts/docs-csp.mjs`）
 - 配信するのはビルド結果だけ。`docs-site/` のソースは `dist/` に入れない
