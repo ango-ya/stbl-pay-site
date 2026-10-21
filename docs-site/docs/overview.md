@@ -21,7 +21,7 @@ STBLpay（すてぶるペイ）は、銀行振込による日本円の支払い�
 
 1. **サーバーで決済を作る。** 注文を確定して金額をサーバーで計算し、API で決済を作成します。例：注文 `ord_0001`、4,980 円の決済を作る。詳しくは[決済を作成する](/server/create-payment)。
 2. **返ってきた `checkoutUrl` へ利用者を移動させる。** 例：「支払う」ボタンを押した利用者のブラウザを、`checkoutUrl` へ遷移させる。詳しくは[決済を開始する](/client/start-payment)。
-3. **サーバーで結果を受け取る。** Webhook を署名検証して注文を更新します。例：成立の通知を受けたら、注文を「支払い済み」にして商品を一度だけ提供する。詳しくは[完了判定](/lifecycle/completion)と[Webhook](/webhooks/events)。
+3. **サーバーで結果を受け取る。** Webhook（署名を検証する）か[状態照会](/server/retrieve-payment)で結果を確かめ、注文を更新します。Webhook の設定は任意です。例：成立を確かめたら、注文を「支払い済み」にして商品を一度だけ提供する。詳しくは[完了判定](/lifecycle/completion)と[Webhook](/webhooks/events)。
 
 それ以外は、次のとおり STBLpay と利用者が行います。
 
