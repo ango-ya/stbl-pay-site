@@ -28,8 +28,9 @@ test.describe("加盟店向けドキュメント", () => {
 
     await expect(page).toHaveTitle(/STBLpay ドキュメント/);
     await expect(page.locator("h1")).toContainText("STBLpay とは");
-    // LP へ戻るリンクは /docs/ を付けずにサイトのトップを指す
-    await expect(page.getByRole("link", { name: "トップ" })).toHaveAttribute("href", "/");
+    // ヘッダーは LP と同じ項目。LP の節へのリンクは /docs/ を付けずに LP を指す
+    await expect(page.locator(".navbar").getByRole("link", { name: "手数料", exact: true })).toHaveAttribute("href", "/#comparison");
+    await expect(page.locator(".navbar").getByRole("link", { name: "導入を相談する" })).toHaveAttribute("href", "/#early-access");
     expect(consoleErrors).toEqual([]);
   });
 
@@ -59,8 +60,8 @@ test.describe("加盟店向けドキュメント", () => {
 
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect(page).toHaveTitle(/STBLpay Docs/);
-    // 英語版の LP へ戻る
-    await expect(page.locator(".navbar").getByRole("link", { name: "Home", exact: true })).toHaveAttribute("href", "/en/");
+    // ヘッダーの LP の節へのリンクは、英語版の LP を指す
+    await expect(page.locator(".navbar").getByRole("link", { name: "Fees", exact: true })).toHaveAttribute("href", "/en/#comparison");
     expect(consoleErrors).toEqual([]);
   });
 
@@ -72,13 +73,23 @@ test.describe("加盟店向けドキュメント", () => {
   });
 
   test("言語の切り替えは LP と同じく、もう一方の言語の同じページへのリンク 1 つ", async ({ page }) => {
-    const nav = page.locator(".navbar__items--right");
+    const nav = page.locator(".navbar__inner");
     await page.goto("/docs/lifecycle/transitions");
     await expect(nav.getByRole("link", { name: "EN", exact: true })).toHaveAttribute("href", "/docs/en/lifecycle/transitions");
     await expect(nav.getByRole("link", { name: "日本語", exact: true })).toHaveCount(0);
     await page.goto("/docs/en/lifecycle/transitions");
     await expect(nav.getByRole("link", { name: "日本語", exact: true })).toHaveAttribute("href", "/docs/lifecycle/transitions");
     await expect(nav.getByRole("link", { name: "EN", exact: true })).toHaveCount(0);
+  });
+
+  test("決済フローのシーケンス図が日英とも描ける（Mermaid の構文エラーが出ない）", async ({ page }) => {
+    for (const path of ["/docs/getting-started/payment-flow", "/docs/en/getting-started/payment-flow"]) {
+      await page.goto(path);
+      const diagram = page.locator(".docusaurus-mermaid-container svg");
+      await expect(diagram, path).toHaveCount(1);
+      await expect(diagram, path).not.toContainText(/Syntax error|Parse error/);
+      await expect(diagram.locator("text.actor").first(), path).toBeVisible();
+    }
   });
 
   test("英語版の状態遷移の図は英語で描かれる", async ({ page }) => {

@@ -254,6 +254,52 @@ kbd {
   color: var(--ink);
 }
 
+/* LP のヘッダー（assets/lp.css の .site-header）と同じ並びにする。
+   幅は LP の .shell（1080px）、ロゴは左、項目は中央、CTA は右。
+   項目はグレーの文字で下線なし、間は 28px。今いる「ドキュメント」だけ濃くする */
+@media (min-width: 997px) {
+  .navbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .navbar__inner {
+    width: min(100% - 48px, 1080px);
+    margin: 0 auto;
+  }
+
+  .navbar__items:not(.navbar__items--right) {
+    flex: 1;
+  }
+
+  .navbar__brand {
+    margin-right: auto;
+  }
+
+  .navbar__items:not(.navbar__items--right) > :last-child {
+    margin-right: auto;
+  }
+}
+
+/* html の項目は Docusaurus が div.navbar__item で包むので、外側の余白を消して LP の間隔（28px）にする */
+.navbar__item:has(> .lp-nav),
+.navbar__item:has(> .navbar-cta) {
+  padding: 0;
+}
+
+.navbar__link.lp-nav {
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray);
+  text-decoration: none;
+}
+
+.navbar__link.lp-nav:hover,
+.navbar__link.lp-nav.navbar__link--active {
+  color: var(--ink);
+}
+
 /* LP ヘッダーと同じ枠付き CTA（LP は min-height 38px） */
 .navbar-cta {
   display: inline-flex;
@@ -278,6 +324,29 @@ kbd {
 
 .navbar-cta:active {
   transform: translateY(1px);
+}
+
+.navbar-cta {
+  text-decoration: none;
+}
+
+/* CTA の右のダークモードの切り替えと間を空ける */
+.navbar__items--right .navbar__item:has(> .navbar-cta) {
+  margin-right: 8px;
+}
+
+/* LP と同じく、狭い画面でもヘッダーに CTA を残す（ほかの項目はメニューに入る） */
+@media (max-width: 996px) {
+  .navbar__items--right .navbar__item:has(> .navbar-cta) {
+    display: block;
+  }
+
+  .navbar__items--right .navbar-cta {
+    display: inline-flex;
+    margin-left: 0;
+    font-size: 12.5px;
+    padding: 0 12px;
+  }
 }
 
 /* ---------- サイドバー ---------- */

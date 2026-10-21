@@ -15,12 +15,13 @@ export default function LocaleToggleNavbarItem({mobile = false}: {mobile?: boole
   // 別の言語は別のアプリとして出るので、SPA の遷移ではなく普通のリンクで移る
   const link = (
     <a
-      className={mobile ? 'menu__link' : 'navbar__item navbar__link'}
+      className={mobile ? 'menu__link' : 'navbar__link lp-nav'}
       href={`${createUrl({locale: target, fullyQualified: false})}${search}${hash}`}
       lang={target}
       hrefLang={target}>
       {target === 'en' ? 'EN' : '日本語'}
     </a>
   );
-  return mobile ? <li className="menu__list-item">{link}</li> : link;
+  // ヘッダーのほかの項目（html の項目）と同じく div.navbar__item で包み、高さと間隔をそろえる
+  return mobile ? <li className="menu__list-item">{link}</li> : <div className="navbar__item">{link}</div>;
 }

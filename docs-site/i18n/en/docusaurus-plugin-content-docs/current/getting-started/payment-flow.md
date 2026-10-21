@@ -21,7 +21,7 @@ sequenceDiagram
     Shop->>Shop: Save the order-to-payment ID mapping
     Shop-->>User: checkoutUrl
     User->>Page: Top-level navigation to the checkout page
-    Note over User,Page: Passkey signature; bank transfer procedure at the issuer if needed
+    Note over User,Page: Passkey signature, and the bank transfer at the issuer if needed
     Pay->>Pay: Confirm deposit, prepare wallet, execute payment
     par Flow 1: Finalize the order (Webhook or status lookup)
         Pay-->>Shop: Webhook (terminal result, if configured)
@@ -31,7 +31,7 @@ sequenceDiagram
             Pay-->>Shop: Status such as settled
         end
     and Flow 2: Buyer returns (for display)
-        Page-->>User: Show a link such as "Return to shop"
+        Page-->>User: Show a link such as "Back to the shop"
         User->>Shop: Click the link and return to returnUrl
         opt Order not yet updated
             Shop->>Pay: Status lookup

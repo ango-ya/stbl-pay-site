@@ -79,39 +79,41 @@ const config: Config = {
         // ロゴは LP へ戻る（src/theme/Logo）
         src: en ? 'img/logo-wordmark-stblpay-black.png' : 'img/logo-wordmark-suteburu-black.png',
       },
+      // LP のヘッダーと同じ項目を並べる。LP の節へのリンクは baseUrl（/docs/）を付けないよう html で書く。
+      // 「ドキュメント」は今いる場所として強調する。Quick Start などはサイドバーからたどる
       items: [
-        {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
-          position: 'left',
-          label: en ? 'Docs' : 'ドキュメント',
-        },
-        {
-          to: '/getting-started/quickstart',
-          label: 'Quick Start',
-          position: 'left',
-        },
-        {
-          to: '/reference/rest',
-          label: en ? 'Reference' : 'リファレンス',
-          position: 'left',
-        },
-
-        // 同じサイトの LP へ戻る。Docusaurus のリンクは baseUrl（/docs/）を付けてしまうので、html で書く
+        ...(en
+          ? [
+              ['#comparison', 'Fees'],
+              ['#flow', 'How it works'],
+              ['#videos', 'Video'],
+              ['#faq', 'FAQ'],
+            ]
+          : [
+              ['#comparison', '手数料'],
+              ['#flow', '仕組み'],
+              ['#videos', '動画'],
+              ['#faq', 'FAQ'],
+            ]
+        ).map(([hash, label]) => ({
+          type: 'html' as const,
+          position: 'left' as const,
+          value: `<a class="navbar__item navbar__link lp-nav" href="${lp}${hash}">${label}</a>`,
+        })),
         {
           type: 'html',
-          position: 'right',
-          value: `<a class="navbar__item navbar__link" href="${lp}">${en ? 'Home' : 'トップ'}</a>`,
+          position: 'left',
+          value: `<a class="navbar__item navbar__link lp-nav navbar__link--active" aria-current="page" href="/docs/${en ? 'en/' : ''}">${en ? 'Docs' : 'ドキュメント'}</a>`,
         },
         // LP と同じく、もう一方の言語へのリンクだけを出す（src/components/LocaleToggleNavbarItem.tsx）
         {
           type: 'custom-localeToggle',
-          position: 'right',
+          position: 'left',
         },
         {
           type: 'html',
           position: 'right',
-          value: `<a class="navbar__item navbar__link navbar-cta" href="${lp}#early-access">${en ? 'Talk to us' : '導入を相談する'}</a>`,
+          value: `<a class="navbar__item navbar__link navbar-cta" href="${lp}#early-access">${en ? 'Talk to us about integrating' : '導入を相談する'}</a>`,
         },
       ],
     },
