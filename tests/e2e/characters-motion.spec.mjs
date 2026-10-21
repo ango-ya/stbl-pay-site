@@ -1002,6 +1002,38 @@ test.describe("ヒーローの登場", () => {
     expect(errors).toEqual([]);
   });
 
+  test("手を振る動きは 1.8 秒。animationend が来なくても、2200ms ちょうどで is-waving を外す（それより早くは外さない）", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const errors = watchErrors(page);
+    await page.clock.install({ time: new Date("2026-10-21T00:00:00Z") });
+    await page.clock.pauseAt(new Date("2026-10-21T00:00:01Z"));
+    // animationend を window の捕捉の段階で止めて、すてぶるくんまで届かないようにする（保険のタイマーだけで外れるかを見る）
+    await page.addInitScript(() => {
+      window.addEventListener("animationend", (e) => e.stopImmediatePropagation(), true);
+    });
+    await page.goto("/");
+    const rig = page.locator(HERO_RIG);
+    await expect(rig).toHaveClass(IS_LIVE, { timeout: 15_000 });
+    await page.clock.runFor(1200);
+    await expect(rig).toHaveClass(/\bis-waving\b/);
+    const arm = await rig.locator(".kun-arm-r").evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { name: cs.animationName, duration: cs.animationDuration, count: cs.animationIterationCount };
+    });
+    expect(arm, "右腕は kun-wave を 1.8 秒・1 回").toEqual({ name: "kun-wave", duration: "1.8s", count: "1" });
+
+    // 実時間で 1.8 秒を過ぎても（animationend は止めてある）、2199ms までは振ったまま
+    await page.waitForTimeout(2000);
+    await page.clock.runFor(2199);
+    await expect(rig).toHaveClass(/\bis-waving\b/);
+    // 2200ms で外れる
+    await page.clock.runFor(1);
+    await expect(rig).not.toHaveClass(/\bis-waving\b/);
+    expect(errors).toEqual([]);
+  });
+
   test("スクリプトが動き出したときヒーローが画面に無ければ、あとで見えても手を振らず、すてぶるちゃんの絵もそのまま", async ({
     page,
   }) => {
