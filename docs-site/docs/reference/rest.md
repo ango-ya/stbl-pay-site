@@ -37,7 +37,7 @@ sidebar_position: 2
 | `amountJpy` | 金額の文字列 | 必須 | 請求額（円） |
 | `orderId` | 文字列（最大128文字） | 任意 | 自社の注文 ID。冪等性のキー |
 | `returnUrl` | HTTPS URL の文字列 | 任意 | 決済後に利用者が戻る URL |
-| `merchantExpiresAt` | 日時の文字列 | 任意 | 決済の期限の上限 |
+| `merchantExpiresAt` | 日時の文字列 | 任意 | 着金期限の上限 |
 
 ### フィールドの注意
 
@@ -53,8 +53,8 @@ sidebar_position: 2
   - ホスト名が、加盟店コンソールで登録したドメインと**完全に一致**します（大文字小文字は区別しません）。サブドメインは別のドメインとして扱うため、`shop.example.com` を登録したときに `www.shop.example.com` は使えません。ドメインの登録は[ドメイン登録](/security/domain)を参照してください。
   - パスとクエリには制限がありません（例：`https://shop.example.com/orders/ord_0001/return`）。
 
-  利用者が「ストアに戻る」リンクを押すと、`returnUrl` に `stbl_pay_intent` クエリが付いて開きます（例：`https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_xxx`）。値は決済 ID です。`returnUrl` に同じ名前のクエリがあると上書きされます。
-- `merchantExpiresAt` は、サーバーが決める期限を短くする上限として使われます。UTC の `Z` で終わる形だけを受け付けます（例：`"2026-10-20T03:00:00Z"`）。`+09:00` のようなオフセット付きは 400 `common/invalid_request` です。同じ `orderId` で再作成しても、最初に受け取った値は上書きされません。[期限の扱い](/lifecycle/transitions)を参照してください。
+  決済が終端に着くと、決済ページに戻るリンク（成立したときは「ショップに戻る」、それ以外の終端では「お支払い先に戻る」）が出ます。利用者が押すと、`returnUrl` に `stbl_pay_intent` クエリが付いて開きます（例：`https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_xxx`）。値は決済 ID です。`returnUrl` に同じ名前のクエリがあると上書きされます。
+- `merchantExpiresAt` は、着金期限（利用者が JPYC EX の手続きへ進んだときに決まる）の上限として使われます。操作期限（`checkoutExpiresAt`）は短くなりません。作成から 3 日より先の日時だけを指定できます。UTC の `Z` で終わる形だけを受け付けます（例：`"2026-10-20T03:00:00Z"`）。`+09:00` のようなオフセット付きは 400 `common/invalid_request` です。同じ `orderId` で再作成しても、最初に受け取った値は上書きされません。[期限の扱い](/lifecycle/transitions)を参照してください。
 
 ### レスポンス
 
@@ -158,24 +158,23 @@ GET /payment_status/pi_0123456789abcdef
 
 ## 状態の値
 
-`status` は次の12個のいずれかです。`settled` だけが成立で、商品の提供や入金の計上はこの状態を根拠にします。区分の意味と遷移は[ステータス一覧](/lifecycle/statuses)を参照してください。
+`status` は次のいずれかです。`settled` だけが成立で、商品の提供や入金の計上はこの状態を根拠にします。区分の意味と遷移は[ステータス一覧](/lifecycle/statuses)を参照してください。
 
 | 値 | 区分 | 一言の意味 |
 |---|---|---|
 | `created` | 途中 | 決済を作成した。署名を待っている |
 | `signed` | 途中 | 利用者の署名が済んだ |
 | `issue_pending` | 途中 | 利用者が JPYC EX の手続きへ進んだ。手続きが済んだことは意味しない |
-| `deposit_seen` | 途中 | 定義はあるが、今は返らない（[状態遷移](/lifecycle/transitions#遷移の一覧)） |
 | `deposit_confirmed` | 途中 | 着金（または残高）を確認した。決済の実行前 |
 | `deploying` | 途中 | 利用者のウォレットを作成している |
 | `executing` | 途中 | 決済の実行を始めた。結果を確認している |
 | `settled` | 成立 | 決済が成立し、加盟店へ送金された |
 | `canceled` | 成立しなかった | 決済が取り消された |
-| `expired` | 成立しなかった | 期限内に着金がなく終了した |
+| `expired` | 成立しなかった | 期限が来て終了した（承認されないまま、または着金期限までに額がそろわないまま） |
 | `failed` | 成立しなかった | 決済が失敗した。理由は `failedReason` |
 | `nonce_conflict` | 要確認 | 結末を特定できなかった。成立とも失敗とも判断しない |
 
-未知の値を受け取ったときは、商品の提供や再請求をせず、確認中として扱ってください。
+未知の値を受け取ったときは、商品の提供や再請求をせず、確認中として扱ってください。API スキーマには `deposit_seen` という値も定義されていますが、今は返りません。
 
 ## 値の形式
 
@@ -241,7 +240,7 @@ GET /payment_status/pi_0123456789abcdef
 | `store/disabled` | 409 | 店舗が無効化されている。加盟店コンソールで店舗の状態を確認する |
 | `payment/expires_at_too_soon` | 400 | `merchantExpiresAt` が近すぎる（作成時点から3日以内に切れる指定）。[期限の扱い](/lifecycle/transitions)を参照し、より後の時刻を指定する |
 | `common/invalid_request` | 400 | リクエストの形式が正しくない（フィールドの型・形式の違反）。入力を直す。`details.issues` に、違反ごとの配列が入る（各要素の `path` が該当フィールド、`message` が理由） |
-| `common/internal` | 500 | サーバー側の障害。同じ `orderId` で再試行しても決済が二重に立つことはない |
+| `common/internal` | 500 | サーバー側の障害。同じ `orderId` で再試行しても決済が二重に立つことはない。ただし、別の店舗で使った `orderId` を指定したときもこのエラーになり、こちらは再試行しても解消しない（[店舗をまたぐ制約](/server/create-payment#冪等性)） |
 
 状態照会（`GET /payment_status/:paymentIntentId`）は、存在しない決済 ID に `payment/not_found`（404）を返します。決済 ID の形式（`pi_` に小文字の16進が8〜32桁）に合わないときは、存在を確かめる前に `common/invalid_request`（400）を返します。
 

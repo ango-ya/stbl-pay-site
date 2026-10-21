@@ -17,15 +17,17 @@ sidebar_position: 3
 | 区分 | 対応する値 | 表示の例 |
 |---|---|---|
 | 成立 | [`settled`](/reference/rest#状態の値) | お支払いを確認しました |
-| 途中 | [`created`・`signed`・`issue_pending`・`deposit_seen`・`deposit_confirmed`・`deploying`・`executing`](/reference/rest#状態の値) | お支払いを確認しています |
-| 成立しなかった | [`canceled`・`expired`・`failed`](/reference/rest#状態の値) | お支払いは完了していません。もう一度お試しください |
+| 途中 | [`created`・`signed`・`issue_pending`・`deposit_confirmed`・`deploying`・`executing`](/reference/rest#状態の値) | お支払いを確認しています |
+| 成立しなかった | [`canceled`・`expired`・`failed`](/reference/rest#状態の値) | お支払いは完了していません |
 | 要確認 | [`nonce_conflict`](/reference/rest#状態の値) | 確認が必要です。サポートへお問い合わせください |
 | 照会できない | 通信の失敗やタイムアウト（決済の状態ではない） | 現在確認できません。注文履歴からご確認ください |
 
 照会に失敗しても決済の失敗ではありません。再決済をすぐ促すと二重請求につながります。
 
+成立しなかった決済では、加盟店へ JPYC は送られていません。利用者が用意した JPYC は、利用者のウォレットに残っています。もう一度支払ってもらうときは、**新しい `orderId` で決済を作り直してください。** 同じ `orderId` で作成しても、終わった決済がそのまま返ります（[冪等性](/server/create-payment#冪等性)）。
+
 ## ブラウザが戻らない場合
 
-タブを閉じても決済処理はブラウザとは独立して進みます。ただし署名しただけで成立が保証されるわけではありません。Webhook と未確定注文の定期照会で結果を取得してください。
+着金の検知、残高の確認、送金の実行は、ブラウザとは独立して進みます。ただし、振込が必要な場合は、利用者が決済ページから JPYC EX の手続きへ進むまで（`issue_pending` になるまで）は決済ページが要ります。その前にタブを閉じると、利用者が戻って手続きを続けない限り決済は進まず、操作期限で `expired` になります。署名しただけで成立が保証されるわけでもありません。Webhook と未確定注文の定期照会で結果を取得してください。
 
 [商品提供の判断](/lifecycle/completion)はサーバーで行います。

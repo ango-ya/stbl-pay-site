@@ -31,4 +31,4 @@ const payment = await response.json();
 
 Webhook を受けたときの確定照会と、通知を取りこぼした未確定注文の定期突合に使います。ブラウザが戻らなくても確認を続けてください。
 
-[完了判定](/lifecycle/completion)と[12状態の意味](/lifecycle/statuses)も参照してください。
+[完了判定](/lifecycle/completion)と[状態の意味](/lifecycle/statuses)も参照してください。
