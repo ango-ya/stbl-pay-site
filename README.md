@@ -32,21 +32,21 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ### つかいかた動画（`#videos`）
 
-- 「すてぶるペイのつかいかた」の予告と第1〜8回（英語ページは第8回の英語字幕版だけ）。番外編は手数料の数字など営業向けの内容を含むため載せていません。
+- 「すてぶるペイのつかいかた」の第1〜8回（英語ページは第8回の英語字幕版だけ）。予告は YouTube に上げていないので載せていません。番外編は手数料の数字など営業向けの内容を含むため載せていません。
 - **動画は YouTube に上げて、サイトに埋め込みます。mp4 はサイトにも git にも置きません。** 埋め込みは `https://www.youtube-nocookie.com/embed/<ID>` です。
 - ポスター（`how-NN.webp`・`-640`）とサムネイル（`-thumb`）はサイトのものを使います（YouTube のサムネイルは使いません）。git に入れて、サイトから配ります。
 - 動画を入れる・入れ替えるときの流れ：
 
-  1. **YouTube に上げる。** 10 本（予告、第1〜8回、第8回の英語字幕版）。公開か限定公開にして、**埋め込みを許可**にします（許可しないと、サイトでは再生できません）。
-  2. **URL を JSON に書く。** `scripts/youtube-ids.example.json` を写して、10 件の値に YouTube の URL（または 11 文字の ID）を入れます。値は `youtu.be/<ID>`・`youtube.com/watch?v=<ID>`・`/shorts/<ID>`・`/embed/<ID>`・ID だけ、のどれでも構いません。写したファイルはコミットしません。
-  3. **HTML に入れる。** 10 件そろっていて、どれも ID を取り出せるときだけ書き込みます（足りない・形が違うときは、何も書かずに止まります）。
+  1. **YouTube に上げる。** 9 本（第1〜8回、第8回の英語字幕版）。公開か限定公開にして、**埋め込みを許可**にします（許可しないと、サイトでは再生できません）。
+  2. **URL を JSON に書く。** `scripts/youtube-ids.example.json` を写して、9 件の値に YouTube の URL（または 11 文字の ID）を入れます。値は `youtu.be/<ID>`・`youtube.com/watch?v=<ID>`・`/shorts/<ID>`・`/embed/<ID>`・ID だけ、のどれでも構いません。写したファイルはコミットしません。
+  3. **HTML に入れる。** 9 件そろっていて、どれも ID を取り出せるときだけ書き込みます（足りない・形が違うときは、何も書かずに止まります）。
 
      ```sh
      cp scripts/youtube-ids.example.json youtube-ids.json   # 値を入れる
      node scripts/set-youtube-ids.mjs youtube-ids.json
      ```
 
-     `index.html` の一覧 9 件とポスターのリンク 1 件（今の回に合わせる）、`en/index.html` のポスターのリンク 1 件（`how-08en`）の `data-youtube` と `href`（`https://www.youtube.com/watch?v=<ID>`。JS が無いときに開く先）を書き換えます。
+     `index.html` の一覧 8 件とポスターのリンク 1 件（今の回に合わせる）、`en/index.html` のポスターのリンク 1 件（`how-08en`）の `data-youtube` と `href`（`https://www.youtube.com/watch?v=<ID>`。JS が無いときに開く先）を書き換えます。
   4. **テストする。** `npm run test:e2e`。
 
   - **ID が空のうちは、押しても何も起きません**（iframe も作らず、空の `watch?v=` にも飛ばしません）。ID を入れる前の HTML（`data-youtube=""`）を main にマージすると、本番で動画が再生できなくなります。
@@ -63,7 +63,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
   - サイトは `Referrer-Policy: no-referrer` を返します。このままだと YouTube の埋め込みがエラー 153 になるので、iframe に `referrerpolicy="strict-origin-when-cross-origin"` を付けています（ページ全体の Referrer-Policy は変えません）。
 - **計測**：YouTube の IFrame Player API を読まないので、再生の開始・終了のイベントは取れません。`video_play` は「ポスターや一覧を押して再生を始めたとき」に、回ごとに 1 回だけ送ります。`video_complete` は送りません。
 - **公開の順序**：PR を main にマージすると本番にデプロイされるので、確認はマージの前に済ませます。次の順に進めます。
-  1. 上の手順 1〜4 を済ませる（ID が 10 件とも入った HTML で、テストが通ること）。
+  1. 上の手順 1〜4 を済ませる（ID が 9 件とも入った HTML で、テストが通ること）。
   2. 書き換わった `index.html` と `en/index.html` をコミットして push し、PR を作る。
   3. PR のブランチ（push 済みのもの）で、GitHub Actions の「Deploy LP demo to Cloudflare Pages」を `workflow_dispatch` で流して、プレビューを作る。
 
@@ -72,7 +72,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
      ```
 
      `.github/workflows/deploy-cloudflare-pages.yml` は `wrangler pages deploy` に `--branch "$GITHUB_REF_NAME"` を渡します。main 以外のブランチから流すと、プロジェクトの本番ブランチ（`main`）とは別のブランチなので、プレビューのデプロイになります。本番の `stbl-pay.com` に付いているデプロイを切り替える手順はありません（カスタムドメインの手順は、付いていなければ付けるだけです）。なお、どのブランチから流しても、Pages のシークレット（`SLACK_WEBHOOK_URL`）を GitHub の値で更新する手順は通ります。流したあと、ログの `Deploy to Cloudflare Pages` に出る URL が `stbl-pay.com` でないこと、Cloudflare のダッシュボードで環境が Preview になっていることを見ます。
-  4. プレビューの URL で、日本語版・英語版の再生（10 本とも、押すと再生が始まり、エラー表示が出ないこと）と、iPhone の Safari での再生を確かめる。
+  4. プレビューの URL で、日本語版・英語版の再生（9 本とも、押すと再生が始まり、エラー表示が出ないこと）と、iPhone の Safari での再生を確かめる。
   5. main にマージする（push で本番にデプロイされる）。
   6. 本番で `curl -I https://stbl-pay.com/` を打って、`Content-Security-Policy` の `frame-src` が `https://www.youtube-nocookie.com` になっていることを確かめる。あわせて本番で、日本語版・英語版とも再生できることを確かめる。
 - 回は `#video-how-NN`（例：`/#video-how-02`）で直接開けます（開いただけでは再生しない）。

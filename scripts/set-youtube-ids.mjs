@@ -3,21 +3,21 @@
 //
 //   node scripts/set-youtube-ids.mjs <JSON ファイル>
 //
-// - JSON ファイルは、次の 10 件を持つオブジェクト（例は scripts/youtube-ids.example.json）。
-//     { "how-00": "<ID か YouTube の URL>", …, "how-08": "…", "how-08en": "…" }
-//   how-00 は予告、how-01〜how-08 は第1〜8回、how-08en は第8回の英語字幕版。
+// - JSON ファイルは、次の 9 件を持つオブジェクト（例は scripts/youtube-ids.example.json）。
+//     { "how-01": "<ID か YouTube の URL>", …, "how-08": "…", "how-08en": "…" }
+//   how-01〜how-08 は第1〜8回、how-08en は第8回の英語字幕版。予告（how-00）と番外編は LP に載せないので入れない。
 // - 値は次のどれでもよい。そこから 11 文字の ID（[A-Za-z0-9_-]{11}）を取り出す。
 //     https://youtu.be/<ID>
 //     https://www.youtube.com/watch?v=<ID>
 //     https://www.youtube.com/shorts/<ID>
 //     https://www.youtube.com/embed/<ID>
 //     <ID> だけ
-// - 10 件そろわない・キーが違う・値から ID を取り出せない、のどれかがあれば、何も書かずに止まる。
-// - index.html は一覧 9 件（how-00〜how-08）の data-youtube と href を書き換える。
+// - 9 件そろわない・キーが違う・値から ID を取り出せない、のどれかがあれば、何も書かずに止まる。
+// - index.html は一覧 8 件（how-01〜how-08）の data-youtube と href を書き換える。
 //   ポスターのリンク（[data-video-poster]）は、そのリンクの data-video の回（今の回）の ID に合わせる。
 // - en/index.html はポスターのリンク 1 件（how-08en）だけを書き換える。
 // - href は https://www.youtube.com/watch?v=<ID>（JS が無いときに開く先）。
-// - 書き換える件数が決まっている（index.html は一覧 9 件＋ポスター 1 件、en/index.html はポスター 1 件）。
+// - 書き換える件数が決まっている（index.html は一覧 8 件＋ポスター 1 件、en/index.html はポスター 1 件）。
 //   ずれていたら、どちらも書き込まずに止まる。
 // - Node の標準モジュールだけを使う。
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -27,14 +27,14 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const EPISODES = [
-  'how-00', 'how-01', 'how-02', 'how-03', 'how-04', 'how-05', 'how-06', 'how-07', 'how-08', 'how-08en',
+  'how-01', 'how-02', 'how-03', 'how-04', 'how-05', 'how-06', 'how-07', 'how-08', 'how-08en',
 ];
 const ID_RE = /^[A-Za-z0-9_-]{11}$/;
 const watchUrl = (id) => `https://www.youtube.com/watch?v=${id}`;
 
 // 書き換える場所。items は一覧の件数、posters はポスターのリンクの件数
 const targets = [
-  { file: 'index.html', items: 9, posters: 1 },
+  { file: 'index.html', items: 8, posters: 1 },
   { file: 'en/index.html', items: 0, posters: 1 },
 ];
 
@@ -72,7 +72,7 @@ function usage() {
       '使いかた:',
       '  node scripts/set-youtube-ids.mjs <JSON ファイル>',
       '',
-      'JSON ファイルは、次の 10 件を持つオブジェクトです（例：scripts/youtube-ids.example.json）。',
+      'JSON ファイルは、次の 9 件を持つオブジェクトです（例：scripts/youtube-ids.example.json）。',
       `  キー：${EPISODES.join(' ')}`,
       '  値：YouTube の動画 ID か URL（youtu.be/<ID>・watch?v=<ID>・/shorts/<ID>・/embed/<ID>）',
     ].join('\n'),
@@ -91,7 +91,7 @@ if (args.length !== 1) {
   process.exit(1);
 }
 
-// --- JSON を読んで、10 件と ID の形を確かめる（ここまでは何も書かない） ---
+// --- JSON を読んで、9 件と ID の形を確かめる（ここまでは何も書かない） ---
 const jsonPath = resolve(args[0]);
 let data;
 try {
@@ -100,7 +100,7 @@ try {
   fail([`NG: ${jsonPath} を JSON として読めません（${error.message}）`]);
 }
 if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-  fail([`NG: ${jsonPath} の中身がオブジェクトではありません（{"how-00": "…", …} の形にしてください）`]);
+  fail([`NG: ${jsonPath} の中身がオブジェクトではありません（{"how-01": "…", …} の形にしてください）`]);
 }
 
 const problems = [];

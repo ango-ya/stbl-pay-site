@@ -15,16 +15,16 @@ import { join } from "node:path";
 //   実際の再生、YouTube 側のエラー（埋め込み不可など）は、公開前の手動確認（プレビューと iPhone の Safari）で見る
 // - 本番ヘッダ（CSP・Referrer-Policy）はローカルの静的サーバーが付けないので、「本番ヘッダ」の 2 本だけ、_headers の値を応答に付け直して動かす
 
-const EPISODES = ["how-00", "how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08"];
+const EPISODES = ["how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08"];
 const ENGLISH_EPISODE = "how-08en";
 
 const YT_ORIGIN = "https://www.youtube-nocookie.com";
 const WATCH = "https://www.youtube.com/watch?v=";
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
-// テスト用の偽の ID（11 文字）。how-00 → test0000000、how-08 → test0000008、how-08en → test00008en
+// テスト用の偽の ID（11 文字）。how-01 → test0000001、how-08 → test0000008、how-08en → test00008en
 const FAKE_ID = {
-  ...Object.fromEntries(EPISODES.map((id, i) => [id, `test000000${i}`])),
+  ...Object.fromEntries(EPISODES.map((id) => [id, `test000000${id.slice(-1)}`])),
   [ENGLISH_EPISODE]: "test00008en",
 };
 
@@ -141,7 +141,7 @@ const preconnects = (page) =>
   );
 
 test.describe("つかいかた動画（日本語LP）", () => {
-  test("一覧に予告と第1〜8回が並び、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
+  test("一覧に第1〜8回が並び（予告・番外編は出さない）、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
     page,
     request,
   }) => {
@@ -173,9 +173,10 @@ test.describe("つかいかた動画（日本語LP）", () => {
       .evaluateAll((els) => els.map((el) => el.getAttribute("src")));
     expect(thumbs).toEqual(EPISODES.map((id) => `assets/video/${id}-thumb.webp`));
 
-    // 番外編（手数料の数字などを含む営業向け）は LP に出さない
+    // 番外編（手数料の数字などを含む営業向け）は LP に出さない。予告も YouTube に上げていないので出さない
     await expect(page.locator('#videos [href*="how-sp"], #videos [href*="how-pk"]')).toHaveCount(0);
     await expect(page.locator('#videos [data-video="how-sp"], #videos [data-video="how-pk"]')).toHaveCount(0);
+    await expect(page.locator('#video-how-00, #videos [data-video="how-00"], #videos [src*="how-00"]')).toHaveCount(0);
   });
 
   test("読み込み時は iframe も YouTube への通信もなく、ポスターだけがある", async ({ page }) => {
@@ -491,7 +492,7 @@ test.describe("YouTube の ID", () => {
       expect(item.youtube, `${item.video} の data-youtube は 11 文字の ID`).toMatch(ID_PATTERN);
       expect(item.href, `${item.video} の href`).toBe(`${WATCH}${item.youtube}`);
     }
-    // 9 本はそれぞれ別の動画（貼り間違いで同じ ID が重ならない）
+    // 8 本はそれぞれ別の動画（貼り間違いで同じ ID が重ならない）
     expect(new Set(items.map((i) => i.youtube)).size, "一覧の ID が重なっている").toBe(EPISODES.length);
 
     const poster = await page.locator("[data-video-poster]").evaluate((el) => ({
