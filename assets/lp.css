@@ -1103,6 +1103,24 @@ sup.fn a:hover {
   color: var(--ink);
 }
 
+/* ---------- 描画の後回し ----------
+   画面の外にあるセクションは、近づくまで描画しない。スマホで最初の表示が遅くならないため。
+   2026-10-16 の計測（Slow 4G・CPU 4 倍遅延のスマホ相当・6 回の中央値）：
+   LCP は main 3.35s → 動画とキャラを足した直後 3.88s → この指定で 3.14s。
+   画像を止めても遅いままだったので、原因は通信量ではなくレイアウトの量だった。
+   後回しのままだとページ内リンクの飛び先がずれるので、読み込みが終わったら（または
+   ページ内リンクを押した瞬間に）lp.js が html に .cv-ready を付けて解く */
+.section,
+.footnotes {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1000px;
+}
+
+.cv-ready .section,
+.cv-ready .footnotes {
+  content-visibility: visible;
+}
+
 /* ---------- 注記 ---------- */
 
 .footnotes {
@@ -1173,6 +1191,664 @@ sup.fn a:hover {
 .footer-note {
   color: var(--gray-light);
   white-space: nowrap;
+}
+
+/* 運営会社の実績（日本語・英語ページ共通）。既存の .footer-inner p に合わせた小さめの文字 */
+.footer-facts {
+  max-width: 60em;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--gray);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.footer-facts li + li {
+  margin-top: 4px;
+}
+
+/* ---------- すてぶるくん・すてぶるちゃん ----------
+   正本は stbl-pay プロジェクトの設定資料（characters/character-bible.md）。
+   - 呼び方は必ずフルネーム。絵は装飾（aria-hidden）、会話は本文として読ませる
+   - 二人を並べるときは、すてぶるくんの頭のてっぺんが、すてぶるちゃんの胸くらい（§2）
+   - すてぶるちゃんの絵は太ももで切れているので、1px の床線の向こうに立たせる
+     （動画で画面の下端に切られているのと同じ見せ方）。すてぶるくんは床線の上に立つ
+   - LP の原則どおり、影・角丸・装飾背景は足さない */
+
+/* 会話：台本のように 1 行ずつ。顔・名前・セリフ */
+.talk {
+  max-width: var(--measure);
+  margin: 28px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.sec-lead + .talk {
+  margin-top: -16px;
+}
+
+.talk-line {
+  display: grid;
+  grid-template-columns: 40px 7.6em minmax(0, 1fr);
+  grid-template-areas: "face name text";
+  align-items: center;
+  column-gap: 12px;
+  margin: 0;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.talk-face {
+  grid-area: face;
+  width: 40px;
+  height: 40px;
+}
+
+.talk-name {
+  grid-area: name;
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.talk-chan .talk-name {
+  color: var(--accent);
+}
+
+.talk-text {
+  grid-area: text;
+  color: var(--ink);
+}
+
+/* 和文の「……」は和文フォントで（欧文フォントの unicode-range に U+2026 が入っているため） */
+.ja-ellipsis {
+  font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+}
+
+/* 立ち絵：床線（1px）の上に二人を置く */
+.cast {
+  display: flex;
+  align-items: flex-end;
+  margin: 0;
+  overflow: hidden; /* すてぶるちゃんの下端を床線で切る */
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.cast img {
+  flex: none;
+  max-width: none;
+  width: auto;
+}
+
+.cast-chan {
+  height: 250px;
+  margin-bottom: -26px;
+}
+
+.cast-kun {
+  position: relative;
+  z-index: 1;
+  height: 98px;
+}
+
+.cast-videos .cast-kun {
+  margin-left: -26px;
+}
+
+.cast-guest {
+  margin-top: 32px;
+}
+
+.cast-guest .cast-chan {
+  margin-bottom: -12px;
+}
+
+.cast-guest .cast-kun {
+  margin-left: -6px;
+}
+
+/* ヒーロー：動画と同じく、左下にすてぶるくん、右下にすてぶるちゃん。
+   すてぶるくんはティッカーの上に立ち、すてぶるちゃんはティッカーの向こうに立つ。
+   ヒーローの文字と重ならない幅（1200px 以上）だけで出す */
+.hero-cast {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .hero-cast {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 41px; /* ティッカーの高さ（9px + 行 + 9px + 罫線 1px） */
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .hero-cast img {
+    position: absolute;
+    bottom: 0;
+    max-width: none;
+    width: auto;
+  }
+
+  .hero-cast-kun {
+    left: max(24px, calc(50% - 640px));
+    height: 108px;
+  }
+
+  .hero-cast-chan {
+    right: max(16px, calc(50% - 650px));
+    height: 246px;
+    margin-bottom: -30px; /* 下端はティッカーの向こうに隠す */
+  }
+
+  .hero.hero-anim .hero-cast {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .hero.hero-in .hero-cast {
+    opacity: 1;
+    transform: none;
+    transition: opacity 700ms ease 320ms, transform 700ms cubic-bezier(0.22, 0.61, 0.36, 1) 320ms;
+  }
+}
+
+@media (min-width: 1440px) {
+  .hero-cast-kun {
+    height: 120px;
+  }
+
+  .hero-cast-chan {
+    height: 280px;
+  }
+}
+
+/* FAQ：寝て浮いているすてぶるくんと、下に置かれた座布団（説明はしない） */
+.faq-shell {
+  position: relative;
+}
+
+.faq-nap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 36px 0 0 auto;
+  border-bottom: 1px solid var(--line);
+}
+
+.faq-nap-kun,
+.faq-nap-zabuton {
+  height: auto;
+}
+
+.faq-nap-kun {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 136px;
+  margin-left: -68px;
+  animation: nap-drift 7s ease-in-out infinite alternate;
+}
+
+.faq-nap-zabuton {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 116px;
+  margin-left: -58px;
+}
+
+@keyframes nap-drift {
+  from {
+    transform: translate(-4px, 0) rotate(-7deg);
+  }
+  to {
+    transform: translate(6px, -12px) rotate(3deg);
+  }
+}
+
+@media (min-width: 1140px) {
+  .faq-nap {
+    position: absolute;
+    top: 150px;
+    right: 0;
+    width: 240px;
+    height: 250px;
+    margin: 0;
+  }
+
+  .faq-nap-kun {
+    width: 150px;
+    margin-left: -75px;
+  }
+
+  .faq-nap-zabuton {
+    width: 124px;
+    margin-left: -62px;
+  }
+}
+
+/* ---------- 動画（すてぶるペイのつかいかた） ---------- */
+
+.videos-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 48px;
+  align-items: end;
+}
+
+.videos-intro .sec-lead {
+  margin-bottom: 0;
+}
+
+.videos-intro .sec-lead + .talk {
+  margin-top: 28px;
+}
+
+.cast-videos {
+  justify-content: center;
+  width: 320px;
+}
+
+.video-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: 0 36px;
+  align-items: start;
+  margin-top: 48px;
+  scroll-margin-top: 84px;
+}
+
+.video-frame {
+  border: 1px solid var(--line-strong);
+  background: var(--paper-dim);
+}
+
+.video-frame iframe,
+.video-poster {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: var(--paper-dim);
+}
+
+/* YouTube の埋め込み。iframe の既定の枠線は消す（枠は .video-frame が持つ）。
+   YouTube の埋め込みは 200×200px 以上が必要なので、狭い画面でも高さを 200px より小さくしない */
+.video-frame iframe {
+  border: 0;
+  min-height: 200px;
+}
+
+/* 押すまでは画像だけ。再生ボタンは角のない四角（LP の原則どおり） */
+.video-poster {
+  position: relative;
+}
+
+.video-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
+  background: rgba(22, 22, 22, 0.86);
+  transition: background-color 150ms ease;
+}
+
+.video-play::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: 28px;
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-left: 22px solid #fff;
+}
+
+.video-poster:hover .video-play,
+.video-poster:focus-visible .video-play {
+  background: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .video-play {
+    width: 60px;
+    height: 60px;
+    margin: -30px 0 0 -30px;
+  }
+
+  .video-play::before {
+    top: 18px;
+    left: 23px;
+    border-top-width: 12px;
+    border-bottom-width: 12px;
+    border-left-width: 18px;
+  }
+}
+
+.video-now {
+  padding-top: 14px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.video-now-series {
+  margin: 0;
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.video-now-title {
+  margin: 8px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.video-now-no {
+  display: block;
+  color: var(--accent);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.video-now-desc {
+  margin: 12px 0 0;
+  color: var(--gray);
+  font-size: 13.5px;
+  line-height: 1.85;
+}
+
+.video-now-meta {
+  margin: 10px 0 0;
+  color: var(--gray);
+  font-size: 12px;
+}
+
+.video-next {
+  margin-top: 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.video-next:hover {
+  text-decoration-thickness: 2px;
+}
+
+.video-next[hidden] {
+  display: none;
+}
+
+.video-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 44px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.video-group {
+  padding: 16px var(--gutter) 0 0;
+}
+
+.video-group + .video-group {
+  padding-left: var(--gutter);
+  border-left: 1px solid var(--line);
+}
+
+.video-group h3 {
+  margin: 0 0 6px;
+  color: var(--gray);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.video-group ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.video-group li {
+  scroll-margin-top: 84px;
+}
+
+.video-item {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-areas:
+    "thumb no"
+    "thumb title";
+  column-gap: 12px;
+  align-items: start;
+  padding: 10px 0 10px 0;
+  border-top: 1px solid var(--line);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.video-group li:first-child .video-item {
+  border-top: 0;
+}
+
+.video-item img {
+  grid-area: thumb;
+  width: 96px;
+  height: 54px;
+  border: 1px solid var(--line);
+}
+
+.video-item-no {
+  grid-area: no;
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.video-item-dur {
+  margin-left: 8px;
+  color: var(--gray);
+  font-weight: 400;
+}
+
+.video-item-title {
+  grid-area: title;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.video-item:hover .video-item-title {
+  color: var(--link);
+}
+
+.video-item[aria-current="true"] {
+  margin-left: -13px;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent);
+}
+
+.video-item[aria-current="true"] .video-item-title {
+  color: var(--accent);
+}
+
+.video-foot {
+  max-width: var(--measure);
+  margin: 28px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--gray);
+  font-size: 13px;
+}
+
+/* 各セクションの会話と、その話を扱う動画へのリンク */
+.aside-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 0 56px;
+  align-items: start;
+  margin-top: 40px;
+}
+
+.aside-row .talk {
+  margin-top: 0;
+}
+
+.video-links {
+  border-top: 1px solid var(--line);
+}
+
+.video-links-label {
+  margin: 0;
+  padding: 10px 0 2px;
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.video-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+  transition: color 150ms ease;
+}
+
+.video-link::before {
+  content: "";
+  flex: none;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--accent);
+}
+
+.video-link-no {
+  flex: none;
+  min-width: 3.2em;
+  color: var(--gray);
+  font-size: 12px;
+}
+
+.video-link:hover {
+  color: var(--link);
+}
+
+@media (max-width: 900px) {
+  .videos-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cast-videos {
+    display: none;
+  }
+
+  .video-stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .video-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .video-group,
+  .video-group + .video-group {
+    padding: 14px 0 6px;
+    border-left: 0;
+  }
+
+  .video-group + .video-group {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .aside-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  /* 1 列になる幅では、問い合わせフォームを押し下げないよう立ち絵を出さない（会話の顔は残る） */
+  .cast-guest {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .talk-line {
+    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-areas:
+      "face name"
+      "face text";
+    column-gap: 10px;
+    padding: 7px 0;
+  }
+
+  .talk-face {
+    width: 36px;
+    height: 36px;
+  }
+
+  .talk-name {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .talk-text {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .cast-chan {
+    height: 210px;
+  }
+
+  .cast-kun {
+    height: 84px;
+  }
+
+  .video-now-title {
+    font-size: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-nap-kun {
+    animation: none;
+    transform: rotate(-5deg);
+  }
+
+  .hero.hero-anim .hero-cast {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 /* ---------- インタラクション ----------
