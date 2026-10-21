@@ -349,6 +349,8 @@
       stop,
       speak,
       hush: endSpeak,
+      // 会話と連動するときに使うコマ（会話を始める前に先読みする）
+      frames: () => VOWELS.map(talkUrl),
       onReduce() {
         if (reduced()) {
           endWave();
@@ -471,6 +473,8 @@
       stop,
       reach,
       hush,
+      // 会話と連動するときに使うコマ（会話を始める前に先読みする）
+      frames: () => (mode === "greet" ? [STAND, REACH] : []),
       onReduce() {
         // 登場のポーズ送りの途中で reduce になったら、そこで切り上げる
         if (reduced() && introducing && actor.running) {
@@ -574,6 +578,11 @@
       const rig = cast.querySelector(".kun-rig[data-kun]");
       const chan = cast.querySelector("img[data-chan]");
       return { kun: rig ? actors.get(rig) : null, chan: chan ? actors.get(chan) : null };
+    };
+    // 顔のコマと、立ち絵が会話に合わせて使うコマ（ページの読み込みが終わる前に会話が始まっても間に合うよう、一緒に先読みする）
+    const playFrames = () => {
+      const stand = stands();
+      return frameUrls().concat(stand.kun ? stand.kun.frames() : [], stand.chan ? stand.chan.frames() : []);
     };
 
     // 話す時間：文字数（脚注記号は数えない）× 95ms（英語は 45ms）、700〜2600ms
@@ -695,7 +704,7 @@
       playing = true;
       sync();
       // 先読みが済むか 1500ms 経つまで待ってから、全部の顔を休みのコマにして再生する
-      tPlay.settle(frameUrls(), 1500, () => {
+      tPlay.settle(playFrames(), 1500, () => {
         restAll();
         speakLine(0);
       });
@@ -733,7 +742,7 @@
     const onNear = (entry) => {
       if (entry.isIntersecting) {
         nearObserver.unobserve(talk);
-        afterLoad(() => frameUrls().forEach(preload));
+        afterLoad(() => playFrames().forEach(preload));
       }
     };
     const onView = (entry) => {

@@ -703,6 +703,70 @@ test.describe("会話の再生", () => {
     expect(errors).toEqual([]);
   });
 
+  test("会話の顔のコマを読んでいる途中でタブが隠れても、話し始めない（表示に戻ると再生する）", async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    // 会話の顔のコマを 2.5 秒遅らせる（再生の前の先読み待ちは最大 1500ms）
+    await page.route("**/assets/char/talk/**", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      await route.continue();
+    });
+    await installRecorder(page);
+    await page.goto("/");
+    const talk = page.locator("#videos .talk");
+    const speakingCount = async () =>
+      (await events(page)).filter((e) => e.k === "class" && e.sec === "videos" && e.added.includes("is-speaking")).length;
+
+    // 画面に入れて 400ms の待ちのあと、先読みを待っている間に隠す（待ちの途中で隠れた場合も、同じく始まらない）
+    await scrollCenter(talk);
+    await page.waitForTimeout(900);
+    expect(await speakingCount(), "先読みが済むまでは話し始めない").toBe(0);
+    await setHidden(page, true);
+    await page.waitForTimeout(3000);
+    expect(await speakingCount(), "隠れている間は話し始めない").toBe(0);
+    await expect(talk).not.toHaveClass(/\bis-played\b/);
+
+    await setHidden(page, false);
+    await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+    expect(speakingWindows(await events(page), "videos").map((w) => w.line)).toEqual([0, 1, 2]);
+    expect(errors).toEqual([]);
+  });
+
+  test("ページの読み込み（load）が終わる前に相談欄の会話が始まっても、立ち絵が手を伸ばし、口パクする", async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    // ロゴの画像を止めて、window の load を遅らせる（すぐには要らないコマの先読みは load の後）
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    await page.route("**/assets/logo-wordmark-suteburu-black.png", async (route) => {
+      await gate;
+      await route.continue();
+    });
+    await installRecorder(page);
+    try {
+      await page.goto("/#early-access", { waitUntil: "domcontentloaded" });
+      const talk = page.locator("#early-access .talk");
+      await scrollCenter(talk);
+      await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+      expect(await page.evaluate(() => document.readyState), "まだ load の前").not.toBe("complete");
+
+      const evs = await events(page);
+      expect(
+        evs.some((e) => e.k === "src" && e.sec === "early-access" && e.chan === "greet" && e.file === "thigh-reach.webp"),
+        "すてぶるちゃんの行で、立ち絵が手を伸ばす"
+      ).toBe(true);
+      expect(
+        evs.some((e) => e.k === "src" && e.sec === "early-access" && e.kun === "cast" && KUN_TALK_MOUTH.test(e.file)),
+        "すてぶるくんの行で、立ち絵が口パクする"
+      ).toBe(true);
+      expect(errors).toEqual([]);
+    } finally {
+      release();
+    }
+  });
+
   test("休みのコマが読めないときは、話し終わったら HTML に書いた絵に戻す（最後の口パクの絵を残さない）", async ({ page }) => {
     test.setTimeout(90_000);
     const errors = watchErrors(page);
@@ -884,55 +948,56 @@ test.describe("ヒーローの登場", () => {
   }) => {
     test.setTimeout(90_000);
     const errors = watchErrors(page);
+    // 手を振るのは「スクリプト開始から 800ms 以内に初めて見えたとき」だけ。実時間だと機械の重さで窓を外すので、
+    // ページの時計（setTimeout・performance.now）を止めて読み込み、時間は runFor で進める。
+    // （CSS のアニメーションと画像の読み込み、IntersectionObserver は実時間のまま）
+    await page.clock.install({ time: new Date("2026-10-21T00:00:00Z") });
+    await page.clock.pauseAt(new Date("2026-10-21T00:00:01Z"));
     await installRecorder(page);
     const rig = page.locator(HERO_RIG);
     const chan = page.locator(".hero-cast-chan");
     const heroRig = (e) => e.k === "class" && hasCls(e, "kun-rig") && e.kun === "hero";
-    // 手を振るのは「スクリプト開始から 800ms 以内に初めて見えたとき」だけ。機械が重くてその窓を外したら、読み直す（3 回まで）
-    let sinceStart = Infinity;
-    for (let attempt = 0; attempt < 3 && sinceStart > 650; attempt++) {
-      await page.goto("/");
-      await expect(rig).toHaveClass(IS_LIVE, { timeout: 15_000 });
-      const first = (await events(page)).find((e) => heroRig(e) && e.added.includes("is-live"));
-      sinceStart = first.t - (await page.evaluate(() => window.__dcl));
-    }
-    expect(sinceStart, "このマシンが重すぎて、登場の窓（スクリプト開始から 800ms）に 3 回とも間に合わなかった").toBeLessThanOrEqual(650);
+    const heroChanFiles = async () => (await events(page)).filter((e) => e.k === "src" && e.chan === "hero").map((e) => e.file);
 
-    await waitFor(page, "is-waving が付く", (e) => heroRig(e) && e.added.includes("is-waving"), 6000);
-    await waitFor(page, "is-waving が外れる", (e) => heroRig(e) && e.removed.includes("is-waving"), 6000);
+    await page.goto("/");
+    await expect(rig).toHaveClass(IS_LIVE, { timeout: 15_000 });
+    // すてぶるちゃんは、登場の絵の先読みが済むと、まず立ち姿に替わる（時計は止まったまま）
+    await waitFor(page, "ヒーローのすてぶるちゃんが立ち姿に替わる", (e) => e.k === "src" && e.chan === "hero");
+    expect((await heroChanFiles())[0], "ヒーローの絵は、まず立ち姿に替わる").toBe("thigh-stand.webp");
+    expect((await events(page)).some((e) => heroRig(e) && e.added.includes("is-waving")), "まだ手を振らない").toBe(false);
 
-    const evs = await events(page);
-    const live = evs.find((e) => heroRig(e) && e.added.includes("is-live"));
-    const on = evs.find((e) => heroRig(e) && e.added.includes("is-waving"));
-    const off = evs.find((e) => heroRig(e) && e.removed.includes("is-waving"));
+    // 1200ms 進めると手を振り始め、すてぶるちゃんは手を伸ばす（1100ms）
+    await page.clock.runFor(1200);
+    await waitFor(page, "is-waving が付く", (e) => heroRig(e) && e.added.includes("is-waving"));
+    const on = (await events(page)).find((e) => heroRig(e) && e.added.includes("is-waving"));
     // 手を振り始めたときの右腕の動きが kun-wave（記録した時点の値で見る）
     expect(on.armAnim, "手を振っている間は、右腕の動きが kun-wave").toBe("kun-wave");
-    expect(on.t - live.t, "見えてから 1200ms ほど後に手を振る").toBeGreaterThan(1000);
-    expect(on.t - live.t, "見えてから 1200ms ほど後に手を振る").toBeLessThan(3000);
-    expect(off.t - on.t, "手を振るのは 1.8 秒の動き（animationend か 2200ms 後に外す）").toBeGreaterThan(1500);
-    expect(off.t - on.t, "手を振るのは 1.8 秒の動き（animationend か 2200ms 後に外す）").toBeLessThan(3500);
+    await expect(chan).toHaveAttribute("src", /thigh-reach\.webp$/);
 
-    // 立ち絵（data-kun="cast"）は手を振らない。ヒーローも 1 回だけ
-    await page.waitForTimeout(1500);
-    const later = await events(page);
-    const waves = later.filter((e) => e.k === "class" && e.added.includes("is-waving"));
+    // 1350ms でウインク、2300ms で手を伸ばした絵に戻る。手振りは animationend か、遅くとも 2200ms 後（3400ms）に外れる
+    await page.clock.runFor(150);
+    await expect(chan).toHaveAttribute("src", /thigh-reach-wink\.webp$/);
+    await page.clock.runFor(2100);
+    await waitFor(page, "is-waving が外れる", (e) => heroRig(e) && e.removed.includes("is-waving"));
+    await expect(chan).toHaveAttribute("src", /thigh-reach\.webp$/);
+    const evs = await events(page);
+    const live = evs.find((e) => heroRig(e) && e.added.includes("is-live"));
+    const off = evs.find((e) => heroRig(e) && e.removed.includes("is-waving"));
+    expect(on.t - live.t, "見えてから 1200ms 後に手を振る").toBeGreaterThanOrEqual(1200);
+    expect(on.t - live.t, "見えてから 1200ms 後に手を振る").toBeLessThanOrEqual(1250);
+    expect(off.t - on.t, "手振りは 2200ms 以内に外れる").toBeLessThanOrEqual(2250);
+    expect(await heroChanFiles(), "ポーズ送りは stand → reach → wink → reach").toEqual([
+      "thigh-stand.webp",
+      "thigh-reach.webp",
+      "thigh-reach-wink.webp",
+      "thigh-reach.webp",
+    ]);
+
+    // 立ち絵（data-kun="cast"）は手を振らない。ヒーローも 1 回だけ。待機のウインクまでは 7 秒以上あるので、手を伸ばした絵のまま
+    await page.clock.runFor(3000);
+    const waves = (await events(page)).filter((e) => e.k === "class" && e.added.includes("is-waving"));
     expect(waves, "手を振るのはヒーローで 1 回だけ").toHaveLength(1);
     expect(waves[0].kun).toBe("hero");
-
-    // すてぶるちゃん：thigh-stand → thigh-reach → thigh-reach-wink → thigh-reach
-    await expect
-      .poll(
-        async () =>
-          hasOrder(
-            (await events(page)).filter((e) => e.k === "src" && e.chan === "hero").map((e) => e.file),
-            ["thigh-stand.webp", "thigh-reach.webp", "thigh-reach-wink.webp", "thigh-reach.webp"]
-          ),
-        { message: "ポーズ送り", timeout: 10_000 }
-      )
-      .toBe(true);
-    const files = (await events(page)).filter((e) => e.k === "src" && e.chan === "hero").map((e) => e.file);
-    expect(files[0], "ヒーローの絵は、まず立ち姿に替わる").toBe("thigh-stand.webp");
-    // 登場が終わったあと、待機のウインクまでは 7 秒以上あるので、手を伸ばした絵のまま
     await expect(chan).toHaveAttribute("src", /thigh-reach\.webp$/);
     expect(errors).toEqual([]);
   });
