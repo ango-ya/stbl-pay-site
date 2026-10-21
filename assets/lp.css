@@ -1278,10 +1278,52 @@ sup.fn a:hover {
   border-bottom: 1px solid var(--line-strong);
 }
 
-.cast img {
+/* 直下の img（すてぶるちゃん）だけ。すてぶるくんの部品の img には効かせない */
+.cast > img {
   flex: none;
   max-width: none;
   width: auto;
+}
+
+/* すてぶるくん：同じ大きさの部品（足・腕・体・ほほ・目・口）を左上でそろえて重ね、1 体に組む。
+   高さは --kun-h で決め、幅は絵の縦横比（748:522）を掛けて出す。
+   目と口は assets/characters.js が img の src を差し替えて動かす。
+   部品の絵は下端に透明な行が 3 行（261 行中）あるので、その分だけ下げて足を床線（ティッカー）に付ける */
+.kun-rig {
+  position: relative;
+  display: block;
+  flex: none;
+  height: var(--kun-h);
+  width: calc(var(--kun-h) * 1.4330);
+  margin-bottom: calc(var(--kun-h) * -0.0115);
+}
+
+.kun-rig .kun-part {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+/* 体（体・ほほ・目・口）はひとまとめにして、足元を支点に呼吸させる */
+.kun-body {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 88.36%;
+}
+
+/* 腕は肩（左右の付け根）を支点に振る */
+.kun-arm-l {
+  transform-origin: 28.35% 52.04%;
+}
+
+.kun-arm-r {
+  transform-origin: 71.65% 52.04%;
 }
 
 .cast-chan {
@@ -1292,11 +1334,12 @@ sup.fn a:hover {
 .cast-kun {
   position: relative;
   z-index: 1;
-  height: 98px;
+  --kun-h: 102px;
 }
 
+/* 重ねる深さは、すてぶるちゃんとの体どうしの間合いが以前の立ち絵と同じになる値（腕が長く外へ出るぶん深い） */
 .cast-videos .cast-kun {
-  margin-left: -26px;
+  margin-left: -46px;
 }
 
 .cast-guest {
@@ -1308,7 +1351,7 @@ sup.fn a:hover {
 }
 
 .cast-guest .cast-kun {
-  margin-left: -6px;
+  margin-left: -26px;
 }
 
 /* ヒーロー：動画と同じく、左下にすてぶるくん、右下にすてぶるちゃん。
@@ -1329,16 +1372,20 @@ sup.fn a:hover {
     pointer-events: none;
   }
 
-  .hero-cast img {
+  /* 直下の img（すてぶるちゃん）だけ。すてぶるくんの部品の img には効かせない */
+  .hero-cast > img {
     position: absolute;
     bottom: 0;
     max-width: none;
     width: auto;
   }
 
+  /* 部品を組んだすてぶるくん（.kun-rig）自体を左下に置く */
   .hero-cast-kun {
-    left: max(24px, calc(50% - 640px));
-    height: 108px;
+    position: absolute;
+    bottom: 0;
+    left: max(8px, calc(50% - 656px));
+    --kun-h: 112px;
   }
 
   .hero-cast-chan {
@@ -1361,12 +1408,104 @@ sup.fn a:hover {
 
 @media (min-width: 1440px) {
   .hero-cast-kun {
-    height: 120px;
+    --kun-h: 124px;
   }
 
   .hero-cast-chan {
     height: 280px;
   }
+}
+
+/* 立ち絵の動き：呼吸・腕の揺れ・手を振る。
+   .is-live は assets/characters.js が「画面に入っていて、タブが表示中」のときだけ付ける
+   （JS なしでは動かず、画面の外では止まる）。体が動くものなので、減らす設定では止める（後ろの @media） */
+@keyframes kun-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.012, 0.988);
+  }
+}
+
+@keyframes kun-arm-l-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes kun-arm-r-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+}
+
+/* 手を振る：右腕を肩から持ち上げて揺らし、下ろす（ヒーローで 1 回だけ） */
+@keyframes kun-wave {
+  0% {
+    transform: rotate(0deg);
+  }
+  18% {
+    transform: rotate(-88deg);
+  }
+  32% {
+    transform: rotate(-70deg);
+  }
+  46% {
+    transform: rotate(-94deg);
+  }
+  60% {
+    transform: rotate(-70deg);
+  }
+  76% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* すてぶるちゃんは足元を支点に、ほんの少し縦に伸び縮みする */
+@keyframes chan-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1, 1.006);
+  }
+}
+
+/* 体と腕は同じ周期（2.8s）で動かす */
+.kun-rig.is-live .kun-body {
+  animation: kun-breathe 2.8s ease-in-out infinite;
+}
+
+.kun-rig.is-live .kun-arm-l {
+  animation: kun-arm-l-sway 2.8s ease-in-out infinite;
+}
+
+.kun-rig.is-live .kun-arm-r {
+  animation: kun-arm-r-sway 2.8s ease-in-out infinite;
+}
+
+/* 揺れより後ろに書いて、手を振る間はこちらを勝たせる */
+.kun-rig.is-waving .kun-arm-r {
+  animation: kun-wave 1.8s ease-in-out 1;
+}
+
+[data-chan].is-live {
+  transform-origin: 50% 100%;
+  animation: chan-breathe 3.2s ease-in-out infinite;
 }
 
 /* FAQ：寝て浮いているすてぶるくんと、下に置かれた座布団（説明はしない） */
@@ -1830,7 +1969,7 @@ sup.fn a:hover {
   }
 
   .cast-kun {
-    height: 84px;
+    --kun-h: 88px;
   }
 
   .video-now-title {
@@ -1848,6 +1987,16 @@ sup.fn a:hover {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  /* 体が動くもの（呼吸・腕の揺れ・手を振る）は止める。まばたき・口パクは絵の差し替えなので JS 側で残す。
+     上の動きと同じ詳細度で、後ろに書いて勝たせる */
+  .kun-rig.is-live .kun-body,
+  .kun-rig.is-live .kun-arm-l,
+  .kun-rig.is-live .kun-arm-r,
+  .kun-rig.is-waving .kun-arm-r,
+  [data-chan].is-live {
+    animation: none;
   }
 }
 
