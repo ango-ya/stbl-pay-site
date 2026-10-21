@@ -39,6 +39,48 @@ test.describe("加盟店向けドキュメント", () => {
     await expect(page.locator('svg[role="img"]:visible')).toHaveCount(1);
   });
 
+  test("英語の LP のヘッダーとフッターから /docs/en/ へ行ける", async ({ page }) => {
+    await page.goto("/en/");
+    await expect(
+      page.locator(".site-nav").getByRole("link", { name: "Docs" })
+    ).toHaveAttribute("href", "/docs/en/");
+    await expect(
+      page.locator(".site-footer").getByRole("link", { name: "Merchant docs" })
+    ).toHaveAttribute("href", "/docs/en/");
+  });
+
+  test("英語版の概要ページが表示され、コンソールにエラーが出ない", async ({ page }) => {
+    const consoleErrors = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") consoleErrors.push(message.text());
+    });
+
+    await page.goto("/docs/en/");
+
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page).toHaveTitle(/STBLpay Docs/);
+    // 英語版の LP へ戻る
+    await expect(page.locator(".navbar").getByRole("link", { name: "Home", exact: true })).toHaveAttribute("href", "/en/");
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test("英語版の状態遷移の図は英語で描かれる", async ({ page }) => {
+    await page.goto("/docs/en/lifecycle/transitions");
+    const chart = page.locator('svg[role="img"]:visible');
+    await expect(chart).toHaveCount(1);
+    await expect(chart).toHaveAttribute("aria-label", /^Flowchart of payment status transitions/);
+    // 日本語が残っていない（訳し漏れがあると EN に無い文が日本語のまま出る）
+    expect(await chart.textContent()).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+  });
+
+  test("英語版の本文に日本語が残っていない（画面の名前の「」は除く）", async ({ page }) => {
+    for (const path of ["/docs/en/", "/docs/en/reference/rest", "/docs/en/lifecycle/statuses"]) {
+      await page.goto(path);
+      const text = (await page.locator("article").textContent()).replace(/「[^」]*」/g, "");
+      expect(text, path).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+    }
+  });
+
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {
     const headers = readFileSync(`${dist}_headers`, "utf8");
     expect(headers).not.toContain("__DOCS_SCRIPT_HASHES__");

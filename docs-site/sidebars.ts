@@ -1,11 +1,15 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
+// カテゴリ名は言語ごとに書き分ける（docusaurus.config.ts と同じく DOCUSAURUS_CURRENT_LOCALE を見る）。
+// ページの名前は各ページの sidebar_label から取る
+const en = process.env.DOCUSAURUS_CURRENT_LOCALE === 'en';
+
 const sidebars: SidebarsConfig = {
   docsSidebar: [
     'overview',
     {
       type: 'category',
-      label: 'はじめに',
+      label: en ? 'Getting started' : 'はじめに',
       collapsed: false,
       items: [
         'getting-started/payment-flow',
@@ -17,7 +21,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'EC サイトへの組み込み',
+      label: en ? 'Add to your store' : 'EC サイトへの組み込み',
       items: [
         'client/install',
         'client/start-payment',
@@ -27,7 +31,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'サーバー実装',
+      label: en ? 'Server side' : 'サーバー実装',
       items: [
         'server/authentication',
         'server/create-payment',
@@ -46,7 +50,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '決済ライフサイクル',
+      label: en ? 'Payment lifecycle' : '決済ライフサイクル',
       items: [
         'lifecycle/statuses',
         'lifecycle/transitions',
@@ -56,7 +60,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '返金',
+      label: en ? 'Refunds' : '返金',
       items: [
         'refunds/overview',
         'refunds/execute',
@@ -66,7 +70,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'セキュリティ',
+      label: en ? 'Security' : 'セキュリティ',
       items: [
         'security/api-keys',
         'security/boundaries',
@@ -76,17 +80,17 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'テスト',
+      label: en ? 'Testing' : 'テスト',
       items: ['testing/sandbox', 'testing/scenarios'],
     },
     {
       type: 'category',
-      label: 'リファレンス',
+      label: en ? 'Reference' : 'リファレンス',
       items: ['reference/rest', 'reference/webhook-events', 'reference/glossary'],
     },
     {
       type: 'category',
-      label: 'サポート',
+      label: en ? 'Support' : 'サポート',
       items: ['support/faq', 'support/troubleshooting', 'support/limitations', 'support/roadmap'],
     },
   ],

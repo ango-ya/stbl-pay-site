@@ -1,0 +1,111 @@
+---
+title: State transitions and deadlines
+sidebar_label: State transitions and deadlines
+sidebar_position: 2
+---
+
+# State transitions and deadlines
+
+This page summarizes the transition conditions that merchants use to make decisions. It does not cover worker locking or retry details.
+
+import StateFlowchart from '@site/src/components/StateFlowchart';
+
+Follow the diagram from top to bottom, answering each branch question with yes or no. Next to each arrow, the diagram shows whose action moves the payment forward.
+
+<StateFlowchart />
+
+## Normal flow
+
+Depending on whether the buyer's JPYC balance is sufficient, the in-progress statuses take one of two paths. Both end in `settled`.
+
+**When the balance is sufficient**
+
+| Status | What happened | Who acted (screen) |
+|---|---|---|
+| `created` | The payment was created. Waiting for a signature | Merchant server |
+| `signed` | The payment operation was signed | Buyer (approves with a passkey on the checkout page) |
+| `deposit_confirmed` | Confirmed that the balance covers the payment | STBLpay |
+| `deploying` | Creating wallets. This happens only the first time; when done, returns to `deposit_confirmed` | STBLpay |
+| `executing` | Executing the transfer and waiting for the result | STBLpay |
+| `settled` | The transfer succeeded and JPYC arrived in the merchant's receiving wallet | - |
+
+**When a bank transfer is needed**
+
+| Status | What happened | Who acted (screen) |
+|---|---|---|
+| `created` | The payment was created. Waiting for a signature | Merchant server |
+| `signed` | The payment operation was signed | Buyer (approves with a passkey on the checkout page) |
+| `issue_pending` | The buyer went on to the JPYC EX procedure (STBLpay received the reservation-start notification). Waiting for the deposit. STBLpay has not verified whether the JPYC EX procedure is complete | Buyer (from the checkout page to JPYC EX) |
+| `deposit_confirmed` | Confirmed that the issued JPYC arrived and the payable amount is available | The buyer makes the bank transfer and JPYC EX issues. STBLpay confirms |
+| `deploying` onward | Same as when the balance is sufficient | STBLpay |
+
+A Webhook arrives only when the payment reaches a [terminal](/reference/glossary) status such as `settled`. However, among terminal statuses, no Webhook arrives for `nonce_conflict`. Check in-progress statuses and `nonce_conflict` with a [status lookup](/reference/rest#retrieve-payment). When a bank transfer is needed, the payment waits for the buyer's transfer, so it may stay in `issue_pending` for a while. This is not a failure.
+
+## Transition list
+
+| From status | Condition | To status |
+|---|---|---|
+| `created` | A signature was received | `signed` |
+| `created` | The operation expiry was reached | `expired` |
+| `signed` | A bank transfer is needed, and the checkout page's reservation-start notification was received (the outcome of the JPYC EX procedure is not checked) | `issue_pending` |
+| `signed` | STBLpay confirmed that the balance is sufficient | `deposit_confirmed` |
+| `signed` | The operation expiry was reached | `expired` |
+| `signed` | The buyer canceled on My Page | `canceled` |
+| `issue_pending` | The payable amount became available within the deadline (the deposit of issued JPYC, or its sum with the current balance) | `deposit_confirmed` |
+| `issue_pending` | The destination of the deposit from JPYC EX does not match the `sender` of the payment operation the buyer signed (the buyer's wallet used for this payment) | `failed` |
+| `issue_pending` | The deposit deadline and the finalization grace period have passed | `expired` |
+| `issue_pending` | The buyer canceled on My Page before the deposit was confirmed | `canceled` |
+| `deposit_confirmed` | The wallets have not been created yet | `deploying` |
+| `deposit_confirmed` | STBLpay started execution | `executing` |
+| `deposit_confirmed` | Before execution, an unrecoverable failure was determined, or retries were used up | `failed` |
+| `deposit_confirmed` | The transfer result cannot be determined | `nonce_conflict` |
+| `deploying` | Preparation of the two wallets finished | `deposit_confirmed` |
+| `deploying` | It failed, or the attempt limit was reached | `failed` |
+| `executing` | Execution succeeded | `settled` |
+| `executing` | It failed, or retries were used up | `failed` |
+| `executing` | The transfer result cannot be determined | `nonce_conflict` |
+
+The diagram and the list omit or combine the following two items.
+
+- The transition from `issue_pending` to `failed` (deposit destination mismatch) is a safeguard against inconsistent stored data and does not occur in normal operation. It is therefore omitted from the diagram.
+- When a merchant is suspended, payments that have not yet started the transfer become `failed` (`failed_reason` is `merchant_suspended`). This is omitted from the diagram and the list. See [Merchant suspension](/lifecycle/edge-cases#merchant-suspension) for details.
+
+`deploying` and `executing` may stay in the same status during confirmation or temporary failures. A payment cannot go directly from `deploying` to `executing`. There are no transitions out of a terminal status.
+
+## Deposits and balance payments
+
+For the bank transfer path, STBLpay checks the destination, sender (the JPYC issuer), chain, and time of each arriving deposit. Then, if the available balance of the buyer's wallet (the current balance plus the deposit) covers the payment amount, the payment moves to `deposit_confirmed`. The new deposit alone does not need to reach the payment amount. A deposit whose sender is not the issuer is not counted. The payment stays in `issue_pending`, and if the amount is not available by the deadline, it becomes `expired`. A deposit is detected only after it can no longer be reversed ([Technical details](#technical-details)).
+
+For example, suppose a buyer with a ¥1,000 balance makes a ¥3,500 payment and has ¥3,000 issued to cover the shortfall. The sum of the balance and the deposit, ¥4,000, covers the payment amount, so the payment moves to `deposit_confirmed`.
+
+A balance payment moves from `signed` to `deposit_confirmed` without waiting for a deposit to be detected. STBLpay checks periodically whether the balance is sufficient, so the transition may come a little after approval, not immediately. STBLpay prevents the same balance from being applied to multiple payments.
+
+## Operation expiry and deposit deadline
+
+- `created` and `signed` before the reservation starts expire at `checkoutExpiresAt`. A payment never stays in these statuses forever.
+- When the reservation-start notification is first accepted, the deposit deadline is fixed as the issuance reservation deadline plus a **14-day buffer**. To find out the exact date and time of the deposit deadline, ask the [contact](/support/troubleshooting#contact).
+- `issue_pending` expires when no matching deposit is found even after the deposit deadline plus the confirmation-wait grace period. Whether a deposit is within the deadline is judged by the block time.
+- A deposit that arrived within the deadline is applied to the payment even if it is detected after the deadline. The grace period for this is the "confirmation-wait grace period" above.
+
+If you specify the optional `merchantExpiresAt`, the earlier of the deposit deadline and the specified value becomes the deposit deadline. The operation expiry does not become shorter (you can only specify a time more than 3 days after creation, and the operation expiry is shorter than that). If omitted, the server's deadline is used as is. A value that expires within 3 days of creation is rejected. Re-creating with the same `orderId` cannot overwrite the specified value.
+
+The deposit deadline is separate from the execution deadline of the payment operation the buyer signed. A merchant-specified deadline does not shorten the execution deadline ([Technical details](#technical-details)).
+
+## Cancellation
+
+Only the buyer can cancel a payment. The buyer approves with a passkey and cancels on STBLpay's My Page. A payment can be canceled in `signed` and in `issue_pending` before the deposit is confirmed. There is no way for the merchant or STBLpay to cancel. When a payment is canceled, a `payment.canceled` Webhook is sent to the merchant. Do not equate the issuer's reservation cancellation with STBLpay's `canceled`.
+
+## Technical details {/* #technical-details */}
+
+These are the blockchain-side names for things described in plain terms above. Merchants do not need to handle them in their implementation. Use them when contacting support, for example.
+
+- **nonce**: A sequence number attached to operations issued by a wallet. The same number can be used only once. A payment becomes `nonce_conflict` when the transfer result cannot be determined and the confirmation limit is reached without identifying the outcome of the operation. This includes not only the case where it was confirmed that the number was used, but also the case where failures to read the number continued up to the limit.
+- **UserOperation**: The unit of operation for payment that the buyer signs. The "payment operation" in the text refers to this.
+- **`validUntil`**: The execution deadline of a signed UserOperation. It is determined separately from the deposit deadline and is not shortened by a merchant-specified deadline.
+- **revert**: When an operation sent to the blockchain is rejected partway through execution and has no effect. It is one of the reasons a payment becomes `failed`.
+- **Deploy**: Creating a wallet on the blockchain. For the first payment, the buyer's wallet and the merchant's receiving wallet are needed, and the status passes through `deploying`. "Creating wallets" in the text refers to this.
+- **64 blocks (finality)**: When 64 blocks have been added after the block containing the deposit, it is treated as no longer reversible. This state is called finality. A deposit is detected only after it reaches this state, so the payment stays in `issue_pending` meanwhile.
+- **minter**: An address with the authority to issue JPYC. In bank transfer reconciliation, STBLpay checks whether the sender matches the issuer's minter.
+- **sender**: The address of the wallet that issues the UserOperation signed by the buyer (the buyer's AA Wallet used for this payment). If the destination of a deposit from JPYC EX does not match it, the payment becomes `failed` (this does not occur in normal operation).
+- **Transfer**: An event that records a movement of JPYC. Deposit detection is done by watching this record.
+- **`txHash`**: The transaction number on the blockchain. Use it when contacting support.

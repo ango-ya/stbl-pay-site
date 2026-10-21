@@ -17,6 +17,10 @@ python3 -m http.server 4173 --directory dist
 
 - ソースは `docs-site/`。ページは `docs-site/docs/` の Markdown で、ページを足したら `docs-site/sidebars.ts` にも足す
 - 書きながら確認するときは `cd docs-site && npm start`（`/docs/` 以下を dev サーバーで表示）
+- 英語版は `/docs/en/`。訳は `docs-site/i18n/en/docusaurus-plugin-content-docs/current/` に、日本語と同じパスで置く。日本語のページを直したら英語も直す
+  - 書きながら確認するときは `cd docs-site && npm start -- --locale en`（dev サーバーは 1 言語ずつしか出さない）
+  - リンク先になる見出しは、英語では `## Idempotency {/* #idempotency */}` のように id を明示する。リンク切れ・アンカー切れはビルドで落ちる
+  - ナビ・フッター・サイドバーのカテゴリ名は `docusaurus.config.ts`・`sidebars.ts` で、状態遷移の図の文は `StateFlowchart.tsx` の `EN` で書き分ける
 - `scripts/build-dist.sh` がビルドして `dist/docs/` に入れ、`_headers` の docs 用 CSP にインラインスクリプトのハッシュを書き込む（`scripts/docs-csp.mjs`）
 - 配信するのはビルド結果だけ。`docs-site/` のソースは `dist/` に入れない
 

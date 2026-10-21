@@ -1,8 +1,83 @@
-import React from 'react';
+import React, {createContext, useContext} from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 // 図の文字は M PLUS 1p。外部へ読みに行かないよう、パッケージから自前で配信する
 import '@fontsource/m-plus-1p/400.css';
 import '@fontsource/m-plus-1p/700.css';
 import styles from './StateFlowchart.module.css';
+
+// 図の中の文は日本語で書き、英語版では EN で引き直す。無い文は日本語のまま出る（下の検査で落とす）
+const EN: Record<string, string> = {
+  正常に進む流れ: 'Normal flow',
+  'Webhook が届く': 'Webhook is sent',
+  '届かない（状態照会で確認）': 'No Webhook (check status)',
+  同じ印の場所へつながる: 'Continues at the same mark',
+  利用者: 'Buyer',
+  加盟店: 'Merchant',
+  はい: 'Yes',
+  いいえ: 'No',
+  マイページで取り消す: 'cancels on My Page',
+  取り消した: 'Canceled by buyer',
+  'API で作成': 'creates via API',
+  '決済を作成した・署名待ち': 'Created, awaiting approval',
+  利用者が: 'Buyer',
+  '承認した？': 'approved?',
+  操作期限まで未承認: 'Not approved in time',
+  パスキーで承認: 'approves with passkey',
+  署名を受け取った: 'Signature received',
+  操作期限に達した: 'Deadline reached',
+  残高は: 'Balance',
+  '足りる？': 'enough?',
+  'はい：残高で払う': 'Yes: use balance',
+  が確認: 'confirms',
+  'JPYC EX の手続きへ進む': 'goes to JPYC EX',
+  '予約開始を受けた・着金待ち': 'Reserved, awaiting deposit',
+  期限内に支払える: 'Enough funds',
+  '額がそろった？': 'by the deadline?',
+  着金期限を過ぎた: 'Past deposit deadline',
+  '振込む、': 'transfers,',
+  が発行: 'issues',
+  今の残高と合わせて足りればよい: 'Existing balance counts toward it',
+  '着金・残高を確定した': 'Funds confirmed',
+  実行の前に失敗: 'Failed before sending',
+  結果が確定できない: 'Outcome unknown',
+  ウォレットは: 'Wallet',
+  '作成済み？': 'created?',
+  ウォレットを作成: 'Creating wallet',
+  作成して戻る: 'creates, returns',
+  作成に失敗: 'Creation failed',
+  送金を実行: 'sends JPYC',
+  送金の結果を確認中: 'Checking send result',
+  送金は: 'Send',
+  '成功した？': 'succeeded?',
+  送金に失敗: 'Send failed',
+  支払いが成立した: 'Payment completed',
+  加盟店が決済を作成: 'Created by merchant',
+  期限まで未承認: 'Not approved',
+  利用者がパスキーで承認: 'Approved with passkey',
+  期限に達した: 'Timed out',
+  '→ 印 A へ': '→ go to mark A',
+  'JPYC EX へ進んだ': 'Went to JPYC EX',
+  着金期限切れ: 'No deposit',
+  振込む: 'transfers',
+  残高と合算でもよい: 'Balance counts toward it',
+  '着金・残高を確定': 'Funds confirmed',
+  実行前に失敗: 'Not sent',
+  確定できない: 'Unknown',
+  '作成後に印 B へ': 'Then go to mark B',
+  '失敗は failed': 'On failure: failed',
+  'STBLpay が送金を実行': 'STBLpay sends JPYC',
+  支払いが成立: 'Payment completed',
+  'signed と、着金の前の issue_pending から': 'From signed, or issue_pending before the deposit,',
+  '利用者が取り消すと canceled になります。': 'a buyer cancellation leads to canceled.',
+  '決済の状態遷移のフローチャート。created から、利用者の承認、残高が足りるかどうか、着金、ウォレットの作成、送金の成否の分岐を経て、settled・failed・nonce_conflict・expired・canceled のどれかで終わります。':
+    'Flowchart of payment status transitions. Starting from created, it branches on buyer approval, whether the balance is enough, the deposit, wallet creation and whether the send succeeded, and ends in settled, failed, nonce_conflict, expired or canceled.',
+};
+
+const LocaleContext = createContext<string>('ja');
+function useT() {
+  const en = useContext(LocaleContext) === 'en';
+  return (t: string) => (en ? (EN[t] ?? t) : t);
+}
 
 type Kind = 'plain' | 'main' | 'settled' | 'fail' | 'warn' | 'muted';
 type Hook = 'yes' | 'no' | null;
@@ -31,6 +106,7 @@ type BoxProps = {
 
 // 状態（行き止まりの状態も同じ形で描く）。desc は 1 行ずつ
 function StateBox({x, y, w, h, name, desc, kind = 'plain', hook = null, hookBottom = false}: BoxProps) {
+  const t = useT();
   const on = kind === 'settled';
   const hy = hookBottom ? y + h - 14 : y + 14;
   return (
@@ -41,7 +117,7 @@ function StateBox({x, y, w, h, name, desc, kind = 'plain', hook = null, hookBott
       </text>
       {desc.map((line, i) => (
         <text key={line} x={x + 12} y={y + 39 + i * 16} className={`${styles.desc} ${on ? styles.descOn : ''}`}>
-          {line}
+          {t(line)}
         </text>
       ))}
       {hook === 'yes' ? (
@@ -54,13 +130,14 @@ function StateBox({x, y, w, h, name, desc, kind = 'plain', hook = null, hookBott
 
 // 分岐。上下左右の頂点から線を出す
 function Diamond({cx, cy, w, h, lines}: {cx: number; cy: number; w: number; h: number; lines: string[]}) {
+  const t = useT();
   const top = cy - ((lines.length - 1) * 17) / 2 + 5;
   return (
     <g>
       <path d={`M${cx},${cy - h / 2} L${cx + w / 2},${cy} L${cx},${cy + h / 2} L${cx - w / 2},${cy} Z`} className={styles.diamond} />
       {lines.map((line, i) => (
         <text key={line} x={cx} y={top + i * 17} textAnchor="middle" className={styles.question}>
-          {line}
+          {t(line)}
         </text>
       ))}
     </g>
@@ -139,11 +216,12 @@ function Line({p, d, kind, head = true}: {p: string; d: string; kind: LineKind; 
 
 type Anchor = 'start' | 'middle' | 'end';
 function Label({x, y, lines, anchor = 'start', strong = false}: {x: number; y: number; lines: string[]; anchor?: Anchor; strong?: boolean}) {
+  const t = useT();
   return (
     <g>
       {lines.map((line, i) => (
         <text key={line} x={x} y={y + i * 16} textAnchor={anchor} className={strong ? styles.labelStrong : styles.label}>
-          {line}
+          {t(line)}
         </text>
       ))}
     </g>
@@ -175,18 +253,23 @@ const WHO: Record<Who, {name: string; w: number; cls: string; tcls: string}> = {
 // 文字幅の目安（全角 12.5px・半角 7px）
 const textW = (t: string) => [...t].reduce((n, c) => n + (c.charCodeAt(0) > 0xff ? 12.5 : 7), 0);
 
+// 誰の印の幅。英語は名前の長さから決める（日本語は WHO の幅のまま）
+const whoW = (who: Who, t: (s: string) => string) => (t(WHO[who].name) === WHO[who].name ? WHO[who].w : textW(t(WHO[who].name)) + 14);
+
 // 「はい」などの前置き、誰の印、操作の説明を 1 行に並べる。y は文字のベースライン
 function Act({x, y, who, text, pre}: {x: number; y: number; who: Who; text?: string; pre?: string}) {
+  const t = useT();
   const a = WHO[who];
-  const px = pre ? x + textW(pre) + 6 : x;
+  const w = whoW(who, t);
+  const px = pre ? x + textW(t(pre)) + 6 : x;
   return (
     <g>
       {pre ? <Label x={x} y={y} lines={[pre]} /> : null}
-      <rect x={px} y={y - 13} width={a.w} height={18} rx={9} className={`${styles.who} ${a.cls}`} />
-      <text x={px + a.w / 2} y={y} textAnchor="middle" className={`${styles.whoText} ${a.tcls}`}>
-        {a.name}
+      <rect x={px} y={y - 13} width={w} height={18} rx={9} className={`${styles.who} ${a.cls}`} />
+      <text x={px + w / 2} y={y} textAnchor="middle" className={`${styles.whoText} ${a.tcls}`}>
+        {t(a.name)}
       </text>
-      {text ? <Label x={px + a.w + 6} y={y} lines={[text]} /> : null}
+      {text ? <Label x={px + w + 6} y={y} lines={[text]} /> : null}
     </g>
   );
 }
@@ -248,9 +331,10 @@ function Desktop() {
   const ySettled = c5 + DH / 2 + G;
   const down = (from: number, to: number) => `M${MX},${from} V${to - 3}`;
   const yDeploy = c4 - H / 2;
+  const t = useT();
   return (
-    <svg className={styles.desktop} viewBox={`0 0 760 ${ySettled + H + 16}`} role="img" aria-label={TITLE}>
-      <title>{TITLE}</title>
+    <svg className={styles.desktop} viewBox={`0 0 760 ${ySettled + H + 16}`} role="img" aria-label={t(TITLE)}>
+      <title>{t(TITLE)}</title>
       <Defs p={p} />
       <Legend x={20} y={c5 + 20} p={p} />
 
@@ -295,8 +379,8 @@ function Desktop() {
       {/* 着金は取り消されない状態になるまで issue_pending のまま待ち、deposit_confirmed へ 1 度に進む */}
       <Line p={p} kind="main" d={down(c3 + DH / 2, yConf)} />
       <Act x={MX + 10} y={c3 + DH / 2 + 22} pre="はい" who="user" text="振込む、" />
-      <Act x={MX + 10 + textW('はい') + 6 + WHO.user.w + 6 + textW('振込む、') + 4} y={c3 + DH / 2 + 22} who="issuer" text="が発行" />
-      <Label x={MX + 10 + textW('はい') + 6} y={c3 + DH / 2 + 42} lines={['今の残高と合わせて足りればよい']} />
+      <Act x={MX + 10 + textW(t('はい')) + 6 + whoW('user', t) + 6 + textW(t('振込む、')) + 4} y={c3 + DH / 2 + 22} who="issuer" text="が発行" />
+      <Label x={MX + 10 + textW(t('はい')) + 6} y={c3 + DH / 2 + 42} lines={['今の残高と合わせて足りればよい']} />
 
       {/* 実行の前 */}
       <StateBox x={BX} y={yConf} w={BW} h={H} name="deposit_confirmed" desc={['着金・残高を確定した']} kind="main" />
@@ -347,9 +431,10 @@ function Mobile() {
   const H = 52;
   const chip = (cy: number) => cy - CH / 2;
   const yes = (y: number, text = 'はい') => <Label x={MX + 8} y={y} lines={[text]} />;
+  const t = useT();
   return (
-    <svg className={styles.mobile} viewBox="0 0 340 1390" role="img" aria-label={TITLE}>
-      <title>{TITLE}</title>
+    <svg className={styles.mobile} viewBox="0 0 340 1390" role="img" aria-label={t(TITLE)}>
+      <title>{t(TITLE)}</title>
       <Defs p={p} />
 
       <StateBox x={BX} y={10} w={BW} h={H} name="created" desc={['加盟店が決済を作成']} kind="main" />
@@ -420,10 +505,13 @@ function Mobile() {
 }
 
 export default function StateFlowchart() {
+  const {i18n} = useDocusaurusContext();
   return (
-    <div className={styles.root}>
-      <Desktop />
-      <Mobile />
-    </div>
+    <LocaleContext.Provider value={i18n.currentLocale}>
+      <div className={styles.root}>
+        <Desktop />
+        <Mobile />
+      </div>
+    </LocaleContext.Provider>
   );
 }
