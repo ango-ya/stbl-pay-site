@@ -6,6 +6,8 @@
   // - すてぶるくん（.kun-rig）：まばたき・目線・ヒーローで 1 回だけ手を振る（呼吸と腕の揺れは CSS が is-live で動かす）
   // - すてぶるちゃん（img[data-chan]）：ウインク・登場のポーズ送り・会話に合わせて手を伸ばす
   // - 会話（.talk）：画面に入ったら 1 回だけ、上の行から順に口パク。立ち絵とも連動する
+  //   （再生中に画面外へ出たら打ち切り、タブが隠れたら止めて表示に戻ったら最初から）
+  // - すぐには要らないコマの先読みは、ページの読み込みが終わってから（ヒーローの登場に使う絵だけはすぐ読む）
   // - 差し替えるコマは先に読み込んでおき、読み込み済みのものだけ使う（ちらつき防止）
   // - IntersectionObserver が無いときは何もしない（絵は止まったまま）
   // - prefers-reduced-motion: 体が動くもの（呼吸・腕の揺れ・手を振る・登場のポーズ送り）を止める。まばたき・口パク・目線は残す
@@ -45,6 +47,15 @@
     return src.slice(0, src.lastIndexOf("/") + 1);
   };
 
+  // ページの読み込みが終わってから呼ぶ（すぐには要らないコマの先読みで、最初の表示の邪魔をしない）
+  const afterLoad = (fn) => {
+    if (document.readyState === "complete") {
+      fn();
+    } else {
+      window.addEventListener("load", fn, { once: true });
+    }
+  };
+
   // 先読み：同じ URL は 1 回だけ読む。読めたものだけ loaded に入る
   const loaded = new Set();
   const loading = new Map();
@@ -52,6 +63,7 @@
     let entry = loading.get(url);
     if (!entry) {
       const img = new Image();
+      img.fetchPriority = "low"; // 対応していないブラウザでは何も起きない
       const promise = new Promise((resolve) => {
         img.onload = () => {
           loaded.add(url);
@@ -305,8 +317,10 @@
     const start = () => {
       if (!preloaded) {
         preloaded = true;
-        ["half", "closed", "left", "right"].forEach((name) => preload(eyeUrl(name)));
-        VOWELS.forEach((v) => preload(talkUrl(v)));
+        afterLoad(() => {
+          ["half", "closed", "left", "right"].forEach((name) => preload(eyeUrl(name)));
+          VOWELS.forEach((v) => preload(talkUrl(v)));
+        });
       }
       scheduleBlink();
       scheduleGaze();
@@ -415,7 +429,12 @@
     const start = () => {
       if (!preloaded) {
         preloaded = true;
-        (mode === "hero" ? [STAND, REACH, WINK] : mode === "wink" ? [REACH, WINK] : [STAND, REACH]).forEach(preload);
+        if (mode === "hero") {
+          // 登場のポーズ送りはフェードが終わるまでに要るので、すぐ読む（WINK は HTML の絵なので読み込み済み）
+          [STAND, REACH, WINK].forEach(preload);
+        } else {
+          afterLoad(() => (mode === "wink" ? [REACH, WINK] : [STAND, REACH]).forEach(preload));
+        }
       }
       if (mode === "wink") {
         scheduleWink();
@@ -496,7 +515,11 @@
       const key = img ? (img.getAttribute("data-face") || "").trim().replace(/\s+/g, " ") : "";
       const spec = FACES[key];
       const who = spec ? spec.who : line.classList.contains("talk-kun") ? "kun" : "chan";
-      return { line, who, face: spec ? { img, spec, dir: dirOf(img), blinking: false, prev: "" } : null };
+      return {
+        line,
+        who,
+        face: spec ? { img, spec, dir: dirOf(img), orig: img.getAttribute("src"), blinking: false, prev: "" } : null,
+      };
     });
     if (!entries.length) {
       return null;
@@ -507,6 +530,7 @@
     const tMouth = makeTimers();
     const tBlink = makeTimers();
     let visible = false;
+    let ratio = 0;
     let waiting = false;
     let playing = false;
     let played = false;
@@ -523,10 +547,19 @@
       });
       return urls;
     };
+    // 休みのコマ。読めていなければ HTML に書いた絵に戻す（最後の口パクの絵を残さない）
+    const toRest = (face) => {
+      const url = faceUrl(face, face.spec.rest);
+      if (loaded.has(url)) {
+        swap(face.img, url);
+      } else {
+        swap(face.img, face.orig, true);
+      }
+    };
     const restAll = () => {
       entries.forEach((entry) => {
         if (entry.face) {
-          swap(entry.face.img, faceUrl(entry.face, entry.face.spec.rest));
+          toRest(entry.face);
         }
       });
     };
@@ -573,7 +606,7 @@
     };
     const mouthEnd = (face) => {
       tMouth.clearAll();
-      swap(face.img, faceUrl(face, face.spec.rest));
+      toRest(face);
     };
 
     // 画面に入っている間（再生中は除く）、各顔が 3〜7 秒おきにまばたき（120ms）
@@ -656,7 +689,7 @@
 
     const begin = () => {
       waiting = false;
-      if (!visible || playing || played) {
+      if (!visible || document.hidden || playing || played) {
         return;
       }
       playing = true;
@@ -668,8 +701,17 @@
       });
     };
 
-    // 再生中に画面外へ出たら打ち切る（もう再生しない）
-    const abort = () => {
+    // 画面に 60% 以上入っていて、タブが表示中なら、400ms 待って再生する（1 回だけ）
+    const arm = () => {
+      if (visible && ratio >= 0.6 && !document.hidden && !played && !playing && !waiting) {
+        waiting = true;
+        tWait.set(begin, 400);
+      }
+    };
+
+    // 再生を止める。画面外へ出たときは打ち切り（もう再生しない）、
+    // タブが隠れたときは、見ていないあいだに終わらないよう止めて、表示に戻ったら最初から再生する
+    const stopPlay = (giveUp) => {
       tPlay.clearAll();
       tMouth.clearAll();
       entries.forEach((entry) => entry.line.classList.remove("is-speaking"));
@@ -681,26 +723,42 @@
       if (stand.chan) {
         stand.chan.hush();
       }
-      finish();
+      if (giveUp) {
+        finish();
+      } else {
+        playing = false;
+      }
     };
 
     const onNear = (entry) => {
       if (entry.isIntersecting) {
         nearObserver.unobserve(talk);
-        frameUrls().forEach(preload);
+        afterLoad(() => frameUrls().forEach(preload));
       }
     };
     const onView = (entry) => {
       visible = entry.isIntersecting;
+      ratio = entry.intersectionRatio;
       if (!visible) {
         tWait.clearAll();
         waiting = false;
         if (playing) {
-          abort();
+          stopPlay(true);
         }
-      } else if (!played && !playing && !waiting && entry.intersectionRatio >= 0.6) {
-        waiting = true;
-        tWait.set(begin, 400);
+      } else {
+        arm();
+      }
+      sync();
+    };
+    const onVisibility = () => {
+      if (document.hidden) {
+        tWait.clearAll();
+        waiting = false;
+        if (playing) {
+          stopPlay(false);
+        }
+      } else {
+        arm();
       }
       sync();
     };
@@ -710,7 +768,7 @@
     nearObserver.observe(talk);
     viewObserver.observe(talk);
 
-    return { sync };
+    return { onVisibility };
   };
 
   document.querySelectorAll(".kun-rig[data-kun]").forEach((rig) => {
@@ -735,7 +793,7 @@
   // タブを切り替えたら、動かす・止めるを見直す
   document.addEventListener("visibilitychange", () => {
     actors.forEach((actor) => actor.sync());
-    talks.forEach((talk) => talk.sync());
+    talks.forEach((talk) => talk.onVisibility());
   });
 
   // reduce の変化に追従する（CSS の動きは media query が止める。JS 側は手振りと登場のポーズ送りを切り上げる）

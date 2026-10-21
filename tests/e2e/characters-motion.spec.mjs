@@ -218,7 +218,13 @@ const installRecorder = (page) =>
           const added = after.filter((x) => !before.includes(x) && /^is-/.test(x));
           const removed = before.filter((x) => !after.includes(x) && /^is-/.test(x));
           if (added.length || removed.length) {
-            rec.push({ k: "class", t, added, removed, ...info(el) });
+            const entry = { k: "class", t, added, removed, ...info(el) };
+            // 手を振り始めた瞬間の右腕の動き（あとから見ると、遅い機械では振り終わっていることがある）
+            if (added.includes("is-waving")) {
+              const arm = el.querySelector(".kun-arm-r");
+              entry.armAnim = arm ? getComputedStyle(arm).animationName : null;
+            }
+            rec.push(entry);
           }
         }
       }
@@ -350,6 +356,19 @@ const animationName = (locator) => locator.evaluate((el) => getComputedStyle(el)
 
 const HERO_RIG = '.kun-rig[data-kun="hero"]';
 const IS_LIVE = /\bis-live\b/;
+
+// タブの表示・非表示を作る（document.hidden を差し替えて visibilitychange を出す）
+const setHidden = (page, hidden) =>
+  page.evaluate((h) => {
+    if (h) {
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    } else {
+      delete document.hidden;
+      delete document.visibilityState;
+    }
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, hidden);
 
 // ─── 1. 素材と HTML ─────────────────────────────────────────────────────────
 
@@ -640,6 +659,90 @@ test.describe("会話の再生", () => {
       expect(kunWindows.some((w) => e.t >= w.start - 150 && e.t <= w.end + 150)).toBe(true);
     }
   });
+
+  test("タブが隠れている間は会話を始めず、再生中に隠れたら止めて、表示に戻ると最初から再生する", async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    await installRecorder(page);
+    await page.goto("/");
+    const talk = page.locator("#videos .talk");
+    const speakingCount = async () =>
+      (await events(page)).filter((e) => e.k === "class" && e.sec === "videos" && e.added.includes("is-speaking")).length;
+    const faceChanges = async () =>
+      (await events(page)).filter((e) => e.k === "src" && e.sec === "videos" && hasCls(e, "talk-face")).length;
+
+    // 隠れたまま会話を画面に入れても、話し始めない
+    await setHidden(page, true);
+    await scrollCenter(talk);
+    await page.waitForTimeout(2500);
+    expect(await speakingCount(), "隠れている間は話し始めない").toBe(0);
+
+    // 表示に戻ると話し始める
+    await setHidden(page, false);
+    await waitFor(page, "話し始める", (e) => e.k === "class" && e.sec === "videos" && e.added.includes("is-speaking"));
+
+    // 再生中に隠れると、話している行が止まり、顔は休みのコマに戻る。再生済みにはしない
+    await setHidden(page, true);
+    await expect(page.locator("#videos .talk-line.is-speaking")).toHaveCount(0);
+    await expect(talk).not.toHaveClass(/\bis-played\b/);
+    for (const f of await readFaces(page, "#videos")) {
+      expect(restOrBlinkOf(f.face).has(f.file), `${f.face} の顔が休みのコマ（今は ${f.file}）`).toBe(true);
+    }
+    // 隠れている間は、顔の絵を替えない（口パクもまばたきも止まる）
+    const frozenFaces = await faceChanges();
+    const frozenLines = await speakingCount();
+    await page.waitForTimeout(2500);
+    expect(await faceChanges(), "隠れている間は顔の絵を替えない").toBe(frozenFaces);
+    expect(await speakingCount(), "隠れている間は次の行に進まない").toBe(frozenLines);
+
+    // 表示に戻ると、最初の行から最後まで再生する
+    await setHidden(page, false);
+    await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+    const windows = speakingWindows(await events(page), "videos");
+    expect(windows.slice(-3).map((w) => w.line), "戻ったあとは 1 行目から順に話す").toEqual([0, 1, 2]);
+    expect(errors).toEqual([]);
+  });
+
+  test("休みのコマが読めないときは、話し終わったら HTML に書いた絵に戻す（最後の口パクの絵を残さない）", async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    await page.route("**/assets/char/talk/chan-normal-0.webp", (route) => route.fulfill({ status: 404, body: "" }));
+    await installRecorder(page);
+    await page.goto("/");
+    const talk = page.locator("#videos .talk");
+    const authored = await readFaces(page, "#videos");
+    expect(authored[0], "1 行目は chan normal で、HTML の絵は chan-normal-1").toEqual({
+      face: "chan normal",
+      file: "chan-normal-1.webp",
+    });
+
+    await scrollCenter(talk);
+    await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+    const evs = await events(page);
+    const first = evs.filter((e) => e.k === "src" && e.sec === "videos" && hasCls(e, "talk-face") && e.line === 0);
+    expect(first.some((e) => /^chan-normal-2\.webp$/.test(e.file)), "1 行目は口パクした").toBe(true);
+    expect(first.some((e) => e.file === "chan-normal-0.webp"), "読めなかったコマは使わない").toBe(false);
+    // 終わったあとは HTML の絵（まばたきの途中なら、まばたきのコマ）
+    const now = (await readFaces(page, "#videos"))[0].file;
+    expect(["chan-normal-1.webp", "chan-blink-normal.webp"], `1 行目の顔（今は ${now}）`).toContain(now);
+    expect(errors).toEqual([]);
+  });
+
+  test("IntersectionObserver の無いブラウザでは、何も動かさず、エラーも出さない", async ({ page }) => {
+    test.setTimeout(60_000);
+    const errors = watchErrors(page);
+    await page.addInitScript(() => {
+      delete window.IntersectionObserver;
+    });
+    await installRecorder(page);
+    await page.goto("/");
+    await scrollCenter(page.locator("#videos .talk"));
+    await page.waitForTimeout(3000);
+    const mine = (await events(page)).filter((e) => e.kun || e.chan || e.face || hasCls(e, "talk") || hasCls(e, "talk-line"));
+    expect(mine, "キャラの絵もクラスも替わらない").toEqual([]);
+    expect(await page.locator(".kun-rig.is-live, [data-chan].is-live, .talk.is-played").count()).toBe(0);
+    expect(errors).toEqual([]);
+  });
 });
 
 // ─── 4. 生きている間だけ動く ─────────────────────────────────────────────────
@@ -796,14 +899,14 @@ test.describe("ヒーローの登場", () => {
     expect(sinceStart, "このマシンが重すぎて、登場の窓（スクリプト開始から 800ms）に 3 回とも間に合わなかった").toBeLessThanOrEqual(650);
 
     await waitFor(page, "is-waving が付く", (e) => heroRig(e) && e.added.includes("is-waving"), 6000);
-    // 手を振っている間は、右腕の動きが kun-wave
-    expect(await animationName(rig.locator(".kun-arm-r"))).toBe("kun-wave");
     await waitFor(page, "is-waving が外れる", (e) => heroRig(e) && e.removed.includes("is-waving"), 6000);
 
     const evs = await events(page);
     const live = evs.find((e) => heroRig(e) && e.added.includes("is-live"));
     const on = evs.find((e) => heroRig(e) && e.added.includes("is-waving"));
     const off = evs.find((e) => heroRig(e) && e.removed.includes("is-waving"));
+    // 手を振り始めたときの右腕の動きが kun-wave（記録した時点の値で見る）
+    expect(on.armAnim, "手を振っている間は、右腕の動きが kun-wave").toBe("kun-wave");
     expect(on.t - live.t, "見えてから 1200ms ほど後に手を振る").toBeGreaterThan(1000);
     expect(on.t - live.t, "見えてから 1200ms ほど後に手を振る").toBeLessThan(3000);
     expect(off.t - on.t, "手を振るのは 1.8 秒の動き（animationend か 2200ms 後に外す）").toBeGreaterThan(1500);
