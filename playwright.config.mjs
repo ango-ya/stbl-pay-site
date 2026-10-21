@@ -19,7 +19,7 @@ export default defineConfig({
   webServer: {
     // 本番と同じ dist/ を配信する（scripts/build-dist.sh が組み立てる。docs も含む）。
     // CI では直前の手順で組み立て済み。手元では毎回組み立て直し、古い dist/ をテストしない
-    command: '[ -n "$CI" ] || ./scripts/build-dist.sh && python3 -m http.server 4173 --bind 127.0.0.1 --directory dist',
+    command: '[ -n "$CI" ] || ./scripts/build-dist.sh && python3 scripts/serve-dist.py 4173',
     timeout: 180_000,
     url: "http://127.0.0.1:4173/index.html",
     reuseExistingServer: !process.env.CI,
