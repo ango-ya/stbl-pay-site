@@ -19,7 +19,7 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \
   --data '{"amountJpy":"4980","orderId":"ord_0001","returnUrl":"https://shop.example.com/orders/ord_0001/return"}'
 ```
 
-Save the mapping between the order and `paymentIntentId`, check the `status` in the response, and then pass the `checkoutUrl` to the browser. When you retry for the same order, use the same `orderId`. If a retry returns an existing payment that is already terminal, do not send the browser to its `checkoutUrl`. If the status is `settled`, the payment is already complete. For any other terminal status, check how the order should be handled, then create a new payment with a new `orderId` (see [Idempotency](/server/create-payment#idempotency)). For the other fields in the response, see the [REST reference](/reference/rest).
+Save the mapping between the order and `paymentIntentId`, check the `status` in the response, and then pass the `checkoutUrl` to the browser. When you retry for the same order, use the same `orderId`. If a retry returns an existing payment that is already terminal, do not send the browser to its `checkoutUrl`. If the status is `settled`, the payment is already complete. If it is `nonce_conflict`, the outcome is not determined: stop automatic shipping and automatic re-billing, investigate, and do not create a new payment until the investigation is complete (see [The transfer result cannot be determined](/lifecycle/edge-cases#nonce-conflict)). If it is `failed`, `expired` or `canceled`, check how the order should be handled, then create a new payment with a new `orderId` (see [Idempotency](/server/create-payment#idempotency)). For the other fields in the response, see the [REST reference](/reference/rest).
 
 ## 2. Navigate the browser
 

@@ -47,6 +47,6 @@ If 409 `payment/order_terminated` is returned, **create a new payment with a new
 
 Prevent duplicates with the `id` of the signature-verified body and a conditional update of the order. After recovering from an outage or after retries were abandoned, reconcile unconfirmed orders with the API. The absence of a notification alone does not mean the payment is unpaid.
 
-## The transfer result cannot be determined (`nonce_conflict`)
+## The transfer result cannot be determined (`nonce_conflict`) {/* #nonce-conflict */}
 
 `nonce_conflict` is terminal, but it means the transfer result could not be determined and the confirmation limit was reached. It is unknown whether the transfer happened, or whether it succeeded or failed. This also applies when failures to read the number (nonce) continued up to the limit ([Technical details](/lifecycle/transitions#technical-details)). There is no Webhook. Detect it with the status API, stop automatic shipping and re-charging, and send it to operational investigation.
