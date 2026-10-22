@@ -4,13 +4,15 @@
   // 動かすのは「クラスの付け外し」と「img の src の差し替え」だけ（インラインの指定も、HTML の組み立ても使わない）。
   // - 画面に入っていて、タブが表示中のときだけ is-live を付けてタイマーを回す。外れたら全部止める
   // - すてぶるくん（.kun-rig）：まばたき・目線・ヒーローで 1 回だけ手を振る（呼吸と腕の揺れは CSS が is-live で動かす）
-  // - すてぶるちゃん（img[data-chan]）：ウインク・登場のポーズ送り・会話に合わせて手を伸ばす
+  // - すてぶるちゃん（img[data-chan]。上半身の絵）：まばたき・ヒーローの振り向き登場と待機の仕草・
+  //   会話に合わせた仕草つきの口パク（得意げ・手のひら・指さし）と、会話の最後の座布団
   // - 会話（.talk）：画面に入ったら 1 回だけ、上の行から順に口パク。立ち絵とも連動する
   //   （再生中に画面外へ出たら打ち切り、タブが隠れたら止めて表示に戻ったら最初から）
   // - すぐには要らないコマの先読みは、ページの読み込みが終わってから（ヒーローの登場に使う絵だけはすぐ読む）
   // - 差し替えるコマは先に読み込んでおき、読み込み済みのものだけ使う（ちらつき防止）
   // - IntersectionObserver が無いときは何もしない（絵は止まったまま）
-  // - prefers-reduced-motion: 体が動くもの（呼吸・腕の揺れ・手を振る・登場のポーズ送り）を止める。まばたき・口パク・目線は残す
+  // - prefers-reduced-motion: 体が動くもの（上下・呼吸・腕の揺れ・手を振る・登場の振り向き）を止める。
+  //   まばたき・口パク・目線・待機や会話の仕草の絵の差し替えは残す
   // 素材の名前と動きの決まりは README の「キャラクターの素材と動き」を参照。
 
   if (!("IntersectionObserver" in window)) {
@@ -18,7 +20,7 @@
   }
 
   const T0 = performance.now();
-  const INTRO_WINDOW = 800; // スクリプト開始からこの間に初めて見えたときだけ、登場の動き（手振り・ポーズ送り）をする
+  const INTRO_WINDOW = 800; // スクリプト開始からこの間に初めて見えたときだけ、登場の動き（手振り・振り向き）をする
   const EXT = ".webp";
   const EN = /^en/i.test(document.documentElement.lang || "");
   const REDUCE = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -360,123 +362,241 @@
     return actor;
   };
 
-  // ---- すてぶるちゃん（img[data-chan]。太ももまでの絵） ----
+  // ---- すてぶるちゃん（img[data-chan]。上半身の絵） ----
+  // コマの名前は <形>-0/1/2（口の開き）。話せる形は POSES、会話の最後に出す仕草は FINALES
+  const POSES = ["normal", "proud", "palm", "point"];
+  const FINALES = ["zabuton"];
+  const CHAN_WEIGHTS = [0.25, 0.4, 0.35]; // 口の 0/1/2 を選ぶ重み
+  // ヒーローの待機の仕草（コマ・出しておく ms）
+  const GESTURES = [
+    ["proud-0", 2400],
+    ["fist", 1800],
+  ];
+  const has = (list, name) => list.indexOf(name) >= 0;
+
   const makeChan = (img) => {
     const mode = img.getAttribute("data-chan");
-    if (mode !== "hero" && mode !== "wink" && mode !== "greet") {
+    if (mode !== "hero" && mode !== "cast") {
       return null;
     }
+    const hero = mode === "hero";
     const dir = dirOf(img);
-    const url = (name) => dir + "thigh-" + name + EXT;
-    const STAND = url("stand");
-    const REACH = url("reach");
-    const WINK = url("reach-wink");
+    const url = (name) => dir + name + EXT;
+    const REST = "normal-0"; // ふだんの顔（ほほえみ）。HTML に書いてある絵
+    const RESTURL = url(REST);
 
     const tIntro = makeTimers();
-    const tWink = makeTimers();
-    const tReach = makeTimers();
+    const tBlink = makeTimers();
+    const tIdle = makeTimers();
+    const tAct = makeTimers(); // 話す・仕草を出している間のタイマー
     let preloaded = false;
     let first = true;
     let introducing = false;
-    let introduced = false; // 登場のポーズ送りをした（途中で止まった場合も含む）。ヒーローはこの後だけウインクする
+    let blinking = false;
+    let acting = false; // 話している・仕草を出している（まばたき・待機の仕草は止める）
 
-    // 7〜11 秒おきに 380ms だけウインク
-    const scheduleWink = () => {
-      tWink.set(() => {
-        swap(img, WINK);
-        tWink.set(() => {
-          swap(img, REACH);
-          scheduleWink();
-        }, 380);
-      }, rand(7000, 11000));
+    const show = (name) => swap(img, url(name), name === REST);
+    const rest = () => swap(img, RESTURL, true);
+
+    // まばたき：2.5〜5.5 秒おき、今の絵が normal-0 のときだけ。20% で続けてもう 1 回
+    const scheduleBlink = () => {
+      tBlink.set(() => blink(false), rand(2500, 5500));
+    };
+    const blink = (second) => {
+      if (
+        introducing ||
+        acting ||
+        img.getAttribute("src") !== RESTURL ||
+        !loaded.has(url("blink-half")) ||
+        !loaded.has(url("blink-normal"))
+      ) {
+        scheduleBlink();
+        return;
+      }
+      blinking = true;
+      play(
+        tBlink,
+        [
+          [() => show("blink-half"), 50],
+          [() => show("blink-normal"), 110],
+          [() => show("blink-half"), 50],
+          [rest, 0],
+        ],
+        () => {
+          blinking = false;
+          if (!second && Math.random() < 0.2) {
+            tBlink.set(() => blink(true), 180);
+          } else {
+            scheduleBlink();
+          }
+        }
+      );
     };
 
-    // 登場のポーズ送り（stand → reach → wink → reach）。ヒーローはまだ透明なうちに stand へ替える
+    // 話す・仕草を出す前に、まばたき・待機の仕草を止める。終わったら normal-0 に戻して再開する
+    const beginAct = () => {
+      tBlink.clearAll();
+      tIdle.clearAll();
+      tAct.clearAll();
+      blinking = false;
+      acting = true;
+    };
+    // 待機の仕草（ヒーローだけ）：12〜20 秒おきに proud-0 を 2400ms か fist を 1800ms
+    const scheduleIdle = () => {
+      if (hero) {
+        tIdle.set(idle, rand(12000, 20000));
+      }
+    };
+    const endAct = () => {
+      tAct.clearAll();
+      acting = false;
+      rest();
+      if (actor.running) {
+        scheduleBlink();
+        scheduleIdle();
+      }
+    };
+    const idle = () => {
+      if (blinking) {
+        tIdle.set(idle, rand(250, 600));
+        return;
+      }
+      const options = GESTURES.filter((g) => loaded.has(url(g[0])));
+      if (introducing || acting || !options.length) {
+        scheduleIdle();
+        return;
+      }
+      const gesture = pick(options);
+      beginAct();
+      show(gesture[0]);
+      tAct.set(endAct, gesture[1]);
+    };
+
+    // ヒーローの登場：横を向いている → こちらを向く → ほほえむ（まだ透明なうちに side-glance へ替える）
     const finishIntro = () => {
       tIntro.clearAll();
       introducing = false;
-      introduced = true;
-      swap(img, REACH);
+      rest();
       if (actor.running) {
-        scheduleWink();
+        scheduleBlink();
+        scheduleIdle();
       }
     };
     const intro = () => {
       introducing = true;
-      tIntro.settle([STAND, REACH, WINK], 500, () => {
-        swap(img, STAND);
-        tIntro.set(() => swap(img, REACH), 1100);
-        tIntro.set(() => swap(img, WINK), 1350);
-        tIntro.set(finishIntro, 2300);
+      tIntro.settle([url("side-glance"), url("look-camera"), RESTURL], 500, () => {
+        show("side-glance");
+        tIntro.set(() => show("look-camera"), 900);
+        tIntro.set(finishIntro, 1500);
       });
     };
 
-    // greet：話している間だけ手を伸ばす。話し終わって 600ms 後に立ち姿へ戻す
-    const reach = (ms) => {
-      if (mode !== "greet" || !actor.running) {
+    // 話す：ms の間、<形>-0/1/2 を直前と違うものに替える。読めていない形・知らない形なら normal。
+    // 終わったら <形>-0 を 700ms 出してから normal-0（normal ならすぐ normal-0）
+    const speak = (ms, pose) => {
+      if (!actor.running) {
         return;
       }
-      tReach.clearAll();
-      swap(img, REACH);
-      tReach.set(() => swap(img, STAND), ms + 600);
+      const form = has(POSES, pose) && (pose === "normal" || loaded.has(url(pose + "-0"))) ? pose : "normal";
+      beginAct();
+      rest();
+      let last = REST;
+      const tick = () => {
+        const names = [];
+        const weights = [];
+        CHAN_WEIGHTS.forEach((weight, i) => {
+          const name = form + "-" + i;
+          if (name !== last && (name === REST || loaded.has(url(name)))) {
+            names.push(name);
+            weights.push(weight);
+          }
+        });
+        if (names.length) {
+          last = pickWeighted(names, weights);
+          show(last);
+        }
+        tAct.set(tick, rand(100, 140));
+      };
+      tick();
+      tAct.set(() => {
+        tAct.clearAll();
+        if (form === "normal") {
+          endAct();
+        } else {
+          show(form + "-0");
+          tAct.set(endAct, 700);
+        }
+      }, ms);
     };
-    const hush = () => {
-      if (mode !== "greet" || !actor.running) {
+
+    // 会話の最後の仕草（座布団）：読めていれば 3000ms 出して normal-0 に戻す
+    const finale = (name) => {
+      if (!actor.running || !has(FINALES, name) || !loaded.has(url(name))) {
         return;
       }
-      tReach.clearAll();
-      swap(img, STAND);
+      beginAct();
+      show(name);
+      tAct.set(endAct, 3000);
+    };
+
+    // 話す・仕草を止めて normal-0 に戻す
+    const hush = () => {
+      if (acting) {
+        endAct();
+      }
     };
 
     const start = () => {
       if (!preloaded) {
         preloaded = true;
-        if (mode === "hero") {
-          // 登場のポーズ送りはフェードが終わるまでに要るので、すぐ読む（WINK は HTML の絵なので読み込み済み）
-          [STAND, REACH, WINK].forEach(preload);
-        } else {
-          afterLoad(() => (mode === "wink" ? [REACH, WINK] : [STAND, REACH]).forEach(preload));
+        // まばたき・待機の仕草のコマは、ページの読み込みが終わってから（登場の 3 枚だけは intro がすぐ読む）
+        afterLoad(() => {
+          [RESTURL, url("blink-half"), url("blink-normal")]
+            .concat(hero ? GESTURES.map((g) => url(g[0])) : [])
+            .forEach(preload);
+        });
+      }
+      if (hero && first) {
+        first = false;
+        if (performance.now() - T0 <= INTRO_WINDOW && !reduced()) {
+          intro();
+          return;
         }
       }
-      if (mode === "wink") {
-        scheduleWink();
-      } else if (mode === "hero") {
-        if (first) {
-          first = false;
-          if (performance.now() - T0 <= INTRO_WINDOW && !reduced()) {
-            intro();
-            return;
-          }
-        }
-        if (introduced) {
-          scheduleWink();
-        }
-      }
+      scheduleBlink();
+      scheduleIdle();
     };
 
+    // 止めたら全部のタイマーを捨てて normal-0 に戻す（登場の途中なら登場は終わり）
     const stop = () => {
-      [tIntro, tWink, tReach].forEach((timers) => timers.clearAll());
-      if (introducing) {
-        introducing = false;
-        introduced = true;
-      }
-      if (mode === "greet") {
-        swap(img, STAND);
-      } else if (mode === "wink" || introduced) {
-        swap(img, REACH);
-      }
+      [tIntro, tBlink, tIdle, tAct].forEach((timers) => timers.clearAll());
+      introducing = false;
+      blinking = false;
+      acting = false;
+      rest();
     };
 
     const actor = {
       kind: "chan",
       start,
       stop,
-      reach,
+      speak,
+      finale,
       hush,
-      // 会話と連動するときに使うコマ（会話を始める前に先読みする）
-      frames: () => (mode === "greet" ? [STAND, REACH] : []),
+      // 会話と連動するときに使うコマ（会話を始める前に先読みする）。names は会話で使う形と仕草の名前
+      frames: (names) => {
+        const urls = [RESTURL, url("blink-half"), url("blink-normal")];
+        (names || []).forEach((name) => {
+          if (has(POSES, name)) {
+            [0, 1, 2].forEach((i) => urls.push(url(name + "-" + i)));
+          } else if (has(FINALES, name)) {
+            urls.push(url(name));
+          }
+        });
+        return urls;
+      },
       onReduce() {
-        // 登場のポーズ送りの途中で reduce になったら、そこで切り上げる
+        // 登場の途中で reduce になったら、そこで切り上げる
         if (reduced() && introducing && actor.running) {
           finishIntro();
         }
@@ -489,6 +609,7 @@
   // data-face → 休み・話す（差し替える候補）・まばたきのコマ（talk/ の中のファイル名、拡張子なし）
   const chanFace = (expr) => ({
     who: "chan",
+    pose: has(POSES, expr) ? expr : "normal", // 立ち絵の形（troubled・serious は立ち絵に無いので normal）
     rest: "chan-" + expr + "-0",
     talk: [0, 1, 2].map((i) => "chan-" + expr + "-" + i),
     weights: [0.25, 0.4, 0.35],
@@ -540,6 +661,29 @@
     let played = false;
     let blinkOn = false;
 
+    // 立ち絵のすてぶるちゃんの形：行の data-pose があればそれ、無ければ顔の表情から
+    const poseOf = (entry) => {
+      const pose = entry.line.getAttribute("data-pose");
+      if (pose) {
+        return pose;
+      }
+      return entry.face ? entry.face.spec.pose : "normal";
+    };
+    const finaleName = talk.getAttribute("data-finale") || "";
+    // この会話で立ち絵のすてぶるちゃんが使う形と、会話の最後の仕草
+    const chanNames = () => {
+      const names = [];
+      entries.forEach((entry) => {
+        if (entry.who === "chan") {
+          names.push(poseOf(entry));
+        }
+      });
+      if (finaleName) {
+        names.push(finaleName);
+      }
+      return names;
+    };
+
     const faceUrl = (face, name) => face.dir + name + EXT;
     const frameUrls = () => {
       const urls = [];
@@ -582,7 +726,7 @@
     // 顔のコマと、立ち絵が会話に合わせて使うコマ（ページの読み込みが終わる前に会話が始まっても間に合うよう、一緒に先読みする）
     const playFrames = () => {
       const stand = stands();
-      return frameUrls().concat(stand.kun ? stand.kun.frames() : [], stand.chan ? stand.chan.frames() : []);
+      return frameUrls().concat(stand.kun ? stand.kun.frames() : [], stand.chan ? stand.chan.frames(chanNames()) : []);
     };
 
     // 話す時間：文字数（脚注記号は数えない）× 95ms（英語は 45ms）、700〜2600ms
@@ -681,7 +825,7 @@
       if (entry.who === "kun" && stand.kun) {
         stand.kun.speak(ms);
       } else if (entry.who === "chan" && stand.chan) {
-        stand.chan.reach(ms);
+        stand.chan.speak(ms, poseOf(entry));
       }
       tPlay.set(() => {
         entry.line.classList.remove("is-speaking");
@@ -692,6 +836,11 @@
           tPlay.set(() => speakLine(index + 1), 450);
         } else {
           finish();
+          // 最後の行のあと、立ち絵のすてぶるちゃんが会話の最後の仕草をする
+          const chan = finaleName ? stands().chan : null;
+          if (chan) {
+            chan.finale(finaleName);
+          }
         }
       }, ms);
     };
@@ -805,7 +954,7 @@
     talks.forEach((talk) => talk.onVisibility());
   });
 
-  // reduce の変化に追従する（CSS の動きは media query が止める。JS 側は手振りと登場のポーズ送りを切り上げる）
+  // reduce の変化に追従する（CSS の動きは media query が止める。JS 側は手振りと登場の振り向きを切り上げる）
   const onReduceChange = () => {
     actors.forEach((actor) => actor.onReduce());
   };
