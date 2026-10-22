@@ -616,6 +616,8 @@
     prefetch.setAttribute("data-video-prefetch", "");
     prefetch.setAttribute("src", EMBED_ORIGIN + "/embed/" + state.yt + "?rel=0&playsinline=1&hl=" + (isEnglish ? "en" : "ja"));
     prefetch.addEventListener("load", () => setTimeout(dropPrefetch, 3000));
+    // 通信が止まって load が来なくても、残り続けないように 20 秒で外す
+    setTimeout(dropPrefetch, 20000);
     document.body.appendChild(prefetch);
   };
   const dropPrefetch = () => {

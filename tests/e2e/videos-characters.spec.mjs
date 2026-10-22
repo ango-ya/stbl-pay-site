@@ -457,8 +457,13 @@ test.describe("プレーヤーの先読み", () => {
     await expect(page.locator(PLAYER)).toHaveCount(1);
   });
 
-  test("データ節約（saveData）や 2G のときは先読みしない", async ({ page }) => {
-    for (const conn of [{ saveData: true, effectiveType: "4g" }, { saveData: false, effectiveType: "slow-2g" }]) {
+  // 条件ごとに別のテストにする（同じページに addInitScript を重ねると、どちらが勝つか決まらない）
+  for (const conn of [
+    { saveData: true, effectiveType: "4g" },
+    { saveData: false, effectiveType: "slow-2g" },
+    { saveData: false, effectiveType: "2g" },
+  ]) {
+    test(`データ節約・2G のときは先読みしない：${JSON.stringify(conn)}`, async ({ page }) => {
       await page.addInitScript((c) => {
         Object.defineProperty(navigator, "connection", { configurable: true, get: () => c });
       }, conn);
@@ -466,9 +471,34 @@ test.describe("プレーヤーの先読み", () => {
       await page.goto("/");
       await page.waitForLoadState("load");
       await page.clock.runFor(5000);
-      await expect(page.locator(PREFETCH), JSON.stringify(conn)).toHaveCount(0);
+      await expect(page.locator(PREFETCH)).toHaveCount(0);
       expect(await preconnects(page)).toEqual([]);
-    }
+    });
+  }
+
+  test("4G でデータ節約でなければ先読みする（上の 2 本が、条件で止めていることを確かめる対照）", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "connection", { configurable: true, get: () => ({ saveData: false, effectiveType: "4g" }) });
+    });
+    await freezeClock(page);
+    await page.goto("/");
+    await page.waitForLoadState("load");
+    await page.clock.runFor(2100);
+    await expect(page.locator(PREFETCH)).toHaveCount(1);
+  });
+
+  test("YouTube の応答が止まって load が来なくても、先読みの iframe は 20 秒で外す", async ({ page }) => {
+    // 先読みの embed だけ応答を返さない（再生用は autoplay=1 が付く）
+    await page.route(/youtube-nocookie\.com\/embed\/[^?]*\?rel=0/, () => {});
+    await freezeClock(page);
+    await page.goto("/");
+    await page.waitForLoadState("load");
+    await page.clock.runFor(2100);
+    await expect(page.locator(PREFETCH)).toHaveCount(1);
+    await page.clock.runFor(19000);
+    await expect(page.locator(PREFETCH)).toHaveCount(1);
+    await page.clock.runFor(1500);
+    await expect(page.locator(PREFETCH)).toHaveCount(0);
   });
 });
 
