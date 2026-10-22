@@ -480,18 +480,115 @@ const fixRandom = (page, value) =>
     Math.random = () => v;
   }, value);
 
-// 絵のファイルの読み込み（HTTP）が終わったか。page.clock を止めても、実時間のまま数えられる。goto の前に呼ぶ
-// （先読みが終わる前に時計を進めると、読めていないコマが選ばれず、乱数の並びと結果が実行ごとに変わる）
-const trackLoads = (page) => {
-  const done = new Set();
-  page.on("requestfinished", (request) => done.add(request.url().split("?")[0].split("/").pop()));
-  return done;
-};
-const waitForLoads = async (page, done, files) => {
-  await expect
-    .poll(() => files.filter((f) => !done.has(f)), { message: "絵の先読みが終わる", timeout: 20_000 })
-    .toEqual([]);
-  await page.waitForTimeout(150); // 読み終わったあとの onload（読み込み済みの印をつける）を待つ
+// アプリの先読み（assets/characters.js の preload。new Image() に onload を代入してから src を入れる）が、onload を呼び終えたことを観測する。
+// goto の前に呼ぶ。HTTP が終わっただけでは、アプリの onload（読み込み済みの印 loaded.add）が済んだとは言えず、
+// 時計を進めるのが早すぎると、読めていないコマが選ばれなくなって、乱数の消費も開始時刻も実行ごとに変わる。
+// HTMLImageElement.prototype の onload・onerror を、元の HTMLElement.prototype の記述子を使って定義し直し、代入されたハンドラーを包む：
+// - 元のハンドラーを呼び終えてから（finally で）、onload なら絵のパスを window.__appLoaded の中身（__appLoadState().loaded）に足す
+// - 切り離された img（アプリの先読み）に代入されたら「読み込み中」に数え、onload か onerror が終わったら外す（__appLoadState().pending）
+// - onload・onerror を代入しない絵（HTML の img など）には何もしない。取り出すと、代入した元の関数が返る
+const installAppLoadTracker = (page) =>
+  page.addInitScript(() => {
+    const loaded = new Set();
+    const pending = new Set();
+    const finished = new WeakSet();
+    const originals = new WeakMap(); // 包んだ関数 → 代入された元の関数
+    const pathOf = (img) => {
+      try {
+        return new URL(img.currentSrc || img.src, location.href).pathname;
+      } catch (e) {
+        return "";
+      }
+    };
+    const watch = (name) => {
+      const base = Object.getOwnPropertyDescriptor(HTMLElement.prototype, name);
+      if (!base || !base.get || !base.set) {
+        return;
+      }
+      Object.defineProperty(HTMLImageElement.prototype, name, {
+        configurable: true,
+        enumerable: base.enumerable,
+        get() {
+          const current = base.get.call(this);
+          return originals.has(current) ? originals.get(current) : current;
+        },
+        set(handler) {
+          if (typeof handler !== "function") {
+            base.set.call(this, handler);
+            return;
+          }
+          if (!this.isConnected && !finished.has(this)) {
+            pending.add(this);
+          }
+          const wrapped = function (event) {
+            try {
+              return handler.call(this, event);
+            } finally {
+              if (name === "onload") {
+                loaded.add(pathOf(this));
+              }
+              finished.add(this);
+              pending.delete(this);
+            }
+          };
+          originals.set(wrapped, handler);
+          base.set.call(this, wrapped);
+        },
+      });
+    };
+    watch("onload");
+    watch("onerror");
+    window.__appLoadState = () => ({ loaded: Array.from(loaded), pending: pending.size });
+  });
+
+// files（"chan/blink-half.webp" のような、assets/char/ の下のパスの終わり）がすべてアプリの onload を終え、
+// 読み込み中の先読みが無くなるまで待つ。Node 側で数えるので、page.clock を止めていても動く
+const waitForAppLoads = (page, files) =>
+  expect
+    .poll(
+      () =>
+        page.evaluate((names) => {
+          const state = window.__appLoadState();
+          return {
+            missing: names.filter((n) => !state.loaded.some((path) => path.endsWith("/" + n))),
+            pending: state.pending,
+          };
+        }, files),
+      { message: "アプリの先読みが、onload まで終わる", timeout: 30_000 }
+    )
+    .toEqual({ missing: [], pending: 0 });
+
+// その場面でアプリが先読みするコマ（ヒーロー：くんの目と口・ちゃんのまばたきと待機の仕草・登場の絵）
+const KUN_FRAMES = ["eyes-half", "eyes-closed", "eyes-left", "eyes-right", "mouth-talk-a", "mouth-talk-i", "mouth-talk-o", "mouth-talk-n"].map(
+  (n) => `kun/${n}.webp`
+);
+const CHAN_BLINK_FRAMES = ["normal-0", "blink-half", "blink-normal"].map((n) => `chan/${n}.webp`);
+const HERO_SCENE = [...KUN_FRAMES, ...CHAN_BLINK_FRAMES, ...["proud-0", "fist", "side-glance", "look-camera"].map((n) => `chan/${n}.webp`)];
+// 会話の欄の立ち絵：くんの目と口・ちゃんのまばたき・会話の顔（休み・話す・まばたき）・会話で使う形と座布団。HTML の data 属性から決める
+const talkScene = async (page, section) => {
+  const info = await page.evaluate((sec) => {
+    const talk = document.querySelector(`#${sec} .talk`);
+    const clean = (value) => (value || "").trim().replace(/\s+/g, " ");
+    return {
+      faces: Array.from(talk.querySelectorAll("img.talk-face[data-face]")).map((img) => clean(img.getAttribute("data-face"))),
+      lines: Array.from(talk.querySelectorAll(".talk-line.talk-chan")).map((line) => ({
+        pose: line.getAttribute("data-pose"),
+        face: clean(line.querySelector("img.talk-face[data-face]")?.getAttribute("data-face")),
+      })),
+      finale: talk.getAttribute("data-finale") || "",
+    };
+  }, section);
+  const poseOf = (line) => line.pose || (line.face.startsWith("chan ") ? line.face.slice(5) : "normal");
+  const poses = [...new Set(info.lines.map(poseOf))].filter((pose) => TALK_POSES.includes(pose));
+  return [
+    ...new Set([
+      ...KUN_FRAMES,
+      ...CHAN_BLINK_FRAMES,
+      ...info.faces.flatMap((face) => [...framesOf(face)].map((f) => `talk/${f}`)),
+      ...poses.flatMap((pose) => [0, 1, 2].map((n) => `chan/${pose}-${n}.webp`)),
+      ...(info.finale ? [`chan/${info.finale}.webp`] : []),
+    ]),
+  ];
 };
 
 // ─── すてぶるちゃんの絵の記録を読む ───────────────────────────────────────────
@@ -557,7 +654,8 @@ const expectBlinkGaps = (groups, maxGap, where) => {
 //   ctx.setTransform で実際の描かれ方どおりに描く。部品の 4 隅を同じ行列で変換した外接矩形が getBoundingClientRect と何 px ずれるかを self に返す
 //   （行列の誤りを見つけるため。テストで 1px 以内を確かめる）。すてぶるちゃんの絵は translate だけなので getBoundingClientRect をそのまま使う
 // - クリップする枠（overflow が visible でない祖先）と画面の幅の重なりを clip に返す
-// - すてぶるくんの足・腕・体の画素と重なる数（overlap）、ヒーローの文字・ボタン・カード・ロゴと重なる数（textOverlap）を数える
+// - すてぶるちゃんの画素がすてぶるくんの足・腕・体の画素と重なる数（overlap）、ヒーローの文字・ボタン・カード・ロゴと重なる数（textOverlap）、
+//   すてぶるくんの画素が文字・ボタン・カード・ロゴと重なる数（textHits）を数える
 async function measureStage({ root, frames, textRoot, floor, wave }) {
   const rootEl = document.querySelector(root);
   const chan = rootEl.querySelector("img[data-chan]");
@@ -846,7 +944,7 @@ async function measureStage({ root, frames, textRoot, floor, wave }) {
     let top = Infinity;
     let bottom = -Infinity;
     let footBottom = -Infinity;
-    const moved = [];
+    const drawn = [];
     kunCtx.setTransform(1, 0, 0, 1, 0, 0);
     kunCtx.clearRect(0, 0, W, H);
     kunParts.forEach((part, i) => {
@@ -865,8 +963,8 @@ async function measureStage({ root, frames, textRoot, floor, wave }) {
         if (i < 2) {
           footBottom = Math.max(footBottom, Y);
         }
-        moved.push(X, Y);
       }
+      drawn.push({ full, pic: part.pic });
       // 実際の描かれ方どおりに、同じ行列で canvas に描く
       kunCtx.setTransform(new DOMMatrix().translate(-X0, -Y0).multiply(full));
       kunCtx.drawImage(part.pic, 0, 0);
@@ -896,13 +994,29 @@ async function measureStage({ root, frames, textRoot, floor, wave }) {
         return n;
       });
     });
-    // ヒーロー：くんの画素の端の点が文字・ボタン・カードに入る数
+    // ヒーロー：くんの画素（足・腕・体）のうち、文字・ボタン・カード・ロゴの中に入る数。
+    // 同じ行列で描いた画素で数える（端の点だけでは、くんの輪郭の内側にすっぽり入った小さなボタンを見落とす）
     let textHits = 0;
     const near = rects.filter((q) => q.right >= left && q.left <= right && q.bottom >= top && q.top <= bottom);
     if (near.length) {
-      for (let k = 0; k < moved.length; k += 2) {
-        if (inside(near, moved[k], moved[k + 1])) {
-          textHits++;
+      const bx = Math.floor(left) - 1;
+      const by = Math.floor(top) - 1;
+      const bw = Math.ceil(right) - bx + 2;
+      const bh = Math.ceil(bottom) - by + 2;
+      const hitCanvas = document.createElement("canvas");
+      hitCanvas.width = bw;
+      hitCanvas.height = bh;
+      const hitCtx = hitCanvas.getContext("2d", { willReadFrequently: true });
+      drawn.forEach((d) => {
+        hitCtx.setTransform(new DOMMatrix().translate(-bx, -by).multiply(d.full));
+        hitCtx.drawImage(d.pic, 0, 0);
+      });
+      const hd = hitCtx.getImageData(0, 0, bw, bh).data;
+      for (let y = 0; y < bh; y++) {
+        for (let x = 0; x < bw; x++) {
+          if (hd[(y * bw + x) * 4 + 3] > 128 && inside(near, bx + x + 0.5, by + y + 0.5)) {
+            textHits++;
+          }
         }
       }
     }
@@ -974,7 +1088,8 @@ const settled = (page, selector) =>
 
 // 測った結果（measureStage）が、動きの途中のどの位相でも決まりを満たす。外れたものは全部まとめて見せる
 // - 動きが測りに反映されている（くんの上下で見えている上端が上がる、ちゃんの上下は絵の高さの約 1.8%、ヒーローは手振りで右腕の描かれ方が変わる）
-// - すてぶるくん：見えている範囲が枠の中（左右・上）。足が床線に付く。行列で描いた部品の外接矩形が getBoundingClientRect と 1px 以内
+// - すてぶるくん：見えている範囲が枠の中（左右・上）。足が床線に付く。行列で描いた部品の外接矩形が getBoundingClientRect と 1px 以内。
+//   textFrames があるとき（ヒーロー）は、手を振る動きの途中も含めて、くんの画素が文字・ボタン・カード・ロゴと重ならない
 // - すてぶるちゃん：見えている範囲が枠の中（上は持ち上がった分も入れる）。胸の切れ目は持ち上がっても床線の下に沈む
 // - kunFrames のコマは、くんとちゃんのどの位相の組み合わせでも、すてぶるくんの画素と重ならない。textFrames のコマは文字・ボタン・カードと重ならない
 // floorY は足が付く床線（立ち絵は .cast の下端、ヒーローはティッカーの上端）。kunBeforeChan は、くんの見えている右端が常にちゃんの絵の左端より左（ヒーロー）
@@ -1022,6 +1137,9 @@ const expectStage = (m, where, { floorY, kunFrames, textFrames = [], wave = fals
     }
     if (Math.abs(floorY - k.kun.footBottom) > 2.5) {
       bad.push(`${when}: 足の下端 ${fmt(k.kun.footBottom)} が床線 ${fmt(floorY)} に付かない`);
+    }
+    if (textFrames.length && k.textHits > 0) {
+      bad.push(`${when}: くんの画素が文字・ボタン・カード・ロゴと重なる ${k.textHits} 画素`);
     }
     if (kunBeforeChan && k.kun.right >= m.chan.left) {
       bad.push(`${when}: くんの右端 ${fmt(k.kun.right)} がちゃんの絵の左端 ${fmt(m.chan.left)} を越える`);
@@ -1273,7 +1391,8 @@ test.describe("組み立て", () => {
 
 test.describe("並びと位置", () => {
   // 動画欄・相談欄の立ち絵：すてぶるくんが左、すてぶるちゃんが右。仕草の手・座布団が .cast の枠から切れず、すてぶるくんに隠れない
-  for (const width of [1280, 1440]) {
+  // 901px は立ち絵が出る一番狭い幅（900px 以下は出さない）で、相談欄の列が約 359px と狭いので、手・座布団の切れとくんとの重なりが本当に効く
+  for (const width of [901, 1024, 1280, 1440]) {
     for (const { path } of PAGES) {
       test(`${path} ${width}px：立ち絵は くんが左・ちゃんが右で、上下・呼吸・揺れの途中でも、仕草の手が枠から切れず、すてぶるくんに隠れない`, async ({
         page,
@@ -2326,6 +2445,92 @@ test.describe("ヒーローの登場", () => {
   });
 });
 
+// ─── 6a. 先読みの観測（installAppLoadTracker）が、ページの絵に悪さをしない ──────────────────
+
+test("先読みの観測：onload・onerror を代入しない絵には何もせず、代入した絵は元のハンドラーをそのまま呼んで、終わりを数える", async ({ page }) => {
+  test.setTimeout(60_000);
+  const errors = watchErrors(page);
+  await installAppLoadTracker(page);
+  await page.goto("/");
+  await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 15_000 });
+  await waitForAppLoads(page, HERO_SCENE); // アプリの先読みが落ち着いてから、こちらの確認を始める（読み込み中は 0 から数える）
+
+  const r = await page.evaluate(async () => {
+    const state = () => window.__appLoadState();
+    const inLoaded = (url) => state().loaded.includes(new URL(url).pathname);
+    const out = {};
+    // HTML の img は onload・onerror を代入していない：何も包まれず null のまま
+    out.domHandlers = Array.prototype.filter.call(document.images, (img) => img.onload || img.onerror).length;
+    out.domCount = document.images.length;
+    out.pendingAtStart = state().pending;
+
+    // 代入した絵：元の関数がそのまま取り出せ、this・event は元のまま、呼び終えてから印が付く。読み込み中は 1 つ増えて、終わると戻る
+    const url = new URL("assets/char/kun/foot-l.webp?probe=1", location.href).href;
+    out.markedBefore = inLoaded(url);
+    const img = new Image();
+    const calls = [];
+    const handler = function (event) {
+      calls.push({ self: this === img, type: event.type, markedInside: inLoaded(url) });
+      return "returned";
+    };
+    img.onload = handler;
+    out.sameHandler = img.onload === handler;
+    img.onerror = () => calls.push({ type: "error" });
+    out.pendingDuring = state().pending;
+    const done = new Promise((resolve) => img.addEventListener("load", resolve, { once: true })); // addEventListener は元のまま動く
+    img.src = url;
+    await done;
+    out.calls = calls;
+    out.markedAfter = inLoaded(url);
+    out.pendingAfter = state().pending;
+
+    // 読めない絵：onerror が呼ばれ、読み込み中から外れ、読み込み済みにはならない
+    const missing = new URL("assets/char/kun/probe-missing.webp", location.href).href;
+    const bad = new Image();
+    const errorCalls = [];
+    bad.onerror = function (event) {
+      errorCalls.push({ self: this === bad, type: event.type });
+    };
+    const failed = new Promise((resolve) => bad.addEventListener("error", resolve, { once: true }));
+    out.pendingBadStart = state().pending;
+    bad.src = missing;
+    await failed;
+    out.errorCalls = errorCalls;
+    out.missingMarked = inLoaded(missing);
+    out.pendingBadEnd = state().pending;
+
+    // 関数でない値（null）は、そのまま入って、そのまま取り出せる。ページに付けた（切り離されていない）img は、読み込み中に数えない
+    const plain = new Image();
+    plain.onload = null;
+    out.nullKept = plain.onload === null;
+    const attached = document.createElement("img");
+    document.body.appendChild(attached);
+    attached.onload = () => {};
+    out.pendingAttached = state().pending;
+    attached.remove();
+    return out;
+  });
+
+  expect(r.domCount, "HTML に img がある").toBeGreaterThan(0);
+  expect(r.domHandlers, "HTML の img には onload・onerror が付いていない").toBe(0);
+  expect(r.pendingAtStart, "確認の前に、アプリの先読みは終わっている").toBe(0);
+  expect(r.markedBefore, "読み込む前は印が無い").toBe(false);
+  expect(r.sameHandler, "代入した関数がそのまま取り出せる").toBe(true);
+  expect(r.pendingDuring, "代入した img は読み込み中に数える").toBe(1);
+  expect(r.calls, "元のハンドラーは 1 回、this と event のまま呼ばれ、その中ではまだ印が付いていない（呼び終えてから付く）").toEqual([
+    { self: true, type: "load", markedInside: false },
+  ]);
+  expect(r.markedAfter, "呼び終えたあと、読み込み済みの印が付く").toBe(true);
+  expect(r.pendingAfter, "読み込み中から外れる").toBe(0);
+  expect(r.pendingBadStart, "読めない絵も、代入すると読み込み中に数える").toBe(1);
+  expect(r.errorCalls, "読めない絵は onerror が元のまま呼ばれる").toEqual([{ self: true, type: "error" }]);
+  expect(r.missingMarked, "読めない絵は読み込み済みにならない").toBe(false);
+  expect(r.pendingBadEnd, "読めない絵も、終わったら読み込み中から外れる").toBe(0);
+  expect(r.nullKept, "null はそのまま").toBe(true);
+  expect(r.pendingAttached, "ページに付けた img は読み込み中に数えない").toBe(0);
+  expect(errors).toEqual([]);
+});
+
 // ─── 6b. ヒーローのまばたきと待機の仕草（ページの時計で数える） ───────────────────
 
 test("ヒーローのすてぶるちゃん：登場のあと、2.5〜5.5 秒おきにまばたき（ときどき 2 回続け）、12〜20 秒おきに proud か fist の仕草をする", async ({
@@ -2333,7 +2538,7 @@ test("ヒーローのすてぶるちゃん：登場のあと、2.5〜5.5 秒お�
 }) => {
   test.setTimeout(150_000);
   const errors = watchErrors(page);
-  const loads = trackLoads(page);
+  await installAppLoadTracker(page);
   await seedRandom(page, SEED); // 続けて 2 回・ふつうの間隔・proud・fist の割合を、同じ並びで確かめる
   await freezeClock(page);
   await stillFrames(page);
@@ -2341,8 +2546,8 @@ test("ヒーローのすてぶるちゃん：登場のあと、2.5〜5.5 秒お�
   await page.goto("/");
   await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 15_000 });
   await waitFor(page, "登場が始まる", (e) => e.k === "src" && e.chan === "hero" && e.file === "side-glance.webp");
-  // まばたき・仕草のコマの先読みが済むのを待ってから、時計を進める
-  await waitForLoads(page, loads, ["blink-half.webp", "blink-normal.webp", "proud-0.webp", "fist.webp"]);
+  // その場面で先読みされるコマ（くんの目と口・ちゃんのまばたきと仕草・登場の絵）が、アプリの onload まで済むのを待ってから、時計を進める
+  await waitForAppLoads(page, HERO_SCENE);
   await advance(page, 300_000);
 
   const evs = await events(page);
@@ -2401,7 +2606,7 @@ test("立ち絵のすてぶるちゃん：画面にいる間、normal-0 のま�
 }) => {
   test.setTimeout(150_000);
   const errors = watchErrors(page);
-  const loads = trackLoads(page);
+  await installAppLoadTracker(page);
   await seedRandom(page, SEED); // 続けて 2 回とふつうの間隔の両方が出ることを、同じ並びで確かめる
   await freezeClock(page);
   await stillFrames(page);
@@ -2411,7 +2616,8 @@ test("立ち絵のすてぶるちゃん：画面にいる間、normal-0 のま�
   await scrollCenter(page.locator("#videos .cast"));
   const chan = page.locator("#videos .cast-chan");
   await expect(chan).toHaveClass(IS_LIVE, { timeout: 15_000 });
-  await waitForLoads(page, loads, ["blink-half.webp", "blink-normal.webp"]); // まばたきのコマの先読みを待つ
+  // 動画欄で先読みされるコマ（会話の顔・立ち絵の仕草・まばたき・くんの目と口）が、アプリの onload まで済むのを待ってから、時計を進める
+  await waitForAppLoads(page, await talkScene(page, "videos"));
   await advance(page, 150_000);
 
   const evs = await events(page);
@@ -2509,7 +2715,7 @@ for (const { path } of PAGES) {
     test(`${path}：Math.random が ${value} のとき、ヒーローも立ち絵（動画欄・相談欄）のすてぶるくんも eyes-${side} だけを見る`, async ({ page }) => {
       test.setTimeout(120_000);
       const errors = watchErrors(page);
-      const loads = trackLoads(page);
+      await installAppLoadTracker(page);
       await fixRandom(page, value);
       await freezeClock(page);
       await stillFrames(page);
@@ -2524,7 +2730,7 @@ for (const { path } of PAGES) {
 
       // ヒーロー：6〜10 秒おき（値が一定なら 8 秒おき）の目線を、40 秒で数回
       await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 15_000 });
-      await waitForLoads(page, loads, ["eyes-left.webp", "eyes-right.webp"]);
+      await waitForAppLoads(page, HERO_SCENE);
       await advance(page, 40_000);
       const hero = await gazes("hero");
       expect(hero.length, `ヒーロー: 40 秒で目線を向けた回数（${hero.length}）`).toBeGreaterThanOrEqual(2);
@@ -2534,6 +2740,7 @@ for (const { path } of PAGES) {
       for (const section of ["videos", "early-access"]) {
         await scrollCenter(page.locator(`#${section} .cast`));
         await expect(page.locator(`#${section} .cast-kun`)).toHaveClass(IS_LIVE, { timeout: 15_000 });
+        await waitForAppLoads(page, await talkScene(page, section));
         await advance(page, 90_000);
         const cast = await gazes("cast", section);
         expect(cast.length, `${section} の立ち絵: 90 秒で目線を向けた回数（${cast.length}）`).toBeGreaterThanOrEqual(2);
