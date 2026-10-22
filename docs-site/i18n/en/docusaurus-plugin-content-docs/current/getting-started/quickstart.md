@@ -19,7 +19,7 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \
   --data '{"amountJpy":"4980","orderId":"ord_0001","returnUrl":"https://shop.example.com/orders/ord_0001/return"}'
 ```
 
-Save the mapping between the order and `paymentIntentId`, and pass the `checkoutUrl` from the response to the browser. When you retry for the same order, use the same `orderId`. For the other fields in the response, see the [REST reference](/reference/rest).
+Save the mapping between the order and `paymentIntentId`, check the `status` in the response, and then pass the `checkoutUrl` to the browser. When you retry for the same order, use the same `orderId`. If a retry returns an existing payment that is already terminal, do not send the browser to its `checkoutUrl`. Follow [Idempotency](/server/create-payment#idempotency) and create a new payment with a new `orderId`. For the other fields in the response, see the [REST reference](/reference/rest).
 
 ## 2. Navigate the browser
 

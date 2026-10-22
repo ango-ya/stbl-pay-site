@@ -57,7 +57,7 @@ const EN: Record<string, string> = {
   期限に達した: 'Timed out',
   '→ 印 A へ': '→ go to mark A',
   'JPYC EX へ進んだ': 'Went to JPYC EX',
-  着金期限切れ: 'No deposit',
+  着金期限切れ: 'Deposit expired',
   振込む: 'transfers',
   残高と合算でもよい: 'Balance counts toward it',
   '着金・残高を確定': 'Funds confirmed',
