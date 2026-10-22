@@ -5,7 +5,8 @@
 //
 // - JSON ファイルは、次の 9 件を持つオブジェクト（例は scripts/youtube-ids.example.json）。
 //     { "how-01": "<ID か YouTube の URL>", …, "how-08": "…", "how-08en": "…" }
-//   how-01〜how-08 は第1〜8回、how-08en は第8回の英語字幕版。予告（how-00）と番外編は LP に載せないので入れない。
+//   how-01〜how-08 は第1〜8回、how-08en は第8回の英語字幕版。予告（how-00）は LP に載せないので入れない。
+//   番外編（how-sp・how-pk）は index.html に ID を直接書いている（このスクリプトの対象外。正規表現 how-NN に当たらない）。
 // - 値は次のどれでもよい。そこから 11 文字の ID（[A-Za-z0-9_-]{11}）を取り出す。
 //     https://youtu.be/<ID>
 //     https://www.youtube.com/watch?v=<ID>
