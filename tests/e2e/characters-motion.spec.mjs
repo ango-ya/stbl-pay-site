@@ -8,16 +8,22 @@ import { join } from "node:path";
 // - 素材（assets/char/ の 66 枚）の有無・大きさ・透過、古い絵（thigh を含む）が残っていないこと、HTML の参照と並び・振り付けの data 属性、
 //   部品の組み立て（腕と体は .kun-bob の中、足は外）、assets/characters.js の動き（生きている間だけ動く・上下・reduce・手を振る・
 //   すてぶるくんの目線とまばたき・すてぶるちゃんのまばたき・登場・待機の仕草・会話の口パクと立ち絵の連動・座布団）、
-//   立ち絵の仕草の手が枠・画面から切れず、すてぶるくんに隠れないこと、
+//   立ち絵の仕草の手が枠・画面から切れず、すてぶるくんに隠れないこと（上下・呼吸・腕の揺れ・手振りの途中でも）、
+//   すてぶるくんの目線が右のすてぶるちゃんの側を多めに見ること、読めないコマ（palm・休み）があるときの縮退、
 //   狭い幅で立ち絵を読まないこと、JS なしの見え方、本番ヘッダ（CSP・Trusted Types）で違反が出ないこと、
 //   コードに入れない書き方（assets/characters.js と assets/lp.css のキャラの節）
 // - 時間に頼る確認のうち、まばたき・登場・待機の仕草・手振りは、ページの時計（page.clock）を止めて runFor で進め、決まった形で見る。
 //   会話の再生は画像の読み込みと IntersectionObserver が絡むので、実時間で expect.poll（〜15 秒）に任せる。
 //   コマの差し替えは addInitScript の MutationObserver が記録し（window.__rec）、記録を後から見て順番や間隔を確かめる
 //   （ポーリングの隙間に起きた変化も取りこぼさない）
+// - 乱数（Math.random）で分岐するものは、種を決めた乱数（seedRandom）に差し替えて、続けて 2 回のまばたき・ふつうの間隔・
+//   proud・fist が実際に出ることを確かめる（固定しないと、割合や「両方が出る」を必須にした確認が偶然落ちる）。
+//   目線の左右は一定の値（fixRandom）にして、選ばれる側を確かめる
 // - 絵の見た目そのもの（自然に見えるか）はここでは見ない。目で見る（スクリーンショット）。
 //   ただし位置については、絵の見えている画素（canvas で測る）が枠・画面・文字・すてぶるくんとどう重なるかを確かめる
-//   （固定の px は書かず、そのときの配置を測って比べる）
+//   （固定の px は書かず、そのときの配置を測って比べる）。測るのは動きの途中も含めて、上下・呼吸・腕の揺れ・ちゃんの上下・手振りを
+//   周期の 8 分の 1 刻みで止めた全部の位相の組み合わせ。すてぶるくんの部品は、img から rig までの transform を掛け合わせて実際の描かれ方どおりに描き、
+//   getBoundingClientRect と合うこともその場で確かめる
 // - YouTube と Google のタグ（計測）への HTTP は、context.route で受けて外に出さない
 // - 本番ヘッダ（CSP）はローカルの静的サーバーが付けないので、「本番ヘッダ」の 2 本だけ、_headers の値を応答に付け直して動かす
 
@@ -453,6 +459,41 @@ const advance = async (page, total, step = 2000) => {
   }
 };
 
+// Math.random を、種を決めた乱数（mulberry32）に差し替える。goto の前に呼ぶ。
+// 乱数で分岐するもの（続けて 2 回のまばたき 20%・待機の仕草の proud / fist）を、実行のたびに同じ並びにして確かめる
+// （固定しないと、割合や「両方が出る」を必須にした確認が、確率は小さくても偶然落ちる）
+const SEED = 20261022;
+const seedRandom = (page, seed) =>
+  page.addInitScript((s) => {
+    let a = s >>> 0;
+    Math.random = () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }, seed);
+// Math.random を一定の値にする。goto の前に呼ぶ（0.5 なら 70% の側＝多い側、0.9 なら少ない側を選ぶ）
+const fixRandom = (page, value) =>
+  page.addInitScript((v) => {
+    Math.random = () => v;
+  }, value);
+
+// 絵のファイルの読み込み（HTTP）が終わったか。page.clock を止めても、実時間のまま数えられる。goto の前に呼ぶ
+// （先読みが終わる前に時計を進めると、読めていないコマが選ばれず、乱数の並びと結果が実行ごとに変わる）
+const trackLoads = (page) => {
+  const done = new Set();
+  page.on("requestfinished", (request) => done.add(request.url().split("?")[0].split("/").pop()));
+  return done;
+};
+const waitForLoads = async (page, done, files) => {
+  await expect
+    .poll(() => files.filter((f) => !done.has(f)), { message: "絵の先読みが終わる", timeout: 20_000 })
+    .toEqual([]);
+  await page.waitForTimeout(150); // 読み終わったあとの onload（読み込み済みの印をつける）を待つ
+};
+
 // ─── すてぶるちゃんの絵の記録を読む ───────────────────────────────────────────
 
 const chanEvents = (evs, chan, sec) =>
@@ -506,10 +547,18 @@ const expectBlinkGaps = (groups, maxGap, where) => {
 // ─── 立ち絵の見えている範囲を測る（canvas。ページの中で動かすので、外の変数は使えない） ──────────
 
 // root（.cast か .hero-cast）の中のすてぶるちゃんの絵を frames の 1 枚ずつ canvas に描き、透明でない画素の端を画面の座標で返す。
-// - 上下・呼吸・腕の揺れ・手振りの動きは巻き戻して止め、休みの形で測る
+// 上下・呼吸・腕の揺れの途中でも枠・すてぶるくん・文字とどう重なるかを見るため、動いているアニメーションを止めて、位相ごとに測る。
+// - すてぶるくんの上下（kun-bob）・呼吸（kun-breathe）・腕の揺れ（kun-arm-l/r-sway）は同じ周期（2.6 秒）でそろえ、
+//   すてぶるちゃんの上下（chan-bob。3.2 秒）は別に、どちらも周期の 0・1/8・…・7/8 に合わせて止める。くんの位相 × ちゃんの位相の全部の組み合わせで見る。
+//   動いているアニメーションが無い（is-live が付く前）ときは、測っても意味が無いので例外にする
+// - wave: true（ヒーロー）は、手を振る動き（kun-wave。1.8 秒）も、周期の 0・1/8・…・7/8 と山（18・46・76%）に合わせて止めて測る
+//   （is-waving を付けて作る。測り終えたら外す）。腕と体の揺れは、そのときの位相（くんの 8 通り）と掛け合わせる
+// - すてぶるくんの部品は、部品の img から rig の直下の子までの各要素の transform・transform-origin・配置（left/top）を DOMMatrix で掛け合わせ、
+//   ctx.setTransform で実際の描かれ方どおりに描く。部品の 4 隅を同じ行列で変換した外接矩形が getBoundingClientRect と何 px ずれるかを self に返す
+//   （行列の誤りを見つけるため。テストで 1px 以内を確かめる）。すてぶるちゃんの絵は translate だけなので getBoundingClientRect をそのまま使う
 // - クリップする枠（overflow が visible でない祖先）と画面の幅の重なりを clip に返す
-// - すてぶるくんの足・腕・体の画素と重なる数（kunOverlap）、ヒーローの文字・ボタン・カードと重なる数（textOverlap）を数える
-async function measureStage({ root, frames, textRoot, floor }) {
+// - すてぶるくんの足・腕・体の画素と重なる数（overlap）、ヒーローの文字・ボタン・カード・ロゴと重なる数（textOverlap）を数える
+async function measureStage({ root, frames, textRoot, floor, wave }) {
   const rootEl = document.querySelector(root);
   const chan = rootEl.querySelector("img[data-chan]");
   const rig = rootEl.querySelector(".kun-rig");
@@ -524,14 +573,7 @@ async function measureStage({ root, frames, textRoot, floor }) {
   const chanImgs = await Promise.all(frames.map((name) => load(dirOf(chan) + name + ".webp")));
   const kunNames = ["foot-l", "foot-r", "arm-l", "arm-r", "body"];
   const kunImgs = await Promise.all(kunNames.map((name) => load(dirOf(rig.querySelector("img")) + name + ".webp")));
-
-  const MOVING = /^(kun-bob|kun-breathe|kun-arm-[lr]-sway|kun-wave|chan-bob)$/;
-  document.getAnimations().forEach((a) => {
-    if (MOVING.test(a.animationName || "")) {
-      a.pause();
-      a.currentTime = 0;
-    }
-  });
+  // ここから先は await しない（IntersectionObserver などに割り込まれて、止めた動きが変わらないように）
 
   const pixels = (img, width, height) => {
     const canvas = document.createElement("canvas");
@@ -562,10 +604,78 @@ async function measureStage({ root, frames, textRoot, floor }) {
     }
     return { minX, maxX, minY, maxY, w, h };
   };
+  // 透明でない画素のうち、各行の左右の端と各列の上下の端の画素の 4 隅（元の絵の座標）。
+  // 回したり縮めたりしたあとの外接矩形は、この点を変換して測れば（画素ごとに変換しなくても）正確に出る
+  const edgePoints = (img, threshold) => {
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const data = pixels(img, w, h);
+    const out = [];
+    const add = (x, y) => out.push(x, y, x + 1, y, x, y + 1, x + 1, y + 1);
+    for (let y = 0; y < h; y++) {
+      let first = -1;
+      let last = -1;
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > threshold) {
+          first = first < 0 ? x : first;
+          last = x;
+        }
+      }
+      if (first >= 0) {
+        add(first, y);
+        add(last, y);
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      let first = -1;
+      let last = -1;
+      for (let y = 0; y < h; y++) {
+        if (data[(y * w + x) * 4 + 3] > threshold) {
+          first = first < 0 ? y : first;
+          last = y;
+        }
+      }
+      if (first >= 0) {
+        add(x, first);
+        add(x, last);
+      }
+    }
+    return out;
+  };
+
+  // ---- 動いているアニメーション（この root の中のものだけ）。止めて、周期の何分の何かに合わせる
+  const STEPS = 8;
+  const AT = Array.from({ length: STEPS }, (_, i) => i / STEPS);
+  const WAVE_AT = AT.concat([0.18, 0.46, 0.76]).sort((a, b) => a - b); // 山は kun-wave の keyframes（18・46・76%）
+  const MOVING = /^(kun-bob|kun-breathe|kun-arm-[lr]-sway|kun-wave|chan-bob)$/;
+  const movingIn = (scope) =>
+    document.getAnimations().filter((a) => MOVING.test(a.animationName || "") && scope.contains(a.effect.target));
+  const seek = (list, at) =>
+    list.forEach((a) => {
+      a.pause();
+      a.currentTime = a.effect.getComputedTiming().duration * at;
+    });
+  // 手を振る動きがあると右腕の揺れが入れ替わるので、先に外して揺れだけの状態にする
+  rig.classList.remove("is-waving");
+  const swayAnims = movingIn(rig);
+  const swayNames = swayAnims.map((a) => a.animationName).sort();
+  const chanAnims = movingIn(chan);
+  if (swayNames.join() !== "kun-arm-l-sway,kun-arm-r-sway,kun-bob,kun-breathe" || chanAnims.length !== 1) {
+    throw new Error(
+      `動いているアニメーションが足りない（くん: ${swayNames.join(" ") || "なし"} / ちゃん: ${chanAnims.length} 個）。is-live が付いてから測る`
+    );
+  }
 
   const rr = rootEl.getBoundingClientRect();
-  const cr = chan.getBoundingClientRect();
+  seek(chanAnims, 0);
+  const cr0 = chan.getBoundingClientRect();
   const kr = rig.getBoundingClientRect();
+  // rig とその祖先に transform が無い（フェードイン・せり上がりが終わっている）。あれば rig の位置に動きが混ざる
+  for (let el = rig; el && el !== document.documentElement; el = el.parentElement) {
+    if (getComputedStyle(el).transform !== "none") {
+      throw new Error("rig か祖先に transform が残っている（位置が落ち着く前に測っている）");
+    }
+  }
 
   // クリップする枠：root 自身と祖先のうち overflow が visible でないもの。横は画面の幅も入れる
   const clip = { left: 0, right: document.documentElement.clientWidth, top: -Infinity, bottom: Infinity };
@@ -584,16 +694,6 @@ async function measureStage({ root, frames, textRoot, floor }) {
     }
   }
 
-  // すてぶるくんの画素（絵の大きさに合わせた canvas に、足・腕・体を重ねる）
-  const cw = Math.ceil(cr.width);
-  const ch = Math.ceil(cr.height);
-  const kunCanvas = document.createElement("canvas");
-  kunCanvas.width = cw;
-  kunCanvas.height = ch;
-  const kunCtx = kunCanvas.getContext("2d", { willReadFrequently: true });
-  kunImgs.forEach((img) => kunCtx.drawImage(img, kr.left - cr.left, kr.top - cr.top, kr.width, kr.height));
-  const kunData = kunCtx.getImageData(0, 0, cw, ch).data;
-
   // ヒーローの文字（1 行ごとの外枠）・ボタン・カード・ロゴ
   const rects = [];
   const textEl = textRoot ? document.querySelector(textRoot) : null;
@@ -610,66 +710,245 @@ async function measureStage({ root, frames, textRoot, floor }) {
     }
     textEl.querySelectorAll(".button, .hero-points, img").forEach((el) => rects.push(el.getBoundingClientRect()));
   }
+  const inside = (list, x, y) => list.some((q) => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom);
 
-  const result = frames.map((name, i) => {
-    const e = extent(chanImgs[i], 40);
-    const sx = cr.width / e.w;
-    const sy = cr.height / e.h;
-    const data = pixels(chanImgs[i], cw, ch);
-    let kunOverlap = 0;
-    let textOverlap = 0;
-    for (let y = 0; y < ch; y++) {
-      for (let x = 0; x < cw; x++) {
-        const at = (y * cw + x) * 4 + 3;
-        if (data[at] <= 128) {
-          continue;
-        }
-        const px = cr.left + (x + 0.5) * (cr.width / cw);
-        const py = cr.top + (y + 0.5) * (cr.height / ch);
-        if (py > clip.bottom) {
-          continue; // 床線・ティッカーの下に沈んでいる分は見えない
-        }
-        if (kunData[at] > 128) {
-          kunOverlap++;
-        }
-        if (rects.some((q) => px >= q.left && px <= q.right && py >= q.top && py <= q.bottom)) {
-          textOverlap++;
-        }
-      }
-    }
+  // 画面の座標で見る 1 枚の canvas（すてぶるちゃんの絵が動く範囲。上へ持ち上がる分の余白つき）。画素 (x, y) は画面の (X0 + x, Y0 + y)
+  const margin = Math.ceil(cr0.height * 0.03) + 2;
+  const X0 = Math.floor(cr0.left) - 2;
+  const Y0 = Math.floor(cr0.top) - margin;
+  const W = Math.ceil(cr0.width) + 4;
+  const H = Math.ceil(cr0.height) + margin * 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const worldRects = rects.filter((q) => q.right >= X0 && q.left <= X0 + W && q.bottom >= Y0 && q.top <= Y0 + H);
+
+  // ---- すてぶるちゃん：位相ごとに、フレームごとの見えている範囲・見えている画素の並び・文字と重なる数
+  const edges = chanImgs.map((img) => extent(img, 40));
+  const chanPhases = AT.map((at) => {
+    seek(chanAnims, at);
+    const cr = chan.getBoundingClientRect();
     return {
-      name,
-      left: cr.left + e.minX * sx,
-      right: cr.left + (e.maxX + 1) * sx,
-      top: cr.top + e.minY * sy,
-      bottom: cr.top + (e.maxY + 1) * sy,
-      kunOverlap,
-      textOverlap,
+      at,
+      dy: cr.top - cr0.top,
+      dx: cr.left - cr0.left,
+      frames: frames.map((name, i) => {
+        const e = edges[i];
+        const sx = cr.width / e.w;
+        const sy = cr.height / e.h;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+        ctx.setTransform(1, 0, 0, 1, -X0, -Y0);
+        ctx.drawImage(chanImgs[i], cr.left, cr.top, cr.width, cr.height);
+        const data = ctx.getImageData(0, 0, W, H).data;
+        const seen = new Int32Array(W * H);
+        let count = 0;
+        let textOverlap = 0;
+        for (let y = 0; y < H; y++) {
+          if (Y0 + y + 0.5 > clip.bottom) {
+            break; // 床線・ティッカーの下に沈んでいる分は見えない
+          }
+          for (let x = 0; x < W; x++) {
+            if (data[(y * W + x) * 4 + 3] > 128) {
+              seen[count++] = y * W + x;
+              if (worldRects.length && inside(worldRects, X0 + x + 0.5, Y0 + y + 0.5)) {
+                textOverlap++;
+              }
+            }
+          }
+        }
+        return {
+          name,
+          left: cr.left + e.minX * sx,
+          right: cr.left + (e.maxX + 1) * sx,
+          top: cr.top + e.minY * sy,
+          bottom: cr.top + (e.maxY + 1) * sy,
+          textOverlap,
+          seen: seen.slice(0, count),
+        };
+      }),
     };
   });
 
-  // すてぶるくんの見えている範囲（足・腕・体の全部）と、足の見えている下端
-  let footBottom = -Infinity;
-  let kunLeft = Infinity;
-  let kunRight = -Infinity;
-  kunImgs.forEach((img, i) => {
-    const e = extent(img, 40);
-    kunLeft = Math.min(kunLeft, kr.left + (e.minX / e.w) * kr.width);
-    kunRight = Math.max(kunRight, kr.left + ((e.maxX + 1) / e.w) * kr.width);
-    if (i < 2) {
-      footBottom = Math.max(footBottom, kr.top + ((e.maxY + 1) / e.h) * kr.height);
+  // ---- すてぶるくん：部品の img から rig の直下の子までの transform を掛け合わせて、画面に描く
+  const px = (value) => parseFloat(value) || 0;
+  const matrixOf = (cs) => (cs.transform === "none" ? new DOMMatrix() : new DOMMatrix(cs.transform));
+  // 要素の「自分の座標（左上が原点）」→「親の座標」＝ 配置(left, top) · 原点へ · transform · 原点から戻す
+  const toParent = (el) => {
+    const cs = getComputedStyle(el);
+    if (cs.position !== "absolute") {
+      throw new Error(`${el.className} が position: absolute でない（配置の前提が崩れている）`);
     }
+    const [ox, oy] = cs.transformOrigin.split(" ").map(px);
+    return new DOMMatrix().translate(px(cs.left), px(cs.top)).translate(ox, oy).multiply(matrixOf(cs)).translate(-ox, -oy);
+  };
+  // img の箱の座標 → 画面の座標（rig の位置 · rig の直下の子 · … · img）
+  const toScreen = (img) => {
+    const chain = [];
+    for (let el = img; el && el !== rig; el = el.parentElement) {
+      chain.unshift(el);
+    }
+    let m = new DOMMatrix().translate(kr.left, kr.top);
+    chain.forEach((el) => {
+      m = m.multiply(toParent(el));
+    });
+    return m;
+  };
+  const boxOf = (img) => {
+    const cs = getComputedStyle(img);
+    return { w: px(cs.width), h: px(cs.height) };
+  };
+  const partOf = (name) => {
+    const img = rig.querySelector(`img[src$="/${name}.webp"]`);
+    if (!img) {
+      throw new Error(`${name} の部品が rig に無い`);
+    }
+    return img;
+  };
+  const kunParts = kunNames.map((name, i) => ({ name, img: partOf(name), pic: kunImgs[i], points: edgePoints(kunImgs[i], 40) }));
+  const allParts = Array.prototype.slice.call(rig.querySelectorAll("img"));
+  const fileOf = (img) => (img.getAttribute("src") || "").split("/").pop();
+  const kunCanvas = document.createElement("canvas");
+  kunCanvas.width = W;
+  kunCanvas.height = H;
+  const kunCtx = kunCanvas.getContext("2d", { willReadFrequently: true });
+
+  const measureKun = (at, waveAt) => {
+    // 描き方が正しいか：4 隅を変換した外接矩形が getBoundingClientRect と合う（8 枚すべて）
+    let worst = 0;
+    let worstPart = "";
+    allParts.forEach((img) => {
+      const m = toScreen(img);
+      const { w, h } = boxOf(img);
+      const xs = [];
+      const ys = [];
+      [[0, 0], [w, 0], [w, h], [0, h]].forEach(([x, y]) => {
+        xs.push(m.a * x + m.c * y + m.e);
+        ys.push(m.b * x + m.d * y + m.f);
+      });
+      const r = img.getBoundingClientRect();
+      const diff = Math.max(
+        Math.abs(Math.min(...xs) - r.left),
+        Math.abs(Math.max(...xs) - r.right),
+        Math.abs(Math.min(...ys) - r.top),
+        Math.abs(Math.max(...ys) - r.bottom)
+      );
+      if (diff > worst) {
+        worst = diff;
+        worstPart = fileOf(img);
+      }
+    });
+
+    // 見えている範囲（足・腕・体）と足の下端：画素の端の点を同じ行列で変換して測る
+    let left = Infinity;
+    let right = -Infinity;
+    let top = Infinity;
+    let bottom = -Infinity;
+    let footBottom = -Infinity;
+    const moved = [];
+    kunCtx.setTransform(1, 0, 0, 1, 0, 0);
+    kunCtx.clearRect(0, 0, W, H);
+    kunParts.forEach((part, i) => {
+      const m = toScreen(part.img);
+      const { w, h } = boxOf(part.img);
+      const full = m.scale(w / part.pic.naturalWidth, h / part.pic.naturalHeight); // 絵の画素 → 画面
+      for (let k = 0; k < part.points.length; k += 2) {
+        const x = part.points[k];
+        const y = part.points[k + 1];
+        const X = full.a * x + full.c * y + full.e;
+        const Y = full.b * x + full.d * y + full.f;
+        left = Math.min(left, X);
+        right = Math.max(right, X);
+        top = Math.min(top, Y);
+        bottom = Math.max(bottom, Y);
+        if (i < 2) {
+          footBottom = Math.max(footBottom, Y);
+        }
+        moved.push(X, Y);
+      }
+      // 実際の描かれ方どおりに、同じ行列で canvas に描く
+      kunCtx.setTransform(new DOMMatrix().translate(-X0, -Y0).multiply(full));
+      kunCtx.drawImage(part.pic, 0, 0);
+    });
+    kunCtx.setTransform(1, 0, 0, 1, 0, 0);
+    const kd = kunCtx.getImageData(0, 0, W, H).data;
+    const mask = new Uint8Array(W * H);
+    let any = false;
+    for (let i = 0; i < W * H; i++) {
+      if (kd[i * 4 + 3] > 128) {
+        mask[i] = 1;
+        any = true;
+      }
+    }
+    // すてぶるちゃんの見えている画素のうち、くんの画素と重なる数（位相 × コマ）
+    const overlap = {};
+    chanPhases[0].frames.forEach((f, fi) => {
+      overlap[f.name] = chanPhases.map((c) => {
+        if (!any) {
+          return 0;
+        }
+        let n = 0;
+        const seen = c.frames[fi].seen;
+        for (let k = 0; k < seen.length; k++) {
+          n += mask[seen[k]];
+        }
+        return n;
+      });
+    });
+    // ヒーロー：くんの画素の端の点が文字・ボタン・カードに入る数
+    let textHits = 0;
+    const near = rects.filter((q) => q.right >= left && q.left <= right && q.bottom >= top && q.top <= bottom);
+    if (near.length) {
+      for (let k = 0; k < moved.length; k += 2) {
+        if (inside(near, moved[k], moved[k + 1])) {
+          textHits++;
+        }
+      }
+    }
+    return { at, wave: waveAt, kun: { left, right, top, bottom, footBottom }, self: { worst, part: worstPart }, textHits, overlap };
+  };
+
+  const kunPhases = [];
+  AT.forEach((at) => {
+    seek(swayAnims, at);
+    kunPhases.push(measureKun(at, null));
   });
-  const floorEl = floor ? document.querySelector(floor) : null;
+
+  // 手を振る：is-waving を付けて kun-wave を作り、止めて測る。右腕の揺れは kun-wave に替わる
+  let waving = false;
+  if (wave) {
+    rig.classList.add("is-waving");
+    const waveAnims = movingIn(rig).filter((a) => a.animationName === "kun-wave");
+    const others = movingIn(rig).filter((a) => a.animationName !== "kun-wave");
+    if (waveAnims.length !== 1 || others.map((a) => a.animationName).sort().join() !== "kun-arm-l-sway,kun-bob,kun-breathe") {
+      throw new Error("手を振る動き（kun-wave）が作れない");
+    }
+    waving = true;
+    WAVE_AT.forEach((w) => {
+      seek(waveAnims, w);
+      AT.forEach((at) => {
+        seek(others, at);
+        kunPhases.push(measureKun(at, w));
+      });
+    });
+    rig.classList.remove("is-waving");
+  }
 
   return {
+    animations: { kun: swayNames, chan: chanAnims.length, wave: waving },
     clip,
     root: { left: rr.left, right: rr.right, top: rr.top, bottom: rr.bottom },
-    chan: { left: cr.left, right: cr.right, top: cr.top, bottom: cr.bottom, width: cr.width, height: cr.height },
-    kun: { left: kr.left, right: kr.right, top: kr.top, bottom: kr.bottom, visibleLeft: kunLeft, visibleRight: kunRight },
-    frames: result,
-    footBottom,
-    floorTop: floorEl ? floorEl.getBoundingClientRect().top : null,
+    chan: { left: cr0.left, right: cr0.right, top: cr0.top, bottom: cr0.bottom, width: cr0.width, height: cr0.height },
+    kunBox: { left: kr.left, right: kr.right, top: kr.top, bottom: kr.bottom },
+    chanPhases: chanPhases.map((c) => ({
+      at: c.at,
+      dy: c.dy,
+      dx: c.dx,
+      frames: c.frames.map(({ seen, ...rest }) => rest),
+    })),
+    kunPhases,
+    floorTop: floor ? document.querySelector(floor).getBoundingClientRect().top : null,
   };
 }
 
@@ -693,26 +972,94 @@ const settled = (page, selector) =>
     )
     .toBe(true);
 
-// 測った見えている範囲が、枠・画面の内側にある（上下の動きで持ち上がる分も含めて）
-const expectInsideClip = (m, where) => {
-  expect(m.kun.visibleLeft, `${where} すてぶるくん: 見えている左端 ${fmt(m.kun.visibleLeft)} が枠の左 ${fmt(m.clip.left)} より内`).toBeGreaterThanOrEqual(
-    m.clip.left - 0.5
-  );
-  expect(m.kun.visibleRight, `${where} すてぶるくん: 見えている右端 ${fmt(m.kun.visibleRight)} が枠の右 ${fmt(m.clip.right)} より内`).toBeLessThanOrEqual(
-    m.clip.right + 0.5
-  );
-  const bob = m.chan.height * 0.018; // chan-bob の頂点（設計書 v2 §4）
-  for (const f of m.frames) {
-    expect(f.left, `${where} ${f.name}: 見えている左端 ${fmt(f.left)} が枠の左 ${fmt(m.clip.left)} より内`).toBeGreaterThanOrEqual(
-      m.clip.left - 0.5
-    );
-    expect(f.right, `${where} ${f.name}: 見えている右端 ${fmt(f.right)} が枠の右 ${fmt(m.clip.right)} より内`).toBeLessThanOrEqual(
-      m.clip.right + 0.5
-    );
-    expect(f.top - bob, `${where} ${f.name}: 上に持ち上がっても枠の上 ${fmt(m.clip.top)} から出ない`).toBeGreaterThanOrEqual(
-      m.clip.top - 0.5
-    );
+// 測った結果（measureStage）が、動きの途中のどの位相でも決まりを満たす。外れたものは全部まとめて見せる
+// - 動きが測りに反映されている（くんの上下で見えている上端が上がる、ちゃんの上下は絵の高さの約 1.8%、ヒーローは手振りで右腕の描かれ方が変わる）
+// - すてぶるくん：見えている範囲が枠の中（左右・上）。足が床線に付く。行列で描いた部品の外接矩形が getBoundingClientRect と 1px 以内
+// - すてぶるちゃん：見えている範囲が枠の中（上は持ち上がった分も入れる）。胸の切れ目は持ち上がっても床線の下に沈む
+// - kunFrames のコマは、くんとちゃんのどの位相の組み合わせでも、すてぶるくんの画素と重ならない。textFrames のコマは文字・ボタン・カードと重ならない
+// floorY は足が付く床線（立ち絵は .cast の下端、ヒーローはティッカーの上端）。kunBeforeChan は、くんの見えている右端が常にちゃんの絵の左端より左（ヒーロー）
+const expectStage = (m, where, { floorY, kunFrames, textFrames = [], wave = false, kunBeforeChan = false }) => {
+  expect(m.animations.kun, `${where}: 測ったくんの動き`).toEqual(["kun-arm-l-sway", "kun-arm-r-sway", "kun-bob", "kun-breathe"]);
+  expect(m.animations.chan, `${where}: 測ったちゃんの動き`).toBe(1);
+  expect(m.animations.wave, `${where}: 手を振る動きを測ったか`).toBe(wave);
+  expect(m.chanPhases, `${where}: ちゃんの位相`).toHaveLength(8);
+  expect(m.kunPhases, `${where}: くんの位相（揺れ 8 通り${wave ? " + 手振り 11 通り × 8" : ""}）`).toHaveLength(wave ? 8 + 11 * 8 : 8);
+
+  const bad = [];
+  const kunAt = (k) => `くん ${k.at}${k.wave === null ? "" : ` 手振り ${k.wave}`}`;
+
+  // 動きが測りに反映されている（反映されていないと、位相を変えても同じ場所を測るだけになる）
+  const base = m.kunPhases.filter((k) => k.wave === null);
+  const rest = base.find((k) => k.at === 0);
+  const peak = base.find((k) => k.at === 0.5);
+  expect(rest.kun.top - peak.kun.top, `${where}: 上下の頂点（1/2）で、くんの見えている上端が上がる`).toBeGreaterThan(2);
+  const chanPeak = m.chanPhases.find((c) => c.at === 0.5);
+  expect(
+    Math.abs(chanPeak.dy + m.chan.height * 0.018),
+    `${where}: ちゃんの上下の頂点（1/2）の持ち上がり ${fmt(chanPeak.dy)}px（絵の高さの 1.8%）`
+  ).toBeLessThanOrEqual(0.5);
+  expect(m.chanPhases.map((c) => Math.abs(c.dx)).filter((dx) => dx > 0.01), `${where}: ちゃんは横には動かない`).toEqual([]);
+  if (wave) {
+    // 手を振ると右の腕が肩から持ち上がるので、揺れだけのときより見えている右端が内へ入る（右腕の描かれ方が変わる）
+    const waved = Math.min(...m.kunPhases.filter((k) => k.wave !== null).map((k) => k.kun.right));
+    const calm = Math.min(...base.map((k) => k.kun.right));
+    expect(calm - waved, `${where}: 手を振る動きが測りに反映されている（右端 ${fmt(waved)} が揺れだけのとき ${fmt(calm)} より内に入る）`).toBeGreaterThan(5);
   }
+
+  for (const k of m.kunPhases) {
+    const when = kunAt(k);
+    if (k.self.worst > 1) {
+      bad.push(`${when}: 行列で描いた ${k.self.part} の外接矩形が getBoundingClientRect と ${fmt(k.self.worst)}px ずれる`);
+    }
+    if (k.kun.left < m.clip.left - 0.5) {
+      bad.push(`${when}: 見えている左端 ${fmt(k.kun.left)} が枠の左 ${fmt(m.clip.left)} から出る`);
+    }
+    if (k.kun.right > m.clip.right + 0.5) {
+      bad.push(`${when}: 見えている右端 ${fmt(k.kun.right)} が枠の右 ${fmt(m.clip.right)} から出る`);
+    }
+    if (k.kun.top < m.clip.top - 0.5) {
+      bad.push(`${when}: 見えている上端 ${fmt(k.kun.top)} が枠の上 ${fmt(m.clip.top)} から出る`);
+    }
+    if (Math.abs(floorY - k.kun.footBottom) > 2.5) {
+      bad.push(`${when}: 足の下端 ${fmt(k.kun.footBottom)} が床線 ${fmt(floorY)} に付かない`);
+    }
+    if (kunBeforeChan && k.kun.right >= m.chan.left) {
+      bad.push(`${when}: くんの右端 ${fmt(k.kun.right)} がちゃんの絵の左端 ${fmt(m.chan.left)} を越える`);
+    }
+    for (const name of kunFrames) {
+      k.overlap[name].forEach((n, i) => {
+        if (n > 0) {
+          bad.push(`${when} × ちゃん ${m.chanPhases[i].at} ${name}: くんに隠れる画素 ${n}`);
+        }
+      });
+    }
+  }
+
+  for (const c of m.chanPhases) {
+    const when = `ちゃん ${c.at}（持ち上がり ${fmt(c.dy)}px）`;
+    const sunk = m.chan.bottom + c.dy - floorY;
+    if (sunk <= 1) {
+      bad.push(`${when}: 絵の下端 ${fmt(m.chan.bottom + c.dy)} が床線 ${fmt(floorY)} の下に沈んでいない（切れ目が見える）`);
+    }
+    for (const f of c.frames) {
+      if (f.left < m.clip.left - 0.5) {
+        bad.push(`${when} ${f.name}: 見えている左端 ${fmt(f.left)} が枠の左 ${fmt(m.clip.left)} から出る`);
+      }
+      if (f.right > m.clip.right + 0.5) {
+        bad.push(`${when} ${f.name}: 見えている右端 ${fmt(f.right)} が枠の右 ${fmt(m.clip.right)} から出る`);
+      }
+      if (f.top < m.clip.top - 0.5) {
+        bad.push(`${when} ${f.name}: 見えている上端 ${fmt(f.top)} が枠の上 ${fmt(m.clip.top)} から出る`);
+      }
+      if (textFrames.includes(f.name) && f.textOverlap > 0) {
+        bad.push(`${when} ${f.name}: 文字・ボタン・カードと重なる画素 ${f.textOverlap}`);
+      }
+    }
+  }
+  // ふだんの位置（持ち上がる前）の胸の切れ目は、床線の下に 10px 以上沈んでいる
+  expect(m.chan.bottom - floorY, `${where}: 絵の下端 ${fmt(m.chan.bottom)} は床線 ${fmt(floorY)} の下に 10px 以上`).toBeGreaterThanOrEqual(10);
+
+  expect(bad.slice(0, 30), `${where}: 動きの途中で決まりを外れたもの（${bad.length} 件。先頭 30 件）`).toEqual([]);
 };
 
 // ─── 1. 素材と HTML ─────────────────────────────────────────────────────────
@@ -928,7 +1275,9 @@ test.describe("並びと位置", () => {
   // 動画欄・相談欄の立ち絵：すてぶるくんが左、すてぶるちゃんが右。仕草の手・座布団が .cast の枠から切れず、すてぶるくんに隠れない
   for (const width of [1280, 1440]) {
     for (const { path } of PAGES) {
-      test(`${path} ${width}px：立ち絵は くんが左・ちゃんが右で、仕草の手が枠から切れず、すてぶるくんに隠れない`, async ({ page }) => {
+      test(`${path} ${width}px：立ち絵は くんが左・ちゃんが右で、上下・呼吸・揺れの途中でも、仕草の手が枠から切れず、すてぶるくんに隠れない`, async ({
+        page,
+      }) => {
         test.setTimeout(90_000);
         await page.setViewportSize({ width, height: 900 });
         await page.goto(path);
@@ -965,18 +1314,13 @@ test.describe("並びと位置", () => {
           expect(order.kunPos, `${cast}: くんは重ね順が効く位置`).not.toBe("static");
           expect(order.kunZ, `${cast}: すてぶるくんが前（ちゃんより手前に出ない）`).toBeGreaterThan(order.chanZ);
 
-          // 見えている画素：15 コマすべてが枠の中。仕草の手・座布団はすてぶるくんの画素と重ならない
+          // 動いている状態（is-live）で、上下・呼吸・腕の揺れとちゃんの上下を周期の 8 分の 1 刻みに止めて、全部の組み合わせで測る。
+          // 15 コマすべてが枠の中。仕草の手・座布団はすてぶるくんの画素と重ならない。足は床線に付き（上下するのは体と腕だけ）、
+          // 胸の切れ目は床線の下に 10px 以上沈んで、持ち上がっても見えない
+          await expect(page.locator(`${cast} .kun-rig`)).toHaveClass(IS_LIVE, { timeout: 10_000 });
+          await expect(page.locator(`${cast} .cast-chan`)).toHaveClass(IS_LIVE, { timeout: 10_000 });
           const m = await page.evaluate(measureStage, { root: cast, frames: CAST_FRAMES, floor: null });
-          expectInsideClip(m, cast);
-          for (const f of m.frames.filter((x) => GESTURE_FRAMES.includes(x.name))) {
-            expect(f.kunOverlap, `${cast} ${f.name}: 手・座布団がすてぶるくんに隠れる画素の数`).toBe(0);
-          }
-          // 足が床線に付く（上下するのは体と腕だけ）
-          expect(Math.abs(m.clip.bottom - m.footBottom), `${cast}: 足 ${fmt(m.footBottom)} が床線 ${fmt(m.clip.bottom)} に付く`).toBeLessThanOrEqual(2.5);
-          // 胸の切れ目は床線の下に 10px 以上沈んでいる。上下で持ち上がっても見えない
-          const sunk = m.chan.bottom - m.clip.bottom;
-          expect(sunk, `${cast}: 絵の下端 ${fmt(m.chan.bottom)} は床線 ${fmt(m.clip.bottom)} の下に 10px 以上`).toBeGreaterThanOrEqual(10);
-          expect(sunk - m.chan.height * 0.018, `${cast}: 持ち上がっても切れ目が見えない`).toBeGreaterThan(1);
+          expectStage(m, cast, { floorY: m.clip.bottom, kunFrames: GESTURE_FRAMES });
         }
       });
     }
@@ -993,24 +1337,19 @@ test.describe("並びと位置", () => {
         await settled(page, ".hero-cast");
         await settled(page, ".hero-inner");
 
+        // 動いている状態（is-live）で、上下・呼吸・腕の揺れ・手を振る動きとちゃんの上下を止めて、全部の組み合わせで測る。
+        // 7 コマすべてが枠の中で、文字・ボタン・カードにもすてぶるくんにも重ならない。足がティッカーに付き、
+        // 胸の切れ目はティッカーの向こうに 10px 以上沈んで、持ち上がっても見えない。左にすてぶるくん、右にすてぶるちゃん
+        await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 10_000 });
+        await expect(page.locator(HERO_CHAN)).toHaveClass(IS_LIVE, { timeout: 10_000 });
         const m = await page.evaluate(measureStage, {
           root: ".hero-cast",
           frames: HERO_FRAMES,
           textRoot: ".hero-inner",
           floor: ".hero-ticker",
+          wave: true,
         });
-        expectInsideClip(m, "ヒーロー");
-        for (const f of m.frames) {
-          expect(f.textOverlap, `ヒーロー ${f.name}: 文字・ボタン・カードと重なる画素の数`).toBe(0);
-          expect(f.kunOverlap, `ヒーロー ${f.name}: すてぶるくんと重なる画素の数`).toBe(0);
-        }
-        // 足がティッカーに付く／胸の切れ目はティッカーの向こうに 10px 以上沈み、上下しても見えない
-        expect(Math.abs(m.floorTop - m.footBottom), `ヒーロー: 足 ${fmt(m.footBottom)} がティッカー ${fmt(m.floorTop)} に付く`).toBeLessThanOrEqual(2.5);
-        const sunk = m.chan.bottom - m.floorTop;
-        expect(sunk, `ヒーロー: 絵の下端 ${fmt(m.chan.bottom)} はティッカーの上端 ${fmt(m.floorTop)} の下に 10px 以上`).toBeGreaterThanOrEqual(10);
-        expect(sunk - m.chan.height * 0.018, "ヒーロー: 持ち上がっても切れ目が見えない").toBeGreaterThan(1);
-        // 左にすてぶるくん、右にすてぶるちゃん
-        expect(m.kun.visibleRight, "ヒーロー: くんは左、ちゃんは右").toBeLessThan(m.chan.left);
+        expectStage(m, "ヒーロー", { floorY: m.floorTop, kunFrames: HERO_FRAMES, textFrames: HERO_FRAMES, wave: true, kunBeforeChan: true });
       });
     }
   }
@@ -1454,6 +1793,92 @@ test.describe("会話の再生", () => {
     await expect(page.locator("#early-access .cast-chan")).toHaveAttribute("src", /normal-0\.webp$/, { timeout: 10_000 });
     expect(errors).toEqual([]);
   });
+
+  for (const { path } of PAGES) {
+    test(`${path}：palm のコマが読めないとき（HTML は書き換えない）、相談欄の会話で palm は一度も出ず、ちゃんは normal-0 のまま、最後の座布団は出て 3 秒で normal-0 に戻る`, async ({
+      page,
+    }) => {
+      test.setTimeout(90_000);
+      const errors = watchErrors(page);
+      const consoleErrors = [];
+      page.on("console", (msg) => {
+        if (msg.type() === "error") {
+          consoleErrors.push({ text: msg.text(), url: msg.location().url });
+        }
+      });
+      const requested = new Set();
+      page.on("request", (request) => requested.add(new URL(request.url()).pathname.split("/").pop()));
+      let palmRequests = 0;
+      await page.route("**/assets/char/chan/palm-*.webp", (route) => {
+        palmRequests++;
+        return route.fulfill({ status: 404, body: "" });
+      });
+      await installRecorder(page);
+      await page.goto(path);
+
+      // 相談欄だけを画面に入れる（動画欄の会話は normal の形で話す行があり、normal-1/2 を先読みしてしまうので、再生させない）
+      const talk = page.locator("#early-access .talk");
+      const chan = page.locator("#early-access .cast-chan");
+      await scrollCenter(talk);
+      await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+      await expect(page.locator("#videos .talk"), "動画欄は再生していない").not.toHaveClass(/\bis-played\b/);
+      expect(palmRequests, "palm のコマは読もうとして、404 になった").toBeGreaterThan(0);
+      // この確認は、normal-1/2 が先読みされていない（読めているのは normal-0 だけ）ことを前提にしている
+      expect([...requested].filter((f) => /^normal-[12]\.webp$/.test(f)), "normal-1/2 は読んでいない").toEqual([]);
+
+      const evs = await events(page);
+      const windows = speakingWindows(evs, "early-access");
+      expect(windows.map((w) => (w.kun ? "kun" : "chan"))).toEqual(["kun", "chan", "kun"]);
+      expect(evs.filter((e) => e.k === "src" && /^palm-/.test(e.file)), "palm はどこにも出ない").toEqual([]);
+
+      // ちゃんの行のあいだ：口は動かず（normal-1/2 が無い）、まばたきもせず、normal-0 のまま。
+      // 話し始めがまばたきの途中だったときの「normal-0 に戻す」1 回だけは除く
+      const mine = chanEvents(evs, "cast", "early-access");
+      const line = windows[1];
+      expect(
+        mine
+          .filter((e) => e.t >= line.start && e.t <= line.end + 700 && !(e.file === "normal-0.webp" && /^blink-/.test(e.from)))
+          .map((e) => `${e.from} → ${e.file}`),
+        "ちゃんの行のあいだ、立ち絵の絵は替わらない（normal-0 のまま）"
+      ).toEqual([]);
+      expect(
+        mine.filter((e) => /^(?!normal-0|blink-)/.test(e.file)).map((e) => e.file),
+        "座布団のほかに、normal-0・まばたき以外の絵にならない"
+      ).toEqual(["zabuton.webp"]);
+
+      // 最後の行のあと、座布団（読めている）が出て、3 秒ほどで normal-0 に戻る
+      await expect
+        .poll(async () => chanEvents(await events(page), "cast", "early-access").some((e) => e.file === "zabuton.webp"), {
+          message: "最後に座布団になる",
+          timeout: 10_000,
+        })
+        .toBe(true);
+      const last = windows[2];
+      const zabuton = chanEvents(await events(page), "cast", "early-access").find((e) => e.file === "zabuton.webp");
+      expect(zabuton.t - last.end, `座布団は最後の行が終わるころ（今は ${Math.round(zabuton.t - last.end)}ms 後）`).toBeGreaterThanOrEqual(-150);
+      expect(zabuton.t - last.end, `座布団は最後の行が終わるころ（今は ${Math.round(zabuton.t - last.end)}ms 後）`).toBeLessThanOrEqual(900);
+      await expect
+        .poll(
+          async () =>
+            chanEvents(await events(page), "cast", "early-access").some((e) => e.t > zabuton.t && e.file === "normal-0.webp"),
+          { message: "座布団のあと normal-0 に戻る", timeout: 10_000 }
+        )
+        .toBe(true);
+      const back = chanEvents(await events(page), "cast", "early-access").find((e) => e.t > zabuton.t && e.file === "normal-0.webp");
+      expect(back.from, "座布団から normal-0 に戻る").toBe("zabuton.webp");
+      expect(back.t - zabuton.t, `座布団は 3 秒ほど（今は ${Math.round(back.t - zabuton.t)}ms）`).toBeGreaterThanOrEqual(2900);
+      expect(back.t - zabuton.t, `座布団は 3 秒ほど（今は ${Math.round(back.t - zabuton.t)}ms）`).toBeLessThanOrEqual(3700);
+      await expect(chan).toHaveAttribute("src", /normal-0\.webp$/);
+
+      // エラーは出ない。コンソールのエラーは、palm の 404（わざと失敗させた読み込み）と、フィクスチャが止めた計測のタグ（ANALYTICS）だけ
+      expect(errors).toEqual([]);
+      expect(consoleErrors.filter((c) => /\/chan\/palm-[012]\.webp$/.test(c.url)).length, "palm の 404 はコンソールに出る").toBeGreaterThan(0);
+      expect(
+        consoleErrors.filter((c) => !/\/chan\/palm-[012]\.webp$/.test(c.url) && !ANALYTICS.test(c.url)),
+        "palm の 404・止めた計測タグ以外のコンソールエラー"
+      ).toEqual([]);
+    });
+  }
 
   test("data-pose が無い行は顔の表情から決め（proud は proud、serious は normal）、知らない data-pose は normal になる", async ({
     page,
@@ -1908,14 +2333,16 @@ test("ヒーローのすてぶるちゃん：登場のあと、2.5〜5.5 秒お�
 }) => {
   test.setTimeout(150_000);
   const errors = watchErrors(page);
+  const loads = trackLoads(page);
+  await seedRandom(page, SEED); // 続けて 2 回・ふつうの間隔・proud・fist の割合を、同じ並びで確かめる
   await freezeClock(page);
   await stillFrames(page);
   await installRecorder(page);
   await page.goto("/");
   await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 15_000 });
   await waitFor(page, "登場が始まる", (e) => e.k === "src" && e.chan === "hero" && e.file === "side-glance.webp");
-  // まばたき・仕草のコマの先読みが済むのを実時間で少し待ってから、時計を進める
-  await page.waitForTimeout(500);
+  // まばたき・仕草のコマの先読みが済むのを待ってから、時計を進める
+  await waitForLoads(page, loads, ["blink-half.webp", "blink-normal.webp", "proud-0.webp", "fist.webp"]);
   await advance(page, 300_000);
 
   const evs = await events(page);
@@ -1974,6 +2401,8 @@ test("立ち絵のすてぶるちゃん：画面にいる間、normal-0 のま�
 }) => {
   test.setTimeout(150_000);
   const errors = watchErrors(page);
+  const loads = trackLoads(page);
+  await seedRandom(page, SEED); // 続けて 2 回とふつうの間隔の両方が出ることを、同じ並びで確かめる
   await freezeClock(page);
   await stillFrames(page);
   await installRecorder(page);
@@ -1982,7 +2411,7 @@ test("立ち絵のすてぶるちゃん：画面にいる間、normal-0 のま�
   await scrollCenter(page.locator("#videos .cast"));
   const chan = page.locator("#videos .cast-chan");
   await expect(chan).toHaveClass(IS_LIVE, { timeout: 15_000 });
-  await page.waitForTimeout(500); // まばたきのコマの先読みを実時間で待つ
+  await waitForLoads(page, loads, ["blink-half.webp", "blink-normal.webp"]); // まばたきのコマの先読みを待つ
   await advance(page, 150_000);
 
   const evs = await events(page);
@@ -1992,7 +2421,9 @@ test("立ち絵のすてぶるちゃん：画面にいる間、normal-0 のま�
   for (const [i, g] of groups.entries()) {
     expectBlinkShape(g, `立ち絵 ${i + 1} 回目のまばたき`);
   }
-  expectBlinkGaps(groups, 16_000, "立ち絵");
+  const gaps = expectBlinkGaps(groups, 16_000, "立ち絵");
+  expect(gaps.some((g) => Math.abs(g - 180) <= 30), "ときどき（20% ほど）続けて 2 回まばたきする").toBe(true);
+  expect(gaps.some((g) => g >= 2250), "ふつうは 2.5〜5.5 秒おき").toBe(true);
 
   // 話しているあいだ（口パクと、そのあとの pose-0）はまばたきしない
   const windows = speakingWindows(evs, "videos").filter((w) => !w.kun);
@@ -2064,6 +2495,54 @@ test("すてぶるくんのまばたき（half → closed → half → open）�
   const next = list.find((e) => e.t > closed.t && e.id === closed.id);
   expect(next.t - closed.t, "目を閉じているのは 70ms ほど").toBeLessThan(800);
 });
+
+// ─── すてぶるくんの目線の向き（右のすてぶるちゃんを多めに見る） ─────────────────────────
+// すてぶるちゃんのいる側（ヒーローも立ち絵も右）を 70% で見る。assets/characters.js は Math.random() < 0.7 なら右、そうでなければ左を見る。
+// Math.random を一定の値にして、ヒーローも立ち絵（動画欄・相談欄）も、決まった側（0.5 なら右、0.9 なら左）だけを見ることを確かめる。
+// 立ち絵のすてぶるくんは画面に入るまで動かないので、その欄を画面の真ん中に送ってから時計を進める。
+// 会話が始まると目線は口パクのあとに回るので、会話（10 秒ほど）が終わってから数えられるよう、十分に進める
+for (const { path } of PAGES) {
+  for (const [value, side] of [
+    [0.5, "right"],
+    [0.9, "left"],
+  ]) {
+    test(`${path}：Math.random が ${value} のとき、ヒーローも立ち絵（動画欄・相談欄）のすてぶるくんも eyes-${side} だけを見る`, async ({ page }) => {
+      test.setTimeout(120_000);
+      const errors = watchErrors(page);
+      const loads = trackLoads(page);
+      await fixRandom(page, value);
+      await freezeClock(page);
+      await stillFrames(page);
+      await installRecorder(page);
+      await page.goto(path);
+      const gazes = async (kun, sec) =>
+        (await events(page))
+          .filter((e) => e.k === "src" && hasCls(e, "kun-eyes") && e.kun === kun && (sec === undefined || e.sec === sec))
+          .map((e) => e.file)
+          .filter((file) => /^eyes-(left|right)\.webp$/.test(file));
+      const expected = `eyes-${side}.webp`;
+
+      // ヒーロー：6〜10 秒おき（値が一定なら 8 秒おき）の目線を、40 秒で数回
+      await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 15_000 });
+      await waitForLoads(page, loads, ["eyes-left.webp", "eyes-right.webp"]);
+      await advance(page, 40_000);
+      const hero = await gazes("hero");
+      expect(hero.length, `ヒーロー: 40 秒で目線を向けた回数（${hero.length}）`).toBeGreaterThanOrEqual(2);
+      expect(new Set(hero), `ヒーロー: 目線は ${expected} だけ（今は ${[...new Set(hero)].join(", ")}）`).toEqual(new Set([expected]));
+
+      // 立ち絵（動画欄・相談欄）：画面に入れてから進める
+      for (const section of ["videos", "early-access"]) {
+        await scrollCenter(page.locator(`#${section} .cast`));
+        await expect(page.locator(`#${section} .cast-kun`)).toHaveClass(IS_LIVE, { timeout: 15_000 });
+        await advance(page, 90_000);
+        const cast = await gazes("cast", section);
+        expect(cast.length, `${section} の立ち絵: 90 秒で目線を向けた回数（${cast.length}）`).toBeGreaterThanOrEqual(2);
+        expect(new Set(cast), `${section} の立ち絵: 目線は ${expected} だけ（今は ${[...new Set(cast)].join(", ")}）`).toEqual(new Set([expected]));
+      }
+      expect(errors).toEqual([]);
+    });
+  }
+}
 
 // ─── 7. 狭い幅 ──────────────────────────────────────────────────────────────
 
