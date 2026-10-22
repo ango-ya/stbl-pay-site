@@ -117,6 +117,11 @@ mkdir -p "$OUT/kun" "$OUT/chan" "$OUT/talk"
 count=0
 bytes=0
 for d in kun chan talk; do
+  # 今回書き出さなかった古い絵（v1 の thigh-*.webp など）は消す
+  for f in "$OUT/$d"/*.webp; do
+    [ -e "$f" ] || continue
+    [ -e "$TMP/out/$d/$(basename "$f")" ] || rm -f "$f"
+  done
   n=0
   for f in "$TMP/out/$d"/*.webp; do
     cp "$f" "$OUT/$d/"

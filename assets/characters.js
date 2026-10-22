@@ -202,9 +202,9 @@
     const mouthRest = mouth.getAttribute("src"); // mouth-rest か mouth-o
     const eyeUrl = (name) => eyesDir + "eyes-" + name + EXT;
     const talkUrl = (vowel) => mouthDir + "mouth-talk-" + vowel + EXT;
-    // すてぶるちゃんのいる側を多めに見る（ヒーローは右、立ち絵は左にいる）
-    const lookMain = hero ? "right" : "left";
-    const lookSub = hero ? "left" : "right";
+    // すてぶるちゃんのいる側（ヒーローも立ち絵も右）を多めに見る
+    const lookMain = "right";
+    const lookSub = "left";
 
     const tBlink = makeTimers();
     const tGaze = makeTimers();
