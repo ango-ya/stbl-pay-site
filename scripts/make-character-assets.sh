@@ -6,7 +6,8 @@
 #
 # - assets/char/kun/（19 枚、374×261）：すてぶるくんの部品。素材集 kun/rig の 748×522 を半分に縮める。
 #   全部同じ大きさで、左上をそろえて重ねると組み上がる（assets/characters.js が目と口の img を差し替える）。
-# - assets/char/chan/（3 枚、340×480）：すてぶるちゃん（太ももまで）。素材集 chan/thigh の 566×800 を縮める。
+# - assets/char/chan/（18 枚、400×388）：すてぶるちゃん（上半身）。素材集 chan/upper の 660×640 を縮める。
+#   ほほえみ・得意げ・手のひら・指さしの口 3 段階（各 3 枚）、まばたき 2、横目・こちらを向く・こぶし・座布団（各 1 枚）。
 # - assets/char/talk/（29 枚、112×112）：会話の顔のコマ。
 #   すてぶるちゃんは素材集 chan/upper（660×640）から顔の範囲を切り出す。
 #   すてぶるくんは rig の部品を奥から重ねて（足・腕・体・ほほ・目・口）、顔の範囲を切り出す。
@@ -27,9 +28,8 @@ for tool in dwebp cwebp ffmpeg ffprobe; do
   command -v "$tool" >/dev/null || { echo "${tool} がありません（brew install webp ffmpeg）"; exit 1; }
 done
 RIG="$KIT/kun/rig"
-THIGH="$KIT/chan/thigh"
 UPPER="$KIT/chan/upper"
-for d in "$RIG" "$THIGH" "$UPPER"; do
+for d in "$RIG" "$UPPER"; do
   [ -d "$d" ] || { echo "NG: ${d} がありません。素材集の展開したフォルダ（kun/・chan/ が入っているもの）を指定してください"; exit 1; }
 done
 
@@ -66,10 +66,17 @@ for p in $KUN_PARTS; do
   enc "$RIG/kun_${p#*:}.webp" 748x522 "$TMP/out/kun/${p%%:*}.webp" 374x261 -resize 374 261
 done
 
-# --- chan/：太ももまで（566×800 → 340×480）。1 枚が大きいので品質 80（拡大して見比べても 90 と見分けがつかない）
+# --- chan/：上半身（660×640 → 400×388）。1 枚が大きいので品質 80（拡大して見比べても 90 と見分けがつかない）
+#     書き出す名前:素材集の名前（chan_◯◯.webp）。口 3 段階の形は <形>-0/1/2
 QUALITY=80
-for p in stand:stand reach:reach reach-wink:reach_wink; do
-  enc "$THIGH/chan_thigh_${p#*:}.webp" 566x800 "$TMP/out/chan/thigh-${p%%:*}.webp" 340x480 -resize 340 480
+CHAN_PARTS="normal-0:normal_0 normal-1:normal_1 normal-2:normal_2
+proud-0:proud_0 proud-1:proud_1 proud-2:proud_2
+palm-0:palm_0 palm-1:palm_1 palm-2:palm_2
+point-0:point_0 point-1:point_1 point-2:point_2
+blink-half:blink_half blink-normal:blink_normal side-glance:side_glance look-camera:look_camera
+fist:fist zabuton:zabuton"
+for p in $CHAN_PARTS; do
+  enc "$UPPER/chan_${p#*:}.webp" 660x640 "$TMP/out/chan/${p%%:*}.webp" 400x388 -resize 400 388
 done
 QUALITY=90
 
@@ -119,5 +126,5 @@ for d in kun chan talk; do
   echo "${d}/: ${n} 枚 -> ${OUT}/${d}/"
   count=$((count + n))
 done
-[ "$count" -eq 51 ] || { echo "NG: 書き出した枚数が ${count} です（51 枚のはず）"; exit 1; }
+[ "$count" -eq 66 ] || { echo "NG: 書き出した枚数が ${count} です（66 枚のはず）"; exit 1; }
 echo "合計: ${count} 枚、${bytes} バイト"
