@@ -15,15 +15,15 @@ import { join } from "node:path";
 //   実際の再生、YouTube 側のエラー（埋め込み不可など）は、公開前の手動確認（プレビューと iPhone の Safari）で見る
 // - 本番ヘッダ（CSP・Referrer-Policy）はローカルの静的サーバーが付けないので、「本番ヘッダ」の 2 本だけ、_headers の値を応答に付け直して動かす
 
-// 第1〜8回と番外編（how-sp まるごと解説・how-pk パスキーのはなし）
-const EPISODES = ["how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08", "how-sp", "how-pk"];
+// 第1〜8回と番外編のパスキーのはなし（how-pk）
+const EPISODES = ["how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08", "how-pk"];
 const ENGLISH_EPISODE = "how-08en";
 
 const YT_ORIGIN = "https://www.youtube-nocookie.com";
 const WATCH = "https://www.youtube.com/watch?v=";
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
-// テスト用の偽の ID（11 文字）。how-01 → test0000001、how-08 → test0000008、how-sp → test000000p、how-08en → test00008en
+// テスト用の偽の ID（11 文字）。how-01 → test0000001、how-08 → test0000008、how-pk → test000000k、how-08en → test00008en
 const FAKE_ID = {
   ...Object.fromEntries(EPISODES.map((id) => [id, `test000000${id.slice(-1)}`])),
   [ENGLISH_EPISODE]: "test00008en",
@@ -92,20 +92,12 @@ const routePages = async (context, { youtubeIds, prodHeaders }) => {
 
 // youtubeIds: "fake"（既定。偽の ID を入れる）／"empty"（ID が空の回）／"as-is"（HTML をそのまま見る）
 // prodHeaders: true なら、_headers の CSP と Referrer-Policy: no-referrer を HTML の応答に付ける
-// prefetch: false（既定）なら、データ節約の設定にして、load の 2 秒後のプレーヤーの先読みを止める
-//   （負荷が高いと、YouTube への要求を数えるテストに先読みの要求が混ざるため）。先読みのテストだけ true にする
 const test = base.extend({
   youtubeIds: ["fake", { option: true }],
   prodHeaders: [false, { option: true }],
-  prefetch: [false, { option: true }],
-  context: async ({ context, youtubeIds, prodHeaders, prefetch }, use) => {
+  context: async ({ context, youtubeIds, prodHeaders }, use) => {
     await routeOutside(context);
     await routePages(context, { youtubeIds, prodHeaders });
-    if (!prefetch) {
-      await context.addInitScript(() => {
-        Object.defineProperty(navigator, "connection", { configurable: true, get: () => ({ saveData: true }) });
-      });
-    }
     await use(context);
   },
 });
@@ -150,7 +142,7 @@ const preconnects = (page) =>
   );
 
 test.describe("つかいかた動画（日本語LP）", () => {
-  test("一覧に第1〜8回と番外編 2 本が並び（予告は出さない）、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
+  test("一覧に第1〜8回と番外編のパスキーのはなしが並び（予告・まるごと解説は出さない）、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
     page,
     request,
   }) => {
@@ -182,7 +174,8 @@ test.describe("つかいかた動画（日本語LP）", () => {
       .evaluateAll((els) => els.map((el) => el.getAttribute("src")));
     expect(thumbs).toEqual(EPISODES.map((id) => `assets/video/${id}-thumb.webp`));
 
-    // 予告は YouTube に上げていないので出さない
+    // 番外編のまるごと解説（手数料 5% が LP の「検討中」と食い違う）は LP に出さない。予告も YouTube に上げていないので出さない
+    await expect(page.locator('#videos [href*="how-sp"], #videos [data-video="how-sp"], #videos [href*="EXfpLc6FXzw"]')).toHaveCount(0);
     await expect(page.locator('#video-how-00, #videos [data-video="how-00"], #videos [src*="how-00"]')).toHaveCount(0);
   });
 
@@ -272,6 +265,38 @@ test.describe("つかいかた動画（日本語LP）", () => {
       expect(m.border, `${where}: iframe に既定の枠線を付けない`).toBe("0px");
       expect(m.scrollWidth, `${where}: 横スクロールが出ない`).toBeLessThanOrEqual(m.clientWidth);
     }
+  });
+
+  test("押してから YouTube のプレーヤーを読み終わるまで、枠に読み込み中の印（is-loading・aria-busy）を出し、読み終わったら消す", async ({
+    page,
+  }) => {
+    // embed の応答を、テストが返すまで止めておく
+    let release;
+    const held = new Promise((resolve) => {
+      release = resolve;
+    });
+    await page.route(/youtube-nocookie\.com\/embed\//, async (route) => {
+      await held;
+      await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: "" });
+    });
+    await page.goto("/");
+    const frame = page.locator("[data-video-frame]");
+    await expect(frame).not.toHaveClass(/\bis-loading\b/);
+    await page.locator("[data-video-poster]").click();
+    await expect(frame).toHaveClass(/\bis-loading\b/);
+    await expect(frame).toHaveAttribute("aria-busy", "true");
+    // 印は再生ボタンと同じ大きさの四角で、押す邪魔をしない
+    const mark = await frame.evaluate((el) => {
+      const cs = getComputedStyle(el, "::before");
+      return { content: cs.content, width: cs.width, events: cs.pointerEvents };
+    });
+    expect(mark).toEqual({ content: '""', width: "72px", events: "none" });
+    expect(await frame.evaluate((el) => getComputedStyle(el, "::after").content), "読み込み中の文字").toBe('"読み込み中…"');
+    await page.waitForTimeout(500);
+    await expect(frame, "読み終わるまでは消さない").toHaveClass(/\bis-loading\b/);
+    release();
+    await expect(frame).not.toHaveClass(/\bis-loading\b/);
+    await expect(frame).not.toHaveAttribute("aria-busy", /.*/);
   });
 
   test("一覧から回を選ぶと、iframe を作り直して新しい回にし、説明も替わる（履歴は増やさない）", async ({ page }) => {
@@ -381,7 +406,7 @@ test.describe("つかいかた動画（日本語LP）", () => {
   });
 
   test("最後の回で「次の回へ」を押しても、フォーカスが iframe に残る", async ({ page }) => {
-    await page.goto("/#video-how-sp");
+    await page.goto("/#video-how-08");
     const next = page.locator("[data-video-next]");
     await expect(next).toBeVisible();
     await next.focus();
@@ -393,123 +418,18 @@ test.describe("つかいかた動画（日本語LP）", () => {
   });
 });
 
-// ─── プレーヤーの先読み（load の 2 秒後に 1 回、見えない iframe で） ─────────────
-
-const PREFETCH = "iframe[data-video-prefetch]";
-// ページの時計を止める（install だけだと実時間で進むので、負荷が高いと 2 秒がすぐ過ぎる）
-const freezeClock = async (page) => {
-  await page.clock.install({ time: new Date("2026-10-22T00:00:00Z") });
-  await page.clock.pauseAt(new Date("2026-10-22T00:00:01Z"));
-};
-
-test.describe("プレーヤーの先読み", () => {
-  test.use({ prefetch: true });
-
-  // 時計は 1 ページに 1 回しか仕掛けられないので、日本語と英語でテストを分ける
-  for (const [path, id, lang] of [["/", "how-01", "ja"], ["/en/", ENGLISH_EPISODE, "en"]]) {
-    test(`${path}：load の 2 秒後に、今の回のプレーヤーを見えない iframe で 1 回だけ読み（自動再生なし）、読み終わったら外す`, async ({ page }) => {
-      await freezeClock(page);
-      const youtube = watchYoutube(page);
-      await page.goto(path);
-      await page.waitForLoadState("load");
-      await page.clock.runFor(1900);
-      await expect(page.locator(PREFETCH), `${path}: 2 秒たつまでは読まない`).toHaveCount(0);
-      expect(youtube.map((r) => r.url), `${path}: 2 秒たつまでは YouTube に要求しない`).toEqual([]);
-      await page.clock.runFor(200);
-      const prefetch = page.locator(PREFETCH);
-      await expect(prefetch).toHaveCount(1);
-      await expect(prefetch).toBeHidden();
-      await expect(prefetch).toHaveAttribute("aria-hidden", "true");
-      await expect(prefetch).toHaveAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-      const params = new URL(await prefetch.getAttribute("src")).searchParams;
-      expect(await prefetch.getAttribute("src")).toMatch(embedPattern(FAKE_ID[id]));
-      expect(params.get("autoplay"), `${path}: 先読みは自動再生しない`).toBeNull();
-      expect(params.get("hl")).toBe(lang);
-      expect(await preconnects(page), `${path}: 先読みのときに preconnect も足す`).toEqual([YT_ORIGIN]);
-      // 読み終わって 3 秒で外す（空の 200 を返すので、すぐ読み終わる。load が来るのは実時間なので、少しずつ進めて待つ）
-      await expect
-        .poll(async () => {
-          await page.clock.runFor(500);
-          return page.locator(PREFETCH).count();
-        }, { message: `${path}: 先読みの iframe を外す`, timeout: 20_000 })
-        .toBe(0);
-      // そのあと増えない
-      await page.clock.runFor(10000);
-      await expect(page.locator("iframe")).toHaveCount(0);
-    });
-  }
-
-  test("先読みの前に再生したら先読みしない。先読みの途中で再生したら、先読みの iframe を外す", async ({ page }) => {
-    await freezeClock(page);
-    await page.goto("/");
-    await page.waitForLoadState("load");
-    await page.locator("[data-video-poster]").click();
-    await page.clock.runFor(3000);
-    await expect(page.locator(PREFETCH)).toHaveCount(0);
-    await expect(page.locator("iframe")).toHaveCount(1);
-
-    await page.goto("/");
-    await page.waitForLoadState("load");
-    await page.clock.runFor(2100);
-    await expect(page.locator(PREFETCH)).toHaveCount(1);
-    await page.locator("[data-video-poster]").click();
-    await expect(page.locator(PREFETCH)).toHaveCount(0);
-    await expect(page.locator(PLAYER)).toHaveCount(1);
-  });
-
-  // 条件ごとに別のテストにする（同じページに addInitScript を重ねると、どちらが勝つか決まらない）
-  for (const conn of [
-    { saveData: true, effectiveType: "4g" },
-    { saveData: false, effectiveType: "slow-2g" },
-    { saveData: false, effectiveType: "2g" },
-  ]) {
-    test(`データ節約・2G のときは先読みしない：${JSON.stringify(conn)}`, async ({ page }) => {
-      await page.addInitScript((c) => {
-        Object.defineProperty(navigator, "connection", { configurable: true, get: () => c });
-      }, conn);
-      await freezeClock(page);
-      await page.goto("/");
-      await page.waitForLoadState("load");
-      await page.clock.runFor(5000);
-      await expect(page.locator(PREFETCH)).toHaveCount(0);
-      expect(await preconnects(page)).toEqual([]);
-    });
-  }
-
-  test("4G でデータ節約でなければ先読みする（上の 2 本が、条件で止めていることを確かめる対照）", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "connection", { configurable: true, get: () => ({ saveData: false, effectiveType: "4g" }) });
-    });
-    await freezeClock(page);
-    await page.goto("/");
-    await page.waitForLoadState("load");
-    await page.clock.runFor(2100);
-    await expect(page.locator(PREFETCH)).toHaveCount(1);
-  });
-
-  test("YouTube の応答が止まって load が来なくても、先読みの iframe は 20 秒で外す", async ({ page }) => {
-    // 先読みの embed だけ応答を返さない（再生用は autoplay=1 が付く）
-    await page.route(/youtube-nocookie\.com\/embed\/[^?]*\?rel=0/, () => {});
-    await freezeClock(page);
-    await page.goto("/");
-    await page.waitForLoadState("load");
-    await page.clock.runFor(2100);
-    await expect(page.locator(PREFETCH)).toHaveCount(1);
-    await page.clock.runFor(19000);
-    await expect(page.locator(PREFETCH)).toHaveCount(1);
-    await page.clock.runFor(1500);
-    await expect(page.locator(PREFETCH)).toHaveCount(0);
-  });
-});
-
-// ─── preconnect ─────────────────────────────────────────────────────────────
+// ─── preconnect（再生する意思があるときだけ、Google に接続する） ─────────────
 
 test.describe("preconnect", () => {
-  test("読み込み直後は、preconnect は無い", async ({ page }) => {
+  test("読み込み直後も、動画の欄に近づいても、preconnect は無い", async ({ page }) => {
     for (const path of ["/", "/en/"]) {
       await page.goto(path);
       await page.waitForTimeout(300);
       expect(await preconnects(page), `${path} の読み込み直後`).toEqual([]);
+      // 動画の欄までスクロールしても、足されない
+      await page.locator("[data-video-frame]").scrollIntoViewIfNeeded();
+      await page.waitForTimeout(600);
+      expect(await preconnects(page), `${path} の動画の欄に近づいたあと`).toEqual([]);
     }
   });
 

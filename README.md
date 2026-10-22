@@ -47,7 +47,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ### つかいかた動画（`#videos`）
 
-- 「すてぶるペイのつかいかた」の第1〜8回と番外編 2 本（まるごと解説 `how-sp`・パスキーのはなし `how-pk`）。英語ページは第8回の英語字幕版だけ。予告は YouTube に上げていないので載せていません。
+- 「すてぶるペイのつかいかた」の第1〜8回と、番外編の「パスキーのはなし」（`how-pk`）。英語ページは第8回の英語字幕版だけ。予告は YouTube に上げていないので載せていません。番外編の「まるごと解説」は、手数料の数字（5%）が LP の「検討中」と食い違うので載せていません。
 - **動画は YouTube に上げて、サイトに埋め込みます。mp4 はサイトにも git にも置きません。** 埋め込みは `https://www.youtube-nocookie.com/embed/<ID>` です。
 - ポスター（`how-NN.webp`・`-640`）とサムネイル（`-thumb`）はサイトのものを使います（YouTube のサムネイルは使いません）。git に入れて、サイトから配ります。
 - 動画を入れる・入れ替えるときの流れ：
@@ -87,14 +87,14 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
      ```
 
      `.github/workflows/deploy-cloudflare-pages.yml` は `wrangler pages deploy` に `--branch "$GITHUB_REF_NAME"` を渡します。main 以外のブランチから流すと、プロジェクトの本番ブランチ（`main`）とは別のブランチなので、プレビューのデプロイになります。本番の `stbl-pay.com` に付いているデプロイを切り替える手順はありません（カスタムドメインの手順は、付いていなければ付けるだけです）。なお、どのブランチから流しても、Pages のシークレット（`SLACK_WEBHOOK_URL`）を GitHub の値で更新する手順は通ります。流したあと、ログの `Deploy to Cloudflare Pages` に出る URL が `stbl-pay.com` でないこと、Cloudflare のダッシュボードで環境が Preview になっていることを見ます。
-  4. プレビューの URL で、日本語版・英語版の再生（11 本とも、押すと再生が始まり、エラー表示が出ないこと）と、iPhone の Safari での再生を確かめる。
+  4. プレビューの URL で、日本語版・英語版の再生（10 本とも、押すと再生が始まり、エラー表示が出ないこと）と、iPhone の Safari での再生を確かめる。
   5. main にマージする（push で本番にデプロイされる）。
   6. 本番で `curl -I https://stbl-pay.com/` を打って、`Content-Security-Policy` の `frame-src` が `https://www.youtube-nocookie.com` になっていることを確かめる。あわせて本番で、日本語版・英語版とも再生できることを確かめる。
 - 回は `#video-how-NN`（例：`/#video-how-02`）で直接開けます（開いただけでは再生しない）。
 
 ### 表示速度（動画を載せても LP を遅くしない）
 
-- 読み込み時は iframe を置かない。ポスター画像（`loading="lazy"`）のリンクだけを出し、押されたら YouTube の埋め込み（iframe）を作って再生する（`assets/lp.js`）。ページの読み込み（load）が済むまでは YouTube に接続しません。済んで 2 秒たったら、押してから再生までを速くするため、今の回のプレーヤーを見えない iframe（`data-video-prefetch`）で 1 回だけ読み、読み終わって 3 秒で外します（読み込みが止まっても 20 秒で外す。スマホはポインタが乗らないので、押すまで何も読まないと最初の再生が遅い）。データ節約の設定や 2G のときは先読みしません（Safari は回線の情報を出さないので、いつも先読みします）。接続を先に済ませる `preconnect`（`https://www.youtube-nocookie.com`）は、先読みのときと、ポスターや一覧の回にポインタが乗ったとき（フォーカスが来たときも）に 1 回足します。
+- 読み込み時は iframe を置かない。ポスター画像（`loading="lazy"`）のリンクだけを出し、押されたら YouTube の埋め込み（iframe）を作って再生する（`assets/lp.js`）。初期表示やスクロールでは YouTube に接続せず、何も読み込みません（押したときに iframe を読み込みます）。接続を先に済ませる `preconnect`（`https://www.youtube-nocookie.com`）は、ポスターや一覧の回にポインタが乗ったとき（フォーカスが来たときも）だけ、1 回足します。スクロールで動画の欄に近づいただけでは足しません（再生する意思があるときだけ Google に接続するため）。
 - 画面外のセクションは `content-visibility: auto` で描画を後回しにし、読み込み後（またはページ内リンクを押した瞬間）に解く（`assets/lp.css`「描画の後回し」）。
 - 2026-10-16 の計測（Slow 4G・CPU 4 倍遅延のスマホ相当、6 回の中央値、brotli 圧縮あり）：
 

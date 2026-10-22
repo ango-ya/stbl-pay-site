@@ -529,8 +529,7 @@
 })();
 
 (function () {
-  // つかいかた動画。LP 全体を遅くしないため、ページの読み込みが済むまでは iframe も YouTube への通信もしない
-  // （済んでから、再生を速くするためにプレーヤーだけ先読みする。下の prefetchPlayer）。
+  // つかいかた動画。LP 全体を遅くしないため、読み込み時は iframe も YouTube への通信も一切しない。
   // - 最初はポスター画像（loading="lazy"）のリンクだけ。押されたら YouTube の埋め込み（iframe）を作って再生する
   // - 一覧（.video-item）や各セクションの「動画で見る」（[data-video-link]）から回を選べる
   // - URL の #video-how-NN で回を指定して開ける（共有用。開いただけでは再生しない）
@@ -576,8 +575,9 @@
   const posterDir = posterImg ? (posterImg.getAttribute("src") || "").replace(/[^/]*$/, "") : "";
   const posterOf = (id, size) => posterDir + id + (size === 640 ? "-640" : "") + ".webp";
 
-  // 再生する意思があるとき（ポスターや一覧の回にポインタが乗った・フォーカスが来た）と、プレーヤーを先読みするときに、
+  // 再生する意思があるとき（ポスターや一覧の回にポインタが乗った・フォーカスが来た）だけ、
   // YouTube への接続を先に済ませておく（最初の再生で DNS・TLS の待ちを減らす）。1 回だけ。
+  // スクロールで近づいただけでは、Google に接続しない
   let warmed = false;
   const warmUp = () => {
     if (warmed) {
@@ -598,41 +598,6 @@
   };
   warmOn(facade);
 
-  // スマホはポインタが乗らないので、押してから YouTube のプレーヤー（JS 一式）を読み始めると再生まで待たされる。
-  // ページの読み込みが済んで 2 秒たったら、今の回のプレーヤーを見えない iframe で 1 回だけ読み、キャッシュを温めておく
-  // （再生用の iframe と同じ youtube-nocookie なので、同じキャッシュを使う）。データ節約・2G のときはしない
-  let prefetch = null;
-  const prefetchPlayer = () => {
-    const conn = navigator.connection;
-    if (player || !hasYt(state.yt) || (conn && (conn.saveData || /2g/.test(conn.effectiveType || "")))) {
-      return;
-    }
-    warmUp();
-    prefetch = document.createElement("iframe");
-    prefetch.hidden = true;
-    prefetch.setAttribute("aria-hidden", "true");
-    prefetch.setAttribute("tabindex", "-1");
-    prefetch.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-    prefetch.setAttribute("data-video-prefetch", "");
-    prefetch.setAttribute("src", EMBED_ORIGIN + "/embed/" + state.yt + "?rel=0&playsinline=1&hl=" + (isEnglish ? "en" : "ja"));
-    prefetch.addEventListener("load", () => setTimeout(dropPrefetch, 3000));
-    // 通信が止まって load が来なくても、残り続けないように 20 秒で外す
-    setTimeout(dropPrefetch, 20000);
-    document.body.appendChild(prefetch);
-  };
-  const dropPrefetch = () => {
-    if (prefetch) {
-      prefetch.remove();
-      prefetch = null;
-    }
-  };
-  const schedulePrefetch = () => setTimeout(prefetchPlayer, 2000);
-  if (document.readyState === "complete") {
-    schedulePrefetch();
-  } else {
-    window.addEventListener("load", schedulePrefetch, { once: true });
-  }
-
   // 今の回を iframe で再生する。回を替えるときは iframe を作り直す
   // （同じ iframe の src を差し替えると、そのたびにブラウザの履歴が 1 つ増え、
   // 「戻る」でページを離れられなくなる。作ったばかりの iframe の最初の読み込みは履歴を増やさない）。
@@ -645,7 +610,6 @@
       // もう同じ回を読んでいる。読み直さない（途中で止めない）
       return player;
     }
-    dropPrefetch();
     const next = document.createElement("iframe");
     next.setAttribute("title", state.label);
     next.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
@@ -656,6 +620,15 @@
     next.setAttribute("height", "1080");
     next.setAttribute("data-video-player", "");
     next.setAttribute("src", embedUrl(state.yt));
+    // YouTube のプレーヤーを読み終わるまでは、枠が空のまま止まって見えるので、読み込み中の印を出す（lp.css の .is-loading）
+    frame.classList.add("is-loading");
+    frame.setAttribute("aria-busy", "true");
+    next.addEventListener("load", () => {
+      if (player === next) {
+        frame.classList.remove("is-loading");
+        frame.removeAttribute("aria-busy");
+      }
+    });
     frame.replaceChild(next, player || facade);
     player = next;
     playerYt = state.yt;

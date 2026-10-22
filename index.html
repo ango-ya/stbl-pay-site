@@ -368,7 +368,7 @@
           <div class="video-stage" id="video-stage">
             <!-- 読み込み時は iframe も YouTube への通信も一切しない。ポスター（lazy）を出し、押されたら iframe を作って再生する（assets/lp.js）。
                  JS なしではリンクとして YouTube の動画ページを開く -->
-            <div class="video-frame" data-video-frame>
+            <div class="video-frame" data-video-frame data-loading-label="読み込み中…">
               <a class="video-poster" href="https://www.youtube.com/watch?v=uw_sOKBsUxQ" data-video="how-01" data-youtube="uw_sOKBsUxQ" data-video-poster aria-label="再生する：第1回 すてぶるペイって、なに？（1:51）">
                 <img
                   src="assets/video/how-01.webp"
@@ -419,7 +419,6 @@
             <section class="video-group" aria-labelledby="video-group-extra">
               <h3 id="video-group-extra">番外編</h3>
               <ol>
-                <li id="video-how-sp"><a class="video-item" href="https://www.youtube.com/watch?v=EXfpLc6FXzw" data-video="how-sp" data-youtube="EXfpLc6FXzw" data-no="番外編" data-dur="11:47" data-desc="カード決済の悩みから、仕組み、お金の流れ、お客さまの体験、お店の機能と料金、始め方まで。お店の方に向けて、まるごと解説します。"><img src="assets/video/how-sp-thumb.webp" alt="" width="320" height="180" loading="lazy" /><span class="video-item-no">番外編<span class="video-item-dur">11:47</span></span><span class="video-item-title">すてぶるペイ まるごと解説</span></a></li>
                 <li id="video-how-pk"><a class="video-item" href="https://www.youtube.com/watch?v=jfhkuVtuijA" data-video="how-pk" data-youtube="jfhkuVtuijA" data-no="番外編" data-dur="10:43" data-desc="パスキーとは何か、なぜ安全なのか。スマホとパソコンでの使い方、なくしたときのことまで。"><img src="assets/video/how-pk-thumb.webp" alt="" width="320" height="180" loading="lazy" /><span class="video-item-no">番外編<span class="video-item-dur">10:43</span></span><span class="video-item-title">パスキーのはなし</span></a></li>
               </ol>
             </section>

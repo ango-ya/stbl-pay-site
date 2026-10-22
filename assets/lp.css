@@ -1628,8 +1628,53 @@ sup.fn a:hover {
 }
 
 .video-frame {
+  position: relative;
   border: 1px solid var(--line-strong);
   background: var(--paper-dim);
+}
+
+/* 押してから YouTube のプレーヤーを読み終わるまで（lp.js が is-loading を付ける）。
+   再生ボタンと同じ位置・大きさの四角の中を白い棒が左右に動き、下に「読み込み中…」（data-loading-label）を出す */
+.video-frame.is-loading::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
+  background: linear-gradient(#fff, #fff) no-repeat 14px 50% / 20px 4px, rgba(22, 22, 22, 0.86);
+  animation: video-loading 0.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.video-frame.is-loading::after {
+  content: attr(data-loading-label);
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  margin-top: 46px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+@keyframes video-loading {
+  from {
+    background-position: 14px 50%, 0 0;
+  }
+  to {
+    background-position: 38px 50%, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-frame.is-loading::before {
+    animation: none;
+  }
 }
 
 .video-frame iframe,
