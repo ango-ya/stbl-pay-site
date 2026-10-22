@@ -19,7 +19,7 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \
   --data '{"amountJpy":"4980","orderId":"ord_0001","returnUrl":"https://shop.example.com/orders/ord_0001/return"}'
 ```
 
-注文と `paymentIntentId` の対応を保存し、応答の `checkoutUrl` をブラウザへ渡します。同じ注文の再試行では同じ `orderId` を使います。応答のその他の項目は [REST リファレンス](/reference/rest)を参照してください。
+注文と `paymentIntentId` の対応を保存し、応答の `status` を確かめてから `checkoutUrl` をブラウザへ渡します。同じ注文の再試行では同じ `orderId` を使います。再試行で終端の既存決済が返ったときは `checkoutUrl` へ遷移させません。`settled` なら支払いは済んでいます。`nonce_conflict` は結果が確定していないため、自動出荷と自動再請求を止めて調査し、調査が終わるまで作り直しません（[送金の結果が確定できない](/lifecycle/edge-cases#送金の結果が確定できないnonce_conflict)）。`failed`・`expired`・`canceled` なら、注文の扱いを確かめてから新しい `orderId` で作り直します（[冪等性](/server/create-payment#冪等性)）。応答のその他の項目は [REST リファレンス](/reference/rest)を参照してください。
 
 ## 2. ブラウザを遷移させる
 
