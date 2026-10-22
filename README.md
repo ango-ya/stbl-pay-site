@@ -47,7 +47,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ### つかいかた動画（`#videos`）
 
-- 「すてぶるペイのつかいかた」の第1〜8回（英語ページは第8回の英語字幕版だけ）。予告は YouTube に上げていないので載せていません。番外編は手数料の数字など営業向けの内容を含むため載せていません。
+- 「すてぶるペイのつかいかた」の第1〜8回と、番外編の「パスキーのはなし」（`how-pk`）。英語ページは第8回の英語字幕版だけ。予告は YouTube に上げていないので載せていません。番外編の「まるごと解説」は、手数料の数字（5%）が LP の「検討中」と食い違うので載せていません。
 - **動画は YouTube に上げて、サイトに埋め込みます。mp4 はサイトにも git にも置きません。** 埋め込みは `https://www.youtube-nocookie.com/embed/<ID>` です。
 - ポスター（`how-NN.webp`・`-640`）とサムネイル（`-thumb`）はサイトのものを使います（YouTube のサムネイルは使いません）。git に入れて、サイトから配ります。
 - 動画を入れる・入れ替えるときの流れ：
@@ -87,7 +87,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
      ```
 
      `.github/workflows/deploy-cloudflare-pages.yml` は `wrangler pages deploy` に `--branch "$GITHUB_REF_NAME"` を渡します。main 以外のブランチから流すと、プロジェクトの本番ブランチ（`main`）とは別のブランチなので、プレビューのデプロイになります。本番の `stbl-pay.com` に付いているデプロイを切り替える手順はありません（カスタムドメインの手順は、付いていなければ付けるだけです）。なお、どのブランチから流しても、Pages のシークレット（`SLACK_WEBHOOK_URL`）を GitHub の値で更新する手順は通ります。流したあと、ログの `Deploy to Cloudflare Pages` に出る URL が `stbl-pay.com` でないこと、Cloudflare のダッシュボードで環境が Preview になっていることを見ます。
-  4. プレビューの URL で、日本語版・英語版の再生（9 本とも、押すと再生が始まり、エラー表示が出ないこと）と、iPhone の Safari での再生を確かめる。
+  4. プレビューの URL で、日本語版・英語版の再生（10 本とも、押すと再生が始まり、エラー表示が出ないこと）と、iPhone の Safari での再生を確かめる。
   5. main にマージする（push で本番にデプロイされる）。
   6. 本番で `curl -I https://stbl-pay.com/` を打って、`Content-Security-Policy` の `frame-src` が `https://www.youtube-nocookie.com` になっていることを確かめる。あわせて本番で、日本語版・英語版とも再生できることを確かめる。
 - 回は `#video-how-NN`（例：`/#video-how-02`）で直接開けます（開いただけでは再生しない）。

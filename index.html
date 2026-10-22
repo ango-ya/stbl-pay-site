@@ -368,7 +368,7 @@
           <div class="video-stage" id="video-stage">
             <!-- 読み込み時は iframe も YouTube への通信も一切しない。ポスター（lazy）を出し、押されたら iframe を作って再生する（assets/lp.js）。
                  JS なしではリンクとして YouTube の動画ページを開く -->
-            <div class="video-frame" data-video-frame>
+            <div class="video-frame" data-video-frame data-loading-label="読み込み中…">
               <a class="video-poster" href="https://www.youtube.com/watch?v=uw_sOKBsUxQ" data-video="how-01" data-youtube="uw_sOKBsUxQ" data-video-poster aria-label="再生する：第1回 すてぶるペイって、なに？（1:51）">
                 <img
                   src="assets/video/how-01.webp"
@@ -383,6 +383,7 @@
                 <span class="video-play" aria-hidden="true"></span>
               </a>
             </div>
+            <p class="sr-only" role="status" data-video-status></p>
             <div class="video-now">
               <p class="video-now-series">すてぶるペイのつかいかた</p>
               <h3 class="video-now-title"><span class="video-now-no" data-video-field="no">第1回</span><span data-video-field="title">すてぶるペイって、なに？</span></h3>
@@ -414,6 +415,12 @@
                 <li id="video-how-06"><a class="video-item" href="https://www.youtube.com/watch?v=O1prpgOYTpQ" data-video="how-06" data-youtube="O1prpgOYTpQ" data-no="第6回" data-dur="1:26" data-desc="ネットショップに、すてぶるペイを入れる流れ。サイトへの組み込みまで。"><img src="assets/video/how-06-thumb.webp" alt="" width="320" height="180" loading="lazy" /><span class="video-item-no">第6回<span class="video-item-dur">1:26</span></span><span class="video-item-title">お店の人：ネットのお店に入れる</span></a></li>
                 <li id="video-how-07"><a class="video-item" href="https://www.youtube.com/watch?v=Iu9l5d0zADA" data-video="how-07" data-youtube="Iu9l5d0zADA" data-no="第7回" data-dur="1:39" data-desc="お店に QR を置いて、レジでお支払いを受け取る流れ。"><img src="assets/video/how-07-thumb.webp" alt="" width="320" height="180" loading="lazy" /><span class="video-item-no">第7回<span class="video-item-dur">1:39</span></span><span class="video-item-title">お店の人：QR なら、もっとかんたん</span></a></li>
                 <li id="video-how-08"><a class="video-item" href="https://www.youtube.com/watch?v=F8Ko4pF2_74" data-video="how-08" data-youtube="F8Ko4pF2_74" data-no="第8回" data-dur="1:19" data-desc="日本のお客さまに、なじみのある銀行振込で払ってもらう流れ。日本で売りたい海外のお店に向けた回です。"><img src="assets/video/how-08-thumb.webp" alt="" width="320" height="180" loading="lazy" /><span class="video-item-no">第8回<span class="video-item-dur">1:19</span></span><span class="video-item-title">海外のお店へ：日本のお客さまに銀行振込で</span></a></li>
+              </ol>
+            </section>
+            <section class="video-group" aria-labelledby="video-group-extra">
+              <h3 id="video-group-extra">番外編</h3>
+              <ol>
+                <li id="video-how-pk"><a class="video-item" href="https://www.youtube.com/watch?v=jfhkuVtuijA" data-video="how-pk" data-youtube="jfhkuVtuijA" data-no="番外編" data-dur="10:43" data-desc="パスキーとは何か、なぜ安全なのか。スマホとパソコンでの使い方、なくしたときのことまで。"><img src="assets/video/how-pk-thumb.webp" alt="" width="320" height="180" loading="lazy" /><span class="video-item-no">番外編<span class="video-item-dur">10:43</span></span><span class="video-item-title">パスキーのはなし</span></a></li>
               </ol>
             </section>
           </div>

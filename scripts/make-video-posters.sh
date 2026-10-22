@@ -7,11 +7,12 @@
 #   例）全部：   ./scripts/make-video-posters.sh <フォルダ>
 #       2 回分： ./scripts/make-video-posters.sh <フォルダ> how-02 how-03
 #
-# - 2 つ目以降の引数で、書き出す回を絞れる（how-0N / how-0Nen）。省略すると全部。
+# - 2 つ目以降の引数で、書き出す回を絞れる（how-0N / how-0Nen / how-pk）。省略すると全部。
 # - mp4 の変換はしない。動画は YouTube に上げるので、サイトに mp4 は置かない。
 #   書き出したポスターとサムネイルは git に入れる（サイトに残す。YouTube のサムネイルは使わない）。
-# - ファイル名の「第N回」「英語字幕版」から how-0N / how-0Nen を決める。
-#   予告と番外編は LP に載せないので書き出さない（予告は YouTube に上げていない。番外編は手数料の数字など営業向けの内容を含む）。
+# - ファイル名の「第N回」「英語字幕版」から how-0N / how-0Nen を、番外編の「パスキー」を how-pk に決める。
+#   予告は YouTube に上げていないので書き出さない。番外編の「まるごと解説」は、手数料の数字（5%）が LP の「検討中」と
+#   食い違うので載せない（書き出さない）。
 # - 回の並びや題を変えたら、index.html の #videos（一覧の題・長さ・説明）も直す。
 #   長さは最後に表示する一覧（元の mp4 の長さ）を見て合わせる。
 # - YouTube の動画 ID は、このスクリプトでは扱わない。scripts/set-youtube-ids.mjs で入れる（README「つかいかた動画」）。
@@ -28,8 +29,8 @@ mkdir -p "$OUT"
 ONLY=" "
 for a in "$@"; do
   case "$a" in
-    how-[0-9][0-9] | how-[0-9][0-9]en) ONLY="$ONLY$a " ;;
-    *) echo "回の指定が違います: ${a}（how-02 / how-08en のように書いてください）"; exit 1 ;;
+    how-[0-9][0-9] | how-[0-9][0-9]en | how-pk) ONLY="$ONLY$a " ;;
+    *) echo "回の指定が違います: ${a}（how-02 / how-08en / how-pk のように書いてください）"; exit 1 ;;
   esac
 done
 DONE=" "
@@ -48,6 +49,7 @@ poster_at() {
 id_for() {
   local name="$1" n
   case "$name" in
+    *番外編*パスキー*) echo "how-pk" ;;
     *番外編* | *予告*) return 1 ;;
     *第*回*英語字幕版*) n="${name#*第}"; n="${n%%回*}"; printf 'how-%02den\n' "$((10#$n))" ;;
     *第*回*) n="${name#*第}"; n="${n%%回*}"; printf 'how-%02d\n' "$((10#$n))" ;;
@@ -90,7 +92,7 @@ for a in "$@"; do
   case "$DONE" in *" $a "*) ;; *) echo "NG: ${a} に当たる書き出しが ${SRC} に見つかりません"; exit 1 ;; esac
 done
 
-# 元の mp4 の長さ。回を絞っても、LP に載せる回（予告・番外編以外）の全部を表示する
+# 元の mp4 の長さ。回を絞っても、LP に載せる回（予告・まるごと解説以外）の全部を表示する
 echo
 echo "長さ（index.html の data-dur と合わせる。元の mp4 の長さ）:"
 for src in "$SRC"/*.mp4; do
