@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            docs-site/package-lock.json
 
       - name: Set up npm with minimum release age support
         run: npm install --global npm@11.16.0 --ignore-scripts
@@ -30,6 +33,9 @@ jobs:
 
       - name: Run LR-006 term checks
         run: ./scripts/check-lr006-terms.sh
+
+      - name: Assemble dist/ (docs のビルドを含む)
+        run: ./scripts/build-dist.sh
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium

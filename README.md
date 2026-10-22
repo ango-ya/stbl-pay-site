@@ -4,17 +4,32 @@
 
 ## ローカル確認
 
-ビルド不要の静的サイトです。
+LP・デモはビルド不要の静的ファイルです。加盟店向けドキュメント（`/docs/`）だけは `docs-site/`（Docusaurus）からビルドします。
 
 ```sh
-python3 -m http.server 4173 --directory .
-# → http://localhost:4173/ をブラウザで開く
+./scripts/build-dist.sh                        # dist/ を組み立てる（docs のビルドを含む）
+python3 -m http.server 4173 --directory dist
+# → http://localhost:4173/ と http://localhost:4173/docs/ をブラウザで開く
 ```
 
-Cloudflare Pages Functions（`functions/api/early-access.js`）込みで確認する場合:
+
+## 加盟店向けドキュメント（/docs/）
+
+- ソースは `docs-site/`。ページは `docs-site/docs/` の Markdown で、ページを足したら `docs-site/sidebars.ts` にも足す
+- 書きながら確認するときは `cd docs-site && npm start`（`/docs/` 以下を dev サーバーで表示）
+- 英語版は `/docs/en/`。訳は `docs-site/i18n/en/docusaurus-plugin-content-docs/current/` に、日本語と同じパスで置く。日本語のページを直したら英語も直す
+  - 書きながら確認するときは `cd docs-site && npm start -- --locale en`（dev サーバーは 1 言語ずつしか出さない）
+  - リンク先になる見出しは、英語では `## Idempotency {/* #idempotency */}` のように id を明示する。リンク切れ・アンカー切れはビルドで落ちる
+  - 画面（加盟店コンソール・決済ページ）は日本語だけなので、画面の名前は英語の後ろに日本語を括弧で添える（例：`Store & QR code (お店と QR コード)`）。それ以外に日本語を残さない（E2E で確かめる）
+  - ナビ・フッター・サイドバーのカテゴリ名は `docusaurus.config.ts`・`sidebars.ts` で、状態遷移の図の文は `StateFlowchart.tsx` の `EN` で書き分ける
+- `scripts/build-dist.sh` がビルドして `dist/docs/` に入れ、`_headers` の docs 用 CSP にインラインスクリプトのハッシュを書き込む（`scripts/docs-csp.mjs`）
+- 配信するのはビルド結果だけ。`docs-site/` のソースは `dist/` に入れない
+
+`_headers`（CSP）と Cloudflare Pages Functions（`functions/api/early-access.js`）込みで確認する場合は、組み立てた `dist/` を配信します（`dist/` には `functions/` も入る）:
 
 ```sh
-npx wrangler pages dev . --compatibility-date=2026-07-07
+./scripts/build-dist.sh
+npx wrangler pages dev dist --compatibility-date=2026-07-07
 ```
 
 ## テスト・チェック
@@ -140,7 +155,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ## デプロイ
 
-`main` への push で GitHub Actions が Cloudflare Pages へ自動デプロイします（`workflow_dispatch` で手動実行も可能）。配信対象は workflow 内で `dist/` に組み立てた本番ファイルのみです。
+`main` への push で GitHub Actions が Cloudflare Pages へ自動デプロイします（`workflow_dispatch` で手動実行も可能）。配信対象は `scripts/build-dist.sh` で `dist/` に組み立てた本番ファイルのみです。
 
 必要な repository secrets / variables:
 
