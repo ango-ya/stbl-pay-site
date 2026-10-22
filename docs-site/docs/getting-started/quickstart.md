@@ -19,7 +19,7 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \
   --data '{"amountJpy":"4980","orderId":"ord_0001","returnUrl":"https://shop.example.com/orders/ord_0001/return"}'
 ```
 
-注文と `paymentIntentId` の対応を保存し、応答の `status` を確かめてから `checkoutUrl` をブラウザへ渡します。同じ注文の再試行では同じ `orderId` を使います。再試行で終端の既存決済が返ったときは `checkoutUrl` へ遷移させず、[冪等性](/server/create-payment#冪等性)に従って新しい `orderId` で作り直します。応答のその他の項目は [REST リファレンス](/reference/rest)を参照してください。
+注文と `paymentIntentId` の対応を保存し、応答の `status` を確かめてから `checkoutUrl` をブラウザへ渡します。同じ注文の再試行では同じ `orderId` を使います。再試行で終端の既存決済が返ったときは `checkoutUrl` へ遷移させません。`settled` なら支払いは済んでいます。それ以外の終端なら、注文の扱いを確かめてから新しい `orderId` で作り直します（[冪等性](/server/create-payment#冪等性)）。応答のその他の項目は [REST リファレンス](/reference/rest)を参照してください。
 
 ## 2. ブラウザを遷移させる
 
