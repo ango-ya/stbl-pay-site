@@ -211,7 +211,7 @@ The value in `failedReason` (status lookup) and in the Webhook `failed_reason` i
 | `merchant_suspended` | Because of a merchant suspension, a payment whose sending had not started was moved to a terminal state. JPYC already deposited remains in the buyer's wallet. [Merchant suspension](/lifecycle/edge-cases#merchant-suspension) |
 | `unclassified` | A failure that has not been classified yet |
 
-With any code except `nonce_conflict`, the payment ends as `failed` and has not succeeded. Close the order as failed, then use the code to decide what to investigate and what to tell the buyer. For `nonce_conflict`, the outcome is not yet determined: do not close the order as failed, and hold it until a status lookup confirms the result. The meaning of a code does not change, and codes may be added.
+With any code except `nonce_conflict`, the payment ends as `failed` and has not succeeded. Close the order as failed, then use the code to decide what to investigate and what to tell the buyer. For `nonce_conflict`, the outcome is not yet determined: do not close the order as failed. Hold it and [refer it for investigation](/lifecycle/edge-cases#nonce-conflict). The meaning of a code does not change, and codes may be added.
 
 ## Errors {/* #errors */}
 
