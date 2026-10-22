@@ -5,13 +5,19 @@ import { join } from "node:path";
 // ─── すてぶるくん・すてぶるちゃんの動き ──────────────────────────────────────
 
 // このファイルが保証する範囲
-// - 素材（assets/char/ の 51 枚）の有無・大きさ・透過、HTML の参照、部品の組み立て、assets/characters.js の動き
-//   （生きている間だけ動く・reduce・手を振る・まばたき・目線・ウインク・会話の口パクと立ち絵の連動）、
+// - 素材（assets/char/ の 66 枚）の有無・大きさ・透過、古い絵（thigh を含む）が残っていないこと、HTML の参照と並び・振り付けの data 属性、
+//   部品の組み立て（腕と体は .kun-bob の中、足は外）、assets/characters.js の動き（生きている間だけ動く・上下・reduce・手を振る・
+//   すてぶるくんの目線とまばたき・すてぶるちゃんのまばたき・登場・待機の仕草・会話の口パクと立ち絵の連動・座布団）、
+//   立ち絵の仕草の手が枠・画面から切れず、すてぶるくんに隠れないこと、
 //   狭い幅で立ち絵を読まないこと、JS なしの見え方、本番ヘッダ（CSP・Trusted Types）で違反が出ないこと、
 //   コードに入れない書き方（assets/characters.js と assets/lp.css のキャラの節）
-// - 時間に頼る確認は expect.poll（〜15 秒）。コマの差し替えは addInitScript の MutationObserver が記録し（window.__rec）、
-//   記録を後から見て順番や間隔を確かめる（ポーリングの隙間に起きた変化も取りこぼさない）
-// - 動きの見た目（絵が自然に見えるか、位置と大きさ）はここでは見ない。目で見る（スクリーンショット）
+// - 時間に頼る確認のうち、まばたき・登場・待機の仕草・手振りは、ページの時計（page.clock）を止めて runFor で進め、決まった形で見る。
+//   会話の再生は画像の読み込みと IntersectionObserver が絡むので、実時間で expect.poll（〜15 秒）に任せる。
+//   コマの差し替えは addInitScript の MutationObserver が記録し（window.__rec）、記録を後から見て順番や間隔を確かめる
+//   （ポーリングの隙間に起きた変化も取りこぼさない）
+// - 絵の見た目そのもの（自然に見えるか）はここでは見ない。目で見る（スクリーンショット）。
+//   ただし位置については、絵の見えている画素（canvas で測る）が枠・画面・文字・すてぶるくんとどう重なるかを確かめる
+//   （固定の px は書かず、そのときの配置を測って比べる）
 // - YouTube と Google のタグ（計測）への HTTP は、context.route で受けて外に出さない
 // - 本番ヘッダ（CSP）はローカルの静的サーバーが付けないので、「本番ヘッダ」の 2 本だけ、_headers の値を応答に付け直して動かす
 
@@ -79,14 +85,25 @@ const test = base.extend({
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-// ─── 素材の一覧（設計書 §1） ────────────────────────────────────────────────
+// ─── 素材の一覧（設計書 v1 §1 と v2 §2） ────────────────────────────────────
 
 const KUN_PARTS = [
   "foot-l", "foot-r", "arm-l", "arm-r", "body", "cheeks",
   "eyes-open", "eyes-half", "eyes-closed", "eyes-left", "eyes-right", "eyes-wide",
   "mouth-rest", "mouth-dot", "mouth-o", "mouth-talk-a", "mouth-talk-i", "mouth-talk-o", "mouth-talk-n",
 ];
-const CHAN_POSES = ["thigh-stand", "thigh-reach", "thigh-reach-wink"];
+// すてぶるちゃん（上半身）の 18 枚。話せる形は 4 つ（口 3 枚ずつ）、あとは単発の絵
+const TALK_POSES = ["normal", "proud", "palm", "point"];
+const CHAN_FILES = [
+  ...TALK_POSES.flatMap((pose) => [0, 1, 2].map((n) => `${pose}-${n}`)),
+  "blink-half", "blink-normal", "side-glance", "look-camera", "fist", "zabuton",
+];
+// 立ち絵（.cast）が使うコマ。ヒーローだけが使う side-glance・look-camera・fist は入れない
+const CAST_FRAMES = CHAN_FILES.filter((n) => !["side-glance", "look-camera", "fist"].includes(n));
+// ヒーローが使うコマ
+const HERO_FRAMES = ["normal-0", "blink-half", "blink-normal", "proud-0", "fist", "side-glance", "look-camera"];
+// 仕草の手が出るコマ
+const GESTURE_FRAMES = ["palm-0", "palm-1", "palm-2", "point-0", "point-1", "point-2", "zabuton"];
 const EXPRESSIONS = ["normal", "proud", "troubled", "serious"];
 const VOWELS = ["a", "i", "o", "n"];
 const TALK_FILES = [
@@ -98,18 +115,20 @@ const TALK_FILES = [
 ];
 const ASSETS = [
   ...KUN_PARTS.map((n) => ({ path: `assets/char/kun/${n}.webp`, width: 374, height: 261, alpha: true })),
-  ...CHAN_POSES.map((n) => ({ path: `assets/char/chan/${n}.webp`, width: 340, height: 480, alpha: true })),
+  ...CHAN_FILES.map((n) => ({ path: `assets/char/chan/${n}.webp`, width: 400, height: 388, alpha: true })),
   ...TALK_FILES.map((n) => ({ path: `assets/char/talk/${n}.webp`, width: 112, height: 112, alpha: false })),
 ];
 
-// 設計書 §1-4：HTML から参照を無くす古い絵（sleep-kun・zabuton は FAQ で使い続けるので入れない）
+// 設計書 v1 §1-4：HTML から参照を無くす古い絵（sleep-kun・zabuton は FAQ で使い続けるので入れない）
 const OLD_ARTWORK = [
   "hero-chan", "present-chan", "guest-chan", "stand-kun-blank", "stand-kun-o", "stand-kun-smile",
   "face-chan-y1-1", "face-chan-y1-2", "face-chan-y1-3", "face-chan-y1-6", "face-chan-y1-7", "face-chan-y2-1",
   "face-kun-1", "face-kun-2", "face-kun-5", "face-kun-8",
 ].map((n) => `${n}.webp`);
+// 設計書 v2 §6：太ももまでの絵（assets/char/chan/ の中。ファイルも無い）
+const OLD_THIGH = ["thigh-stand", "thigh-reach", "thigh-reach-wink"].map((n) => `${n}.webp`);
 
-// 設計書 §4-4：会話の顔の data-face ごとの、休み・話す・まばたきのコマ
+// 設計書 v1 §4-4：会話の顔の data-face ごとの、休み・話す・まばたきのコマ
 const chanFace = (x) => ({ rest: `chan-${x}-0`, talk: [0, 1, 2].map((n) => `chan-${x}-${n}`), blink: `chan-blink-${x}` });
 const kunFace = (eyes, rest, blink) => ({
   rest,
@@ -132,7 +151,7 @@ const restOrBlinkOf = (face) => webp([FACE[face].rest, FACE[face].blink]);
 const TALK_FRAME = /^(chan-(normal|proud|troubled|serious)-[12]|kun-(open|wide)-talk-[aion])\.webp$/;
 const KUN_TALK_MOUTH = /^mouth-talk-[aion]\.webp$/;
 
-// 設計書 §2-4：HTML に書いてある顔の絵と data-face の対応
+// 設計書 v1 §2-4：HTML に書いてある顔の絵と data-face の対応
 const FACE_BY_FILE = {
   "chan-normal-0.webp": "chan normal",
   "chan-normal-1.webp": "chan normal",
@@ -322,20 +341,27 @@ const speakingWindows = (evs, sec) => {
   return windows;
 };
 
-// 設計書 §4-4 の話す時間：文字数（※ と数字の脚注記号は数えない）× 日本語 95ms／英語 45ms、700〜2600ms
+// 設計書 v1 §4-4 の話す時間：文字数（※ と数字の脚注記号は数えない）× 日本語 95ms／英語 45ms、700〜2600ms
 const speakMs = (text, lang) => {
   const count = text.replace(/[※0-9０-９]/g, "").replace(/\s+/g, " ").trim().length;
   return Math.min(2600, Math.max(700, count * (lang === "en" ? 45 : 95)));
 };
 
-// 部品の組み立て：全部が左上をそろえて同じ大きさで重なる（transform に左右されない offset* で見る）
+// 部品の組み立て：全部が左上をそろえて同じ大きさで重なる（transform に左右されない offset* で見る）。
+// 腕と体は .kun-bob の中にあるが、.kun-bob 自体が rig と同じ枠なので、重なりは変わらない
 const assemblyOf = (rig) =>
   rig.evaluate((el) => {
     const parts = Array.prototype.slice.call(el.querySelectorAll("img"));
+    const box = (n) => ({ left: n.offsetLeft, top: n.offsetTop, width: n.offsetWidth, height: n.offsetHeight });
+    const bob = el.querySelector(".kun-bob");
+    const names = (nodes) => Array.prototype.map.call(nodes, (n) => (n.className || "").split(/\s+/).filter(Boolean).join("."));
     return {
       width: el.offsetWidth,
       height: el.offsetHeight,
-      parts: parts.map((p) => ({ left: p.offsetLeft, top: p.offsetTop, width: p.offsetWidth, height: p.offsetHeight })),
+      parts: parts.map(box),
+      bob: bob ? box(bob) : null,
+      rigChildren: names(el.children),
+      bobChildren: bob ? names(bob.children) : [],
     };
   });
 
@@ -350,11 +376,27 @@ const expectAssembled = (assembly, where) => {
     expect(Math.abs(p.width - assembly.width), `${where}: ${i} 枚目の幅`).toBeLessThanOrEqual(1);
     expect(Math.abs(p.height - assembly.height), `${where}: ${i} 枚目の高さ`).toBeLessThanOrEqual(1);
   }
+  // 足は rig の直下に残り、腕と体だけが .kun-bob（rig と同じ枠）の中にある
+  expect(assembly.rigChildren, `${where}: rig の直下は 足・足・kun-bob`).toEqual([
+    "kun-part.kun-foot-l",
+    "kun-part.kun-foot-r",
+    "kun-bob",
+  ]);
+  expect(assembly.bobChildren, `${where}: kun-bob の中は 腕・腕・体`).toEqual([
+    "kun-part.kun-arm-l",
+    "kun-part.kun-arm-r",
+    "kun-body",
+  ]);
+  expect(assembly.bob, `${where}: kun-bob がある`).toBeTruthy();
+  expect(Math.abs(assembly.bob.left) + Math.abs(assembly.bob.top), `${where}: kun-bob は左上そろい`).toBeLessThanOrEqual(1);
+  expect(Math.abs(assembly.bob.width - assembly.width), `${where}: kun-bob の幅`).toBeLessThanOrEqual(1);
+  expect(Math.abs(assembly.bob.height - assembly.height), `${where}: kun-bob の高さ`).toBeLessThanOrEqual(1);
 };
 
 const animationName = (locator) => locator.evaluate((el) => getComputedStyle(el).animationName);
 
 const HERO_RIG = '.kun-rig[data-kun="hero"]';
+const HERO_CHAN = ".hero-cast-chan";
 const IS_LIVE = /\bis-live\b/;
 
 // タブの表示・非表示を作る（document.hidden を差し替えて visibilitychange を出す）
@@ -370,12 +412,316 @@ const setHidden = (page, hidden) =>
     document.dispatchEvent(new Event("visibilitychange"));
   }, hidden);
 
+// ─── ページの時計（page.clock）を止めて進める ─────────────────────────────────
+
+// setTimeout・performance.now を止めて読み込む。絵の読み込みと IntersectionObserver、CSS の動きは実時間のまま。
+// 時間は runFor で進める（遅い機械でも、窓を外さず、間隔が決まった形になる）
+const freezeClock = async (page) => {
+  await page.clock.install({ time: new Date("2026-10-21T00:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-10-21T00:00:01Z"));
+};
+
+// 時計を step ずつ進めながら、記録が pred を満たすまで待つ（進めた ms を返す）。
+// 絵の読み込みは実時間なので、1 回ごとにほんの少し実時間も待つ
+const runUntil = async (page, message, pred, { step = 250, maxMs = 30_000 } = {}) => {
+  let spent = 0;
+  for (;;) {
+    if (pred(await events(page))) {
+      return spent;
+    }
+    if (spent >= maxMs) {
+      throw new Error(`${message}（ページの時計を ${maxMs}ms 進めても起きなかった）`);
+    }
+    await page.clock.runFor(step);
+    spent += step;
+    await page.waitForTimeout(15);
+  }
+};
+
+// ヒーローの背景（canvas）は requestAnimationFrame で毎コマ描くので、止めた時計を長く進めるテストでは遅すぎる。
+// 時計を止めたあとに呼んで、rAF を何もしないものに替える（キャラの動きは setTimeout だけで動くので影響しない）
+const stillFrames = (page) =>
+  page.addInitScript(() => {
+    window.requestAnimationFrame = () => 0;
+  });
+
+// 時計を total ms 進める（長いときは step ずつ。待機の間隔や出現の回数を数えるため）
+const advance = async (page, total, step = 2000) => {
+  for (let done = 0; done < total; done += step) {
+    await page.clock.runFor(Math.min(step, total - done));
+    await page.waitForTimeout(10);
+  }
+};
+
+// ─── すてぶるちゃんの絵の記録を読む ───────────────────────────────────────────
+
+const chanEvents = (evs, chan, sec) =>
+  evs.filter((e) => e.k === "src" && e.chan === chan && (sec === undefined || e.sec === sec));
+
+// 話している行 w のあいだ（と、話し終わりの直後）の、立ち絵のちゃんの絵の差し替え。
+// 話し始めがまばたきの途中だったときの「normal-0 に戻す」1 回だけは除く
+const spokenFrames = (evs, sec, w) =>
+  chanEvents(evs, "cast", sec).filter(
+    (e) => e.t >= w.start && e.t <= w.end + 100 && !(e.file === "normal-0.webp" && /^blink-/.test(e.from))
+  );
+
+const BLINK_SEQ = ["blink-half.webp", "blink-normal.webp", "blink-half.webp", "normal-0.webp"];
+// 同じ img の src の差し替え（時系列）から、まばたき（half → normal → half → normal-0）の塊を取り出す
+const blinkGroups = (list) => {
+  const groups = [];
+  for (let i = 0; i + BLINK_SEQ.length <= list.length; i++) {
+    if (BLINK_SEQ.every((f, j) => list[i + j].file === f)) {
+      groups.push(list.slice(i, i + BLINK_SEQ.length));
+      i += BLINK_SEQ.length - 1;
+    }
+  }
+  return groups;
+};
+
+// 止めた時計で測ったまばたきの決まり：50ms → 110ms → 50ms、始まりは normal-0 から
+const expectBlinkShape = (group, where) => {
+  expect(group[0].from, `${where}: まばたきは normal-0 から始まる`).toBe("normal-0.webp");
+  expect(group[1].t - group[0].t, `${where}: blink-half は 50ms`).toBeGreaterThanOrEqual(45);
+  expect(group[1].t - group[0].t, `${where}: blink-half は 50ms`).toBeLessThanOrEqual(75);
+  expect(group[2].t - group[1].t, `${where}: blink-normal は 110ms`).toBeGreaterThanOrEqual(105);
+  expect(group[2].t - group[1].t, `${where}: blink-normal は 110ms`).toBeLessThanOrEqual(135);
+  expect(group[3].t - group[2].t, `${where}: 2 つ目の blink-half は 50ms`).toBeGreaterThanOrEqual(45);
+  expect(group[3].t - group[2].t, `${where}: 2 つ目の blink-half は 50ms`).toBeLessThanOrEqual(75);
+};
+
+// まばたきの間：続けてもう 1 回（180ms）か、2.5〜5.5 秒おき。仕草・会話のあいだは後回しになるので、上は余裕を持たせる
+const expectBlinkGaps = (groups, maxGap, where) => {
+  const gaps = [];
+  for (let i = 1; i < groups.length; i++) {
+    gaps.push(groups[i][0].t - groups[i - 1][3].t);
+  }
+  for (const gap of gaps) {
+    const second = Math.abs(gap - 180) <= 30;
+    const interval = gap >= 2250 && gap <= maxGap;
+    expect(second || interval, `${where}: まばたきの間 ${Math.round(gap)}ms は 180ms（続けて 2 回）か 2.5〜5.5 秒おき`).toBe(true);
+  }
+  return gaps;
+};
+
+// ─── 立ち絵の見えている範囲を測る（canvas。ページの中で動かすので、外の変数は使えない） ──────────
+
+// root（.cast か .hero-cast）の中のすてぶるちゃんの絵を frames の 1 枚ずつ canvas に描き、透明でない画素の端を画面の座標で返す。
+// - 上下・呼吸・腕の揺れ・手振りの動きは巻き戻して止め、休みの形で測る
+// - クリップする枠（overflow が visible でない祖先）と画面の幅の重なりを clip に返す
+// - すてぶるくんの足・腕・体の画素と重なる数（kunOverlap）、ヒーローの文字・ボタン・カードと重なる数（textOverlap）を数える
+async function measureStage({ root, frames, textRoot, floor }) {
+  const rootEl = document.querySelector(root);
+  const chan = rootEl.querySelector("img[data-chan]");
+  const rig = rootEl.querySelector(".kun-rig");
+  const dirOf = (img) => img.getAttribute("src").replace(/[^/]*$/, "");
+  const load = (url) =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("読めない絵 " + url));
+      img.src = new URL(url, location.href).href;
+    });
+  const chanImgs = await Promise.all(frames.map((name) => load(dirOf(chan) + name + ".webp")));
+  const kunNames = ["foot-l", "foot-r", "arm-l", "arm-r", "body"];
+  const kunImgs = await Promise.all(kunNames.map((name) => load(dirOf(rig.querySelector("img")) + name + ".webp")));
+
+  const MOVING = /^(kun-bob|kun-breathe|kun-arm-[lr]-sway|kun-wave|chan-bob)$/;
+  document.getAnimations().forEach((a) => {
+    if (MOVING.test(a.animationName || "")) {
+      a.pause();
+      a.currentTime = 0;
+    }
+  });
+
+  const pixels = (img, width, height) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, width, height);
+    return ctx.getImageData(0, 0, width, height).data;
+  };
+  // 透明でない画素の端（元の絵の座標）
+  const extent = (img, threshold) => {
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const data = pixels(img, w, h);
+    let minX = w;
+    let maxX = -1;
+    let minY = h;
+    let maxY = -1;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > threshold) {
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    return { minX, maxX, minY, maxY, w, h };
+  };
+
+  const rr = rootEl.getBoundingClientRect();
+  const cr = chan.getBoundingClientRect();
+  const kr = rig.getBoundingClientRect();
+
+  // クリップする枠：root 自身と祖先のうち overflow が visible でないもの。横は画面の幅も入れる
+  const clip = { left: 0, right: document.documentElement.clientWidth, top: -Infinity, bottom: Infinity };
+  for (let el = rootEl; el && el !== document.documentElement; el = el.parentElement) {
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    const left = r.left + el.clientLeft;
+    const top = r.top + el.clientTop;
+    if (cs.overflowX !== "visible") {
+      clip.left = Math.max(clip.left, left);
+      clip.right = Math.min(clip.right, left + el.clientWidth);
+    }
+    if (cs.overflowY !== "visible") {
+      clip.top = Math.max(clip.top, top);
+      clip.bottom = Math.min(clip.bottom, top + el.clientHeight);
+    }
+  }
+
+  // すてぶるくんの画素（絵の大きさに合わせた canvas に、足・腕・体を重ねる）
+  const cw = Math.ceil(cr.width);
+  const ch = Math.ceil(cr.height);
+  const kunCanvas = document.createElement("canvas");
+  kunCanvas.width = cw;
+  kunCanvas.height = ch;
+  const kunCtx = kunCanvas.getContext("2d", { willReadFrequently: true });
+  kunImgs.forEach((img) => kunCtx.drawImage(img, kr.left - cr.left, kr.top - cr.top, kr.width, kr.height));
+  const kunData = kunCtx.getImageData(0, 0, cw, ch).data;
+
+  // ヒーローの文字（1 行ごとの外枠）・ボタン・カード・ロゴ
+  const rects = [];
+  const textEl = textRoot ? document.querySelector(textRoot) : null;
+  if (textEl) {
+    const walker = document.createTreeWalker(textEl, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.textContent.trim()) {
+        continue;
+      }
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      Array.prototype.forEach.call(range.getClientRects(), (q) => rects.push(q));
+    }
+    textEl.querySelectorAll(".button, .hero-points, img").forEach((el) => rects.push(el.getBoundingClientRect()));
+  }
+
+  const result = frames.map((name, i) => {
+    const e = extent(chanImgs[i], 40);
+    const sx = cr.width / e.w;
+    const sy = cr.height / e.h;
+    const data = pixels(chanImgs[i], cw, ch);
+    let kunOverlap = 0;
+    let textOverlap = 0;
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        const at = (y * cw + x) * 4 + 3;
+        if (data[at] <= 128) {
+          continue;
+        }
+        const px = cr.left + (x + 0.5) * (cr.width / cw);
+        const py = cr.top + (y + 0.5) * (cr.height / ch);
+        if (py > clip.bottom) {
+          continue; // 床線・ティッカーの下に沈んでいる分は見えない
+        }
+        if (kunData[at] > 128) {
+          kunOverlap++;
+        }
+        if (rects.some((q) => px >= q.left && px <= q.right && py >= q.top && py <= q.bottom)) {
+          textOverlap++;
+        }
+      }
+    }
+    return {
+      name,
+      left: cr.left + e.minX * sx,
+      right: cr.left + (e.maxX + 1) * sx,
+      top: cr.top + e.minY * sy,
+      bottom: cr.top + (e.maxY + 1) * sy,
+      kunOverlap,
+      textOverlap,
+    };
+  });
+
+  // すてぶるくんの見えている範囲（足・腕・体の全部）と、足の見えている下端
+  let footBottom = -Infinity;
+  let kunLeft = Infinity;
+  let kunRight = -Infinity;
+  kunImgs.forEach((img, i) => {
+    const e = extent(img, 40);
+    kunLeft = Math.min(kunLeft, kr.left + (e.minX / e.w) * kr.width);
+    kunRight = Math.max(kunRight, kr.left + ((e.maxX + 1) / e.w) * kr.width);
+    if (i < 2) {
+      footBottom = Math.max(footBottom, kr.top + ((e.maxY + 1) / e.h) * kr.height);
+    }
+  });
+  const floorEl = floor ? document.querySelector(floor) : null;
+
+  return {
+    clip,
+    root: { left: rr.left, right: rr.right, top: rr.top, bottom: rr.bottom },
+    chan: { left: cr.left, right: cr.right, top: cr.top, bottom: cr.bottom, width: cr.width, height: cr.height },
+    kun: { left: kr.left, right: kr.right, top: kr.top, bottom: kr.bottom, visibleLeft: kunLeft, visibleRight: kunRight },
+    frames: result,
+    footBottom,
+    floorTop: floorEl ? floorEl.getBoundingClientRect().top : null,
+  };
+}
+
+const fmt = (n) => Math.round(n * 10) / 10;
+
+// 要素と、その祖先の transform がすべて無くなる（フェードイン・せり上がりが終わる）まで待つ
+const settled = (page, selector) =>
+  expect
+    .poll(
+      () =>
+        page.evaluate((sel) => {
+          for (let el = document.querySelector(sel); el && el !== document.documentElement; el = el.parentElement) {
+            const cs = getComputedStyle(el);
+            if (cs.transform !== "none" || Number(cs.opacity) < 1) {
+              return false;
+            }
+          }
+          return true;
+        }, selector),
+      { message: `${selector} の位置が落ち着く（フェードインが終わる）`, timeout: 10_000 }
+    )
+    .toBe(true);
+
+// 測った見えている範囲が、枠・画面の内側にある（上下の動きで持ち上がる分も含めて）
+const expectInsideClip = (m, where) => {
+  expect(m.kun.visibleLeft, `${where} すてぶるくん: 見えている左端 ${fmt(m.kun.visibleLeft)} が枠の左 ${fmt(m.clip.left)} より内`).toBeGreaterThanOrEqual(
+    m.clip.left - 0.5
+  );
+  expect(m.kun.visibleRight, `${where} すてぶるくん: 見えている右端 ${fmt(m.kun.visibleRight)} が枠の右 ${fmt(m.clip.right)} より内`).toBeLessThanOrEqual(
+    m.clip.right + 0.5
+  );
+  const bob = m.chan.height * 0.018; // chan-bob の頂点（設計書 v2 §4）
+  for (const f of m.frames) {
+    expect(f.left, `${where} ${f.name}: 見えている左端 ${fmt(f.left)} が枠の左 ${fmt(m.clip.left)} より内`).toBeGreaterThanOrEqual(
+      m.clip.left - 0.5
+    );
+    expect(f.right, `${where} ${f.name}: 見えている右端 ${fmt(f.right)} が枠の右 ${fmt(m.clip.right)} より内`).toBeLessThanOrEqual(
+      m.clip.right + 0.5
+    );
+    expect(f.top - bob, `${where} ${f.name}: 上に持ち上がっても枠の上 ${fmt(m.clip.top)} から出ない`).toBeGreaterThanOrEqual(
+      m.clip.top - 0.5
+    );
+  }
+};
+
 // ─── 1. 素材と HTML ─────────────────────────────────────────────────────────
 
 test.describe("素材と HTML", () => {
-  test("設計書 §1 の 51 枚が assets/char/ にそろい、大きさと透過が決まりどおり", () => {
-    expect(ASSETS, "kun 19 + chan 3 + talk 29").toHaveLength(51);
-    expect(new Set(ASSETS.map((a) => a.path)).size, "名前が重ならない").toBe(51);
+  test("設計書 v2 §2 の 66 枚が assets/char/ にそろい、大きさと透過が決まりどおり。太ももまでの絵は無い", () => {
+    expect(CHAN_FILES, "すてぶるちゃん 18 枚").toHaveLength(18);
+    expect(ASSETS, "kun 19 + chan 18 + talk 29").toHaveLength(66);
+    expect(new Set(ASSETS.map((a) => a.path)).size, "名前が重ならない").toBe(66);
     const problems = [];
     for (const a of ASSETS) {
       const full = join(ROOT, a.path);
@@ -396,6 +742,9 @@ test.describe("素材と HTML", () => {
       }
     }
     expect(problems).toEqual([]);
+    for (const old of OLD_THIGH) {
+      expect(existsSync(join(ROOT, "assets/char/chan", old)), `assets/char/chan/${old} は無い`).toBe(false);
+    }
   });
 
   for (const { path, file, lang } of PAGES) {
@@ -418,21 +767,25 @@ test.describe("素材と HTML", () => {
         // 日本語ページは相対パス、英語ページは /assets/… の絶対パス
         expect(src, "src の書き方").toMatch(lang === "en" ? /^\/assets\/char\// : /^assets\/char\//);
         const repoPath = src.replace(/^\//, "");
-        expect(known.has(repoPath), `${src} は §1 の素材`).toBe(true);
+        expect(known.has(repoPath), `${src} は設計書の素材`).toBe(true);
         expect(existsSync(join(ROOT, repoPath)), `${src} のファイル`).toBe(true);
         const res = await request.head(new URL(src, page.url()).href);
         expect(res.status(), `${src} の配信`).toBe(200);
       }
 
-      // 古い絵への参照は HTML に残さない
+      // 古い絵への参照は HTML に残さない（太ももまでの絵も）
       const html = readText(file);
       for (const old of OLD_ARTWORK) {
         expect(html, `${file} に古い絵 ${old} が残っている`).not.toContain(`assets/char/${old}`);
       }
+      for (const old of OLD_THIGH) {
+        expect(html, `${file} に太ももまでの絵 ${old} が残っている`).not.toContain(`chan/${old}`);
+      }
 
-      // FAQ の寝て浮くすてぶるくんと座布団は変えない
+      // FAQ の寝て浮くすてぶるくんと座布団は変えない（新しい chan/zabuton.webp とは別のファイル）
       const nap = await srcs(".faq-nap img");
       expect(nap.map((s) => s.split("/").pop())).toEqual(["sleep-kun.webp", "zabuton.webp"]);
+      expect(nap.every((s) => !s.includes("/chan/"))).toBe(true);
       for (const old of ["sleep-kun.webp", "zabuton.webp"]) {
         expect(existsSync(join(ROOT, "assets/char", old)), `${old} は残す`).toBe(true);
       }
@@ -443,6 +796,92 @@ test.describe("素材と HTML", () => {
         `<script src="${prefix}/lp.js" defer></script>\n    <script src="${prefix}/characters.js" defer></script>`
       );
     });
+
+    test(`${file}：すてぶるちゃんの立ち絵は 400×388 で、くんが左・ちゃんが右。会話の振り付けは data 属性だけ`, async ({
+      page,
+    }) => {
+      test.setTimeout(60_000);
+      await page.goto(path);
+      const shape = await page.evaluate(() => {
+        const attrs = (img) =>
+          img
+            ? {
+                width: img.getAttribute("width"),
+                height: img.getAttribute("height"),
+                alt: img.getAttribute("alt"),
+                chan: img.getAttribute("data-chan"),
+                loading: img.getAttribute("loading"),
+                decoding: img.getAttribute("decoding"),
+                fetchpriority: img.getAttribute("fetchpriority"),
+              }
+            : null;
+        const castOrder = (cast) =>
+          Array.prototype.map.call(cast.children, (c) => (c.classList.contains("kun-rig") ? "kun" : c.tagName === "IMG" ? "chan" : c.tagName));
+        const lineOf = (sel) =>
+          Array.prototype.map.call(document.querySelectorAll(sel + " .talk-line"), (line) => ({
+            who: line.classList.contains("talk-kun") ? "kun" : "chan",
+            pose: line.getAttribute("data-pose"),
+          }));
+        const talkOf = (sel) => document.querySelector(sel + " .talk").getAttribute("data-finale");
+        const others = Array.prototype.filter
+          .call(document.querySelectorAll(".talk"), (t) => !t.closest("#videos") && !t.closest("#early-access"))
+          .map((t) => ({
+            finale: t.getAttribute("data-finale"),
+            poses: Array.prototype.map.call(t.querySelectorAll(".talk-line"), (l) => l.getAttribute("data-pose")),
+          }));
+        return {
+          hero: attrs(document.querySelector(".hero-cast > img.hero-cast-chan")),
+          videos: attrs(document.querySelector("#videos .cast > img.cast-chan")),
+          guest: attrs(document.querySelector("#early-access .cast > img.cast-chan")),
+          videosOrder: castOrder(document.querySelector("#videos .cast")),
+          guestOrder: castOrder(document.querySelector("#early-access .cast")),
+          videosLines: lineOf("#videos"),
+          guestLines: lineOf("#early-access"),
+          videosFinale: talkOf("#videos"),
+          guestFinale: talkOf("#early-access"),
+          others,
+          thighClass: document.querySelectorAll('[data-chan="wink"], [data-chan="greet"]').length,
+        };
+      });
+      // （絵の src は、JS が動いているとまばたきで替わるので、ここでは見ない。HTML に書いたままの src は「JS なし」で確かめる）
+      const chan = (data, extra) => ({
+        width: "400",
+        height: "388",
+        alt: "",
+        chan: data,
+        loading: "lazy",
+        decoding: null,
+        fetchpriority: null,
+        ...extra,
+      });
+      expect(shape.hero, "ヒーローのちゃん").toEqual(chan("hero", { decoding: "async", fetchpriority: "low" }));
+      expect(shape.videos, "動画欄のちゃん").toEqual(chan("cast"));
+      expect(shape.guest, "相談欄のちゃん").toEqual(chan("cast"));
+      expect(shape.thighClass, "wink・greet の印は無い").toBe(0);
+      // 左にすてぶるくん、右にすてぶるちゃん（動画と同じ並び）
+      expect(shape.videosOrder, "動画欄は くん → ちゃん").toEqual(["kun", "chan"]);
+      expect(shape.guestOrder, "相談欄は くん → ちゃん").toEqual(["kun", "chan"]);
+      // 振り付け：動画欄は 1 行目 proud・3 行目 point、相談欄はちゃんの行 palm と、最後の座布団。ほかの会話には付けない
+      expect(shape.videosLines).toEqual([
+        { who: "chan", pose: "proud" },
+        { who: "kun", pose: null },
+        { who: "chan", pose: "point" },
+      ]);
+      expect(shape.guestLines).toEqual([
+        { who: "kun", pose: null },
+        { who: "chan", pose: "palm" },
+        { who: "kun", pose: null },
+      ]);
+      expect(shape.videosFinale, "動画欄に座布団は無い").toBeNull();
+      expect(shape.guestFinale).toBe("zabuton");
+      if (lang === "ja") {
+        expect(shape.others.length, "ほかの会話がある（英語ページには動画欄と相談欄の 2 つだけ）").toBeGreaterThan(0);
+      }
+      for (const t of shape.others) {
+        expect(t.finale, "ほかの会話に data-finale は付けない").toBeNull();
+        expect(t.poses.every((p) => p === null), "ほかの会話に data-pose は付けない").toBe(true);
+      }
+    });
   }
 });
 
@@ -450,7 +889,9 @@ test.describe("素材と HTML", () => {
 
 test.describe("組み立て", () => {
   for (const { path } of PAGES) {
-    test(`${path}：すてぶるくんは部品 8 枚が同じ大きさで重なり、ヒーローの絵は決まった大きさ`, async ({ page }) => {
+    test(`${path}：すてぶるくんは部品 8 枚が同じ大きさで重なり（腕と体は kun-bob の中）、すてぶるちゃんの絵は 400×388`, async ({
+      page,
+    }) => {
       test.setTimeout(60_000);
       await page.goto(path);
 
@@ -460,8 +901,8 @@ test.describe("組み立て", () => {
       await expect.poll(() => sizesOf(heroParts), { message: "ヒーローの部品が全部読み込まれる" }).toEqual(
         Array(8).fill([374, 261])
       );
-      const heroChan = page.locator(".hero-cast-chan");
-      await expect.poll(() => sizesOf(heroChan), { message: "ヒーローのすてぶるちゃん" }).toEqual([[340, 480]]);
+      const heroChan = page.locator(HERO_CHAN);
+      await expect.poll(() => sizesOf(heroChan), { message: "ヒーローのすてぶるちゃん" }).toEqual([[400, 388]]);
       expectAssembled(await assemblyOf(page.locator(".hero-cast-kun")), "ヒーロー");
 
       // 動画欄・相談欄の立ち絵（スクロールして lazy を読ませる）
@@ -473,7 +914,7 @@ test.describe("組み立て", () => {
           Array(8).fill([374, 261])
         );
         await expect.poll(() => sizesOf(page.locator(`${cast} .cast-chan`)), { message: `${cast} のちゃん` }).toEqual([
-          [340, 480],
+          [400, 388],
         ]);
         expectAssembled(await assemblyOf(page.locator(`${cast} .cast-kun`)), cast);
       }
@@ -481,7 +922,147 @@ test.describe("組み立て", () => {
   }
 });
 
+// ─── 2b. 並びと位置（枠・画面・文字・すてぶるくんとの関係） ─────────────────────
+
+test.describe("並びと位置", () => {
+  // 動画欄・相談欄の立ち絵：すてぶるくんが左、すてぶるちゃんが右。仕草の手・座布団が .cast の枠から切れず、すてぶるくんに隠れない
+  for (const width of [1280, 1440]) {
+    for (const { path } of PAGES) {
+      test(`${path} ${width}px：立ち絵は くんが左・ちゃんが右で、仕草の手が枠から切れず、すてぶるくんに隠れない`, async ({ page }) => {
+        test.setTimeout(90_000);
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        for (const section of ["#videos", "#early-access"]) {
+          const cast = `${section} .cast`;
+          await scrollCenter(page.locator(cast));
+          await expect.poll(() => sizesOf(page.locator(`${cast} .cast-chan`)), { message: `${cast} のちゃん` }).toEqual([
+            [400, 388],
+          ]);
+          await settled(page, cast);
+
+          // 左にすてぶるくん、右にすてぶるちゃん。すてぶるくんが前（z-index）
+          const order = await page.evaluate((sel) => {
+            const root = document.querySelector(sel);
+            const kun = root.querySelector(".kun-rig").getBoundingClientRect();
+            const chan = root.querySelector("img.cast-chan");
+            const chanBox = chan.getBoundingClientRect();
+            const z = (el) => {
+              const cs = getComputedStyle(el);
+              return cs.zIndex === "auto" ? 0 : Number(cs.zIndex);
+            };
+            return {
+              kunLeft: kun.left,
+              kunCenter: (kun.left + kun.right) / 2,
+              chanLeft: chanBox.left,
+              chanCenter: (chanBox.left + chanBox.right) / 2,
+              kunZ: z(root.querySelector(".kun-rig")),
+              kunPos: getComputedStyle(root.querySelector(".kun-rig")).position,
+              chanZ: z(chan),
+            };
+          }, cast);
+          expect(order.kunLeft, `${cast}: くんの箱がちゃんの箱より左`).toBeLessThan(order.chanLeft);
+          expect(order.kunCenter, `${cast}: くんの中心がちゃんの中心より左`).toBeLessThan(order.chanCenter);
+          expect(order.kunPos, `${cast}: くんは重ね順が効く位置`).not.toBe("static");
+          expect(order.kunZ, `${cast}: すてぶるくんが前（ちゃんより手前に出ない）`).toBeGreaterThan(order.chanZ);
+
+          // 見えている画素：15 コマすべてが枠の中。仕草の手・座布団はすてぶるくんの画素と重ならない
+          const m = await page.evaluate(measureStage, { root: cast, frames: CAST_FRAMES, floor: null });
+          expectInsideClip(m, cast);
+          for (const f of m.frames.filter((x) => GESTURE_FRAMES.includes(x.name))) {
+            expect(f.kunOverlap, `${cast} ${f.name}: 手・座布団がすてぶるくんに隠れる画素の数`).toBe(0);
+          }
+          // 足が床線に付く（上下するのは体と腕だけ）
+          expect(Math.abs(m.clip.bottom - m.footBottom), `${cast}: 足 ${fmt(m.footBottom)} が床線 ${fmt(m.clip.bottom)} に付く`).toBeLessThanOrEqual(2.5);
+          // 胸の切れ目は床線の下に 10px 以上沈んでいる。上下で持ち上がっても見えない
+          const sunk = m.chan.bottom - m.clip.bottom;
+          expect(sunk, `${cast}: 絵の下端 ${fmt(m.chan.bottom)} は床線 ${fmt(m.clip.bottom)} の下に 10px 以上`).toBeGreaterThanOrEqual(10);
+          expect(sunk - m.chan.height * 0.018, `${cast}: 持ち上がっても切れ目が見えない`).toBeGreaterThan(1);
+        }
+      });
+    }
+  }
+
+  // ヒーロー：画面から切れず、文字・ボタン・カードに重ならず、胸の切れ目はティッカーの向こうに沈む
+  for (const width of [1200, 1280, 1440, 1920]) {
+    for (const { path } of PAGES) {
+      test(`${path} ${width}px：ヒーローのすてぶるちゃんは画面から切れず、文字・ボタン・カードに重ならない`, async ({ page }) => {
+        test.setTimeout(90_000);
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        await expect.poll(() => sizesOf(page.locator(HERO_CHAN)), { message: "ヒーローのちゃん" }).toEqual([[400, 388]]);
+        await settled(page, ".hero-cast");
+        await settled(page, ".hero-inner");
+
+        const m = await page.evaluate(measureStage, {
+          root: ".hero-cast",
+          frames: HERO_FRAMES,
+          textRoot: ".hero-inner",
+          floor: ".hero-ticker",
+        });
+        expectInsideClip(m, "ヒーロー");
+        for (const f of m.frames) {
+          expect(f.textOverlap, `ヒーロー ${f.name}: 文字・ボタン・カードと重なる画素の数`).toBe(0);
+          expect(f.kunOverlap, `ヒーロー ${f.name}: すてぶるくんと重なる画素の数`).toBe(0);
+        }
+        // 足がティッカーに付く／胸の切れ目はティッカーの向こうに 10px 以上沈み、上下しても見えない
+        expect(Math.abs(m.floorTop - m.footBottom), `ヒーロー: 足 ${fmt(m.footBottom)} がティッカー ${fmt(m.floorTop)} に付く`).toBeLessThanOrEqual(2.5);
+        const sunk = m.chan.bottom - m.floorTop;
+        expect(sunk, `ヒーロー: 絵の下端 ${fmt(m.chan.bottom)} はティッカーの上端 ${fmt(m.floorTop)} の下に 10px 以上`).toBeGreaterThanOrEqual(10);
+        expect(sunk - m.chan.height * 0.018, "ヒーロー: 持ち上がっても切れ目が見えない").toBeGreaterThan(1);
+        // 左にすてぶるくん、右にすてぶるちゃん
+        expect(m.kun.visibleRight, "ヒーロー: くんは左、ちゃんは右").toBeLessThan(m.chan.left);
+      });
+    }
+  }
+});
+
 // ─── 3. 会話の再生 ──────────────────────────────────────────────────────────
+
+// 立ち絵のすてぶるちゃんが、話す行のあいだ pose の口パク（pose-0/1/2 だけ）をして、
+// 終わったら pose-0 を少し見せて normal-0 に戻る（設計書 v2 §5-1）。話し終わりの戻りは少し遅れるので、来るまで待つ
+const expectChanSpeaks = async (page, sec, w, pose, where) => {
+  const evs = await events(page);
+  const files = spokenFrames(evs, sec, w).map((e) => e.file);
+  expect(files.length, `${where}: 話している間に絵が替わる`).toBeGreaterThan(0);
+  for (const file of files) {
+    expect(file, `${where}: 話している間は ${pose}-0/1/2 だけ（今は ${file}）`).toMatch(new RegExp(`^${pose}-[012]\\.webp$`));
+  }
+  expect(
+    files.some((f) => /-[12]\.webp$/.test(f)),
+    `${where}: 口パクで ${pose}-1 か ${pose}-2 になる`
+  ).toBe(true);
+
+  // 終わったら pose-0 を 700ms ほど見せてから normal-0
+  await expect
+    .poll(async () => chanEvents(await events(page), "cast", sec).some((e) => e.t > w.end + 100 && e.file === "normal-0.webp"), {
+      message: `${where}: 話し終わって normal-0 に戻る`,
+      timeout: 10_000,
+    })
+    .toBe(true);
+  const back = chanEvents(await events(page), "cast", sec).find((e) => e.t > w.end + 100 && e.file === "normal-0.webp");
+  expect(back.from, `${where}: 戻る前は ${pose}-0`).toBe(`${pose}-0.webp`);
+  expect(back.t - w.end, `${where}: 話し終わって 700ms ほど後に normal-0（今は ${Math.round(back.t - w.end)}ms）`).toBeGreaterThanOrEqual(550);
+  expect(back.t - w.end, `${where}: 話し終わって 700ms ほど後に normal-0（今は ${Math.round(back.t - w.end)}ms）`).toBeLessThanOrEqual(1200);
+};
+
+// 配信される「/」の HTML を書き換える（会話の振り付けの data 属性を変えて、動きを確かめる）
+const rewriteHome = (page, rewrite) =>
+  page.route(
+    (url) => url.hostname === "127.0.0.1" && url.pathname === "/",
+    async (route) => {
+      if (route.request().resourceType() !== "document") {
+        return route.continue();
+      }
+      const response = await route.fetch();
+      const headers = { ...response.headers() };
+      delete headers["content-length"];
+      delete headers["content-encoding"];
+      return route.fulfill({ response, body: rewrite(await response.text()), headers });
+    }
+  );
+// 動画欄の 3 行目の data-pose="point" を外す（顔は chan serious なので、ちゃんは normal の形で話す）
+const dropVideosPoint = (html) =>
+  html.replace('<p class="talk-line talk-chan" data-pose="point">', '<p class="talk-line talk-chan">');
 
 test.describe("会話の再生", () => {
   for (const { path, lang } of PAGES) {
@@ -560,6 +1141,22 @@ test.describe("会話の再生", () => {
       }
       await expect(castMouth).toHaveAttribute("src", new RegExp(`${restMouth}$`));
 
+      // 立ち絵のすてぶるちゃん：1 行目は得意げ（proud）、3 行目は左下のすてぶるくんを指さして（point）話す。
+      // くんの行のあいだは話さない（口パクの絵にならない）。動画欄に palm・座布団は出ない
+      expect(windows.map((w) => (w.kun ? "kun" : "chan"))).toEqual(["chan", "kun", "chan"]);
+      await expectChanSpeaks(page, "videos", windows[0], "proud", "1 行目");
+      await expectChanSpeaks(page, "videos", windows[2], "point", "3 行目");
+      const chanAll = chanEvents(await events(page), "cast", "videos");
+      const allowed = /^(normal-0|proud-[012]|point-[012]|blink-half|blink-normal)\.webp$/;
+      for (const e of chanAll) {
+        expect(e.file, `動画欄の立ち絵が使う絵（${e.file}）`).toMatch(allowed);
+      }
+      const kunLine = windows[1];
+      for (const e of chanAll.filter((x) => x.t > kunLine.start + 50 && x.t < kunLine.end)) {
+        expect(e.file, "くんの行のあいだ、ちゃんは口パクしない").toMatch(/^(normal-0|blink-half|blink-normal|proud-0)\.webp$/);
+      }
+      await expect(page.locator("#videos .cast-chan")).toHaveAttribute("src", /normal-0\.webp$/, { timeout: 10_000 });
+
       // 再生のあとも、画面にいる間は顔がまばたきする（まばたきのコマを出して、休みのコマに戻る）
       const mark = (await events(page)).length;
       const isBlink = (e) =>
@@ -590,9 +1187,70 @@ test.describe("会話の再生", () => {
       expect(await speakingCount(), "再生は 1 回だけ").toBe(before);
       expect(errors).toEqual([]);
     });
+
+    test(`${path}：相談欄の会話で、ちゃんの行のあいだは手のひら（palm）で示し、最後に座布団を 3 秒見せて normal-0 に戻る`, async ({
+      page,
+    }) => {
+      test.setTimeout(90_000);
+      const errors = watchErrors(page);
+      await installRecorder(page);
+      await page.goto(path);
+      const talk = page.locator("#early-access .talk");
+      const chan = page.locator("#early-access .cast-chan");
+      await expect(chan).toHaveAttribute("src", /normal-0\.webp$/);
+      await expect(chan).toHaveAttribute("data-chan", "cast");
+      await scrollCenter(talk);
+      await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+
+      const evs = await events(page);
+      const windows = speakingWindows(evs, "early-access");
+      expect(windows.map((w) => (w.kun ? "kun" : "chan"))).toEqual(["kun", "chan", "kun"]);
+      await expectChanSpeaks(page, "early-access", windows[1], "palm", "ちゃんの行");
+
+      // くんの行のあいだは話さない。最初の行の前に手を出さない
+      const chanAll = chanEvents(evs, "cast", "early-access");
+      for (const e of chanAll.filter((x) => x.t < windows[1].start)) {
+        expect(e.file, "ちゃんが話し始めるまで、仕草の絵にならない").toMatch(/^(normal-0|blink-half|blink-normal)\.webp$/);
+      }
+
+      // 最後の行が終わったら座布団（zabuton）を 3 秒見せて、normal-0 に戻る
+      await expect
+        .poll(async () => chanEvents(await events(page), "cast", "early-access").some((e) => e.file === "zabuton.webp"), {
+          message: "最後に座布団になる",
+          timeout: 10_000,
+        })
+        .toBe(true);
+      const last = windows[2];
+      const zabuton = chanEvents(await events(page), "cast", "early-access").find((e) => e.file === "zabuton.webp");
+      expect(zabuton.t - last.end, `座布団は最後の行が終わるころ（今は ${Math.round(zabuton.t - last.end)}ms 後）`).toBeGreaterThanOrEqual(-150);
+      expect(zabuton.t - last.end, `座布団は最後の行が終わるころ（今は ${Math.round(zabuton.t - last.end)}ms 後）`).toBeLessThanOrEqual(900);
+      await expect
+        .poll(
+          async () =>
+            chanEvents(await events(page), "cast", "early-access").some((e) => e.t > zabuton.t && e.file === "normal-0.webp"),
+          { message: "座布団のあと normal-0 に戻る", timeout: 10_000 }
+        )
+        .toBe(true);
+      const back = chanEvents(await events(page), "cast", "early-access").find((e) => e.t > zabuton.t && e.file === "normal-0.webp");
+      expect(back.from, "座布団から normal-0 に戻る").toBe("zabuton.webp");
+      expect(back.t - zabuton.t, `座布団は 3 秒ほど（今は ${Math.round(back.t - zabuton.t)}ms）`).toBeGreaterThanOrEqual(2900);
+      expect(back.t - zabuton.t, `座布団は 3 秒ほど（今は ${Math.round(back.t - zabuton.t)}ms）`).toBeLessThanOrEqual(3700);
+      await expect(chan).toHaveAttribute("src", /normal-0\.webp$/);
+
+      // 立ち絵のすてぶるくんは、くんの行のあいだだけ口を動かす
+      const kunWindows = windows.filter((w) => w.kun);
+      const mouthTalk = evs.filter(
+        (e) => e.k === "src" && e.sec === "early-access" && e.kun === "cast" && hasCls(e, "kun-mouth") && KUN_TALK_MOUTH.test(e.file)
+      );
+      expect(mouthTalk.length).toBeGreaterThan(0);
+      for (const e of mouthTalk) {
+        expect(kunWindows.some((w) => e.t >= w.start - 150 && e.t <= w.end + 150)).toBe(true);
+      }
+      expect(errors).toEqual([]);
+    });
   }
 
-  test("再生の途中で画面の外へ出たら、そこで打ち切って、顔を休みのコマに戻す（もう再生しない）", async ({ page }) => {
+  test("再生の途中で画面の外へ出たら、そこで打ち切って、顔と立ち絵を休みのコマに戻す（もう再生しない）", async ({ page }) => {
     test.setTimeout(90_000);
     await installRecorder(page);
     await page.goto("/");
@@ -601,6 +1259,7 @@ test.describe("会話の再生", () => {
       (await events(page)).filter((e) => e.k === "class" && e.sec === "videos" && e.added.includes("is-speaking")).length;
     await scrollCenter(talk);
     await waitFor(page, "話し始める", (e) => e.k === "class" && e.sec === "videos" && e.added.includes("is-speaking"));
+    await waitFor(page, "立ち絵のちゃんが話す", (e) => e.k === "src" && e.chan === "cast" && /^proud-[12]\.webp$/.test(e.file));
 
     // 画面の外へ出ると、そこで打ち切る（is-played が付く）。最後の行までは進まない
     await scrollTop(page, 0);
@@ -609,6 +1268,9 @@ test.describe("会話の再生", () => {
     for (const f of await readFaces(page, "#videos")) {
       expect(restOrBlinkOf(f.face).has(f.file), `${f.face} の顔が休みのコマ（今は ${f.file}）`).toBe(true);
     }
+    await expect(page.locator("#videos .cast-chan"), "立ち絵のちゃんも休みのコマ").toHaveAttribute("src", /normal-0\.webp$/, {
+      timeout: 10_000,
+    });
     // 次の行は始まらない。戻ってきても再生しない
     const cut = await speakingCount();
     await page.waitForTimeout(1500);
@@ -619,57 +1281,20 @@ test.describe("会話の再生", () => {
     expect(cut, "最後の行まで進んでいない").toBeLessThan(3);
   });
 
-  test("相談欄：すてぶるちゃんの行のあいだだけ立ち絵が手を伸ばし（reach）、話し終わって少ししたら立ち姿に戻る", async ({
+  test("タブが隠れている間は会話を始めず、再生中に隠れたら止めて（立ち絵も休みに戻して）、表示に戻ると最初から再生する", async ({
     page,
   }) => {
-    test.setTimeout(90_000);
-    await installRecorder(page);
-    await page.goto("/");
-    const talk = page.locator("#early-access .talk");
-    const chan = page.locator('#early-access .cast-chan[data-chan="greet"]');
-    await expect(chan).toHaveAttribute("src", /thigh-stand\.webp$/);
-    await scrollCenter(talk);
-    await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
-
-    const evs = await events(page);
-    const windows = speakingWindows(evs, "early-access");
-    expect(windows.map((w) => (w.kun ? "kun" : "chan"))).toEqual(["kun", "chan", "kun"]);
-    const chanWindow = windows.find((w) => !w.kun);
-    const chanEvents = evs.filter((e) => e.k === "src" && e.sec === "early-access" && e.chan === "greet");
-    const reach = chanEvents.find((e) => e.file === "thigh-reach.webp");
-    expect(reach, "ちゃんの行で thigh-reach になる").toBeTruthy();
-    expect(Math.abs(reach.t - chanWindow.start), "reach になるのは、ちゃんが話し始めるころ").toBeLessThanOrEqual(400);
-    for (const e of chanEvents.filter((x) => x.file === "thigh-reach.webp")) {
-      expect(e.t, "くんの行のあいだは reach にしない").toBeGreaterThanOrEqual(chanWindow.start - 150);
-    }
-    const back = chanEvents.find((e) => e.file === "thigh-stand.webp" && e.t > reach.t);
-    expect(back, "話し終わったら thigh-stand に戻る").toBeTruthy();
-    const afterSpeech = back.t - chanWindow.end;
-    expect(afterSpeech, `話し終わって 600ms ほど後に戻る（今は ${Math.round(afterSpeech)}ms）`).toBeGreaterThan(450);
-    expect(afterSpeech, `話し終わって 600ms ほど後に戻る（今は ${Math.round(afterSpeech)}ms）`).toBeLessThan(2500);
-    await expect(chan).toHaveAttribute("src", /thigh-stand\.webp$/);
-
-    // 立ち絵のすてぶるくんは、くんの行のあいだだけ口を動かす
-    const kunWindows = windows.filter((w) => w.kun);
-    const mouthTalk = evs.filter(
-      (e) => e.k === "src" && e.sec === "early-access" && e.kun === "cast" && hasCls(e, "kun-mouth") && KUN_TALK_MOUTH.test(e.file)
-    );
-    expect(mouthTalk.length).toBeGreaterThan(0);
-    for (const e of mouthTalk) {
-      expect(kunWindows.some((w) => e.t >= w.start - 150 && e.t <= w.end + 150)).toBe(true);
-    }
-  });
-
-  test("タブが隠れている間は会話を始めず、再生中に隠れたら止めて、表示に戻ると最初から再生する", async ({ page }) => {
     test.setTimeout(90_000);
     const errors = watchErrors(page);
     await installRecorder(page);
     await page.goto("/");
     const talk = page.locator("#videos .talk");
+    const castChan = page.locator("#videos .cast-chan");
     const speakingCount = async () =>
       (await events(page)).filter((e) => e.k === "class" && e.sec === "videos" && e.added.includes("is-speaking")).length;
     const faceChanges = async () =>
       (await events(page)).filter((e) => e.k === "src" && e.sec === "videos" && hasCls(e, "talk-face")).length;
+    const chanChanges = async () => chanEvents(await events(page), "cast", "videos").length;
 
     // 隠れたまま会話を画面に入れても、話し始めない
     await setHidden(page, true);
@@ -677,22 +1302,26 @@ test.describe("会話の再生", () => {
     await page.waitForTimeout(2500);
     expect(await speakingCount(), "隠れている間は話し始めない").toBe(0);
 
-    // 表示に戻ると話し始める
+    // 表示に戻ると話し始める（1 行目はちゃんの proud）
     await setHidden(page, false);
     await waitFor(page, "話し始める", (e) => e.k === "class" && e.sec === "videos" && e.added.includes("is-speaking"));
+    await waitFor(page, "立ち絵のちゃんが話す", (e) => e.k === "src" && e.chan === "cast" && /^proud-[12]\.webp$/.test(e.file));
 
-    // 再生中に隠れると、話している行が止まり、顔は休みのコマに戻る。再生済みにはしない
+    // 再生中に隠れると、話している行が止まり、顔と立ち絵は休みのコマに戻る。再生済みにはしない
     await setHidden(page, true);
     await expect(page.locator("#videos .talk-line.is-speaking")).toHaveCount(0);
     await expect(talk).not.toHaveClass(/\bis-played\b/);
     for (const f of await readFaces(page, "#videos")) {
       expect(restOrBlinkOf(f.face).has(f.file), `${f.face} の顔が休みのコマ（今は ${f.file}）`).toBe(true);
     }
-    // 隠れている間は、顔の絵を替えない（口パクもまばたきも止まる）
+    await expect(castChan, "立ち絵のちゃんも休みのコマ").toHaveAttribute("src", /normal-0\.webp$/);
+    // 隠れている間は、顔の絵も立ち絵も替えない（口パクもまばたきも止まる）
     const frozenFaces = await faceChanges();
+    const frozenChan = await chanChanges();
     const frozenLines = await speakingCount();
     await page.waitForTimeout(2500);
     expect(await faceChanges(), "隠れている間は顔の絵を替えない").toBe(frozenFaces);
+    expect(await chanChanges(), "隠れている間は立ち絵の絵を替えない").toBe(frozenChan);
     expect(await speakingCount(), "隠れている間は次の行に進まない").toBe(frozenLines);
 
     // 表示に戻ると、最初の行から最後まで再生する
@@ -732,7 +1361,9 @@ test.describe("会話の再生", () => {
     expect(errors).toEqual([]);
   });
 
-  test("ページの読み込み（load）が終わる前に相談欄の会話が始まっても、立ち絵が手を伸ばし、口パクする", async ({ page }) => {
+  test("ページの読み込み（load）が終わる前に相談欄の会話が始まっても、立ち絵が palm になり、口パクして、座布団も出す", async ({
+    page,
+  }) => {
     test.setTimeout(90_000);
     const errors = watchErrors(page);
     // ロゴの画像を止めて、window の load を遅らせる（すぐには要らないコマの先読みは load の後）
@@ -754,13 +1385,14 @@ test.describe("会話の再生", () => {
 
       const evs = await events(page);
       expect(
-        evs.some((e) => e.k === "src" && e.sec === "early-access" && e.chan === "greet" && e.file === "thigh-reach.webp"),
-        "すてぶるちゃんの行で、立ち絵が手を伸ばす"
+        evs.some((e) => e.k === "src" && e.sec === "early-access" && e.chan === "cast" && /^palm-[12]\.webp$/.test(e.file)),
+        "すてぶるちゃんの行で、立ち絵が palm になる"
       ).toBe(true);
       expect(
         evs.some((e) => e.k === "src" && e.sec === "early-access" && e.kun === "cast" && KUN_TALK_MOUTH.test(e.file)),
         "すてぶるくんの行で、立ち絵が口パクする"
       ).toBe(true);
+      await waitFor(page, "最後に座布団になる", (e) => e.k === "src" && e.sec === "early-access" && e.chan === "cast" && e.file === "zabuton.webp");
       expect(errors).toEqual([]);
     } finally {
       release();
@@ -792,6 +1424,74 @@ test.describe("会話の再生", () => {
     expect(errors).toEqual([]);
   });
 
+  test("立ち絵の palm のコマが読めないときは、palm を使わず normal の口パクで話す（読めていない形は normal）", async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    await page.route("**/assets/char/chan/palm-*.webp", (route) => route.fulfill({ status: 404, body: "" }));
+    // normal のコマは、normal の形で話す行がある会話のときに先読みされる。動画欄の 3 行目を normal の形にして、先に再生しておく
+    await rewriteHome(page, dropVideosPoint);
+    await installRecorder(page);
+    await page.goto("/");
+    const videos = page.locator("#videos .talk");
+    await scrollCenter(videos);
+    await expect(videos).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+    const talk = page.locator("#early-access .talk");
+    await scrollCenter(talk);
+    await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+
+    const evs = await events(page);
+    const windows = speakingWindows(evs, "early-access");
+    const mine = chanEvents(evs, "cast", "early-access");
+    expect(mine.some((e) => /^palm-/.test(e.file)), "読めなかった palm は使わない").toBe(false);
+    const during = spokenFrames(evs, "early-access", windows[1]);
+    expect(during.length, "ちゃんの行のあいだ、絵は替わる").toBeGreaterThan(0);
+    for (const e of during) {
+      expect(e.file, `読めない形は normal の口パク（今は ${e.file}）`).toMatch(/^normal-[012]\.webp$/);
+    }
+    expect(during.some((e) => /^normal-[12]\.webp$/.test(e.file)), "normal-1 か normal-2 になる").toBe(true);
+    // ほかの絵（座布団）は読めるので出る。終わったら normal-0
+    await waitFor(page, "座布団は出る", (e) => e.k === "src" && e.chan === "cast" && e.file === "zabuton.webp");
+    await expect(page.locator("#early-access .cast-chan")).toHaveAttribute("src", /normal-0\.webp$/, { timeout: 10_000 });
+    expect(errors).toEqual([]);
+  });
+
+  test("data-pose が無い行は顔の表情から決め（proud は proud、serious は normal）、知らない data-pose は normal になる", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const errors = watchErrors(page);
+    // 配信される HTML を書き換える：動画欄の 1 行目は data-pose を外して顔を chan proud に、3 行目は data-pose を外す（顔は chan serious）。
+    // 相談欄のちゃんの行は data-pose="bogus"。（normal のコマは動画欄の 3 行目が先読みする）
+    await rewriteHome(page, (source) => {
+      let html = source.replace(/<p class="talk-line talk-chan" data-pose="proud">(.*?)data-face="chan normal"/s, (_, mid) => {
+        return `<p class="talk-line talk-chan">${mid}data-face="chan proud"`;
+      });
+      html = dropVideosPoint(html);
+      return html.replace('<p class="talk-line talk-chan" data-pose="palm">', '<p class="talk-line talk-chan" data-pose="bogus">');
+    });
+    await installRecorder(page);
+    await page.goto("/");
+    expect(await page.locator("#videos .talk-line").first().getAttribute("data-pose"), "書き換えが効いている").toBeNull();
+    const videos = page.locator("#videos .talk");
+    await scrollCenter(videos);
+    await expect(videos).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+    const guest = page.locator("#early-access .talk");
+    await scrollCenter(guest);
+    await expect(guest).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+
+    const evs = await events(page);
+    const during = (sec, w) => spokenFrames(evs, sec, w).map((e) => e.file);
+    const v = speakingWindows(evs, "videos");
+    expect(during("videos", v[0]).length, "1 行目は口パクする").toBeGreaterThan(0);
+    expect(during("videos", v[0]).every((f) => /^proud-[012]\.webp$/.test(f)), "顔が chan proud なら proud の口パク").toBe(true);
+    expect(during("videos", v[2]).length, "3 行目は口パクする").toBeGreaterThan(0);
+    expect(during("videos", v[2]).every((f) => /^normal-[012]\.webp$/.test(f)), "顔が chan serious なら normal の口パク").toBe(true);
+    const g = speakingWindows(evs, "early-access");
+    expect(during("early-access", g[1]).length, "相談欄のちゃんの行は口パクする").toBeGreaterThan(0);
+    expect(during("early-access", g[1]).every((f) => /^normal-[012]\.webp$/.test(f)), "知らない data-pose は normal の口パク").toBe(true);
+    expect(errors).toEqual([]);
+  });
+
   test("IntersectionObserver の無いブラウザでは、何も動かさず、エラーも出さない", async ({ page }) => {
     test.setTimeout(60_000);
     const errors = watchErrors(page);
@@ -809,73 +1509,144 @@ test.describe("会話の再生", () => {
   });
 });
 
-// ─── 4. 生きている間だけ動く ─────────────────────────────────────────────────
+// ─── 4. 生きている間だけ動く・上下 ───────────────────────────────────────────
 
-test("生きている間だけ動く：画面に入っていて、タブが表示中のときだけ is-live が付き、CSS の動きが働く", async ({ page }) => {
+test("生きている間だけ動く：画面に入っていて、タブが表示中のときだけ is-live が付き、CSS の動き（上下・呼吸・揺れ）が働く", async ({
+  page,
+}) => {
   test.setTimeout(90_000);
   const errors = watchErrors(page);
   await page.goto("/");
   const rig = page.locator(HERO_RIG);
   await expect(rig).toHaveClass(IS_LIVE, { timeout: 10_000 });
 
-  // 呼吸・腕の揺れ・すてぶるちゃんの呼吸（腕は手を振っている間だけ kun-wave に替わる）
-  await expect.poll(() => animationName(rig.locator(".kun-body"))).toBe("kun-breathe");
+  // 上下（腕と体）・呼吸・腕の揺れ・すてぶるちゃんの上下（腕は手を振っている間だけ kun-wave に替わる）。足は動かない
+  await expect.poll(() => animationName(rig.locator(".kun-bob"))).toBe("kun-bob");
+  expect(await animationName(rig.locator(".kun-body"))).toBe("kun-breathe");
   expect(await animationName(rig.locator(".kun-arm-l"))).toBe("kun-arm-l-sway");
   expect(["kun-arm-r-sway", "kun-wave"]).toContain(await animationName(rig.locator(".kun-arm-r")));
-  expect(await animationName(page.locator(".hero-cast-chan"))).toBe("chan-breathe");
+  expect(await animationName(page.locator(HERO_CHAN))).toBe("chan-bob");
+  expect(await animationName(rig.locator(".kun-foot-l")), "左足は動かない").toBe("none");
+  expect(await animationName(rig.locator(".kun-foot-r")), "右足は動かない").toBe("none");
+  expect(await animationName(rig), "すてぶるくんの枠そのものは動かない").toBe("none");
+
+  // 周期：すてぶるくんの上下・呼吸・腕の揺れは 2.6 秒でそろい、すてぶるちゃんの上下は 3.2 秒
+  const duration = (locator) => locator.evaluate((el) => getComputedStyle(el).animationDuration);
+  expect(await duration(rig.locator(".kun-bob")), "kun-bob").toBe("2.6s");
+  expect(await duration(rig.locator(".kun-body")), "kun-breathe").toBe("2.6s");
+  expect(await duration(rig.locator(".kun-arm-l")), "kun-arm-l-sway").toBe("2.6s");
+  expect(await duration(page.locator(HERO_CHAN)), "chan-bob").toBe("3.2s");
 
   // 画面に入っていない立ち絵は生きていない
   const cast = page.locator("#videos .cast-kun");
+  const castChan = page.locator("#videos .cast-chan");
   await expect(cast).not.toHaveClass(IS_LIVE);
+  expect(await animationName(cast.locator(".kun-bob"))).toBe("none");
   expect(await animationName(cast.locator(".kun-body"))).toBe("none");
+  expect(await animationName(castChan)).toBe("none");
 
   // ページの下までスクロールすると、ヒーローの is-live が外れ、CSS の動きも止まる
   await scrollCenter(page.locator("#early-access"));
   await expect(rig).not.toHaveClass(IS_LIVE);
+  expect(await animationName(rig.locator(".kun-bob"))).toBe("none");
   expect(await animationName(rig.locator(".kun-body"))).toBe("none");
-  expect(await animationName(page.locator(".hero-cast-chan"))).toBe("none");
+  expect(await animationName(page.locator(HERO_CHAN))).toBe("none");
 
-  // 動画欄に入ると、そこの立ち絵が生きる
+  // 動画欄に入ると、そこの立ち絵（くんもちゃんも）が生きる
   await scrollCenter(page.locator("#videos .cast"));
   await expect(cast).toHaveClass(IS_LIVE, { timeout: 10_000 });
+  await expect(castChan).toHaveClass(IS_LIVE, { timeout: 10_000 });
+  await expect.poll(() => animationName(cast.locator(".kun-bob"))).toBe("kun-bob");
   await expect.poll(() => animationName(cast.locator(".kun-body"))).toBe("kun-breathe");
+  expect(await animationName(castChan)).toBe("chan-bob");
+  expect(await animationName(cast.locator(".kun-foot-l"))).toBe("none");
 
   // 戻ると、またヒーローが生きる
   await scrollTop(page, 0);
   await expect(rig).toHaveClass(IS_LIVE, { timeout: 10_000 });
 
   // タブが隠れると止まり、戻ると動く（visibilitychange を拾う）
-  await page.evaluate(() => {
-    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
-    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
-    document.dispatchEvent(new Event("visibilitychange"));
-  });
+  await setHidden(page, true);
   await expect(rig).not.toHaveClass(IS_LIVE);
-  await page.evaluate(() => {
-    delete document.hidden;
-    delete document.visibilityState;
-    document.dispatchEvent(new Event("visibilitychange"));
-  });
+  await expect(page.locator(HERO_CHAN)).not.toHaveClass(IS_LIVE);
+  await setHidden(page, false);
   await expect(rig).toHaveClass(IS_LIVE, { timeout: 10_000 });
+  await expect(page.locator(HERO_CHAN)).toHaveClass(IS_LIVE, { timeout: 10_000 });
   expect(errors).toEqual([]);
+});
+
+// 動きの中ほど（50%）まで進めて止め、いまの translateY を返す（Web Animations API はテストの側でだけ使う）
+const seekTranslate = (locator, name, fraction) =>
+  locator.evaluate(
+    (el, [animation, at]) => {
+      const a = el.getAnimations().find((x) => x.animationName === animation);
+      if (!a) {
+        return null;
+      }
+      a.pause();
+      a.currentTime = a.effect.getComputedTiming().duration * at;
+      const m = /^matrix\(([^)]*)\)$/.exec(getComputedStyle(el).transform);
+      return { y: m ? Number(m[1].split(",")[5]) : 0, height: el.offsetHeight };
+    },
+    [name, fraction]
+  );
+
+test("上下：腕と体（.kun-bob）が約 2.5%、すてぶるちゃんが約 1.8% 持ち上がり、足は動かない", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto("/");
+  const rig = page.locator(HERO_RIG);
+  await expect(rig).toHaveClass(IS_LIVE, { timeout: 10_000 });
+  await expect(page.locator(HERO_CHAN)).toHaveClass(IS_LIVE, { timeout: 10_000 });
+  await settled(page, ".hero-cast"); // 登場のせり上がりが終わってから測る
+  const foot = rig.locator(".kun-foot-l");
+  const bob = rig.locator(".kun-bob");
+  const rectOf = (locator) => locator.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom };
+  });
+
+  // 動きの始め（0%）：すべて元の位置
+  const start = await seekTranslate(bob, "kun-bob", 0);
+  expect(start, "kun-bob の動きがある").toBeTruthy();
+  expect(Math.abs(start.y), "始めは元の位置").toBeLessThanOrEqual(0.05);
+  const footStart = await rectOf(foot);
+  const bobStart = await rectOf(bob);
+
+  // 中ほど（50%）：体と腕の枠が高さの 2.5% だけ上がる。足は動かない
+  const peak = await seekTranslate(bob, "kun-bob", 0.5);
+  expect(peak.y, "kun-bob は上へ高さの 2.5%").toBeLessThan(0);
+  expect(Math.abs(peak.y + peak.height * 0.025), `kun-bob の持ち上がり ${peak.y.toFixed(2)}px（高さ ${peak.height}px の 2.5%）`).toBeLessThanOrEqual(0.3);
+  const footPeak = await rectOf(foot);
+  const bobPeak = await rectOf(bob);
+  expect(footPeak, "足は動かない").toEqual(footStart);
+  expect(bobStart.top - bobPeak.top, "体と腕の枠は実際に上がる").toBeGreaterThan(1);
+  expect(bobPeak.top, "体と腕は下には沈まない").toBeLessThan(bobStart.top);
+
+  // すてぶるちゃん：絵の高さの 1.8%
+  const chan = page.locator(HERO_CHAN);
+  expect(Math.abs((await seekTranslate(chan, "chan-bob", 0)).y), "始めは元の位置").toBeLessThanOrEqual(0.05);
+  const chanPeak = await seekTranslate(chan, "chan-bob", 0.5);
+  expect(chanPeak.y, "chan-bob は上へ").toBeLessThan(0);
+  expect(Math.abs(chanPeak.y + chanPeak.height * 0.018), `chan-bob の持ち上がり ${chanPeak.y.toFixed(2)}px（高さ ${chanPeak.height}px の 1.8%）`).toBeLessThanOrEqual(0.3);
 });
 
 // ─── 5. reduce ──────────────────────────────────────────────────────────────
 
-test("reduce：体が動くもの（呼吸・腕の揺れ・手を振る・登場のポーズ送り）は止まり、まばたきと会話は残る", async ({ page }) => {
+test("reduce：体が動くもの（上下・呼吸・腕の揺れ・手を振る・登場）は止まり、まばたきと会話は残る", async ({ page }) => {
   test.setTimeout(90_000);
   const errors = watchErrors(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await installRecorder(page);
   await page.goto("/");
   const rig = page.locator(HERO_RIG);
-  const chan = page.locator(".hero-cast-chan");
+  const chan = page.locator(HERO_CHAN);
 
+  expect(await animationName(rig.locator(".kun-bob")), "上下").toBe("none");
   expect(await animationName(rig.locator(".kun-body")), "呼吸").toBe("none");
   expect(await animationName(rig.locator(".kun-arm-l")), "腕の揺れ").toBe("none");
-  expect(await animationName(chan), "すてぶるちゃんの呼吸").toBe("none");
+  expect(await animationName(chan), "すてぶるちゃんの上下").toBe("none");
 
-  // まばたきは残る＝ヒーローは動いている。そのうえで 3 秒たっても、登場のポーズ送りも手振りも起きない
+  // まばたきは残る＝ヒーローは動いている（すてぶるくんもすてぶるちゃんも）。そのうえで登場のポーズ送りも手振りも起きない
   await expect
     .poll(
       async () => {
@@ -884,17 +1655,28 @@ test("reduce：体が動くもの（呼吸・腕の揺れ・手を振る・登�
           .map((e) => e.file);
         return hasRun(files, ["eyes-half.webp", "eyes-closed.webp", "eyes-half.webp", "eyes-open.webp"]);
       },
-      { message: "reduce でもまばたきする", timeout: 15_000 }
+      { message: "reduce でもすてぶるくんがまばたきする", timeout: 15_000 }
+    )
+    .toBe(true);
+  await expect
+    .poll(
+      async () => blinkGroups(chanEvents(await events(page), "hero")).length > 0,
+      { message: "reduce でもすてぶるちゃんがまばたきする", timeout: 20_000 }
     )
     .toBe(true);
   await page.waitForFunction(() => performance.now() > 3200);
   const evs = await events(page);
   expect(evs.some((e) => e.k === "class" && e.added.includes("is-waving")), "手を振らない").toBe(false);
-  expect(evs.filter((e) => e.k === "src" && e.chan === "hero"), "ヒーローのすてぶるちゃんの絵を替えない").toEqual([]);
-  await expect(chan).toHaveAttribute("src", /thigh-reach-wink\.webp$/);
+  const heroFiles = chanEvents(evs, "hero").map((e) => e.file);
+  expect(heroFiles, "登場のポーズ送り（side-glance・look-camera）をしない").not.toContain("side-glance.webp");
+  expect(heroFiles, "登場のポーズ送り（side-glance・look-camera）をしない").not.toContain("look-camera.webp");
+  for (const file of heroFiles) {
+    expect(file, `reduce のヒーローが使う絵（${file}）`).toMatch(/^(normal-0|blink-half|blink-normal|proud-0|fist)\.webp$/);
+  }
+  await expect(chan).toHaveAttribute("src", /(normal-0|blink-half|blink-normal|proud-0|fist)\.webp$/);
   await expect(rig).not.toHaveClass(/\bis-waving\b/);
 
-  // 会話は再生される（口パクは残る）
+  // 会話は再生される（口パクは残る）。立ち絵のちゃんも仕草をする（絵の差し替えだけ）
   const talk = page.locator("#videos .talk");
   await scrollCenter(talk);
   await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
@@ -907,8 +1689,12 @@ test("reduce：体が動くもの（呼吸・腕の揺れ・手を振る・登�
     after.some((e) => e.k === "src" && e.sec === "videos" && e.kun === "cast" && KUN_TALK_MOUTH.test(e.file)),
     "reduce でも立ち絵のすてぶるくんが口パクする"
   ).toBe(true);
+  expect(
+    after.some((e) => e.k === "src" && e.sec === "videos" && e.chan === "cast" && /^proud-[12]\.webp$/.test(e.file)),
+    "reduce でも立ち絵のすてぶるちゃんが proud の口パクをする"
+  ).toBe(true);
 
-  // CSS：画面に入って is-live が付いても、手を振っても、4 種のアニメーションは none（付けて確かめ、元に戻す）
+  // CSS：画面に入って is-live が付いても、手を振っても、動きはすべて none（付けて確かめ、元に戻す）
   // （手を振るは is-live と別に、is-waving だけでも確かめる。両方付くと後ろの規則だけで none になってしまう）
   const forced = await page.evaluate(() => {
     const rigEl = document.querySelector('.kun-rig[data-kun="hero"]');
@@ -919,6 +1705,7 @@ test("reduce：体が動くもの（呼吸・腕の揺れ・手を振る・登�
     rigEl.classList.add("is-live");
     chanEl.classList.add("is-live");
     const result = {
+      bob: name(rigEl.querySelector(".kun-bob")),
       breathe: name(rigEl.querySelector(".kun-body")),
       armL: name(rigEl.querySelector(".kun-arm-l")),
       armR: name(rigEl.querySelector(".kun-arm-r")),
@@ -936,69 +1723,81 @@ test("reduce：体が動くもの（呼吸・腕の揺れ・手を振る・登�
     }
     return result;
   });
-  expect(forced).toEqual({ breathe: "none", armL: "none", armR: "none", chan: "none", wave: "none" });
+  expect(forced).toEqual({ bob: "none", breathe: "none", armL: "none", armR: "none", chan: "none", wave: "none" });
   expect(errors).toEqual([]);
 });
 
-// ─── 6. 手を振る・登場のポーズ送り ───────────────────────────────────────────
+// ─── 6. ヒーローの登場・手を振る ─────────────────────────────────────────────
 
 test.describe("ヒーローの登場", () => {
-  test("手を振る：見えてから 1.2 秒ほどで is-waving が付いて 1 回だけ外れ、すてぶるちゃんは立ち姿から手を伸ばしてウインクする", async ({
+  test("登場：見えてから、すてぶるちゃんは side-glance → look-camera（900ms）→ normal-0（1500ms）。手を振る（すてぶるくん）は 1.2 秒後に 1 回だけ", async ({
     page,
   }) => {
     test.setTimeout(90_000);
     const errors = watchErrors(page);
-    // 手を振るのは「スクリプト開始から 800ms 以内に初めて見えたとき」だけ。実時間だと機械の重さで窓を外すので、
+    // 登場は「スクリプト開始から 800ms 以内に初めて見えたとき」だけ。実時間だと機械の重さで窓を外すので、
     // ページの時計（setTimeout・performance.now）を止めて読み込み、時間は runFor で進める。
     // （CSS のアニメーションと画像の読み込み、IntersectionObserver は実時間のまま）
-    await page.clock.install({ time: new Date("2026-10-21T00:00:00Z") });
-    await page.clock.pauseAt(new Date("2026-10-21T00:00:01Z"));
+    await freezeClock(page);
     await installRecorder(page);
     const rig = page.locator(HERO_RIG);
-    const chan = page.locator(".hero-cast-chan");
+    const chan = page.locator(HERO_CHAN);
     const heroRig = (e) => e.k === "class" && hasCls(e, "kun-rig") && e.kun === "hero";
-    const heroChanFiles = async () => (await events(page)).filter((e) => e.k === "src" && e.chan === "hero").map((e) => e.file);
+    const heroChanFiles = async () => chanEvents(await events(page), "hero").map((e) => e.file);
 
     await page.goto("/");
     await expect(rig).toHaveClass(IS_LIVE, { timeout: 15_000 });
-    // すてぶるちゃんは、登場の絵の先読みが済むと、まず立ち姿に替わる（時計は止まったまま）
-    await waitFor(page, "ヒーローのすてぶるちゃんが立ち姿に替わる", (e) => e.k === "src" && e.chan === "hero");
-    expect((await heroChanFiles())[0], "ヒーローの絵は、まず立ち姿に替わる").toBe("thigh-stand.webp");
+    // すてぶるちゃんは、登場の絵の先読みが済むと、まず side-glance に替わる（時計は止まったまま）
+    await waitFor(page, "ヒーローのすてぶるちゃんが side-glance に替わる", (e) => e.k === "src" && e.chan === "hero");
+    expect((await heroChanFiles())[0], "ヒーローの絵は、まず side-glance に替わる").toBe("side-glance.webp");
     expect((await events(page)).some((e) => heroRig(e) && e.added.includes("is-waving")), "まだ手を振らない").toBe(false);
+    const start = chanEvents(await events(page), "hero")[0];
+    expect(start.from, "登場の前は HTML の normal-0").toBe("normal-0.webp");
 
-    // 1200ms 進めると手を振り始め、すてぶるちゃんは手を伸ばす（1100ms）
-    await page.clock.runFor(1200);
+    // 900ms でこちらを向く（look-camera）。899ms まではよそ見のまま
+    await page.clock.runFor(899);
+    await expect(chan).toHaveAttribute("src", /side-glance\.webp$/);
+    await page.clock.runFor(1);
+    await expect(chan).toHaveAttribute("src", /look-camera\.webp$/);
+
+    // 1200ms で手を振り始める（すてぶるくん）。そのあいだ、すてぶるちゃんはこちらを向いたまま
+    await page.clock.runFor(300);
     await waitFor(page, "is-waving が付く", (e) => heroRig(e) && e.added.includes("is-waving"));
     const on = (await events(page)).find((e) => heroRig(e) && e.added.includes("is-waving"));
     // 手を振り始めたときの右腕の動きが kun-wave（記録した時点の値で見る）
     expect(on.armAnim, "手を振っている間は、右腕の動きが kun-wave").toBe("kun-wave");
-    await expect(chan).toHaveAttribute("src", /thigh-reach\.webp$/);
+    await expect(chan).toHaveAttribute("src", /look-camera\.webp$/);
 
-    // 1350ms でウインク、2300ms で手を伸ばした絵に戻る。手振りは animationend か、遅くとも 2200ms 後（3400ms）に外れる
-    await page.clock.runFor(150);
-    await expect(chan).toHaveAttribute("src", /thigh-reach-wink\.webp$/);
-    await page.clock.runFor(2100);
+    // 1500ms で normal-0（ほほえみ）に戻る。手振りは animationend か、遅くとも 2200ms 後（3400ms）に外れる
+    await page.clock.runFor(299);
+    await expect(chan).toHaveAttribute("src", /look-camera\.webp$/);
+    await page.clock.runFor(1);
+    await expect(chan).toHaveAttribute("src", /normal-0\.webp$/);
+    await page.clock.runFor(1900);
     await waitFor(page, "is-waving が外れる", (e) => heroRig(e) && e.removed.includes("is-waving"));
-    await expect(chan).toHaveAttribute("src", /thigh-reach\.webp$/);
     const evs = await events(page);
     const live = evs.find((e) => heroRig(e) && e.added.includes("is-live"));
     const off = evs.find((e) => heroRig(e) && e.removed.includes("is-waving"));
     expect(on.t - live.t, "見えてから 1200ms 後に手を振る").toBeGreaterThanOrEqual(1200);
     expect(on.t - live.t, "見えてから 1200ms 後に手を振る").toBeLessThanOrEqual(1250);
     expect(off.t - on.t, "手振りは 2200ms 以内に外れる").toBeLessThanOrEqual(2250);
-    expect(await heroChanFiles(), "ポーズ送りは stand → reach → wink → reach").toEqual([
-      "thigh-stand.webp",
-      "thigh-reach.webp",
-      "thigh-reach-wink.webp",
-      "thigh-reach.webp",
-    ]);
 
-    // 立ち絵（data-kun="cast"）は手を振らない。ヒーローも 1 回だけ。待機のウインクまでは 7 秒以上あるので、手を伸ばした絵のまま
+    const files = chanEvents(evs, "hero");
+    expect(files.slice(0, 3).map((e) => e.file), "登場は side-glance → look-camera → normal-0").toEqual([
+      "side-glance.webp",
+      "look-camera.webp",
+      "normal-0.webp",
+    ]);
+    expect(files[1].t - files[0].t, "side-glance の 900ms 後に look-camera").toBeGreaterThanOrEqual(900);
+    expect(files[1].t - files[0].t, "side-glance の 900ms 後に look-camera").toBeLessThanOrEqual(950);
+    expect(files[2].t - files[0].t, "side-glance の 1500ms 後に normal-0").toBeGreaterThanOrEqual(1500);
+    expect(files[2].t - files[0].t, "side-glance の 1500ms 後に normal-0").toBeLessThanOrEqual(1550);
+
+    // 立ち絵（data-kun="cast"）は手を振らない。ヒーローも 1 回だけ
     await page.clock.runFor(3000);
     const waves = (await events(page)).filter((e) => e.k === "class" && e.added.includes("is-waving"));
     expect(waves, "手を振るのはヒーローで 1 回だけ").toHaveLength(1);
     expect(waves[0].kun).toBe("hero");
-    await expect(chan).toHaveAttribute("src", /thigh-reach\.webp$/);
     expect(errors).toEqual([]);
   });
 
@@ -1007,8 +1806,7 @@ test.describe("ヒーローの登場", () => {
   }) => {
     test.setTimeout(60_000);
     const errors = watchErrors(page);
-    await page.clock.install({ time: new Date("2026-10-21T00:00:00Z") });
-    await page.clock.pauseAt(new Date("2026-10-21T00:00:01Z"));
+    await freezeClock(page);
     // animationend を window の捕捉の段階で止めて、すてぶるくんまで届かないようにする（保険のタイマーだけで外れるかを見る）
     await page.addInitScript(() => {
       window.addEventListener("animationend", (e) => e.stopImmediatePropagation(), true);
@@ -1034,7 +1832,39 @@ test.describe("ヒーローの登場", () => {
     expect(errors).toEqual([]);
   });
 
-  test("スクリプトが動き出したときヒーローが画面に無ければ、あとで見えても手を振らず、すてぶるちゃんの絵もそのまま", async ({
+  test("登場の途中でタブが隠れたら、登場は終わりにして normal-0 に戻り、表示に戻っても登場をやり直さない", async ({ page }) => {
+    test.setTimeout(60_000);
+    const errors = watchErrors(page);
+    await freezeClock(page);
+    await installRecorder(page);
+    await page.goto("/");
+    const rig = page.locator(HERO_RIG);
+    const chan = page.locator(HERO_CHAN);
+    await expect(rig).toHaveClass(IS_LIVE, { timeout: 15_000 });
+    await waitFor(page, "side-glance に替わる", (e) => e.k === "src" && e.chan === "hero" && e.file === "side-glance.webp");
+
+    // 登場の途中（side-glance）で隠れる：normal-0 に戻り、時計を進めても続きは起きない
+    await setHidden(page, true);
+    await expect(rig).not.toHaveClass(IS_LIVE);
+    await expect(chan).toHaveAttribute("src", /normal-0\.webp$/);
+    await page.clock.runFor(5000);
+    await expect(chan).toHaveAttribute("src", /normal-0\.webp$/);
+    expect(chanEvents(await events(page), "hero").map((e) => e.file), "登場の続き（look-camera）は起きない").toEqual([
+      "side-glance.webp",
+      "normal-0.webp",
+    ]);
+
+    // 表示に戻っても登場しない（まばたきと待機の仕草だけ）
+    await setHidden(page, false);
+    await expect(rig).toHaveClass(IS_LIVE, { timeout: 10_000 });
+    await advance(page, 8000);
+    const files = chanEvents(await events(page), "hero").map((e) => e.file);
+    expect(files.filter((f) => f === "side-glance.webp"), "登場をやり直さない").toHaveLength(1);
+    expect(files, "look-camera は出ない").not.toContain("look-camera.webp");
+    expect(errors).toEqual([]);
+  });
+
+  test("スクリプトが動き出したときヒーローが画面に無ければ、あとで見えても手を振らず、登場もしない（normal-0 のまま、まばたきと待機の仕草だけ）", async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -1064,12 +1894,118 @@ test.describe("ヒーローの登場", () => {
     await page.waitForTimeout(3000);
     const evs = await events(page);
     expect(evs.some((e) => e.k === "class" && e.added.includes("is-waving")), "手を振らない").toBe(false);
-    expect(evs.filter((e) => e.k === "src" && e.chan === "hero"), "登場のポーズ送りをしない").toEqual([]);
-    await expect(page.locator(".hero-cast-chan")).toHaveAttribute("src", /thigh-reach-wink\.webp$/);
+    const files = chanEvents(evs, "hero").map((e) => e.file);
+    expect(files, "登場のポーズ送り（side-glance）をしない").not.toContain("side-glance.webp");
+    expect(files, "登場のポーズ送り（look-camera）をしない").not.toContain("look-camera.webp");
+    await expect(page.locator(HERO_CHAN)).toHaveAttribute("src", /(normal-0|blink-half|blink-normal)\.webp$/);
   });
 });
 
-// ─── すてぶるくんの目・すてぶるちゃんのウインク ──────────────────────────────
+// ─── 6b. ヒーローのまばたきと待機の仕草（ページの時計で数える） ───────────────────
+
+test("ヒーローのすてぶるちゃん：登場のあと、2.5〜5.5 秒おきにまばたき（ときどき 2 回続け）、12〜20 秒おきに proud か fist の仕草をする", async ({
+  page,
+}) => {
+  test.setTimeout(150_000);
+  const errors = watchErrors(page);
+  await freezeClock(page);
+  await stillFrames(page);
+  await installRecorder(page);
+  await page.goto("/");
+  await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 15_000 });
+  await waitFor(page, "登場が始まる", (e) => e.k === "src" && e.chan === "hero" && e.file === "side-glance.webp");
+  // まばたき・仕草のコマの先読みが済むのを実時間で少し待ってから、時計を進める
+  await page.waitForTimeout(500);
+  await advance(page, 300_000);
+
+  const evs = await events(page);
+  const hero = chanEvents(evs, "hero");
+  const live = evs.find((e) => e.k === "class" && hasCls(e, "kun-rig") && e.kun === "hero" && e.added.includes("is-live"));
+  const introEnd = hero.find((e) => e.file === "normal-0.webp" && e.from === "look-camera.webp");
+  expect(introEnd, "登場は normal-0 で終わる").toBeTruthy();
+
+  // まばたき：登場のあと。blink-half 50ms → blink-normal 110ms → blink-half 50ms → normal-0。登場のあいだはしない
+  const groups = blinkGroups(hero);
+  expect(groups.length, `300 秒でまばたきした回数（${groups.length}）`).toBeGreaterThanOrEqual(25);
+  expect(groups[0][0].t, "登場のあいだはまばたきしない").toBeGreaterThan(introEnd.t);
+  expect(groups[0][0].t - introEnd.t, "登場のあと、最初のまばたきまで").toBeLessThanOrEqual(6500);
+  for (const [i, g] of groups.entries()) {
+    expectBlinkShape(g, `${i + 1} 回目のまばたき`);
+  }
+  // 仕草の途中で来たまばたきは後回し（仕草が終わってから改めて 2.5〜5.5 秒）なので、上は 5.5 + 2.4 + 5.5 秒まで
+  const gaps = expectBlinkGaps(groups, 14_000, "ヒーロー");
+  expect(gaps.some((g) => Math.abs(g - 180) <= 30), "ときどき（20% ほど）続けて 2 回まばたきする").toBe(true);
+  expect(gaps.some((g) => g >= 2250), "ふつうは 2.5〜5.5 秒おき").toBe(true);
+  // 2 回続けるのは 20% ほど：全体の中で多すぎず、少なすぎない
+  const doubles = gaps.filter((g) => Math.abs(g - 180) <= 30).length;
+  expect(doubles / gaps.length, `続けて 2 回の割合（${doubles}/${gaps.length}）`).toBeGreaterThan(0.03);
+  expect(doubles / gaps.length, `続けて 2 回の割合（${doubles}/${gaps.length}）`).toBeLessThan(0.4);
+
+  // 待機の仕草：proud-0 を 2400ms か fist を 1800ms 出して normal-0 に戻す。12〜20 秒おき。仕草のあいだはまばたきしない
+  const gestures = hero.filter((e) => e.file === "proud-0.webp" || e.file === "fist.webp");
+  expect(gestures.length, `300 秒で仕草をした回数（${gestures.length}）`).toBeGreaterThanOrEqual(8);
+  expect(new Set(gestures.map((g) => g.file)), "proud-0 も fist も出る（半々）").toEqual(new Set(["proud-0.webp", "fist.webp"]));
+  expect(gestures[0].t - live.t, "最初の仕草は 12 秒以上あと").toBeGreaterThanOrEqual(11_900);
+  for (const [i, g] of gestures.entries()) {
+    const hold = g.file === "proud-0.webp" ? 2400 : 1800;
+    const next = hero.find((e) => e.t > g.t && e.id === g.id);
+    if (!next) {
+      continue; // 時計を止めたところで仕草の途中
+    }
+    expect(next.file, `${i + 1} 回目の仕草は normal-0 に戻る`).toBe("normal-0.webp");
+    expect(Math.abs(next.t - g.t - hold), `${g.file} は ${hold}ms 出す（今は ${Math.round(next.t - g.t)}ms）`).toBeLessThanOrEqual(40);
+    expect(
+      hero.filter((e) => e.t > g.t && e.t < next.t && /^blink-/.test(e.file)),
+      "仕草のあいだはまばたきしない"
+    ).toEqual([]);
+    if (i > 0) {
+      const gap = g.t - gestures[i - 1].t;
+      expect(gap, `仕草の間 ${Math.round(gap)}ms は 12〜20 秒おき`).toBeGreaterThanOrEqual(11_900);
+      expect(gap, `仕草の間 ${Math.round(gap)}ms は 12〜20 秒おき（出している時間を足しても 23 秒以内）`).toBeLessThanOrEqual(23_000);
+    }
+  }
+  // 登場のあと以外では side-glance・look-camera は出ない
+  expect(hero.filter((e) => e.file === "side-glance.webp"), "登場は 1 回だけ").toHaveLength(1);
+  expect(errors).toEqual([]);
+});
+
+test("立ち絵のすてぶるちゃん：画面にいる間、normal-0 のまま 2.5〜5.5 秒おきにまばたきする（話す・仕草のあいだはしない）", async ({
+  page,
+}) => {
+  test.setTimeout(150_000);
+  const errors = watchErrors(page);
+  await freezeClock(page);
+  await stillFrames(page);
+  await installRecorder(page);
+  await page.goto("/");
+  // 動画欄の立ち絵を画面に入れる（会話も始まるが、時計が止まっているので、進めるまで話さない）
+  await scrollCenter(page.locator("#videos .cast"));
+  const chan = page.locator("#videos .cast-chan");
+  await expect(chan).toHaveClass(IS_LIVE, { timeout: 15_000 });
+  await page.waitForTimeout(500); // まばたきのコマの先読みを実時間で待つ
+  await advance(page, 150_000);
+
+  const evs = await events(page);
+  const mine = chanEvents(evs, "cast", "videos");
+  const groups = blinkGroups(mine);
+  expect(groups.length, `150 秒でまばたきした回数（${groups.length}）`).toBeGreaterThanOrEqual(10);
+  for (const [i, g] of groups.entries()) {
+    expectBlinkShape(g, `立ち絵 ${i + 1} 回目のまばたき`);
+  }
+  expectBlinkGaps(groups, 16_000, "立ち絵");
+
+  // 話しているあいだ（口パクと、そのあとの pose-0）はまばたきしない
+  const windows = speakingWindows(evs, "videos").filter((w) => !w.kun);
+  for (const w of windows) {
+    expect(
+      mine.filter((e) => e.t > w.start && e.t < w.end + 650 && /^blink-/.test(e.file)),
+      "ちゃんが話しているあいだはまばたきしない"
+    ).toEqual([]);
+  }
+  expect(errors).toEqual([]);
+});
+
+// ─── すてぶるくんの目 ────────────────────────────────────────────────────────
 
 test("すてぶるくんのまばたき（half → closed → half → open）と目線（横を見て、open に戻る）。重ならない", async ({ page }) => {
   test.setTimeout(90_000);
@@ -1129,33 +2065,6 @@ test("すてぶるくんのまばたき（half → closed → half → open）�
   expect(next.t - closed.t, "目を閉じているのは 70ms ほど").toBeLessThan(800);
 });
 
-test("待機のウインク：立ち絵のすてぶるちゃんが 7〜11 秒おきに thigh-reach-wink を 380ms だけ出す（reduce でも出る）", async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await installRecorder(page);
-  await page.goto("/");
-  const chan = page.locator('#videos .cast-chan[data-chan="wink"]');
-  await expect(chan).toHaveAttribute("src", /thigh-reach\.webp$/);
-  await scrollCenter(page.locator("#videos .cast"));
-  await waitFor(
-    page,
-    "thigh-reach-wink が出る",
-    (e) => e.k === "src" && e.chan === "wink" && e.file === "thigh-reach-wink.webp",
-    25_000
-  );
-  const evs = await events(page);
-  const wink = evs.find((e) => e.k === "src" && e.chan === "wink" && e.file === "thigh-reach-wink.webp");
-  await expect
-    .poll(async () => (await events(page)).some((e) => e.k === "src" && e.id === wink.id && e.t > wink.t))
-    .toBe(true);
-  const back = (await events(page)).find((e) => e.k === "src" && e.id === wink.id && e.t > wink.t);
-  expect(back.file).toBe("thigh-reach.webp");
-  expect(back.t - wink.t, "ウインクは 380ms ほど").toBeGreaterThan(250);
-  expect(back.t - wink.t, "ウインクは 380ms ほど").toBeLessThan(1500);
-});
-
 // ─── 7. 狭い幅 ──────────────────────────────────────────────────────────────
 
 test.describe("狭い幅", () => {
@@ -1198,7 +2107,7 @@ test.describe("JS なし", () => {
       test.setTimeout(60_000);
       await page.goto(path);
 
-      // 顔の絵と data-face は設計書 §2-4 の表のとおり。行の話し手と合う
+      // 顔の絵と data-face は設計書 v1 §2-4 の表のとおり。行の話し手と合う
       const lines = await page.locator(".talk-line").evaluateAll((els) =>
         els.map((el) => ({
           who: el.classList.contains("talk-kun") ? "kun" : el.classList.contains("talk-chan") ? "chan" : "",
@@ -1218,37 +2127,43 @@ test.describe("JS なし", () => {
       const first = await page.locator("#videos .talk-face").first().getAttribute("src");
       expect(first).toMatch(lang === "en" ? /^\/assets\/char\/talk\/chan-normal-1\.webp$/ : /^assets\/char\/talk\/chan-normal-1\.webp$/);
 
-      // ヒーロー・立ち絵の組み立て（設計書 §2-1〜2-3）
+      // ヒーロー・立ち絵の組み立て（設計書 v1 §2-1〜2-3 と v2 §3）
       const shape = await page.evaluate(() => {
-        const names = (rig) => Array.prototype.map.call(rig.querySelectorAll("img"), (i) => i.getAttribute("src").split("/").pop());
         const attr = (el, name) => (el ? el.getAttribute(name) : null);
         const file = (el) => (el ? el.getAttribute("src").split("/").pop() : null);
+        const chanOf = (el) => ({ src: file(el), w: attr(el, "width"), h: attr(el, "height"), mode: attr(el, "data-chan") });
         return {
-          heroRig: names(document.querySelector('.hero-cast .kun-rig[data-kun="hero"]')),
+          heroRig: Array.prototype.map.call(document.querySelectorAll('.hero-cast .kun-rig[data-kun="hero"] img'), file),
           heroMouth: file(document.querySelector('.hero-cast .kun-mouth')),
-          heroChan: { src: file(document.querySelector('.hero-cast img[data-chan="hero"]')), w: attr(document.querySelector('.hero-cast img[data-chan="hero"]'), "width"), h: attr(document.querySelector('.hero-cast img[data-chan="hero"]'), "height") },
+          heroChan: chanOf(document.querySelector('.hero-cast img[data-chan]')),
           videos: {
-            chan: file(document.querySelector("#videos .cast img[data-chan]")),
-            mode: attr(document.querySelector("#videos .cast img[data-chan]"), "data-chan"),
+            chan: chanOf(document.querySelector("#videos .cast img[data-chan]")),
             mouth: file(document.querySelector("#videos .cast .kun-mouth")),
             kun: attr(document.querySelector("#videos .cast .kun-rig"), "data-kun"),
           },
           guest: {
-            chan: file(document.querySelector("#early-access .cast img[data-chan]")),
-            mode: attr(document.querySelector("#early-access .cast img[data-chan]"), "data-chan"),
+            chan: chanOf(document.querySelector("#early-access .cast img[data-chan]")),
             mouth: file(document.querySelector("#early-access .cast .kun-mouth")),
             kun: attr(document.querySelector("#early-access .cast .kun-rig"), "data-kun"),
           },
-          castRig: names(document.querySelector("#videos .cast .kun-rig")),
+          castRig: Array.prototype.map.call(document.querySelectorAll("#videos .cast .kun-rig img"), file),
           parts: Array.prototype.map.call(document.querySelectorAll(".kun-rig img, [data-chan]"), (i) => [i.getAttribute("alt"), i.closest("[aria-hidden='true']") ? "hidden" : "exposed"]),
         };
       });
       const rigParts = ["foot-l", "foot-r", "arm-l", "arm-r", "body", "cheeks", "eyes-open", "mouth-rest"].map((n) => `${n}.webp`);
       expect(shape.heroRig).toEqual(rigParts);
       expect(shape.heroMouth).toBe("mouth-rest.webp");
-      expect(shape.heroChan).toEqual({ src: "thigh-reach-wink.webp", w: "340", h: "480" });
-      expect(shape.videos).toEqual({ chan: "thigh-reach.webp", mode: "wink", mouth: "mouth-o.webp", kun: "cast" });
-      expect(shape.guest).toEqual({ chan: "thigh-stand.webp", mode: "greet", mouth: "mouth-rest.webp", kun: "cast" });
+      expect(shape.heroChan).toEqual({ src: "normal-0.webp", w: "400", h: "388", mode: "hero" });
+      expect(shape.videos).toEqual({
+        chan: { src: "normal-0.webp", w: "400", h: "388", mode: "cast" },
+        mouth: "mouth-o.webp",
+        kun: "cast",
+      });
+      expect(shape.guest).toEqual({
+        chan: { src: "normal-0.webp", w: "400", h: "388", mode: "cast" },
+        mouth: "mouth-rest.webp",
+        kun: "cast",
+      });
       expect(shape.castRig).toEqual(rigParts.map((n) => (n === "mouth-rest.webp" ? "mouth-o.webp" : n)));
       for (const [alt, hidden] of shape.parts) {
         expect(alt, "立ち絵の絵は装飾").toBe("");
@@ -1286,8 +2201,9 @@ test.describe("本番ヘッダをかけたページ", () => {
       expect(csp).toContain("require-trusted-types-for 'script'");
       await expect(page.locator("html")).toHaveAttribute("lang", lang);
 
-      // ヒーローが動き、動画欄・相談欄の会話が再生される（立ち絵とも連動する）
+      // ヒーローが動き（登場・上下）、動画欄・相談欄の会話が再生される（立ち絵とも連動する）
       await expect(page.locator(HERO_RIG)).toHaveClass(IS_LIVE, { timeout: 10_000 });
+      await expect.poll(() => animationName(page.locator(".kun-rig[data-kun=hero] .kun-bob"))).toBe("kun-bob");
       for (const section of ["#videos", "#early-access"]) {
         const talk = page.locator(`${section} .talk`);
         await scrollCenter(talk);
@@ -1302,6 +2218,15 @@ test.describe("本番ヘッダをかけたページ", () => {
         evs.some((e) => e.k === "src" && e.kun === "cast" && KUN_TALK_MOUTH.test(e.file)),
         "立ち絵の口の差し替えが実際に起きた"
       ).toBe(true);
+      expect(
+        evs.some((e) => e.k === "src" && e.chan === "cast" && e.sec === "videos" && /^(proud|point)-[12]\.webp$/.test(e.file)),
+        "動画欄の立ち絵のちゃんの仕草が実際に起きた"
+      ).toBe(true);
+      expect(
+        evs.some((e) => e.k === "src" && e.chan === "cast" && e.sec === "early-access" && /^palm-[12]\.webp$/.test(e.file)),
+        "相談欄の立ち絵のちゃんの仕草が実際に起きた"
+      ).toBe(true);
+      await waitFor(page, "座布団が実際に出た", (e) => e.k === "src" && e.chan === "cast" && e.file === "zabuton.webp");
 
       const violations = await page.evaluate(() => window.__csp.slice());
       const mine = violations.filter((v) => /^(img-src|style-src|script-src|require-trusted-types-for|trusted-types)/.test(v));
@@ -1371,7 +2296,7 @@ const CHARACTER_SELECTOR = /\.kun-|\.cast|\.hero-cast|\.talk|\[data-chan\]|\[dat
 const STAND_SELECTOR = /\.kun-|\.cast|\.hero-cast|\[data-chan\]|\[data-kun\]/;
 
 test.describe("決まり", () => {
-  test("assets/characters.js：左右反転・色の加工・HTML の組み立て・インラインの style・新しすぎる書き方を使わない", () => {
+  test("assets/characters.js：左右反転・色の加工・HTML の組み立て・インラインの style・新しすぎる書き方を使わず、古い名前（thigh・wink・greet）を残さない", () => {
     const raw = readText("assets/characters.js");
     expect(raw, "strict mode").toContain('"use strict"');
     const code = stripJsComments(raw);
@@ -1399,22 +2324,28 @@ test.describe("決まり", () => {
       [/\.(flat|flatMap|matchAll|replaceAll|at)\s*\(/, "ES2018 以降の配列・文字列のメソッド"],
       [/Object\.fromEntries|structuredClone|\bBigInt\b/, "ES2019 以降の API"],
       [/\d_\d/, "数値の区切り（_）"],
+      // 設計書 v2 §5-1：待機のウインク（wink）・greet・thigh の名前は全部消す
+      [/\bthigh\b|thigh-/, "太ももまでの絵（thigh）"],
+      [/\bwink\b|reach-wink/, "待機のウインク（wink）"],
+      [/\bgreet\b/, "greet"],
     ];
     for (const [re, label] of banned) {
       expect(code, `assets/characters.js に ${label} がある`).not.toMatch(re);
     }
   });
 
-  test("assets/lp.css：左右反転・負の scale を使わず、キャラの規則に filter・hue-rotate・使わない CSS が無い", () => {
+  test("assets/lp.css：左右反転・負の scale を使わず、キャラの規則に filter・hue-rotate・使わない CSS が無く、古い動き（chan-breathe）・thigh を残さない", () => {
     const css = readText("assets/lp.css");
     const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, "");
-    // 設計書 §5-10 は lp.css 全体に hue-rotate が無いことを求めるが、ヒーローのロゴ（.hero-logo）が元から使っている。
+    // 設計書 v1 §5-10 は lp.css 全体に hue-rotate が無いことを求めるが、ヒーローのロゴ（.hero-logo）が元から使っている。
     // そのため hue-rotate と filter は、キャラの規則に限って見る（左右反転と負の scale は全体で見る）
     expect(withoutComments, "scaleX(-1)").not.toMatch(/scaleX\(\s*-/);
     expect(withoutComments, "innerHTML・.style.").not.toMatch(/innerHTML|\.style\./);
     expect(withoutComments, "負の scale").not.toMatch(/scale\(\s*-|scale\([^)]*,\s*-|scaleY\(\s*-/);
     expect(withoutComments, "@property").not.toContain("@property");
     expect(withoutComments, "offset-path").not.toContain("offset-path");
+    expect(withoutComments, "太ももまでの絵（thigh）").not.toMatch(/thigh/);
+    expect(withoutComments, "chan-breathe は消した").not.toContain("chan-breathe");
 
     const rules = cssRules(css);
     const character = rules.filter((r) => CHARACTER_SELECTOR.test(r.selector));
@@ -1434,9 +2365,17 @@ test.describe("決まり", () => {
     }
     expect(problems, "キャラの規則に書かない CSS").toEqual([]);
 
-    // 動きの @keyframes がそろっている
-    for (const name of ["kun-breathe", "kun-arm-l-sway", "kun-arm-r-sway", "kun-wave", "chan-breathe"]) {
+    // 動きの @keyframes がそろっている（上下は kun-bob・chan-bob）
+    for (const name of ["kun-bob", "kun-breathe", "kun-arm-l-sway", "kun-arm-r-sway", "kun-wave", "chan-bob"]) {
       expect(rules.some((r) => r.selector === `@keyframes ${name}`), `@keyframes ${name}`).toBe(true);
     }
   });
+
+  for (const { file } of PAGES) {
+    test(`${file}：HTML に太ももまでの絵と古い data-chan（wink・greet）を残さない`, () => {
+      const html = readText(file);
+      expect(html).not.toMatch(/thigh/);
+      expect(html).not.toMatch(/data-chan="(wink|greet)"/);
+    });
+  }
 });
