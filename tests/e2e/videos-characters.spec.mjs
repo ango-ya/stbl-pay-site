@@ -292,11 +292,25 @@ test.describe("つかいかた動画（日本語LP）", () => {
     });
     expect(mark).toEqual({ content: '""', width: "72px", events: "none" });
     expect(await frame.evaluate((el) => getComputedStyle(el, "::after").content), "読み込み中の文字").toBe('"読み込み中…"');
+    // 読み上げには、枠の外の role="status" で伝える
+    const status = page.locator('[data-video-status][role="status"]');
+    await expect(status).toHaveText("読み込み中…");
     await page.waitForTimeout(500);
     await expect(frame, "読み終わるまでは消さない").toHaveClass(/\bis-loading\b/);
     release();
     await expect(frame).not.toHaveClass(/\bis-loading\b/);
     await expect(frame).not.toHaveAttribute("aria-busy", /.*/);
+    await expect(status).toHaveText("");
+  });
+
+  test("英語ページでも、読み込み中の文字は Loading…", async ({ page }) => {
+    await page.route(/youtube-nocookie\.com\/embed\//, () => {});
+    await page.goto("/en/");
+    await page.locator("[data-video-poster]").click();
+    const frame = page.locator("[data-video-frame]");
+    await expect(frame).toHaveClass(/\bis-loading\b/);
+    expect(await frame.evaluate((el) => getComputedStyle(el, "::after").content)).toBe('"Loading…"');
+    await expect(page.locator('[data-video-status][role="status"]')).toHaveText("Loading…");
   });
 
   test("一覧から回を選ぶと、iframe を作り直して新しい回にし、説明も替わる（履歴は増やさない）", async ({ page }) => {

@@ -547,6 +547,7 @@
   }
 
   const items = Array.prototype.slice.call(document.querySelectorAll(".video-item[data-video]"));
+  const status = document.querySelector("[data-video-status]");
   const isEnglish = document.documentElement.lang === "en";
   // 埋め込みは youtube-nocookie.com から（_headers の frame-src と同じ）
   const EMBED_ORIGIN = "https://www.youtube-nocookie.com";
@@ -621,12 +622,19 @@
     next.setAttribute("data-video-player", "");
     next.setAttribute("src", embedUrl(state.yt));
     // YouTube のプレーヤーを読み終わるまでは、枠が空のまま止まって見えるので、読み込み中の印を出す（lp.css の .is-loading）
+    // 読み上げには、枠の外の role="status"（[data-video-status]）で伝える
     frame.classList.add("is-loading");
     frame.setAttribute("aria-busy", "true");
+    if (status) {
+      status.textContent = frame.getAttribute("data-loading-label") || "";
+    }
     next.addEventListener("load", () => {
       if (player === next) {
         frame.classList.remove("is-loading");
         frame.removeAttribute("aria-busy");
+        if (status) {
+          status.textContent = "";
+        }
       }
     });
     frame.replaceChild(next, player || facade);
