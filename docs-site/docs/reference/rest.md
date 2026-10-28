@@ -8,6 +8,8 @@ sidebar_position: 2
 
 このページは、加盟店サーバーが呼ぶ API のメソッド・パス・認証・フィールド・エラーをまとめています。接続先 URL は導入時に STBLpay の担当者へ問い合わせて受け取り（[問い合わせ先](/support/troubleshooting#問い合わせ先)）、公開 URL や localhost の既定値を仮定しないでください。
 
+同じ内容を、OpenAPI 3.1 形式の仕様書 [openapi.yaml](pathname:///openapi.yaml) でも提供しています。Webhook の本文とヘッダーも含みます。コードの生成や、AI コーディングエージェントに読ませるときに使えます。
+
 ## エンドポイント一覧
 
 | メソッド | パス | 認証 | 用途 |

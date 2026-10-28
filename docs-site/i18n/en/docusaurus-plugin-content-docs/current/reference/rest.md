@@ -8,6 +8,8 @@ sidebar_position: 2
 
 This page lists the methods, paths, authentication, fields, and errors of the API that your server calls. You get the endpoint URL from your STBLpay contact when you onboard ([contact](/support/troubleshooting#contact)). Don't assume a public URL or a localhost default.
 
+The same content is also available as an OpenAPI 3.1 specification, [openapi.yaml](pathname:///openapi.yaml), which also covers the webhook body and headers. Use it to generate code or give it to an AI coding agent. Its descriptions are in Japanese.
+
 ## Endpoint list
 
 | Method | Path | Authentication | Purpose |

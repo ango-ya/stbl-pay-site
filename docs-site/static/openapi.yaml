@@ -1,0 +1,666 @@
+# STBLpay の加盟店向け API の仕様書（OpenAPI 3.1）。https://stbl-pay.com/docs/openapi.yaml で配信する。
+# 文章の説明は docs/reference/rest.md と docs/reference/webhook-events.md にある。API を変えたら、この仕様書と両方の文章をそろえて直す
+openapi: 3.1.0
+info:
+  title: STBLpay API
+  version: '2026-10-28'
+  summary: 加盟店のサーバーが呼ぶ API と、加盟店のサーバーが受け取る Webhook
+  description: |
+    すてぶるペイ（STBLpay）で、加盟店（EC サイト）のサーバーが呼ぶ API と、加盟店のサーバーが受け取る Webhook の仕様です。
+    使い方と注意点は[加盟店向けドキュメント](https://stbl-pay.com/docs/)にあります。
+    [REST API リファレンス](https://stbl-pay.com/docs/reference/rest)と[Webhook イベントリファレンス](https://stbl-pay.com/docs/reference/webhook-events)は、この仕様書と同じ内容を文章で説明しています。
+
+    - 本文は JSON です。REST API のフィールドは camelCase、Webhook の本文は snake_case です。
+    - 金額は円建ての 10 進の文字列です（例：`"4980"`）。JSON number ではありません。手数料などの端数も、浮動小数点数へ変換せずに扱ってください。
+    - 日時は UTC の `Z` で終わる ISO 8601 です。応答はミリ秒まで付きます。
+    - エラーの本文は `{ "code": "...", "details": { ... } }` です。`details` が無いこともあります。分岐には `code` を使い、HTTP ステータスは補助にしてください。コードは増えることがあるので、未知のコードは共通のエラー処理へ落としてください。
+    - 加盟店のサーバーから呼べる返金 API はありません。返金は加盟店コンソールの機能です。
+  contact:
+    name: STBLpay の問い合わせ先
+    url: https://stbl-pay.com/docs/support/troubleshooting
+servers:
+  - url: '{baseUrl}'
+    description: 接続先は、導入時に STBLpay の担当者から受け取ってください。公開 URL や localhost の既定値を仮定しないでください
+    variables:
+      baseUrl:
+        default: https://api.example.com
+        description: 担当者から受け取った接続先の URL（末尾の / は付けない）。既定値は置き換え用の仮の値です
+tags:
+  - name: 決済
+    description: 決済の作成と状態の照会
+paths:
+  /payment_intents:
+    post:
+      operationId: createPaymentIntent
+      tags: [決済]
+      summary: 決済を作成する
+      description: |
+        決済を作成し、利用者をトップレベル遷移させる決済ページの URL（`checkoutUrl`）を返します。
+        応答の `status` が `created` でも、決済は成立していません。成立は Webhook か状態照会で確かめます。
+
+        同じ店舗から同じ `orderId` で呼ぶと、新しい決済を作らずに既存の決済を返します（このときも 201）。
+        返るのはその時点の `status` と、最初の作成で決まった金額・手数料・期限です。2 回目以降に送った `amountJpy` と `merchantExpiresAt` は検査も反映もしません。
+        ただし、店舗の状態と `returnUrl` は 2 回目以降も検査します。
+
+        サーバーから呼んでください。API キーをブラウザへ出さないでください。
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentIntentRequest'
+            examples:
+              basic:
+                summary: 注文 ID と戻り先を付けて作成する
+                value:
+                  amountJpy: '4980'
+                  orderId: ord_0001
+                  returnUrl: https://shop.example.com/orders/ord_0001/return
+      responses:
+        '201':
+          description: 決済を作成した。または、同じ `orderId` の既存の決済を返した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePaymentIntentResponse'
+              examples:
+                created:
+                  summary: 新しく作成した（値は例）
+                  value:
+                    paymentIntentId: pi_0123456789abcdef0123456789abcdef
+                    checkoutUrl: https://checkout.example/checkout/pi_0123456789abcdef0123456789abcdef
+                    status: created
+                    amountJpy: '4980'
+                    feeJpy: '49.8'
+                    netAmountJpy: '4930.2'
+                    checkoutExpiresAt: '2026-10-20T03:00:00.000Z'
+                    createdAt: '2026-10-19T03:00:00.000Z'
+        '400':
+          description: |
+            リクエストが正しくない。
+
+            - `common/invalid_request`：本文の型・形式の違反。本文の形式の違反では `details.issues` に違反の一覧が入ります。金額が 0 のとき、金額の小数部が 6 桁を超えるときは `details` がありません
+            - `payment/expires_at_too_soon`：`merchantExpiresAt` が近すぎる。`details.minSeconds` に、作成時点から最低限あける秒数が入ります
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidRequest:
+                  summary: 本文の形式の違反
+                  value:
+                    code: common/invalid_request
+                    details:
+                      issues:
+                        - code: invalid_string
+                          validation: regex
+                          path: [amountJpy]
+                          message: 10 進の非負数
+                amountZero:
+                  summary: 金額が 0（details なし）
+                  value:
+                    code: common/invalid_request
+                expiresAtTooSoon:
+                  summary: merchantExpiresAt が近すぎる
+                  value:
+                    code: payment/expires_at_too_soon
+                    details:
+                      minSeconds: 259200
+        '401':
+          description: '`auth/api_key_invalid`：API キーが無効、失効済み、または送られていない'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                apiKeyInvalid:
+                  value:
+                    code: auth/api_key_invalid
+        '403':
+          description: |
+            - `merchant/suspended`：加盟店が利用停止中。決済を作成できない。再開を待つ
+            - `merchant/origin_mismatch`：`returnUrl` が登録ドメインの条件に合わない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                suspended:
+                  value:
+                    code: merchant/suspended
+                originMismatch:
+                  value:
+                    code: merchant/origin_mismatch
+        '409':
+          description: |
+            - `store/disabled`：店舗が無効化されている。加盟店コンソールで店舗の状態を確認する
+            - `merchant/domain_required`：EC の決済にはドメインの登録が必要。加盟店コンソールで登録する
+            - `payment/order_terminated`：同じ `orderId` の既存の決済が、加盟店の利用停止で中止済み、または停止前に作られてまだ送信していない。`details` に既存の決済の `paymentIntentId`・`status`・`failedReason` が入る。新しい `orderId` で作り直す
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                storeDisabled:
+                  value:
+                    code: store/disabled
+                domainRequired:
+                  value:
+                    code: merchant/domain_required
+                orderTerminated:
+                  value:
+                    code: payment/order_terminated
+                    details:
+                      paymentIntentId: pi_0123456789abcdef0123456789abcdef
+                      status: failed
+                      failedReason: merchant_suspended
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: |
+            `common/internal`：サーバー側の障害。同じ `orderId` で再試行しても、決済が二重に立つことはありません。
+            ただし、同じ加盟店の別の店舗で使った `orderId` を指定したときもこのエラーになり、こちらは再試行しても解消しません。`orderId` は加盟店全体で一意に採番してください
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                internal:
+                  value:
+                    code: common/internal
+  /payment_status/{paymentIntentId}:
+    get:
+      operationId: getPaymentStatus
+      tags: [決済]
+      summary: 決済の状態を照会する
+      description: |
+        決済の現在の状態を返します。**認証はありません。** API キーや Authorization ヘッダーは不要です。
+        決済 ID は秘密ではないので、自社の注文を閲覧する権限の代わりには使わないでください。
+        この応答に金額・手数料・ウォレットは含まれません。
+      security: []
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          description: 決済の作成で受け取った `paymentIntentId`。形式が違う ID（テスト通知の `pi_test_` で始まる ID を含む）は、存在を確かめる前に 400 になります
+          schema:
+            $ref: '#/components/schemas/PaymentIntentId'
+      responses:
+        '200':
+          description: 決済の現在の状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatusView'
+              examples:
+                settled:
+                  summary: 成立した（値は例）
+                  value:
+                    paymentIntentId: pi_0123456789abcdef0123456789abcdef
+                    status: settled
+                    txHash: '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+                    failedReason: null
+                    returnUrl: https://shop.example.com/orders/ord_0001/return
+                    settledAt: '2026-10-19T03:05:00.000Z'
+                failed:
+                  summary: 失敗した（値は例）
+                  value:
+                    paymentIntentId: pi_0123456789abcdef0123456789abcdef
+                    status: failed
+                    txHash: '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+                    failedReason: insufficient_balance
+                    returnUrl: null
+                    settledAt: null
+        '400':
+          description: '`common/invalid_request`：決済 ID の形式が違う（`details` なし）'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidRequest:
+                  value:
+                    code: common/invalid_request
+        '404':
+          description: '`payment/not_found`：その決済 ID の決済は無い'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                notFound:
+                  value:
+                    code: payment/not_found
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: '`common/internal`：サーバー側の障害'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+webhooks:
+  paymentEvent:
+    post:
+      operationId: receivePaymentEvent
+      summary: 決済の結果を受け取る（加盟店のサーバーが実装する）
+      description: |
+        決済が終端に着くと、加盟店コンソールで登録した URL へ STBLpay が `POST` します。
+        送信先の URL と署名鍵は加盟店ごとに 1 組で、どのネットショップの決済の通知も同じ URL に届きます。
+        種類は本文の `type` で区別します（`payment.settled`・`payment.failed`・`payment.canceled`・`payment.expired`）。未知の種類は 2xx を返して無視できるようにしてください。
+        結末を特定できなかった決済（`nonce_conflict`）の通知はありません。状態照会で確かめます。
+
+        **受け取ったら、次の順に処理してください。**
+
+        1. 署名を検証する。`Stbl-Pay-Signature` の `t` と、JSON パーサーを通す前の本文のバイト列から `"<t>.<本文>"` を作り、署名鍵で HMAC-SHA256 を計算して小文字の 16 進にする。`v1` のいずれかと一致すれば受理する。`t` と現在時刻のずれの許容は 300 秒を初期値にする
+        2. 本文を `JSON.parse` した値の `test` が `true` なら、加盟店コンソールから送ったテスト通知。注文や決済の状態を更新せずに 2xx を返す
+        3. 署名を検証した本文の `id` で重複を除く。再送でも `id` と本文は変わらない
+        4. 業務の処理をする。入金の計上は `payment.settled` の `net_received_jpy` を根拠にする
+
+        **配信と再送**
+
+        - 2xx の応答を成功とします。応答の本文は読みません
+        - 2xx 以外（3xx・4xx・5xx）、タイムアウト、接続や TLS の失敗は、すべて失敗として再送します。リダイレクトは追いません
+        - タイムアウトは、現在の設定で 10 秒です。時間のかかる処理は後に回し、先に 2xx を返してください
+        - 失敗後の間隔は 3 秒 → 10 秒 → 30 秒 → 120 秒 → 600 秒です。初回と合わせて 6 回試行し、以降は打ち切ります
+        - 再送では本文と `id` を保ち、`t` と署名を試行ごとに作り直します。到着の順序は保証しません
+
+        詳しくは[署名検証](https://stbl-pay.com/docs/webhooks/signature)、[再送ポリシー](https://stbl-pay.com/docs/webhooks/retry)、[冪等性](https://stbl-pay.com/docs/webhooks/idempotency)を参照してください。
+      # 送り手の認証は API キーではなく、本文の署名（Stbl-Pay-Signature）で行う
+      security: []
+      parameters:
+        - name: Stbl-Pay-Signature
+          in: header
+          required: true
+          description: |
+            `t=<Unix 秒>,v1=<HMAC-SHA256 の小文字 16 進>` の形で、コンマで区切ります。
+            署名鍵を作り直してから 24 時間は、新旧の鍵の `v1` が 2 つ並びます。すべて保持し、同名のキーを上書きする辞書へ変換しないでください。
+            署名鍵は `whsec_` で始まる文字列で、`whsec_` を含む文字列全体をそのまま HMAC の鍵に使います。
+          schema:
+            type: string
+          example: t=1792900000,v1=5f2b0c1e9d8a7b6c5f4e3d2c1b0a99887766554433221100ffeeddccbbaa9988
+        - name: Stbl-Pay-Event-Id
+          in: header
+          required: true
+          description: 本文の `id` の複製。再送でも変わりません。署名の対象外なので、重複の除去には署名を検証した本文の `id` を使ってください
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: '`Content-Type` は `application/json; charset=utf-8` です。キーの順序に依存しないでください'
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/WebhookEvent'
+                - $ref: '#/components/schemas/TestWebhookEvent'
+            examples:
+              settled:
+                summary: payment.settled（値は例）
+                value:
+                  id: evt_0123456789abcdef0123456789abcdef
+                  type: payment.settled
+                  created_at: '2026-10-19T03:05:01.000Z'
+                  data:
+                    payment_intent_id: pi_0123456789abcdef0123456789abcdef
+                    order_id: ord_0001
+                    status: settled
+                    merchant_id: m_0123456789abcdef0123456789abcdef
+                    payout: '0x0123456789abcdef0123456789abcdef01234567'
+                    amount_jpy: '4980'
+                    fee_jpy: '49.8'
+                    net_received_jpy: '4930.2'
+                    tx_hash: '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+                    settled_at: '2026-10-19T03:05:00.000Z'
+                    failed_reason: null
+              failed:
+                summary: payment.failed（値は例）
+                value:
+                  id: evt_fedcba9876543210fedcba9876543210
+                  type: payment.failed
+                  created_at: '2026-10-19T03:05:01.000Z'
+                  data:
+                    payment_intent_id: pi_0123456789abcdef0123456789abcdef
+                    order_id: ord_0001
+                    status: failed
+                    merchant_id: m_0123456789abcdef0123456789abcdef
+                    payout: '0x0123456789abcdef0123456789abcdef01234567'
+                    amount_jpy: '4980'
+                    fee_jpy: '0'
+                    net_received_jpy: '0'
+                    tx_hash: '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+                    settled_at: null
+                    failed_reason: insufficient_balance
+              test:
+                summary: テスト通知（値は例）
+                value:
+                  id: evt_test_0123456789abcdef01234567
+                  type: payment.settled
+                  created_at: '2026-10-28T01:02:03.456Z'
+                  test: true
+                  data:
+                    payment_intent_id: pi_test_0123456789abcdef01234567
+                    order_id: test_0123456789abcdef01234567
+                    status: settled
+                    merchant_id: m_0123456789abcdef0123456789abcdef
+                    payout: '0x0123456789abcdef0123456789abcdef01234567'
+                    amount_jpy: '1000'
+                    fee_jpy: '0'
+                    net_received_jpy: '1000'
+                    tx_hash: null
+                    settled_at: '2026-10-28T01:02:03.456Z'
+                    failed_reason: null
+      responses:
+        '2XX':
+          description: 受信に成功した。本文は読まれません
+        default:
+          description: 2xx 以外は失敗として扱い、再送します
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-stbl-api-key
+      description: |
+        加盟店コンソールで店舗ごとに発行する API キー。形式は `stblpay_` に 43 文字の base64url が続く文字列です。
+        `Authorization` ヘッダーは使いません。
+  responses:
+    TooManyRequests:
+      description: |
+        回数の制限にかかった。間を置いて再試行してください。
+        決済作成と状態照会には、アプリ側の回数制限はありません。ただし、前段のネットワークで回数を制限することがあり、そのときの本文には `code` が入りません
+  schemas:
+    PaymentIntentId:
+      type: string
+      pattern: '^pi_[0-9a-f]{8,32}$'
+      description: 決済 ID。`pi_` に小文字の 16 進が 8〜32 桁続く
+      examples: [pi_0123456789abcdef0123456789abcdef]
+    AmountJpy:
+      type: string
+      pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'
+      description: 円建ての金額。10 進の数の文字列で、整数部に先頭のゼロは付かない。応答では小数部の末尾の 0 を落とす（`"1.50"` は `"1.5"`、`"4980.0"` は `"4980"` になる）
+      examples: ['4980', '49.8']
+    DateTime:
+      type: string
+      pattern: '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?Z$'
+      description: UTC の `Z` で終わる ISO 8601 の日時。`+09:00` のようなオフセット付きと、暦に無い日付（2 月 30 日など）は受け付けない。リクエストでは秒とミリ秒を省略できる。応答はミリ秒まで付く
+      examples: ['2026-10-20T03:00:00.000Z']
+    PaymentStatus:
+      type: string
+      enum:
+        - created
+        - signed
+        - issue_pending
+        - deposit_seen
+        - deposit_confirmed
+        - deploying
+        - executing
+        - settled
+        - canceled
+        - expired
+        - failed
+        - nonce_conflict
+      description: |
+        決済の状態。`settled` だけが成立で、商品の提供や入金の計上はこの状態を根拠にします。
+
+        | 値 | 区分 | 意味 |
+        |---|---|---|
+        | `created` | 途中 | 決済を作成した。署名を待っている |
+        | `signed` | 途中 | 利用者の署名が済んだ |
+        | `issue_pending` | 途中 | 利用者が JPYC EX の手続きへ進んだ。手続きが済んだことは意味しない |
+        | `deposit_confirmed` | 途中 | 着金（または残高）を確認した。決済の実行前 |
+        | `deploying` | 途中 | 利用者のウォレットを作成している |
+        | `executing` | 途中 | 決済の実行を始めた。結果を確認している |
+        | `settled` | 成立 | 決済が成立し、加盟店へ送金された |
+        | `canceled` | 成立しなかった | 決済が取り消された |
+        | `expired` | 成立しなかった | 期限が来て終了した |
+        | `failed` | 成立しなかった | 決済が失敗した。理由は `failedReason` |
+        | `nonce_conflict` | 要確認 | 結末を特定できなかった。成立とも失敗とも判断せず、保留して調査へ回す |
+
+        `deposit_seen` は定義だけがあり、今は返りません。未知の値を受け取ったときは、商品の提供や再請求をせず、確認中として扱ってください。
+    FailedReason:
+      type: [string, 'null']
+      description: |
+        失敗の分類コード。`status` が `failed` または `nonce_conflict` のときに入り、それ以外では null です。
+        コードは増えることがあるので、列挙で厳密に検証せず、**未知の値は失敗として扱うフォールバックに落としてください。**
+        生のチェーンのエラー文字列と、発行体の取引可否判断の理由は入りません。
+
+        | コード | 意味 |
+        |---|---|
+        | `userop_expired` | 着金または残高の充足は確認できたが、決済を実行できる時刻を過ぎていた。お金は届いている |
+        | `deposit_recipient_mismatch` | 着金の宛先が、決済で想定した宛先と違う |
+        | `wallet_deploy_failed` | 利用者のウォレットの作成に失敗した |
+        | `missing_signed_userop` | 実行に必要な署名済みの操作が無かった |
+        | `insufficient_balance` | 支払人の残高が足りない |
+        | `policy_violation` | 支払人のウォレットの金額上限・頻度上限に触れた |
+        | `not_pay_call` / `not_allowed_call` | 許可された形の支払い操作ではなかった |
+        | `fee_amount_mismatch` | 手数料の額が合わない |
+        | `fee_not_collected` | 手数料が徴収されていない |
+        | `merchant_wallet_outdated` | 加盟店の受取ウォレットの実装が古く、猶予を過ぎている |
+        | `unexpected_implementation` | ウォレットの実装が想定と違う |
+        | `userop_reverted` | 上のどれにも当てはまらない、支払い操作の失敗 |
+        | `nonce_conflict` | 結末を特定できなかった（`status` も `nonce_conflict`）。Webhook には入らない |
+        | `merchant_suspended` | 加盟店の利用停止で、送信を開始していない決済を終端にした |
+        | `unclassified` | まだ分類していない失敗 |
+      examples: [insufficient_balance]
+    CreatePaymentIntentRequest:
+      type: object
+      required: [amountJpy]
+      properties:
+        amountJpy:
+          type: string
+          pattern: '^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$'
+          description: |
+            請求額（円）。10 進の数の文字列で、整数部に先頭のゼロは付けない（例：`"4980"`、`"0.5"`）。
+            0 を超える金額にする（`"0"` は 400 `common/invalid_request`）。小数部は 6 桁まで。
+            この API は金額の上限と下限を独自にはかけていません。支払い時に、利用者のウォレットの金額上限・頻度上限に触れて成立しないことがあります（`failedReason` は `policy_violation`）
+          examples: ['4980']
+        orderId:
+          type: string
+          maxLength: 128
+          description: |
+            自社の注文 ID。冪等性のキー。同じ店舗から同じ値で再作成すると既存の決済を返します。
+            長さは UTF-16 のコード単位で数えて 128 までです（絵文字などは 1 文字で 2 単位）。
+            省略すると、呼ぶたびに新しい決済を作ります。複数の店舗があるときは、加盟店全体で一意に採番してください（別の店舗で使った値は 500 `common/internal`）
+          examples: [ord_0001]
+        returnUrl:
+          # format: uri は付けない。国際化ドメイン名（https://例え.テスト/）をサーバーは受け付けるが、uri の検査では落ちるため
+          type: string
+          pattern: '^https://'
+          description: |
+            決済の後に利用者が戻る URL。次の条件をすべて満たさないと、決済は作成されません。
+
+            - スキームは `https`（`http` は `http://localhost` のような開発用の URL も不可）
+            - ポート番号を付けない（`:443` は付けても通る）
+            - `user:pass@` のような userinfo を含めない
+            - ホスト名が、加盟店コンソールで登録したドメインと完全に一致する（大文字小文字は区別しない。サブドメインは別のドメイン）
+
+            `https` でない URL は 400 `common/invalid_request` です。ただし `http://localhost`・`http://127.0.0.1`・`http://[::1]` は 403 `merchant/origin_mismatch` です。`https` で、ほかの条件に合わないときも 403 `merchant/origin_mismatch` です。
+            パスとクエリに制限はありません。利用者が戻るときは、`stbl_pay_intent` クエリ（値は決済 ID）が付きます。
+          examples: [https://shop.example.com/orders/ord_0001/return]
+        merchantExpiresAt:
+          $ref: '#/components/schemas/DateTime'
+          description: |
+            着金期限の上限。作成から 3 日より先の日時だけを指定できます（近すぎると 400 `payment/expires_at_too_soon`）。
+            操作期限（`checkoutExpiresAt`）は短くなりません。同じ `orderId` で再作成しても、最初に受け取った値は上書きされません
+          examples: ['2026-10-25T03:00:00Z']
+    CreatePaymentIntentResponse:
+      type: object
+      required: [paymentIntentId, checkoutUrl, status, amountJpy, feeJpy, netAmountJpy, checkoutExpiresAt, createdAt]
+      properties:
+        paymentIntentId:
+          $ref: '#/components/schemas/PaymentIntentId'
+          description: 決済 ID。自社の注文と結び付けて保存する
+        checkoutUrl:
+          type: string
+          pattern: '^https://'
+          description: 利用者をトップレベル遷移させる決済ページの URL
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+          description: 新しく作成したときは `created`。同じ `orderId` で既存の決済を返したときは、その時点の状態
+        amountJpy:
+          $ref: '#/components/schemas/AmountJpy'
+          description: 請求額
+        feeJpy:
+          $ref: '#/components/schemas/AmountJpy'
+          description: 手数料の見積り。確定した手数料は `payment.settled` の Webhook の `fee_jpy` で受け取る
+        netAmountJpy:
+          $ref: '#/components/schemas/AmountJpy'
+          description: 加盟店の受取額の見積り（`amountJpy` − `feeJpy`）
+        checkoutExpiresAt:
+          $ref: '#/components/schemas/DateTime'
+          description: 決済ページの期限
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+          description: 決済の作成日時
+    PaymentStatusView:
+      type: object
+      required: [paymentIntentId, status, txHash, failedReason, returnUrl, settledAt]
+      properties:
+        paymentIntentId:
+          $ref: '#/components/schemas/PaymentIntentId'
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        txHash:
+          type: [string, 'null']
+          pattern: '^0x[0-9a-f]{64}$'
+          description: 送金のトランザクション。決済の実行を始める前は null
+        failedReason:
+          $ref: '#/components/schemas/FailedReason'
+        returnUrl:
+          type: [string, 'null']
+          pattern: '^https://'
+          description: 作成時に指定した `returnUrl`。指定しなかったときは null
+        settledAt:
+          oneOf:
+            - $ref: '#/components/schemas/DateTime'
+            - type: 'null'
+          description: 成立した日時。`settled` 以外では null
+    Error:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: エラーコード。未知のコードは共通のエラー処理へ落とす
+          examples: [common/invalid_request]
+        details:
+          type: object
+          additionalProperties: true
+          description: |
+            コードごとの追加の情報。無いこともあります。表示文言はサーバーが返さないので、加盟店側で決めます。
+
+            - `common/invalid_request`（本文の形式の違反）：`issues` に違反の配列。各要素の `path` は該当フィールドを指す配列、`message` は理由
+            - `payment/expires_at_too_soon`：`minSeconds` に、作成時点から最低限あける秒数
+            - `payment/order_terminated`：既存の決済の `paymentIntentId`・`status`・`failedReason`
+    WebhookPaymentData:
+      type: object
+      required: [payment_intent_id, order_id, status, merchant_id, payout, amount_jpy, fee_jpy, net_received_jpy, tx_hash, settled_at, failed_reason]
+      properties:
+        payment_intent_id:
+          $ref: '#/components/schemas/PaymentIntentId'
+        order_id:
+          type: [string, 'null']
+          description: 決済の作成時に渡した `orderId`。渡さなかったときは null
+        status:
+          type: string
+          enum: [settled, failed, canceled, expired]
+          description: イベントに対応する終端状態（`payment.settled` は `settled` のように対応する）
+        merchant_id:
+          type: string
+          pattern: '^m_[0-9a-f]{8,32}$'
+          description: 加盟店 ID
+        payout:
+          type: string
+          pattern: '^0x[0-9a-f]{40}$'
+          description: 加盟店の受取先のアドレス（小文字）
+        amount_jpy:
+          $ref: '#/components/schemas/AmountJpy'
+          description: 注文額。どのイベントでも注文額のまま
+        fee_jpy:
+          $ref: '#/components/schemas/AmountJpy'
+          description: '`payment.settled` では、チェーン上で実際に引かれた手数料。それ以外のイベントでは `"0"`'
+        net_received_jpy:
+          $ref: '#/components/schemas/AmountJpy'
+          description: '`payment.settled` では、加盟店の実際の受取額。それ以外のイベントでは `"0"`。入金の計上はこの値を使う'
+        tx_hash:
+          type: [string, 'null']
+          pattern: '^0x[0-9a-f]{64}$'
+          description: 送金のトランザクション。取消・失効では null。失敗では、実行を始めていれば入る
+        settled_at:
+          oneOf:
+            - $ref: '#/components/schemas/DateTime'
+            - type: 'null'
+          description: 成立した日時。`payment.settled` 以外では null
+        failed_reason:
+          $ref: '#/components/schemas/FailedReason'
+          description: '`payment.failed` の理由の分類コード（状態照会の `failedReason` と同じ集合。`nonce_conflict` は入らない）。それ以外のイベントでは null'
+    WebhookEvent:
+      type: object
+      required: [id, type, created_at, data]
+      properties:
+        id:
+          type: string
+          pattern: '^evt_[0-9a-f]{8,32}$'
+          description: イベント ID。再送でも変わらない。重複の除去に使う
+        type:
+          type: string
+          enum: [payment.settled, payment.failed, payment.canceled, payment.expired]
+          description: イベントの種類。種類は増えることがあるので、未知の種類は 2xx を返して無視する
+        created_at:
+          $ref: '#/components/schemas/DateTime'
+          description: イベントを作った日時。署名ヘッダーの `t`（送信した時刻）とは別
+        data:
+          $ref: '#/components/schemas/WebhookPaymentData'
+    TestWebhookEvent:
+      type: object
+      description: 加盟店コンソールから送るテスト通知。`test` が `true` で、実在する決済や注文を指さない。保存した URL へ 1 回だけ送り、再送しない
+      required: [id, type, created_at, test, data]
+      properties:
+        id:
+          type: string
+          pattern: '^evt_test_[0-9a-f]{24}$'
+        type:
+          const: payment.settled
+        created_at:
+          $ref: '#/components/schemas/DateTime'
+        test:
+          const: true
+        data:
+          type: object
+          required: [payment_intent_id, order_id, status, merchant_id, payout, amount_jpy, fee_jpy, net_received_jpy, tx_hash, settled_at, failed_reason]
+          properties:
+            payment_intent_id:
+              type: string
+              pattern: '^pi_test_[0-9a-f]{24}$'
+            order_id:
+              type: string
+              pattern: '^test_[0-9a-f]{24}$'
+            status:
+              const: settled
+            merchant_id:
+              type: string
+              pattern: '^m_[0-9a-f]{8,32}$'
+              description: 自社の加盟店 ID
+            payout:
+              type: string
+              pattern: '^0x[0-9a-f]{40}$'
+              description: 登録している受取先のアドレス
+            amount_jpy:
+              $ref: '#/components/schemas/AmountJpy'
+              description: '`"1000"`'
+            fee_jpy:
+              $ref: '#/components/schemas/AmountJpy'
+              description: '`"0"`'
+            net_received_jpy:
+              $ref: '#/components/schemas/AmountJpy'
+              description: '`"1000"`'
+            tx_hash:
+              type: 'null'
+            settled_at:
+              $ref: '#/components/schemas/DateTime'
+              description: 送信した日時
+            failed_reason:
+              type: 'null'
