@@ -117,6 +117,15 @@ test.describe("加盟店向けドキュメント", () => {
     }
   });
 
+  test("OpenAPI の仕様書を、日英の docs の下と llms.txt が案内する場所から取得できる", async ({ request }) => {
+    for (const path of ["/docs/openapi.yaml", "/docs/en/openapi.yaml"]) {
+      const response = await request.get(path);
+      expect(response.ok(), path).toBe(true);
+      expect(await response.text(), path).toMatch(/^openapi: 3\.1\.0$/m);
+    }
+    expect(await (await request.get("/llms.txt")).text()).toContain("(/docs/openapi.yaml)");
+  });
+
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {
     const headers = readFileSync(`${dist}_headers`, "utf8");
     expect(headers).not.toContain("__DOCS_SCRIPT_HASHES__");
