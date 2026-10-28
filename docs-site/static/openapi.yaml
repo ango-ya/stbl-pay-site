@@ -19,11 +19,11 @@ info:
     url: https://stbl-pay.com/docs/support/troubleshooting
 servers:
   - url: '{baseUrl}'
-    description: 接続先は、導入時に STBLpay の担当者から受け取ってください。公開 URL や localhost の既定値を仮定しないでください
+    description: 接続先の URL は、[問い合わせ先](https://stbl-pay.com/docs/support/troubleshooting)に確認してください。公開 URL や localhost の既定値を仮定しないでください
     variables:
       baseUrl:
         default: https://api.example.com
-        description: 担当者から受け取った接続先の URL（末尾の / は付けない）。既定値は置き換え用の仮の値です
+        description: 確認した接続先の URL（末尾の / は付けない）。既定値は置き換え用の仮の値です
 tags:
   - name: 決済
     description: 決済の作成と状態の照会
