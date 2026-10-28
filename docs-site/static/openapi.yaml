@@ -1,5 +1,5 @@
 # STBLpay の加盟店向け API の仕様書（OpenAPI 3.1）。https://stbl-pay.com/docs/openapi.yaml で配信する。
-# 文章の説明は docs/reference/rest.md と docs/reference/webhook-events.md にある。API を変えたら、この仕様書と両方の文章をそろえて直す
+# 加盟店 API と Webhook の項目ごとの決まり（型・形式・必須・エラー・本文の形）はこの仕様書が正本。docs には概要と図を書き、詳細はここへリンクする
 openapi: 3.1.0
 info:
   title: STBLpay API
@@ -7,8 +7,7 @@ info:
   summary: 加盟店のサーバーが呼ぶ API と、加盟店のサーバーが受け取る Webhook
   description: |
     すてぶるペイ（STBLpay）で、加盟店（EC サイト）のサーバーが呼ぶ API と、加盟店のサーバーが受け取る Webhook の仕様です。
-    使い方と注意点は[加盟店向けドキュメント](https://stbl-pay.com/docs/)にあります。
-    [REST API リファレンス](https://stbl-pay.com/docs/reference/rest)と[Webhook イベントリファレンス](https://stbl-pay.com/docs/reference/webhook-events)は、この仕様書と同じ内容を文章で説明しています。
+    組み込みの流れと注意点は[加盟店向けドキュメント](https://stbl-pay.com/docs/)にあります。
 
     - 本文は JSON です。REST API のフィールドは camelCase、Webhook の本文は snake_case です。
     - 金額は円建ての 10 進の文字列です（例：`"4980"`）。JSON number ではありません。手数料などの端数も、浮動小数点数へ変換せずに扱ってください。
