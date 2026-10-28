@@ -39,8 +39,8 @@ paths:
         応答の `status` が `created` でも、決済は成立していません。成立は Webhook か状態照会で確かめます。
 
         同じ店舗から同じ `orderId` で呼ぶと、新しい決済を作らずに既存の決済を返します（このときも 201）。
-        返るのはその時点の `status` と、最初の作成で決まった金額・手数料・期限です。2 回目以降に送った `amountJpy` と `merchantExpiresAt` は検査も反映もしません。
-        ただし、店舗の状態と `returnUrl` は 2 回目以降も検査します。
+        返るのはその時点の `status` と、最初の作成で決まった金額・手数料・期限です。
+        2 回目以降も、本文の型と形式、店舗の状態、`returnUrl` は検査します。既存の決済があるときは、送った `amountJpy` と `merchantExpiresAt` の値の検査（金額が 0 でないか、期限が近すぎないか）をせず、反映もしません。
 
         サーバーから呼んでください。API キーをブラウザへ出さないでください。
       security:
@@ -256,14 +256,15 @@ webhooks:
 
         1. 署名を検証する。`Stbl-Pay-Signature` の `t` と、JSON パーサーを通す前の本文のバイト列から `"<t>.<本文>"` を作り、署名鍵で HMAC-SHA256 を計算して小文字の 16 進にする。`v1` のいずれかと一致すれば受理する。`t` と現在時刻のずれの許容は 300 秒を初期値にする
         2. 本文を `JSON.parse` した値の `test` が `true` なら、加盟店コンソールから送ったテスト通知。注文や決済の状態を更新せずに 2xx を返す
-        3. 署名を検証した本文の `id` で重複を除く。再送でも `id` と本文は変わらない
-        4. 業務の処理をする。入金の計上は `payment.settled` の `net_received_jpy` を根拠にする
+        3. 署名を検証した本文の `id` で重複を除きながら、イベントを耐久性のある DB またはキューへ保存する。再送でも `id` と本文は変わらない
+        4. 保存してから 2xx を返す。先に応答すると、直後の停止で通知を失っても再送されない
+        5. 保存したイベントから業務の処理をする。入金の計上は `payment.settled` の `net_received_jpy` を根拠にする
 
         **配信と再送**
 
         - 2xx の応答を成功とします。応答の本文は読みません
         - 2xx 以外（3xx・4xx・5xx）、タイムアウト、接続や TLS の失敗は、すべて失敗として再送します。リダイレクトは追いません
-        - タイムアウトは、現在の設定で 10 秒です。時間のかかる処理は後に回し、先に 2xx を返してください
+        - タイムアウトは、現在の設定で 10 秒です。イベントを保存したら 2xx を返し、時間のかかる処理は後に回してください
         - 失敗後の間隔は 3 秒 → 10 秒 → 30 秒 → 120 秒 → 600 秒です。初回と合わせて 6 回試行し、以降は打ち切ります
         - 再送では本文と `id` を保ち、`t` と署名を試行ごとに作り直します。到着の順序は保証しません
 
@@ -505,7 +506,7 @@ components:
           description: 請求額
         feeJpy:
           $ref: '#/components/schemas/AmountJpy'
-          description: 手数料の見積り。確定した手数料は `payment.settled` の Webhook の `fee_jpy` で受け取る
+          description: 作成時点の手数料の見積り。実際の手数料は `payment.settled` の Webhook の `fee_jpy` で受け取り、この値と違うことがある
         netAmountJpy:
           $ref: '#/components/schemas/AmountJpy'
           description: 加盟店の受取額の見積り（`amountJpy` − `feeJpy`）
@@ -581,10 +582,10 @@ components:
           description: 注文額。どのイベントでも注文額のまま
         fee_jpy:
           $ref: '#/components/schemas/AmountJpy'
-          description: '`payment.settled` では、チェーン上で実際に引かれた手数料。それ以外のイベントでは `"0"`'
+          description: '`payment.settled` では、チェーン上で実際に引かれた手数料（実行結果から取れなかった回だけ、作成時の見積りで計算した値）。それ以外のイベントでは `"0"`'
         net_received_jpy:
           $ref: '#/components/schemas/AmountJpy'
-          description: '`payment.settled` では、加盟店の実際の受取額。それ以外のイベントでは `"0"`。入金の計上はこの値を使う'
+          description: '`payment.settled` では、加盟店の実際の受取額（実行結果から取れなかった回だけ、作成時の見積りで計算した値）。それ以外のイベントでは `"0"`。入金の計上はこの値を使う'
         tx_hash:
           type: [string, 'null']
           pattern: '^0x[0-9a-f]{64}$'
