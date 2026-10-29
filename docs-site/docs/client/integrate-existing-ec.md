@@ -40,7 +40,8 @@ flowchart TD
   C -- settled --> D[支払い済み。作り直さず、その決済で注文を進める]
   C -- canceled / expired / failed --> E[新しい orderId で作り直す]
   C -- nonce_conflict --> F[作り直さず、問い合わせ先へ調査を依頼する]
-  C -- created / signed / issue_pending --> G{期限まで待てる}
+  C -- created --> H
+  C -- signed / issue_pending --> G{期限まで待てる}
   C -- それ以外の途中の状態 --> J[終端になるまで状態照会を続ける]
   J --> B
   G -- 待てる --> H[失効を待つ。expired になり payment.expired が届く]
@@ -53,9 +54,9 @@ flowchart TD
 2. `settled` なら、支払いは済んでいます。作り直さず、その決済で注文を進めます。
 3. `canceled`・`expired`・`failed` なら、成立しないことが確定しています。新しい `orderId` で作り直せます。
 4. `nonce_conflict` なら、作り直さずに[問い合わせ先](/support/troubleshooting#問い合わせ先)へ調査を依頼します（[送金の結果が確定できない](/lifecycle/edge-cases#送金の結果が確定できないnonce_conflict)）。
-5. `created`・`signed`・`issue_pending` なら、新しい決済を作りません。次のどちらかで終端になるのを待ち、1 に戻ります。
+5. `created`・`signed`・`issue_pending` なら、新しい決済を作りません。次の方法で終端になるのを待ち、1 に戻ります。
    - **期限を待つ**：`created` と予約開始前の `signed` は `checkoutExpiresAt` で、`issue_pending` は着金期限と確定待ちの猶予を過ぎると `expired` になり、`payment.expired` が届きます（[操作期限と着金期限](/lifecycle/transitions#操作期限と着金期限)）。
-   - **利用者に取り消してもらう**：待てない場合は、利用者に STBLpay のマイページで取り消してもらうよう案内します。取り消せるのは `signed` と、着金が確認される前の `issue_pending` だけです。取り消すと `canceled` になり、`payment.canceled` が届きます。着金が確認された後は取り消せません（[キャンセル](/lifecycle/transitions#キャンセル)）。
+   - **利用者に取り消してもらう（`signed`・`issue_pending` のみ）**：待てない場合は、利用者に STBLpay のマイページで取り消してもらうよう案内します。取り消せるのは `signed` と、着金が確認される前の `issue_pending` だけです。取り消すと `canceled` になり、`payment.canceled` が届きます。着金が確認された後は取り消せません（[キャンセル](/lifecycle/transitions#キャンセル)）。
 6. それ以外の途中の状態（着金の確認後）なら、取り消しも失効もできません。新しい決済を作らず、終端になるまで状態照会を続けて 1 に戻ります。
 
 復帰ページの表示では、自社セッションから注文を認可します。決済 ID を知っていることだけで注文内容を返さないでください。
