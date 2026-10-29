@@ -607,7 +607,7 @@ components:
           description: イベント ID。再送でも変わらない。重複の除去に使う
         type:
           type: string
-          enum: [payment.settled, payment.failed, payment.canceled, payment.expired]
+          examples: [payment.settled, payment.failed, payment.canceled, payment.expired]
           description: イベントの種類。種類は増えることがあるので、未知の種類は 2xx を返して無視する
         created_at:
           $ref: '#/components/schemas/DateTime'
