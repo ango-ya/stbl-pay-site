@@ -40,11 +40,11 @@ STBLpay and the buyer handle everything else:
 | Sandbox | In preparation ([Sandbox](/testing/sandbox)) |
 | Multi-account management, WooCommerce plugin | Planned after the first release ([Roadmap](/support/roadmap)) |
 
-Availability and known limitations are summarized in [Scope and limitations](/support/limitations).
+Availability and known limitations are summarized in [Known limitations](/support/limitations).
 
 ## Read these first
 
-1. [Payment flow](/getting-started/payment-flow), [Money flow](/getting-started/money-flow), [Division of responsibilities](/getting-started/responsibilities)
+1. [Payment flow](/getting-started/payment-flow), [Money flow](/getting-started/money-flow), [Client and server responsibilities](/getting-started/responsibilities)
 2. [Prerequisites](/getting-started/prerequisites) and [Quick Start](/getting-started/quickstart)
 3. [Completion check](/lifecycle/completion) and [Webhooks](/webhooks/events)
 

@@ -1,10 +1,10 @@
 ---
-title: 署名検証
-sidebar_label: 署名検証
+title: Webhook 検証の要件
+sidebar_label: Webhook 検証の要件
 sidebar_position: 3
 ---
 
-# 署名検証
+# Webhook 検証の要件
 
 Webhook を注文確定の根拠にする場合、署名と時刻を必ず検証し、検証済みボディの `id` で冪等に処理します。[実装例](/webhooks/signature)を参照してください。
 

@@ -15,9 +15,10 @@ Retries have a maximum count, so eventual delivery is not guaranteed. To prepare
 Register the final URL that can receive a `POST` directly.
 
 - HTTPS only. You cannot set a URL that includes a username or password (userinfo).
+- Use a valid certificate issued by a publicly trusted certificate authority. It must not be expired, its hostname must match the URL, and your server must send the intermediate certificates too. STBLpay cannot connect to an endpoint that uses a self-signed certificate or a certificate issued by an internal certificate authority. In that case, STBLpay treats the delivery as a failure, retries it, and abandons it when the retry limit is reached. Delivery history (配信履歴) shows TLS verification failed (TLS の確認の失敗).
 - You cannot set a URL that resolves to an internal or reserved address, or a URL whose hostname cannot be resolved. STBLpay performs the same validation on every delivery.
 - **Redirects are not followed.** STBLpay treats a `3xx` response as a failure and retries. Register the destination URL.
-- `2xx` is treated as success.
+- `2xx` is treated as success. How long STBLpay waits for the response (the timeout) and which responses count as failures (`3xx`, `4xx`, `5xx`, timeouts, and connection or TLS failures) are in `webhooks.paymentEvent` in the [OpenAPI specification](pathname:///openapi.yaml).
 
 ## Retry intervals
 

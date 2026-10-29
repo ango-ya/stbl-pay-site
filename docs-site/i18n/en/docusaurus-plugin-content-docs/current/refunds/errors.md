@@ -11,8 +11,8 @@ When you cannot start a refund, the Refund (返金) screen shows the reason.
 | Message on screen | What to do |
 |---|---|
 | "Only completed payments can be refunded" (完了した決済だけ返金できます) | Try again after the payment becomes `settled` |
-| "Cannot refund because the buyer's receiving address is unknown" (お客さまの受取先が分からないため返金できません) | Contact your operations person |
-| "No amount is refundable now" (いま返金できる額がありません) | The amount is already refunded, or reserved by a refund pending approval. Or the balance of the receiving wallet is insufficient. Check the reason text shown with it on the screen, and the history |
+| "Cannot refund because the buyer's receiving address is unknown" (お客さまの受取先が分からないため返金できません) | This cannot be resolved on the merchant side. Contact [support](/support/troubleshooting#contact) and include the payment ID |
+| "No amount is refundable now" (いま返金できる額がありません) | The amount is already refunded and nothing is left, or the balance of the receiving wallet or the on-chain backing for the refund has reached 0. Check the reason text shown with it on the screen, and the history (if a reason text is shown, see [Refundable amount and funding source](/refunds/funding)) |
 | "A refund is possible after the operation in progress is confirmed" (進行中の操作の確認後に返金できます) | Another operation on the wallet is in progress. Recheck after the confirmation finishes |
 | "There is an operation pending approval" (承認待ちの操作があります) | Cancel the pending approval, or recheck after a while |
 | "Cannot refund because the receiving wallet has not been created yet" (受取ウォレットがまだ作成されていないため返金できません) | Recheck after the receiving wallet is created |

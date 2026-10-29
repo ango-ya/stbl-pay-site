@@ -8,6 +8,8 @@ sidebar_position: 2
 
 このページは、加盟店サーバーが呼ぶ API のメソッド・パス・認証・フィールド・エラーをまとめています。接続先 URL は導入時に STBLpay の担当者へ問い合わせて受け取り（[問い合わせ先](/support/troubleshooting#問い合わせ先)）、公開 URL や localhost の既定値を仮定しないでください。
 
+API の項目ごとの型・形式・制約・エラーは、OpenAPI 3.1 の仕様書 [openapi.yaml](pathname:///openapi.yaml) に定義しています。このページは、その概要と使い方の注意です。コードの生成や、AI コーディングエージェントに読ませるときは、仕様書を使ってください。
+
 ## エンドポイント一覧
 
 | メソッド | パス | 認証 | 用途 |
@@ -18,6 +20,8 @@ sidebar_position: 2
 リクエストとレスポンスの本文は JSON です。
 
 ## 決済作成
+
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `POST /payment_intents`（`CreatePaymentIntentRequest`・`CreatePaymentIntentResponse`） にあります。
 
 `POST /payment_intents`
 
@@ -53,12 +57,12 @@ sidebar_position: 2
   - ホスト名が、加盟店コンソールで登録したドメインと**完全に一致**します（大文字小文字は区別しません）。サブドメインは別のドメインとして扱うため、`shop.example.com` を登録したときに `www.shop.example.com` は使えません。ドメインの登録は[ドメイン登録](/security/domain)を参照してください。
   - パスとクエリには制限がありません（例：`https://shop.example.com/orders/ord_0001/return`）。
 
-  決済が終端に着くと、決済ページに戻るリンク（成立したときは「ショップに戻る」、それ以外の終端では「お支払い先に戻る」）が出ます。利用者が押すと、`returnUrl` に `stbl_pay_intent` クエリが付いて開きます（例：`https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_xxx`）。値は決済 ID です。`returnUrl` に同じ名前のクエリがあると上書きされます。
+  決済が終端に着くと、決済ページに戻るリンク（成立したときは「ショップに戻る」、それ以外の終端では「お支払い先に戻る」）が出ます。利用者が押すと、`returnUrl` に `stbl_pay_intent` クエリが付いて開きます（例：`https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_0123456789abcdef0123456789abcdef`）。値は決済 ID です。`returnUrl` に同じ名前のクエリがあると上書きされます。
 - `merchantExpiresAt` は、着金期限（利用者が JPYC EX の手続きへ進んだときに決まる）の上限として使われます。操作期限（`checkoutExpiresAt`）は短くなりません。作成から 3 日より先の日時だけを指定できます。UTC の `Z` で終わる形だけを受け付けます（例：`"2026-10-20T03:00:00Z"`）。`+09:00` のようなオフセット付きは 400 `common/invalid_request` です。同じ `orderId` で再作成しても、最初に受け取った値は上書きされません。[期限の扱い](/lifecycle/transitions)を参照してください。
 
 ### レスポンス
 
-成功すると 201（同じ `orderId` で既存の決済を返すときも 201） で次の JSON を返します。
+成功すると 201（同じ `orderId` で既存の決済を返すときも 201）で次の JSON を返します。
 
 | フィールド | 型 | 説明 |
 |---|---|---|
@@ -66,9 +70,9 @@ sidebar_position: 2
 | `checkoutUrl` | HTTPS URL の文字列 | 利用者をトップレベル遷移させる決済ページの URL |
 | `status` | [状態の値](#状態の値) | 新しく作成したときは `created` |
 | `amountJpy` | 金額の文字列 | 請求額 |
-| `feeJpy` | 金額の文字列 | 手数料 |
-| `netAmountJpy` | 金額の文字列 | 加盟店の受取額（`amountJpy` − `feeJpy`） |
-| `checkoutExpiresAt` | 日時の文字列 | 決済ページの期限 |
+| `feeJpy` | 金額の文字列 | 手数料の見積り（作成時の料率で計算した額）。精算に使う手数料は `payment.settled` の `fee_jpy` で確認する（[金額の扱い](/reference/webhook-events#金額の扱い)） |
+| `netAmountJpy` | 金額の文字列 | 加盟店の受取額の見積り（`amountJpy` − `feeJpy`）。入金の計上には使わず、`payment.settled` の `net_received_jpy` を使う |
+| `checkoutExpiresAt` | 日時の文字列 | 操作期限（利用者が署名して支払いを始めるまでの期限） |
 | `createdAt` | 日時の文字列 | 決済の作成日時 |
 
 `status` が `created` でも、決済は成立していません。成立は Webhook か状態照会で確かめます。
@@ -97,8 +101,8 @@ Content-Type: application/json
 
 ```json
 {
-  "paymentIntentId": "pi_0123456789abcdef",
-  "checkoutUrl": "https://checkout.example/checkout/pi_0123456789abcdef",
+  "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+  "checkoutUrl": "https://checkout.example/checkout/pi_0123456789abcdef0123456789abcdef",
   "status": "created",
   "amountJpy": "4980",
   "feeJpy": "49.8",
@@ -109,6 +113,8 @@ Content-Type: application/json
 ```
 
 ## 状態照会
+
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `GET /payment_status/{paymentIntentId}`（`PaymentStatusView`） にあります。
 
 `GET /payment_status/:paymentIntentId`
 
@@ -142,12 +148,12 @@ Content-Type: application/json
 ### 例
 
 ```http
-GET /payment_status/pi_0123456789abcdef
+GET /payment_status/pi_0123456789abcdef0123456789abcdef
 ```
 
 ```json
 {
-  "paymentIntentId": "pi_0123456789abcdef",
+  "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
   "status": "settled",
   "txHash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "failedReason": null,
@@ -158,6 +164,8 @@ GET /payment_status/pi_0123456789abcdef
 
 ## 状態の値
 
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `PaymentStatus` にあります。
+
 `status` は次のいずれかです。`settled` だけが成立で、商品の提供や入金の計上はこの状態を根拠にします。区分の意味と遷移は[ステータス一覧](/lifecycle/statuses)を参照してください。
 
 | 値 | 区分 | 一言の意味 |
@@ -166,11 +174,11 @@ GET /payment_status/pi_0123456789abcdef
 | `signed` | 途中 | 利用者の署名が済んだ |
 | `issue_pending` | 途中 | 利用者が JPYC EX の手続きへ進んだ。手続きが済んだことは意味しない |
 | `deposit_confirmed` | 途中 | 着金（または残高）を確認した。決済の実行前 |
-| `deploying` | 途中 | 利用者のウォレットを作成している |
+| `deploying` | 途中 | 必要なウォレット（利用者のウォレット、加盟店の受取ウォレット）を作成している |
 | `executing` | 途中 | 決済の実行を始めた。結果を確認している |
 | `settled` | 成立 | 決済が成立し、加盟店へ送金された |
 | `canceled` | 成立しなかった | 決済が取り消された |
-| `expired` | 成立しなかった | 期限が来て終了した（承認されないまま、または着金期限までに額がそろわないまま） |
+| `expired` | 成立しなかった | 期限が来て終了した（承認されないまま、承認後に JPYC EX の手続きへ進まないまま操作期限が来た、または着金期限までに額がそろわないまま） |
 | `failed` | 成立しなかった | 決済が失敗した。理由は `failedReason` |
 | `nonce_conflict` | 要確認 | 結末を特定できなかった。成立とも失敗とも判断しない |
 
@@ -178,10 +186,12 @@ GET /payment_status/pi_0123456789abcdef
 
 ## 値の形式
 
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `PaymentIntentId`・`AmountJpy`・`DateTime` にあります。
+
 | 値 | 形式 | 例 |
 |---|---|---|
-| 決済 ID（`paymentIntentId`） | `pi_` に、小文字の16進が8〜32桁 | `pi_0123456789abcdef` |
-| イベント ID（Webhook の `id`） | `evt_` に、小文字の16進が8〜32桁 | `evt_0123456789abcdef` |
+| 決済 ID（`paymentIntentId`） | `pi_` に、小文字の16進が8〜32桁 | `pi_0123456789abcdef0123456789abcdef` |
+| イベント ID（Webhook の `id`） | `evt_` に、小文字の16進が8〜32桁 | `evt_0123456789abcdef0123456789abcdef` |
 | `txHash` | `0x` に、小文字の16進が64桁 | `0x` ＋ 64桁 |
 | API キー | `stblpay_` に、英数字・`-`・`_` の43文字 | `stblpay_` ＋ 43文字 |
 | 日時 | UTC の `Z` で終わる ISO 8601。応答はミリ秒まで付く。リクエストではミリ秒を省略できる | `2026-10-20T03:00:00.000Z` |
@@ -191,13 +201,15 @@ GET /payment_status/pi_0123456789abcdef
 
 ## `failed_reason` の分類コード
 
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `FailedReason` にあります。
+
 `failedReason`（状態照会）と Webhook の `failed_reason` に入る値は、次の表のコードのいずれかです。生のチェーンのエラー文字列は入りません。コードは今後増えることがあります。受け手は値を列挙で厳密に検証せず、**未知の値を、失敗として扱うフォールバックに落としてください。** 発行体の取引可否判断の理由は入りません。
 
 | コード | 意味 |
 |---|---|
 | `userop_expired` | 着金または残高の充足は確認できたが、決済を実行できる時刻を過ぎていた。**お金は届いている**。`expired`（期限内に着金しなかった）とは別の事象で、`payment.failed` で届く。利用者の JPYC 残高は減っておらず、次の決済に充てられる |
 | `deposit_recipient_mismatch` | 着金の宛先が、決済で想定した宛先と違う |
-| `wallet_deploy_failed` | 利用者のウォレットの作成に失敗した（実行の失敗、または試行の上限） |
+| `wallet_deploy_failed` | 必要なウォレット（利用者のウォレットまたは加盟店の受取ウォレット）の作成に失敗した（実行の失敗、または試行の上限） |
 | `missing_signed_userop` | 実行に必要な署名済みの操作が無かった |
 | `insufficient_balance` | 支払人の残高が足りない |
 | `policy_violation` | 支払人のウォレットの金額上限・頻度上限に触れた |
@@ -214,6 +226,8 @@ GET /payment_status/pi_0123456789abcdef
 `nonce_conflict` を除くどのコードでも、決済は `failed` で終わり、成立していません。コードは、注文を失敗として終了したうえで、調査や利用者への案内を分けるための手掛かりです。`nonce_conflict` は結末が確定していないため、注文を失敗として閉じず、保留して[調査へ回します](/lifecycle/edge-cases#送金の結果が確定できないnonce_conflict)。コードの意味は変わらず、増えることがあります。
 
 ## エラー
+
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `Error` と、各エンドポイントの応答 にあります。
 
 サーバーのエラー形式は `{ code, details? }` です。たとえば次の形です。
 
@@ -238,7 +252,7 @@ GET /payment_status/pi_0123456789abcdef
 |---|---|---|
 | `auth/api_key_invalid` | 401 | API キーが無効、失効済み、または送られていない。キーを確認する |
 | `store/disabled` | 409 | 店舗が無効化されている。加盟店コンソールで店舗の状態を確認する |
-| `payment/expires_at_too_soon` | 400 | `merchantExpiresAt` が近すぎる（作成時点から3日以内に切れる指定）。[期限の扱い](/lifecycle/transitions)を参照し、より後の時刻を指定する |
+| `payment/expires_at_too_soon` | 400 | `merchantExpiresAt` が近すぎる（作成時点から 3 日以内に切れる指定）。[期限の扱い](/lifecycle/transitions)を参照し、より後の時刻を指定する |
 | `common/invalid_request` | 400 | リクエストの形式が正しくない（フィールドの型・形式の違反）。入力を直す。`details.issues` に、違反ごとの配列が入る（各要素の `path` が該当フィールド、`message` が理由） |
 | `common/internal` | 500 | サーバー側の障害。同じ `orderId` で再試行しても決済が二重に立つことはない。ただし、別の店舗で使った `orderId` を指定したときもこのエラーになり、こちらは再試行しても解消しない（[店舗をまたぐ制約](/server/create-payment#冪等性)） |
 

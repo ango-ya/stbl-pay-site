@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Create a payment
 
-To "create a payment" is to register an amount and an order number with STBLpay and have it create a receipt for the payment (a [payment intent](/reference/glossary)).
+To "create a payment" is to register an amount and an order number with STBLpay and have it create a record of the payment request (a [payment intent](/reference/glossary)).
 
 Determine the amount and the order number on the merchant server. Do not use an amount received from the browser as is, and verify that the logged-in buyer can pay for that order.
 
@@ -16,6 +16,8 @@ Determine the amount and the order number on the merchant server. Do not use an 
 2. Call `POST /payment_intents` with the API key.
 3. Persist the mapping between `paymentIntentId` and the order.
 4. Pass the returned `checkoutUrl` to the browser.
+
+For the definition of each field in the body and the response, see `POST /payment_intents` in the [OpenAPI specification](pathname:///openapi.yaml).
 
 ```js
 // order is the server-side order that has already gone through authorization and price calculation.
@@ -41,11 +43,11 @@ This is an example of the API call only. In your own endpoint, implement authent
 
 If you create again from the same store with the same `orderId`, the existing payment is returned instead of a new one. Use the same value for timeouts and double clicks, and do not generate a random value for each retry. If you create concurrently with the same `orderId`, there is no error, and both requests get the same payment with a 201.
 
-The existing payment is returned as is even if it has reached a [terminal](/reference/glossary) status such as expired or settled. A payment in a terminal status cannot be paid, so check the `status` in the response before sending the buyer to `checkoutUrl`. If it is `settled`, the payment is already done. If it is `nonce_conflict`, the outcome is not determined: stop automatic shipping and automatic re-billing, investigate, and do not create a new payment until the investigation is complete (see [The transfer result cannot be determined](/lifecycle/edge-cases#nonce-conflict)). If it is `failed`, `expired` or `canceled`, confirm how to handle the order, and then create again with a new `orderId`.
+The existing payment is returned as is even if it has reached a [terminal](/reference/glossary) status such as expired or settled. A payment in a terminal status cannot be paid, so check the `status` in the response before sending the buyer to `checkoutUrl`. If it is `settled`, the payment is already done. If it is `nonce_conflict`, the outcome is not determined: stop automatic shipping and automatic re-billing, ask the [contact](/support/troubleshooting#contact) to investigate with the payment ID, and do not create a new payment until you receive the result of the investigation in reply to your inquiry (see [The transfer result cannot be determined](/lifecycle/edge-cases#nonce-conflict)). If it is `failed`, `expired` or `canceled`, confirm how to handle the order, and then create again with a new `orderId`.
 
 As an exception, creating again **after a merchant suspension is lifted** may not return the existing payment. Note that while the merchant is suspended, creating a payment itself is rejected with 403 `merchant/suspended`. If the existing payment was aborted by the suspension, or was created before the suspension and had not yet started sending, 409 `payment/order_terminated` is returned (`details` is `{ paymentIntentId, status, failedReason }`). In this case, no `checkoutUrl` is returned. **Create again with a new `orderId`.** For any other existing payment (settled, expired, canceled, already started sending, and so on), the existing payment is returned as before. For how suspension is handled, see [Merchant suspension](/lifecycle/edge-cases#merchant-suspension).
 
-Sending a different amount or deadline with the same `orderId` does not update the existing payment. Manage a change to the order terms, or a new payment after a terminal status, as a separate payment attempt, after checking its mapping to the existing payment and preventing double charging.
+Sending a different amount or deadline with the same `orderId` does not update the existing payment. Manage a change to the order terms, or a new payment after a terminal status, as a separate payment attempt, after confirming that the existing payment has reached a terminal status. If you create a new payment with a new `orderId` while the existing one is not terminal, the buyer can pay either of them, and paying both means paying twice. The merchant cannot cancel the existing payment (see [State transitions and deadlines](/lifecycle/transitions)).
 
 If you have multiple stores, assign order numbers that are unique within the merchant. In the current specification, the uniqueness constraint is per merchant, while retrieving an existing payment is per store. If you use the same number in another store, that store cannot retrieve the existing payment, and the result is 500 `common/internal`. Retrying does not resolve it.
 
@@ -55,7 +57,7 @@ To create an EC payment, you must have registered a domain in the merchant conso
 
 ## Deadlines and return destination
 
-Check the operation expiry in `checkoutExpiresAt` in the response. The optional `merchantExpiresAt` acts as an upper limit on the **deposit deadline**, and the operation expiry does not become shorter (you can only specify a time more than 3 days after creation, and the operation expiry is shorter than that). It also does not extend the deadline of an existing payment. For details, see [State transitions and deadlines](/lifecycle/transitions).
+Check the operation deadline in `checkoutExpiresAt` in the response. The optional `merchantExpiresAt` acts as an upper limit on the **deposit deadline**, and the operation deadline does not become shorter (you can only specify a time more than 3 days after creation, and the operation deadline is shorter than that). It also does not extend the deadline of an existing payment. For details, see [State transitions and deadlines](/lifecycle/transitions).
 
 Make `returnUrl` an HTTPS URL on a registered domain, and do not include secret information (for requirements and examples, see [Domain registration](/security/domain#returnurl-requirements)). A return is not proof that the payment succeeded.
 

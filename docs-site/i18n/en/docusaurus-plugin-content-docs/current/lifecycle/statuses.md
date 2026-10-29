@@ -18,7 +18,7 @@ A payment has **11 statuses**. Whether a notification was delivered is not part 
 | `executing` | In progress | STBLpay has started executing the payment and is confirming the result |
 | `settled` | Terminal | The payment was executed successfully, and the transfer to the merchant and the fee distribution are complete |
 | `canceled` | Terminal | The buyer canceled the payment on My Page (マイページ) |
-| `expired` | Terminal | Ended because a deadline passed. Either the operation expiry passed without approval, or the full payable amount was not available by the deposit deadline |
+| `expired` | Terminal | Ended because a deadline passed. Either the operation deadline passed without approval, the operation deadline passed after approval but before the buyer proceeded to the JPYC EX procedure, or the full payable amount was not available by the deposit deadline |
 | `failed` | Terminal | The payment ended without succeeding. The reason is in `failedReason` ([classification codes](/reference/rest#failed-reason-codes)) |
 | `nonce_conflict` | Terminal | The transfer result could not be determined and the confirmation limit was reached. It is unknown whether the transfer happened, or whether it succeeded or failed. This also applies when failures to read the number (nonce) continued up to the limit. Operational investigation is required ([details](/lifecycle/transitions#technical-details)) |
 

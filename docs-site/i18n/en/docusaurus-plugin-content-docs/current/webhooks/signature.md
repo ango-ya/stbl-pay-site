@@ -12,6 +12,8 @@ If you use a Webhook to confirm orders, you must verify the signature and timest
 
 The signed content is the byte sequence `"<t>.<raw body>"`, and the algorithm is HMAC-SHA256. `t` is the Unix time in seconds of each delivery attempt, and it is updated on every retry. The default tolerance is 300 seconds.
 
+The signing secret is a string that starts with `whsec_`. Use the whole string, including `whsec_`, as the HMAC key as is. Do not decode it as hex or Base64, and do not strip the `whsec_` prefix.
+
 For 24 hours after you regenerate the signing secret, multiple `v1` values arrive. Keep all of them, and accept the request if the value you compute with your own secret matches any one of them. Do not convert them into a dictionary that overwrites duplicate keys.
 
 ## Node.js verification example
@@ -45,13 +47,13 @@ export function verifyStblPaySignature(rawBody, header, secret, now = Date.now()
 }
 ```
 
-STBLpay sends Webhooks with `Content-Type: application/json; charset=utf-8`. In Express, use `express.raw({ type: 'application/json' })` on the Webhook route, and register it before the generic `express.json()`. By default `express.raw()` accepts only `application/octet-stream`, so without `type` the received bytes are empty and signature verification fails. After verification, run `JSON.parse` and validate the shape of the Webhook.
+STBLpay sends Webhooks with `Content-Type: application/json; charset=utf-8`. In Express, use `express.raw({ type: 'application/json' })` on the Webhook route, and register it before the generic `express.json()`. By default `express.raw()` accepts only `application/octet-stream`, so without `type` the body is not read, `req.body` is not a Buffer, and signature verification fails. After verification, run `JSON.parse` and validate the shape of the Webhook.
 
 Parsing JSON and serializing it again changes whitespace and key order. Use the received bytes as they are for verification. Compare signatures in a timing-safe way, and do not call `timingSafeEqual` with values of different lengths.
 
 ## Issuing and regenerating the signing secret
 
-Configure the Webhook in the merchant console. Open Store & QR code (お店と QR コード) from the menu and select your online store. Then use Payment completion notification endpoint (お支払い完了のお知らせ先) in the Integration setup (組み込みの準備) tab.
+Configure the Webhook in the merchant console. Open Store & QR code (お店と QR コード) from the menu and select your online store. Then use Payment completion notification endpoint (お支払い完了のお知らせ先) in the Integration setup (組み込みの準備) tab. The endpoint URL and the signing secret are set once per merchant, so you see the same settings whichever online store you open them from. Changing the URL, clicking Remove webhook (webhook を解除), and regenerating the signing secret affect notifications for every online store. A notification does not identify the online store, so match it to your order by `payment_intent_id`.
 
 - **The signing secret is issued when you first set the endpoint URL, and it is shown only then.** You cannot view it again after you close the screen. Store it in the secret management system of your receiving server. If you fail to save it, regenerate the signing secret.
 - **Changing the URL does not change the signing secret.** Change URL (URL を変更) does not issue a secret.
@@ -65,7 +67,7 @@ Regenerating the signing secret keeps the previous signing secret valid for 24 h
 - Removing it deletes both the new and previous signing secrets (the previous one is also invalidated immediately).
 - Undelivered and pending-retry notifications are discarded. **Setting up again does not resume discarded notifications.** Setting up again issues a new signing secret.
 - Notifications already in flight may not be cancelable.
-- Reconcile the results of discarded payments with the [status lookup](/server/retrieve-payment) (`GET /payment_status/:paymentIntentId`). The payments themselves are not canceled.
+- Reconcile the results of payments whose notifications were discarded with the [status lookup](/server/retrieve-payment) (`GET /payment_status/:paymentIntentId`). The payments themselves are not canceled.
 - On your receiving side, also delete the old signing secret.
 
 Notifications for payments that occurred while no Webhook was configured are not sent even if you configure one later. Likewise, reconcile them with the status lookup.

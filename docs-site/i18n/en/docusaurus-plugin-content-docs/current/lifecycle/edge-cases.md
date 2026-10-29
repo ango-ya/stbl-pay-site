@@ -10,7 +10,7 @@ Check the payment status, the buyer's screen actions, and the status of your own
 
 ## The browser was closed or the buyer does not return
 
-A payment can progress even if the browser does not return. `created` before signing and `signed` before the reservation have an operation expiry, and after the reservation there is a separate deposit deadline. Decide using Webhooks and status lookups, and do not decide that a payment failed based only on elapsed time.
+A payment can progress even if the browser does not return. `created` before signing and `signed` before the reservation have an operation deadline, and after the reservation there is a separate deposit deadline. Decide using Webhooks and status lookups, and do not decide that a payment failed based only on elapsed time.
 
 ## The create request timed out
 
@@ -28,7 +28,7 @@ This is **not the revival of a payment that STBLpay finalized as `canceled`**. A
 
 ## The payment succeeded after you closed your own order
 
-Your own inventory hold deadline and STBLpay's payment deadline are separate. If STBLpay's payment has not reached a terminal status, it may still succeed. Detect and hold a deposit for an order you cannot fulfill, and escalate it to an operations contact. A refund is available only through the route where an owner approves it from the payment details screen (決済詳細画面) in the merchant console. The merchant server cannot refund automatically ([Scope of refunds](/refunds/overview)).
+Your own inventory hold deadline and STBLpay's payment deadline are separate. If STBLpay's payment has not reached a terminal status, it may still succeed. Detect and hold a deposit for an order you cannot fulfill, and escalate it to an operations contact. A refund is available only through the route where an owner approves it from the Transaction details (取引の詳細) screen in the merchant console. The merchant server cannot refund automatically ([Scope of refunds](/refunds/overview)).
 
 ## Merchant suspension {/* #merchant-suspension */}
 
@@ -38,6 +38,11 @@ Suspension is an operation in which the operator stops providing the service to 
 - **A payment created before the suspension that has not yet started sending**: Ends as `failed`. `failed_reason` is `merchant_suspended`. A `payment.failed` Webhook is also sent
 - **A payment that has already started sending**: Keep checking the result. Do not decide success or failure based only on the suspension
 - **Creating with the same `orderId` after reinstatement**: If the existing payment was aborted by the suspension, or was created before the suspension and had not yet started sending, the result is 409 `payment/order_terminated`
+- **Using the merchant console while suspended**: You can sign in, but you cannot start a new refund, withdraw, view the transaction history, or change settings (403 `merchant/suspended`)
+
+Even while suspended, [status retrieval](/server/retrieve-payment) (no API authentication required) and Webhook delivery for payments that already exist continue. Keep your receiver running. This does not mean you can view the transaction history in the merchant console. Check the results of payments during the suspension with status retrieval and Webhooks.
+
+Refunds are made by the merchant. STBLpay does not hold funds or make refunds on your behalf. If an order needs a refund during the suspension, keep a note of it. For lifting the suspension or handling matters during it, use the [contact](/support/troubleshooting#contact) and describe it as a consultation about lifting or handling the suspension.
 
 **For a payment that has already started sending, `payment.settled` may arrive after the suspension. If it arrives, treat it as a successful payment as usual.** Do not ignore a settled notification or close the order because of the suspension.
 
@@ -49,4 +54,9 @@ Prevent duplicates with the `id` of the signature-verified body and a conditiona
 
 ## The transfer result cannot be determined (`nonce_conflict`) {/* #nonce-conflict */}
 
-`nonce_conflict` is terminal, but it means the transfer result could not be determined and the confirmation limit was reached. It is unknown whether the transfer happened, or whether it succeeded or failed. This also applies when failures to read the number (nonce) continued up to the limit ([Technical details](/lifecycle/transitions#technical-details)). There is no Webhook. Detect it with the status API, stop automatic shipping and re-charging, and send it to operational investigation.
+`nonce_conflict` is terminal, but it means the transfer result could not be determined and the confirmation limit was reached. It is unknown whether the transfer happened, or whether it succeeded or failed. This also applies when failures to read the number (nonce) continued up to the limit ([Technical details](/lifecycle/transitions#technical-details)). There is no Webhook. Detect it with the status API, stop automatic shipping and automatic re-billing, and ask the [contact](/support/troubleshooting#contact) to investigate, with the payment ID.
+
+The status stays `nonce_conflict` even after the investigation, so waiting on status lookups does not resolve it. The result of the investigation is given in reply to your inquiry. Until you receive the reply, keep the order on hold and do not create a new payment with a new `orderId`.
+
+- **If the reply says the transfer happened**: the payment is done, even though the status stays `nonce_conflict`. Treat it as settled and deliver the goods exactly once. Do not create a new payment, because the buyer could end up paying twice.
+- **If the reply says the transfer did not happen**: the payment is not done. Check how the order should be handled, then create a new payment with a new `orderId`.

@@ -26,6 +26,8 @@ A payment never reaches more than one terminal state. However, STBLpay retries n
 5. Return `2xx` only after persisting succeeds. Run business processing in a retryable worker.
 6. Verify that the payment ID matches the order, then perform an [idempotent order update](/webhooks/idempotency).
 
+Each merchant has a single Webhook destination, so notifications for the same merchant's in-store QR code payments also arrive there. For in-store payments, `order_id` is null. Because `orderId` can be omitted when creating a payment, you cannot tell in-store payments apart by whether `order_id` is null. For a notification whose `payment_intent_id` does not correspond to any of your orders, still perform steps 1 to 5 and return `2xx`. Then mark it as processed without changing any order. Do not link it to a different order.
+
 ## States that are not notified
 
 STBLpay does not send a notification for `nonce_conflict`, because the outcome cannot be determined, including whether a transfer was made. Reconcile unconfirmed orders with the [status lookup API](/server/retrieve-payment) and investigate them operationally. STBLpay also does not send a Webhook for each in-progress state.
@@ -33,6 +35,8 @@ STBLpay does not send a notification for `nonce_conflict`, because the outcome c
 Merchant account events and refund completion are not payment Webhook events.
 
 ## Test notifications {/* #test-notifications */}
+
+The body of a test notification is defined in `TestWebhookEvent` in the [OpenAPI specification](pathname:///openapi.yaml).
 
 You can send a test notification to check that your endpoint works. In the merchant console, open Store & QR code (お店と QR コード) from the menu and select your online store. In the Integration setup (組み込みの準備) tab, go to Payment completion notification endpoint (お支払い完了のお知らせ先) and find Test delivery (テスト送信). Select the checkbox that confirms you have finished the receiving-side handling, then click Send test notification (テスト通知を送る). STBLpay sends the notification once to the saved URL and does not retry. You can send up to 5 per minute.
 

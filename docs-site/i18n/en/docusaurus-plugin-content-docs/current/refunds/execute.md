@@ -12,7 +12,7 @@ You make refunds in the merchant console. You need to be logged in to the mercha
 
 1. In the merchant console, open Store & QR code (お店と QR コード) from the menu, select the target store, and open the This store's sales (この店舗の売上) tab.
 2. Open Details (詳細) for the transaction to refund, and find Refund (返金) on the Transaction details (取引の詳細) screen.
-3. Enter the amount in Refund amount (JPY) (返金額（円）). To refund the full amount, click Full amount (全額). This fills in the amount that is refundable at that moment.
+3. Enter the amount in whole yen in Refund amount (JPY) (返金額（円）). To refund the full amount, click Full amount (全額). This fills in the amount that is refundable at that moment, rounded down to whole yen. Amounts below 1 yen cannot be refunded.
 4. Click Refund (返金する). The server assembles the refund operation.
 5. In the "Approve this refund?" (返金を承認しますか？) dialog, check the order number, payment ID, refund amount, and refund destination, then click Approve with passkey (パスキーで承認).
 6. Check the result on the screen and in Refund history (返金の履歴).

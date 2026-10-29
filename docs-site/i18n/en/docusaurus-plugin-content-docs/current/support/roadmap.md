@@ -18,6 +18,17 @@ This will let staff other than the owner use the merchant account.
 
 Until then, the owner's passkey performs all merchant console operations.
 
+## Resetting a lost passkey
+
+This will let you recreate the owner's passkey if it is lost.
+
+- The owner registers approvers in advance. An approver can be another person, such as an assistant manager, or your own second device.
+- If the passkey is lost, the passkey can be reset once any one of the registered approvers approves it.
+- Approvers can only approve a reset. They cannot withdraw sales, issue refunds, or change settings.
+- If a reset you do not recognize is requested, you can cancel it before it is approved.
+
+Until then, if you lose the owner's passkey, you can no longer move the JPYC in the receiving wallet, and STBLpay cannot restore it either ([Money flow](/getting-started/money-flow)).
+
 ## WooCommerce plugin
 
 A plugin that adds STBLpay as a payment method to a WooCommerce store.

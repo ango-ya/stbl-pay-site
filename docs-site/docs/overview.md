@@ -40,12 +40,12 @@ STBLpay（すてぶるペイ）は、銀行振込による日本円の支払い�
 | Sandbox | 準備中（[Sandbox](/testing/sandbox)） |
 | 複数アカウントでの管理・WooCommerce プラグイン | 1st リリースのあとに提供予定（[今後の予定](/support/roadmap)） |
 
-提供状況と既知の制約は[提供範囲と制約](/support/limitations)にまとめています。
+提供状況と既知の制約は[既知の制限](/support/limitations)にまとめています。
 
 ## 最初に読むもの
 
-1. [決済フロー](/getting-started/payment-flow)、[お金の流れ](/getting-started/money-flow)、[責務の分担](/getting-started/responsibilities)
-2. [接続の準備](/getting-started/prerequisites)と[Quick Start](/getting-started/quickstart)
+1. [決済フロー](/getting-started/payment-flow)、[お金の流れ](/getting-started/money-flow)、[Client と Server の責務](/getting-started/responsibilities)
+2. [準備](/getting-started/prerequisites)と[Quick Start](/getting-started/quickstart)
 3. [完了判定](/lifecycle/completion)と[Webhook](/webhooks/events)
 
-返金は [提供範囲](/refunds/overview)を参照してください。
+返金は[返金の提供範囲](/refunds/overview)を参照してください。
