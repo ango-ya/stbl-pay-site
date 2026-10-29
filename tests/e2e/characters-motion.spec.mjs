@@ -1833,12 +1833,30 @@ test.describe("会話の再生", () => {
       await gate;
       await route.continue();
     });
+    // 時計を止める。会話は先読みを 1500ms までしか待たないので、実時間のままだと遅い機械では palm の絵が間に合わない
+    await installAppLoadTracker(page);
+    await freezeClock(page);
+    await stillFrames(page);
     await installRecorder(page);
+    let palmRequested = false;
+    page.on("request", (request) => {
+      palmRequested ||= request.url().endsWith("/assets/char/chan/palm-1.webp");
+    });
     try {
-      await page.goto("/#early-access", { waitUntil: "domcontentloaded" });
+      // URL に #early-access を付けない。load の前は、レイアウトが変わるたびにブラウザーがその位置へスクロールし直し、会話が画面から外れる
+      await page.goto("/", { waitUntil: "domcontentloaded" });
       const talk = page.locator("#early-access .talk");
-      await scrollCenter(talk);
-      await expect(talk).toHaveClass(/\bis-played\b/, { timeout: 25_000 });
+      // 画面に入ってからの待ち（400ms）を、会話の先読みが始まるまで少しずつ進める。進めすぎると先読みの待ち（1500ms）が切れる
+      for (let spent = 0; !palmRequested; spent += 100) {
+        expect(spent, "会話の先読みが始まる").toBeLessThan(10_000);
+        await scrollCenter(talk);
+        await page.clock.runFor(100);
+        await page.waitForTimeout(20);
+      }
+      await waitForAppLoads(page, ["chan/palm-1.webp", "chan/palm-2.webp", "chan/zabuton.webp"]);
+      await runUntil(page, "会話が終わる", (evs) =>
+        evs.some((e) => e.k === "class" && e.sec === "early-access" && e.added.includes("is-played"))
+      );
       expect(await page.evaluate(() => document.readyState), "まだ load の前").not.toBe("complete");
 
       const evs = await events(page);
@@ -1850,7 +1868,9 @@ test.describe("会話の再生", () => {
         evs.some((e) => e.k === "src" && e.sec === "early-access" && e.kun === "cast" && KUN_TALK_MOUTH.test(e.file)),
         "すてぶるくんの行で、立ち絵が口パクする"
       ).toBe(true);
-      await waitFor(page, "最後に座布団になる", (e) => e.k === "src" && e.sec === "early-access" && e.chan === "cast" && e.file === "zabuton.webp");
+      await runUntil(page, "最後に座布団になる", (evs) =>
+        evs.some((e) => e.k === "src" && e.sec === "early-access" && e.chan === "cast" && e.file === "zabuton.webp")
+      );
       expect(errors).toEqual([]);
     } finally {
       release();

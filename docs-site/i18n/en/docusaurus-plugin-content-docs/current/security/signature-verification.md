@@ -1,10 +1,10 @@
 ---
-title: Signature verification
-sidebar_label: Signature verification
+title: Webhook verification requirements
+sidebar_label: Webhook verification requirements
 sidebar_position: 3
 ---
 
-# Signature verification
+# Webhook verification requirements
 
 If you use a Webhook as the basis for finalizing an order, always verify the signature and the time, and process idempotently by the `id` in the verified body. See the [implementation example](/webhooks/signature).
 

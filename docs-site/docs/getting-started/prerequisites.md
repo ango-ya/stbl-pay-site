@@ -16,15 +16,17 @@ sidebar_position: 3
 |---|---|
 | API のベース URL | サーバー間の決済作成・状態照会 |
 | 加盟店の API キー | 決済作成の `x-stbl-api-key` ヘッダ。店舗ごとに、加盟店コンソールで発行する |
-| 加盟店の登録ドメイン（[origin](/reference/glossary)） | `returnUrl` の検証 |
-| Webhook 受信先と署名鍵 | サーバーでの結果通知受信 |
+| 加盟店の登録ドメイン（ホスト名。例：`shop.example.com`。[ドメイン登録](/security/domain)） | EC 決済の作成に必須（未登録だと 409 `merchant/domain_required`）。`returnUrl` のホスト名の照合にも使う |
+| Webhook 受信先と署名鍵（任意。推奨） | サーバーでの結果通知受信。使わない場合は、状態照会で `settled` を確かめてから注文を確定する |
 
-ブラウザへ API キーを渡さないでください。加盟店が試す環境は準備中です（[Sandbox](/testing/sandbox)）。決済ページの URL は作成応答から取得します。
+ブラウザへ API キーを渡さないでください。試すときは [Sandbox](/testing/sandbox) を使えます。決済ページの URL は作成応答から取得します。
 
 ## 加盟店側の準備
+
+最初に、ネットショップのお店を作ります。加盟店コンソールのメニューの「お店と QR コード」で「お店をつくる」を押し、お店の名前（128 文字まで）を入れ、お店の種類に「ネットショップ」を選びます。API キー、ドメイン、Webhook の設定は、ネットショップのお店の「組み込みの準備」タブにだけあります。「店頭 QR」のお店には出ません。お店の種類はあとから変えられません。店頭の QR 決済でも使うときは、お店をもう 1 つ作ります。
 
 1. 注文を認証・認可し、金額をサーバーで計算する。
 2. 注文と決済 ID の対応を保存する DB を用意する。
 3. 決済後に戻るページを用意する（URL の条件と例は[ドメイン登録](/security/domain#returnurl-の条件)）。
-4. HTTPS の Webhook 受信先で [raw body](/reference/glossary)（受け取ったままの本文）を保持できるようにする。URL は直接 `POST` を受けられる最終 URL にする。HTTPS のみ、ユーザー名・パスワード（[userinfo](/reference/glossary)）を含めない、内部アドレスに解決されない、リダイレクト（`3xx`）は追わない（[送信先 URL の条件](/webhooks/retry#送信先-url-の条件)）。
-5. 署名検証、受信イベントの永続化、重複排除、注文の定期[突合](/reference/glossary)を実装する。
+4. Webhook を使う場合は、HTTPS の Webhook 受信先で [raw body](/reference/glossary#通知)（受け取ったままの本文）を保持できるようにする。URL は直接 `POST` を受けられる最終 URL にする。HTTPS のみ、ユーザー名・パスワード（[userinfo](/reference/glossary#画面の遷移とドメイン)）を含めない、内部アドレスに解決されない、リダイレクト（`3xx`）は追わない（[送信先 URL の条件](/webhooks/retry#送信先-url-の条件)）。
+5. 注文の定期[突合](/reference/glossary#確認と照合)を実装する。Webhook を使う場合は、署名検証、受信イベントの永続化、重複排除も実装する。使わない場合は、状態照会で `settled` を確かめてから注文を確定する。

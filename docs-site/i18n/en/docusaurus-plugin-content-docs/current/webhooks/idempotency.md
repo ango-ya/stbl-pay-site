@@ -34,7 +34,7 @@ If a retry arrives and an unprocessed event already exists, do not create a new 
 Do the following in the same DB transaction.
 
 1. Lock the event and the corresponding order, and check whether it has already been processed.
-2. Verify that the payment ID, merchant, and amount match the order. Hold mismatches for investigation.
+2. Verify that the payment ID, merchant, and amount match the order. Hold mismatches for investigation. If no order corresponds to the `payment_intent_id` (for example, an in-store QR code payment), do not hold it. Mark it as processed without changing any order.
 3. Update the order conditionally, and record the outbox for fulfillment and similar actions under a unique order key.
 4. Record the processed time on the event.
 

@@ -30,7 +30,7 @@ const EN: Record<string, string> = {
   'はい：残高で払う': 'Yes: use balance',
   が確認: 'confirms',
   'JPYC EX の手続きへ進む': 'goes to JPYC EX',
-  '予約開始を受けた・着金待ち': 'Reserved, awaiting deposit',
+  '予約開始を受けた・着金待ち': 'Started, awaiting deposit',
   期限内に支払える: 'Enough funds',
   '額がそろった？': 'by the deadline?',
   着金期限を過ぎた: 'Past deposit deadline',

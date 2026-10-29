@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Quick Start
 
-These are the minimal steps to check payment creation, navigation, and status lookup against an endpoint that behaves as this guide describes. Prepare the [connection information](/getting-started/prerequisites) first. The environment for merchants to try is in preparation ([Sandbox](/testing/sandbox)).
+These are the minimal steps to check payment creation, navigation, and status lookup against an endpoint that behaves as this guide describes. Prepare the [connection information](/getting-started/prerequisites) first. To try things out, you can use the [Sandbox](/testing/sandbox).
 
 ## 1. Create a payment from the server
 
@@ -19,7 +19,7 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \
   --data '{"amountJpy":"4980","orderId":"ord_0001","returnUrl":"https://shop.example.com/orders/ord_0001/return"}'
 ```
 
-Save the mapping between the order and `paymentIntentId`, check the `status` in the response, and then pass the `checkoutUrl` to the browser. When you retry for the same order, use the same `orderId`. If a retry returns an existing payment that is already terminal, do not send the browser to its `checkoutUrl`. If the status is `settled`, the payment is already complete. If it is `nonce_conflict`, the outcome is not determined: stop automatic shipping and automatic re-billing, investigate, and do not create a new payment until the investigation is complete (see [The transfer result cannot be determined](/lifecycle/edge-cases#nonce-conflict)). If it is `failed`, `expired` or `canceled`, check how the order should be handled, then create a new payment with a new `orderId` (see [Idempotency](/server/create-payment#idempotency)). For the other fields in the response, see the [REST reference](/reference/rest).
+Save the mapping between the order and `paymentIntentId`, check the `status` in the response, and then pass the `checkoutUrl` to the browser. When you retry for the same order, use the same `orderId`. If a retry returns an existing payment that is already terminal, do not send the browser to its `checkoutUrl`. If the status is `settled`, the payment is already complete. If it is `nonce_conflict`, the outcome is not determined: stop automatic shipping and automatic re-billing, ask the [contact](/support/troubleshooting#contact) to investigate with the payment ID, and do not create a new payment until you receive the result of the investigation in reply to your inquiry (see [The transfer result cannot be determined](/lifecycle/edge-cases#nonce-conflict)). If it is `failed`, `expired` or `canceled`, check how the order should be handled, then create a new payment with a new `orderId` (see [Idempotency](/server/create-payment#idempotency)). For the other fields in the response, see the [REST reference](/reference/rest).
 
 ## 2. Navigate the browser
 
@@ -45,7 +45,7 @@ If `status` is `settled`, the payment has succeeded. `signed` and `deposit_confi
 This example alone does not complete goods delivery. Implement the following.
 
 - Authentication and authorization of your own orders, amount calculation on the server, CSRF protection
-- [Webhook signature verification](/webhooks/signature) and [persistence and deduplication](/webhooks/idempotency)
+- If you use Webhooks (optional, recommended): [Webhook signature verification](/webhooks/signature) and [persistence and deduplication](/webhooks/idempotency). If you do not, confirm `settled` with a status lookup before finalizing the order
 - [Completion check on the server](/lifecycle/completion) and delivering goods exactly once
 - Periodic lookups for missed notifications and handling of [abnormal cases](/lifecycle/edge-cases)
 

@@ -8,7 +8,11 @@ sidebar_position: 3
 
 通常の REST API が camelCase なのに対し、**Webhook payload は snake_case** です。
 
+Webhook の本文とヘッダーの項目ごとの定義は、OpenAPI 3.1 の仕様書 [openapi.yaml](pathname:///openapi.yaml) の `webhooks` にあります。このページは、その概要と使い方の注意です。
+
 ## 共通形式
+
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `webhooks.paymentEvent`（`WebhookEvent`） にあります。
 
 ボディは `id`（`evt_` で始まるイベント ID）、`type`、`created_at`（UTC の `Z` で終わる ISO 8601）、`data` を持ちます。`created_at` はイベント生成時刻で、署名ヘッダの送信時刻 `t` とは異なります。
 
@@ -20,6 +24,8 @@ sidebar_position: 3
 重複排除には **署名検証済みボディの `id`** を使います。ヘッダのイベント ID は署名対象外です。
 
 ## イベントと data
+
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `WebhookPaymentData` にあります。
 
 `payment.settled`、`payment.failed`、`payment.canceled`、`payment.expired` の4種類は、共通の `data` の形を使います。`payment.failed` でも金額などの共通フィールドは省略しません。
 
@@ -47,11 +53,15 @@ sidebar_position: 3
 
 ## 配信と処理
 
+送信のタイムアウト・失敗として扱う応答・再送の間隔は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `webhooks.paymentEvent` にもあります。
+
 受信成功は `2xx` です。[署名検証](/webhooks/signature)、[再送ポリシー](/webhooks/retry)、[冪等性](/webhooks/idempotency)を実装してください。未知の種別は安全に無視できるようにします。
 
 `nonce_conflict` の通知はありません。確認は状態照会 API と運用調査で行います。
 
 ## テスト通知
+
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `TestWebhookEvent` にあります。
 
 加盟店コンソールから送るテスト通知だけは、`type` が `payment.settled` のまま、本文に `test: true` を持ちます。通常の通知に `test` というキーはありません。各フィールドの値は次のとおりです。
 

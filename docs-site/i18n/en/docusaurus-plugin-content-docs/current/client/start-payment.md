@@ -17,14 +17,16 @@ async function startCheckout(orderId) {
   });
   if (!response.ok) throw new Error('Could not start the payment');
   const { checkoutUrl } = await response.json();
+  // When a retry returns a terminal payment, your server does not return checkoutUrl. Go to your own order page (the URL is an example).
+  if (!checkoutUrl) return window.location.assign(`/orders/${encodeURIComponent(orderId)}`);
   window.location.assign(checkoutUrl);
 }
 ```
 
-`/api/checkout` is an example of an endpoint you provide. Apply your own session authentication and CSRF protection, and verify the order's owner and amount on the server.
+`/api/checkout` is an example of an endpoint you provide. Apply your own session authentication and CSRF protection, and verify the order's owner and amount on the server. If STBLpay returns an existing terminal payment for a retry of the same order, your server checks the `status` in the response and does not return `checkoutUrl` to the browser. The STBLpay response still contains `checkoutUrl` (see [Idempotency](/server/create-payment#idempotency)).
 
 Disable the button while the request is in flight. On the server, use the same `orderId` when retrying the same order. Do not create a new order number just because of a communication failure.
 
 Persist the order details before navigating, and specify the return destination as `returnUrl` when you create the payment. Do not mark an order as paid merely because the buyer navigated or returned.
 
-Next, see [Showing the result](/client/handle-result).
+Next, see [Return and receiving the result](/client/handle-result).

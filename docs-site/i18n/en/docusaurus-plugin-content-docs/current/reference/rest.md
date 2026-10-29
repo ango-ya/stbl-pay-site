@@ -8,6 +8,8 @@ sidebar_position: 2
 
 This page lists the methods, paths, authentication, fields, and errors of the API that your server calls. You get the endpoint URL from your STBLpay contact when you onboard ([contact](/support/troubleshooting#contact)). Don't assume a public URL or a localhost default.
 
+The type, format, constraints, and errors of each API field are defined in the OpenAPI 3.1 specification [openapi.yaml](pathname:///openapi.yaml). This page gives an overview and usage notes. Use the specification for code generation or to give to an AI coding agent.
+
 ## Endpoint list
 
 | Method | Path | Authentication | Purpose |
@@ -18,6 +20,8 @@ This page lists the methods, paths, authentication, fields, and errors of the AP
 Request and response bodies are JSON.
 
 ## Create payment {/* #create-payment */}
+
+For the definition of each field, see `POST /payment_intents` (`CreatePaymentIntentRequest` and `CreatePaymentIntentResponse`) in the [OpenAPI specification](pathname:///openapi.yaml).
 
 `POST /payment_intents`
 
@@ -48,12 +52,12 @@ Creates a payment and returns the `checkoutUrl` that you send the buyer to.
 - If you create a payment again from the same store with the same `orderId`, the existing payment is returned. Specify a stable value for each order. If you omit it, idempotency by this order identifier is not available. With multiple stores, assign values that are unique across the whole merchant ([constraint across stores](/server/create-payment#idempotency)).
 - `returnUrl` must satisfy all of the following conditions. If it does not, the payment is not created. A URL that is not `https` returns 400 `common/invalid_request`. However, `http://localhost`, `http://127.0.0.1`, and `http://[::1]` pass the format check, so they return 403 `merchant/origin_mismatch`. An `https` URL that fails the other conditions also returns 403 `merchant/origin_mismatch`.
   - The scheme is `https`. `http` cannot be used. Development URLs such as `http://localhost` cannot be used either (403 `merchant/origin_mismatch`).
-  - A port number cannot be included (`https://shop.example.com:8443/` is not allowed).
+  - A port number cannot be included (`https://shop.example.com:8443/` is not allowed; `:443` is treated the same as no port).
   - userinfo such as `user:pass@` cannot be included.
   - The hostname **exactly matches** a domain registered in the merchant console (case-insensitive). Subdomains are treated as different domains, so if you registered `shop.example.com`, `www.shop.example.com` cannot be used. For domain registration, see [Domain registration](/security/domain).
   - There are no restrictions on the path and query (example: `https://shop.example.com/orders/ord_0001/return`).
 
-  When a payment reaches a terminal state, the checkout page shows a link back: "Back to the shop" (ショップに戻る) if the payment succeeded, or "Back to the payee" (お支払い先に戻る) in any other terminal state. When the buyer clicks it, `returnUrl` opens with a `stbl_pay_intent` query parameter appended (example: `https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_xxx`). The value is the payment ID. If `returnUrl` already has a query parameter with the same name, it is overwritten.
+  When a payment reaches a terminal state, the checkout page shows a link back: "Back to the shop" (ショップに戻る) if the payment succeeded, or "Back to the payee" (お支払い先に戻る) in any other terminal state. When the buyer clicks it, `returnUrl` opens with a `stbl_pay_intent` query parameter appended (example: `https://shop.example.com/orders/ord_0001/return?stbl_pay_intent=pi_0123456789abcdef0123456789abcdef`). The value is the payment ID. If `returnUrl` already has a query parameter with the same name, it is overwritten.
 - `merchantExpiresAt` is used as the upper limit of the deposit deadline (which is determined when the buyer proceeds to the JPYC EX procedure). It does not shorten the operation deadline (`checkoutExpiresAt`). You can only specify a datetime more than 3 days after creation. Only the form ending in UTC `Z` is accepted (example: `"2026-10-20T03:00:00Z"`). A value with an offset such as `+09:00` returns 400 `common/invalid_request`. Even if you create again with the same `orderId`, the value received first is not overwritten. See [How deadlines work](/lifecycle/transitions).
 
 ### Response
@@ -66,9 +70,9 @@ On success, the API returns 201 with the following JSON. It also returns 201 whe
 | `checkoutUrl` | HTTPS URL string | URL of the checkout page to send the buyer to with a top-level navigation |
 | `status` | [Status values](#status-values) | `created` when newly created |
 | `amountJpy` | Amount string | Amount charged |
-| `feeJpy` | Amount string | Fee |
-| `netAmountJpy` | Amount string | Amount the merchant receives (`amountJpy` − `feeJpy`) |
-| `checkoutExpiresAt` | Datetime string | Deadline of the checkout page |
+| `feeJpy` | Amount string | Estimated fee, calculated at creation. The fee used for settlement is in `fee_jpy` of `payment.settled` (see [How amounts are handled](/reference/webhook-events#amounts)) |
+| `netAmountJpy` | Amount string | Estimated amount the merchant receives (`amountJpy` − `feeJpy`). Do not use it to record the deposit; use `net_received_jpy` of `payment.settled` |
+| `checkoutExpiresAt` | Datetime string | Operation deadline (the deadline by which the buyer must sign and start the payment) |
 | `createdAt` | Datetime string | When the payment was created |
 
 Even if `status` is `created`, the payment has not succeeded. Confirm success with a Webhook or a status lookup.
@@ -97,8 +101,8 @@ Response (values are examples):
 
 ```json
 {
-  "paymentIntentId": "pi_0123456789abcdef",
-  "checkoutUrl": "https://checkout.example/checkout/pi_0123456789abcdef",
+  "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+  "checkoutUrl": "https://checkout.example/checkout/pi_0123456789abcdef0123456789abcdef",
   "status": "created",
   "amountJpy": "4980",
   "feeJpy": "49.8",
@@ -109,6 +113,8 @@ Response (values are examples):
 ```
 
 ## Retrieve payment status {/* #retrieve-payment */}
+
+For the definition of each field, see `GET /payment_status/{paymentIntentId}` (`PaymentStatusView`) in the [OpenAPI specification](pathname:///openapi.yaml).
 
 `GET /payment_status/:paymentIntentId`
 
@@ -142,12 +148,12 @@ This response does not include the amount, fee, or wallet. The payment ID is not
 ### Example
 
 ```http
-GET /payment_status/pi_0123456789abcdef
+GET /payment_status/pi_0123456789abcdef0123456789abcdef
 ```
 
 ```json
 {
-  "paymentIntentId": "pi_0123456789abcdef",
+  "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
   "status": "settled",
   "txHash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "failedReason": null,
@@ -158,6 +164,8 @@ GET /payment_status/pi_0123456789abcdef
 
 ## Status values {/* #status-values */}
 
+For the definition of each field, see `PaymentStatus` in the [OpenAPI specification](pathname:///openapi.yaml).
+
 `status` is one of the following. Only `settled` means the payment succeeded. Base delivery of goods and recording of revenue on this status. For the meaning of the categories and the transitions, see the [status list](/lifecycle/statuses).
 
 | Value | Category | Short meaning |
@@ -166,11 +174,11 @@ GET /payment_status/pi_0123456789abcdef
 | `signed` | In progress | The buyer's signature is done |
 | `issue_pending` | In progress | The buyer proceeded to the JPYC EX procedure. This does not mean the procedure is finished |
 | `deposit_confirmed` | In progress | The deposit (or balance) was confirmed. Before the payment is executed |
-| `deploying` | In progress | The buyer's wallet is being created |
+| `deploying` | In progress | The required wallets (the buyer's wallet and the merchant's receiving wallet) are being created |
 | `executing` | In progress | Execution of the payment has started. The result is being confirmed |
 | `settled` | Succeeded | The payment succeeded and the funds were sent to the merchant |
 | `canceled` | Did not succeed | The payment was canceled |
-| `expired` | Did not succeed | Ended because the deadline passed (not approved, or the amount was not complete by the deposit deadline) |
+| `expired` | Did not succeed | Ended because the deadline passed (not approved, the operation deadline passed after approval but before the buyer proceeded to the JPYC EX procedure, or the amount was not complete by the deposit deadline) |
 | `failed` | Did not succeed | The payment failed. The reason is in `failedReason` |
 | `nonce_conflict` | Needs review | The outcome could not be determined. Do not treat it as either succeeded or failed |
 
@@ -178,10 +186,12 @@ If you receive an unknown value, do not deliver goods or charge again; treat it 
 
 ## Value formats {/* #value-formats */}
 
+For the definition of each field, see `PaymentIntentId`, `AmountJpy`, and `DateTime` in the [OpenAPI specification](pathname:///openapi.yaml).
+
 | Value | Format | Example |
 |---|---|---|
-| Payment ID (`paymentIntentId`) | `pi_` followed by 8 to 32 lowercase hex digits | `pi_0123456789abcdef` |
-| Event ID (Webhook `id`) | `evt_` followed by 8 to 32 lowercase hex digits | `evt_0123456789abcdef` |
+| Payment ID (`paymentIntentId`) | `pi_` followed by 8 to 32 lowercase hex digits | `pi_0123456789abcdef0123456789abcdef` |
+| Event ID (Webhook `id`) | `evt_` followed by 8 to 32 lowercase hex digits | `evt_0123456789abcdef0123456789abcdef` |
 | `txHash` | `0x` followed by 64 lowercase hex digits | `0x` + 64 digits |
 | API key | `stblpay_` followed by 43 characters of alphanumerics, `-`, and `_` | `stblpay_` + 43 characters |
 | Datetime | ISO 8601 ending in UTC `Z`. Responses include milliseconds. Requests may omit milliseconds | `2026-10-20T03:00:00.000Z` |
@@ -191,13 +201,15 @@ The IDs in a [test notification](/reference/webhook-events#test-notifications) a
 
 ## `failed_reason` classification codes {/* #failed-reason-codes */}
 
+For the definition of each field, see `FailedReason` in the [OpenAPI specification](pathname:///openapi.yaml).
+
 The value in `failedReason` (status lookup) and in the Webhook `failed_reason` is one of the codes in the following table. Raw chain error strings are not included. Codes may be added in the future. Receivers should not validate the value strictly as an enumeration; **fall back to treating an unknown value as a failure.** The reasons behind the issuer's decision on whether to allow a transaction are not included.
 
 | Code | Meaning |
 |---|---|
 | `userop_expired` | The deposit or sufficient balance was confirmed, but the time at which the payment could be executed had passed. **The money has arrived.** This is a different event from `expired` (no deposit within the deadline), and it is delivered as `payment.failed`. The buyer's JPYC balance has not decreased and can be used for the next payment |
 | `deposit_recipient_mismatch` | The recipient of the deposit differs from the recipient expected for the payment |
-| `wallet_deploy_failed` | Creating the buyer's wallet failed (an execution failure, or the attempt limit was reached) |
+| `wallet_deploy_failed` | Creating a required wallet (the buyer's wallet or the merchant's receiving wallet) failed (an execution failure, or the attempt limit was reached) |
 | `missing_signed_userop` | The signed operation required for execution was missing |
 | `insufficient_balance` | The payer's balance is insufficient |
 | `policy_violation` | The payer's wallet hit its amount limit or frequency limit |
@@ -215,6 +227,8 @@ With any code except `nonce_conflict`, the payment ends as `failed` and has not 
 
 ## Errors {/* #errors */}
 
+For the definition of each field, see `Error` and the responses of each endpoint in the [OpenAPI specification](pathname:///openapi.yaml).
+
 The server's error format is `{ code, details? }`. For example:
 
 ```json
@@ -228,7 +242,7 @@ The codes related to merchant settings and suspension are as follows.
 | `merchant/domain_required` | 409 | A domain must be registered for EC payments. Register it in the merchant console ([Domain registration](/security/domain)) |
 | `merchant/suspended` | 403 | The merchant is suspended. Payments cannot be created. Wait for reinstatement |
 | `merchant/origin_mismatch` | 403 | `returnUrl` does not meet the registered-domain conditions. Use a URL that satisfies the [`returnUrl` conditions](#field-notes) |
-| `payment/order_terminated` | 409 | The existing payment for the same `orderId` was already canceled by a suspension, or was created before the suspension and has not been sent yet. `details` is `{ paymentIntentId, status, failedReason }`. Create again with a new `orderId` |
+| `payment/order_terminated` | 409 | The existing payment for the same `orderId` was already aborted by the suspension (status `failed`, `failedReason` `merchant_suspended`), or was created before the suspension and has not been sent yet. `details` is `{ paymentIntentId, status, failedReason }`. Create again with a new `orderId` |
 
 See [Merchant suspension](/lifecycle/edge-cases#merchant-suspension).
 
@@ -239,7 +253,7 @@ The errors that `POST /payment_intents` can return are as follows (excluding tho
 | `auth/api_key_invalid` | 401 | The API key is invalid, revoked, or was not sent. Check the key |
 | `store/disabled` | 409 | The store is disabled. Check the store's status in the merchant console |
 | `payment/expires_at_too_soon` | 400 | `merchantExpiresAt` is too soon (it would expire within 3 days of creation). See [How deadlines work](/lifecycle/transitions) and specify a later time |
-| `common/invalid_request` | 400 | The request format is invalid (a field type or format violation). Fix the input. `details.issues` holds an array with one entry per violation (`path` of each entry is the field, `message` is the reason) |
+| `common/invalid_request` | 400 | The request format is invalid (a field type or format violation). Fix the input. When present, `details.issues` holds an array with one entry per violation (`path` of each entry is the field, `message` is the reason) |
 | `common/internal` | 500 | A server-side failure. Retrying with the same `orderId` does not create the payment twice. However, specifying an `orderId` used at a different store also returns this error, and retrying does not resolve that case ([constraint across stores](/server/create-payment#idempotency)) |
 
 The status lookup (`GET /payment_status/:paymentIntentId`) returns `payment/not_found` (404) for a payment ID that does not exist. If the payment ID does not match the format (`pi_` followed by 8 to 32 lowercase hex digits), it returns `common/invalid_request` (400) before checking whether the payment exists.

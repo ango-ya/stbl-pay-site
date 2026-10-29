@@ -10,12 +10,12 @@ Terms used in the guide, grouped by theme. For more on the blockchain side, see 
 
 ## How a payment progresses
 
-- **Create a payment**: Registering the amount and order number with STBLpay so that it issues a payment slip. This is the operation of calling `POST /payment_intents`, and you send the buyer to the `checkoutUrl` it returns.
-- **Payment intent**: The slip for a payment you created. You tell them apart by `paymentIntentId`. Example: order `order-123` gets exactly one `paymentIntentId`.
-- **Settled (succeeded)**: The state in which the merchant may deliver the goods. It refers only to when the status becomes `settled`.
+- **Create a payment**: Registering the amount and order number with STBLpay so that it creates a record of the payment request. This is the operation of calling `POST /payment_intents`, and you send the buyer to the `checkoutUrl` it returns.
+- **Payment intent**: The record of the payment request you created. You tell them apart by `paymentIntentId`. Example: order `ord_0001` gets exactly one `paymentIntentId`.
+- **Settled (succeeded)**: The state in which the merchant may deliver the goods. It refers only to when the status becomes `settled`. As an exception, an order whose `nonce_conflict` investigation came back saying the transfer happened is treated as settled, even though the status stays `nonce_conflict` (see [The transfer result cannot be determined](/lifecycle/edge-cases#nonce-conflict)).
 - **Terminal**: The state in which the payment goes no further. `settled`, `failed`, `canceled`, `expired`, and `nonce_conflict` apply. Their meanings are in [Status values](/reference/rest#status-values). A payment that has reached a terminal state never changes to another status.
 - **Transition**: The status of a payment changing to another status. Example: changing from `created` to `signed`.
-- **Allocation**: Deciding which payment a deposit is treated as paying for. One deposit is never allocated to multiple payments.
+- **Allocation**: Deciding which payment a deposit is treated as paying for. One deposit can be allocated to more than one payment (for example, when the buyer pays for several orders in one transfer).
 - **Operation deadline**: The deadline by which the buyer must sign and start the payment. You can check it in `checkoutExpiresAt`.
 - **Deposit deadline**: For a payment made by bank transfer, the deadline to wait for the deposit. It is determined separately from the operation deadline.
 
@@ -24,7 +24,7 @@ Terms used in the guide, grouped by theme. For more on the blockchain side, see 
 - **Lookup**: The merchant server asking STBLpay for the current status of a payment. Covered in [Retrieve payment status](/server/retrieve-payment).
 - **Reconciliation**: Comparing the merchant's orders against the status of STBLpay payments to find discrepancies. Example: periodically looking up orders for which you did not receive a Webhook.
 - **Idempotent**: Repeating the same operation any number of times gives the same result as doing it once. Example: even if you create a payment again with the same `orderId`, as a rule you do not get two payments and the same one is returned (for exceptions such as merchant suspension, see [idempotency](/server/create-payment#idempotency)). Even if the same Webhook arrives twice, you do not deliver the goods twice.
-- **Responsibility**: The assignment of who handles a task. Example: the passkey signature is handled by the checkout page, and confirming the order is handled by the merchant server. See [Division of responsibilities](/getting-started/responsibilities).
+- **Responsibility**: The assignment of who handles a task. Example: the passkey signature is handled by the checkout page, and confirming the order is handled by the merchant server. See [Client and server responsibilities](/getting-started/responsibilities).
 - **`txHash`**: The transaction number on the blockchain. Use it when contacting STBLpay.
 
 ## Screen navigation and domains
@@ -49,7 +49,7 @@ Terms used in the guide, grouped by theme. For more on the blockchain side, see 
 - **Issuance**: JPYC EX delivering to a wallet the same amount of JPYC as the yen paid in. The buyer applies for issuance on JPYC EX and pays in yen by bank transfer.
 - **Redemption**: Returning JPYC to JPYC EX to turn it into yen.
 - **Polygon**: The blockchain on which JPYC moves. The buyer's wallet and the merchant's receiving wallet are on it.
-- **Receiving wallet**: The wallet, one per merchant, that receives the JPYC of payments. It is tied to the owner's passkey. The address is `payout` in the Webhook. For details, see [Flow of money](/getting-started/money-flow).
+- **Receiving wallet**: The wallet, one per merchant, that receives the JPYC of payments. It is tied to the owner's passkey. The address is `payout` in the Webhook. For details, see [Money flow](/getting-started/money-flow).
 
 ## Blockchain terms
 

@@ -117,9 +117,24 @@ test.describe("加盟店向けドキュメント", () => {
     }
   });
 
+  test("REST API リファレンスから OpenAPI の仕様書を取得できる（日英とも）", async ({ page, request }) => {
+    for (const path of ["/docs/reference/rest", "/docs/en/reference/rest"]) {
+      await page.goto(path);
+      const href = await page.locator("article").getByRole("link", { name: "openapi.yaml" }).getAttribute("href");
+      const response = await request.get(href);
+      expect(response.ok(), `${path} → ${href}`).toBe(true);
+      expect(await response.text(), `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
+    }
+    // llms.txt が案内する場所
+    expect((await request.get("/docs/openapi.yaml")).ok()).toBe(true);
+    expect(await (await request.get("/llms.txt")).text()).toContain("(/docs/openapi.yaml)");
+  });
+
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {
     const headers = readFileSync(`${dist}_headers`, "utf8");
     expect(headers).not.toContain("__DOCS_SCRIPT_HASHES__");
+    // OpenAPI の仕様書だけ検索結果に載せない
+    expect(headers).toMatch(/^\/docs\/openapi\.yaml\n  X-Robots-Tag: noindex$/m);
 
     // 概要ページのテーマ切り替えのスクリプトが、CSP のハッシュで許可されている
     const html = readFileSync(`${dist}docs/index.html`, "utf8");

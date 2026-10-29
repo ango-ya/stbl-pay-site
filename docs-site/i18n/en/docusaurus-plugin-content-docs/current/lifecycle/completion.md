@@ -15,7 +15,7 @@ The ways to confirm completion are as follows.
 - **`payment.settled` Webhook**: Verify the signature and timestamp on the raw body, and process idempotently by the `id` in the body
 - **Server-to-server lookup with the status API**: Confirm `settled` using the payment ID saved at creation
 
-Use the Webhook as the main path for result notification, and use the API for a confirming lookup when needed and for periodic [reconciliation](/reference/glossary) when notifications are missing. Do not make it a required condition for providing goods that both arrive. If you did, a settled order would stall when a notification is missing.
+If you use Webhooks, use them as the main path for result notification, and use the API for a confirming lookup when needed and for periodic [reconciliation](/reference/glossary) when notifications are missing. Do not require both the Webhook and the API lookup result to arrive before providing goods. If you did, a settled order would stall when a notification is missing.
 
 None of the following can be used as a basis for success: a `status` from the browser, a query on the return URL, or the tab coming back.
 

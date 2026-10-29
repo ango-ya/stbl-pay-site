@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Scope of refunds
 
-**Currently, the only refund path is for the merchant's owner to approve the refund with a passkey from the payment detail screen of the merchant console.** There is no refund API that your server can call.
+**Currently, the only refund path is for the merchant's owner to approve the refund with a passkey from the Transaction details (取引の詳細) screen of the merchant console.** There is no refund API that your server can call.
 
 - **Refund operation**: Start from Refund (返金) on the Transaction details (取引の詳細) screen of the merchant console ([procedure](/refunds/execute))
 - **Approval**: The owner's passkey. Without approval, the refund is not executed

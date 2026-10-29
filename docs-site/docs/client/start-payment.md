@@ -17,14 +17,16 @@ async function startCheckout(orderId) {
   });
   if (!response.ok) throw new Error('決済を開始できませんでした');
   const { checkoutUrl } = await response.json();
+  // 再試行で終端の決済が返ったとき、自社サーバーは checkoutUrl を返さない。自社の注文画面へ移す（URL は例）
+  if (!checkoutUrl) return window.location.assign(`/orders/${encodeURIComponent(orderId)}`);
   window.location.assign(checkoutUrl);
 }
 ```
 
-`/api/checkout` は加盟店が用意するエンドポイントの例です。自社のセッション認証・CSRF 対策を適用し、注文の所有者と金額をサーバーで確認してください。
+`/api/checkout` は加盟店が用意するエンドポイントの例です。自社のセッション認証・CSRF 対策を適用し、注文の所有者と金額をサーバーで確認してください。同じ注文の再試行で STBLpay が終端の既存決済を返したときは、自社サーバーが応答の `status` を確かめ、ブラウザへ `checkoutUrl` を返さないようにします。STBLpay の応答には `checkoutUrl` が入っています（扱いは[冪等性](/server/create-payment#冪等性)）。
 
 ボタンは要求中に無効化します。サーバーでも同じ注文の再試行には同じ `orderId` を使います。通信失敗だけで新しい注文番号を作らないでください。
 
 遷移前に注文内容を永続化し、復帰先を決済作成時に `returnUrl` として指定します。遷移したことや復帰したことだけで注文を支払い済みにしないでください。
 
-次は [結果の表示](/client/handle-result)を参照してください。
+次は [復帰と結果の受け取り](/client/handle-result)を参照してください。
