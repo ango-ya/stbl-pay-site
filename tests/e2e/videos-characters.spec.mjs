@@ -15,14 +15,15 @@ import { join } from "node:path";
 //   実際の再生、YouTube 側のエラー（埋め込み不可など）は、公開前の手動確認（プレビューと iPhone の Safari）で見る
 // - 本番ヘッダ（CSP・Referrer-Policy）はローカルの静的サーバーが付けないので、「本番ヘッダ」の 2 本だけ、_headers の値を応答に付け直して動かす
 
-const EPISODES = ["how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08"];
+// 第1〜8回と番外編のパスキーのはなし（how-pk）
+const EPISODES = ["how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08", "how-pk"];
 const ENGLISH_EPISODE = "how-08en";
 
 const YT_ORIGIN = "https://www.youtube-nocookie.com";
 const WATCH = "https://www.youtube.com/watch?v=";
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
-// テスト用の偽の ID（11 文字）。how-01 → test0000001、how-08 → test0000008、how-08en → test00008en
+// テスト用の偽の ID（11 文字）。how-01 → test0000001、how-08 → test0000008、how-pk → test000000k、how-08en → test00008en
 const FAKE_ID = {
   ...Object.fromEntries(EPISODES.map((id) => [id, `test000000${id.slice(-1)}`])),
   [ENGLISH_EPISODE]: "test00008en",
@@ -141,7 +142,7 @@ const preconnects = (page) =>
   );
 
 test.describe("つかいかた動画（日本語LP）", () => {
-  test("一覧に第1〜8回が並び（予告・番外編は出さない）、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
+  test("一覧に第1〜8回と番外編のパスキーのはなしが並び（予告・まるごと解説は出さない）、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
     page,
     request,
   }) => {
@@ -173,9 +174,8 @@ test.describe("つかいかた動画（日本語LP）", () => {
       .evaluateAll((els) => els.map((el) => el.getAttribute("src")));
     expect(thumbs).toEqual(EPISODES.map((id) => `assets/video/${id}-thumb.webp`));
 
-    // 番外編（手数料の数字などを含む営業向け）は LP に出さない。予告も YouTube に上げていないので出さない
-    await expect(page.locator('#videos [href*="how-sp"], #videos [href*="how-pk"]')).toHaveCount(0);
-    await expect(page.locator('#videos [data-video="how-sp"], #videos [data-video="how-pk"]')).toHaveCount(0);
+    // 番外編のまるごと解説（手数料 5% が LP の「検討中」と食い違う）は LP に出さない。予告も YouTube に上げていないので出さない
+    await expect(page.locator('#videos [href*="how-sp"], #videos [data-video="how-sp"], #videos [href*="EXfpLc6FXzw"]')).toHaveCount(0);
     await expect(page.locator('#video-how-00, #videos [data-video="how-00"], #videos [src*="how-00"]')).toHaveCount(0);
   });
 
@@ -267,6 +267,52 @@ test.describe("つかいかた動画（日本語LP）", () => {
     }
   });
 
+  test("押してから YouTube のプレーヤーを読み終わるまで、枠に読み込み中の印（is-loading・aria-busy）を出し、読み終わったら消す", async ({
+    page,
+  }) => {
+    // embed の応答を、テストが返すまで止めておく
+    let release;
+    const held = new Promise((resolve) => {
+      release = resolve;
+    });
+    await page.route(/youtube-nocookie\.com\/embed\//, async (route) => {
+      await held;
+      await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: "" });
+    });
+    await page.goto("/");
+    const frame = page.locator("[data-video-frame]");
+    await expect(frame).not.toHaveClass(/\bis-loading\b/);
+    await page.locator("[data-video-poster]").click();
+    await expect(frame).toHaveClass(/\bis-loading\b/);
+    await expect(frame).toHaveAttribute("aria-busy", "true");
+    // 印は再生ボタンと同じ大きさの四角で、押す邪魔をしない
+    const mark = await frame.evaluate((el) => {
+      const cs = getComputedStyle(el, "::before");
+      return { content: cs.content, width: cs.width, events: cs.pointerEvents };
+    });
+    expect(mark).toEqual({ content: '""', width: "72px", events: "none" });
+    expect(await frame.evaluate((el) => getComputedStyle(el, "::after").content), "読み込み中の文字").toBe('"読み込み中…"');
+    // 読み上げには、枠の外の role="status" で伝える
+    const status = page.locator('[data-video-status][role="status"]');
+    await expect(status).toHaveText("読み込み中…");
+    await page.waitForTimeout(500);
+    await expect(frame, "読み終わるまでは消さない").toHaveClass(/\bis-loading\b/);
+    release();
+    await expect(frame).not.toHaveClass(/\bis-loading\b/);
+    await expect(frame).not.toHaveAttribute("aria-busy", /.*/);
+    await expect(status).toHaveText("");
+  });
+
+  test("英語ページでも、読み込み中の文字は Loading…", async ({ page }) => {
+    await page.route(/youtube-nocookie\.com\/embed\//, () => {});
+    await page.goto("/en/");
+    await page.locator("[data-video-poster]").click();
+    const frame = page.locator("[data-video-frame]");
+    await expect(frame).toHaveClass(/\bis-loading\b/);
+    expect(await frame.evaluate((el) => getComputedStyle(el, "::after").content)).toBe('"Loading…"');
+    await expect(page.locator('[data-video-status][role="status"]')).toHaveText("Loading…");
+  });
+
   test("一覧から回を選ぶと、iframe を作り直して新しい回にし、説明も替わる（履歴は増やさない）", async ({ page }) => {
     await page.goto("/");
     await page.locator("[data-video-poster]").click();
@@ -299,9 +345,10 @@ test.describe("つかいかた動画（日本語LP）", () => {
     await expect(player).toHaveAttribute("title", /第3回.*2回目からは、パスキーで/);
     await expect(page.locator("iframe")).toHaveCount(1);
 
-    // 最後の回では「次の回へ」を出さない
-    await page.locator('#videos .video-item[data-video="how-08"]').click();
-    await expectEmbed(player, FAKE_ID["how-08"], "ja");
+    // 最後の回（番外編のパスキーのはなし）では「次の回へ」を出さない
+    await page.locator('#videos .video-item[data-video="how-pk"]').click();
+    await expectEmbed(player, FAKE_ID["how-pk"], "ja");
+    await expect(player).toHaveAttribute("title", /番外編.*パスキーのはなし/);
     await expect(page.locator("[data-video-next]")).toBeHidden();
   });
 
@@ -373,13 +420,13 @@ test.describe("つかいかた動画（日本語LP）", () => {
   });
 
   test("最後の回で「次の回へ」を押しても、フォーカスが iframe に残る", async ({ page }) => {
-    await page.goto("/#video-how-07");
+    await page.goto("/#video-how-08");
     const next = page.locator("[data-video-next]");
     await expect(next).toBeVisible();
     await next.focus();
     await page.keyboard.press("Enter");
     const player = page.locator(`#video-stage ${PLAYER}`);
-    await expectEmbed(player, FAKE_ID["how-08"], "ja");
+    await expectEmbed(player, FAKE_ID["how-pk"], "ja");
     await expect(next).toBeHidden();
     await expect(player).toBeFocused();
   });
@@ -502,7 +549,7 @@ test.describe("YouTube の ID", () => {
       expect(item.youtube, `${item.video} の data-youtube は 11 文字の ID`).toMatch(ID_PATTERN);
       expect(item.href, `${item.video} の href`).toBe(`${WATCH}${item.youtube}`);
     }
-    // 8 本はそれぞれ別の動画（貼り間違いで同じ ID が重ならない）
+    // どの回もそれぞれ別の動画（貼り間違いで同じ ID が重ならない）
     expect(new Set(items.map((i) => i.youtube)).size, "一覧の ID が重なっている").toBe(EPISODES.length);
 
     const poster = await page.locator("[data-video-poster]").evaluate((el) => ({

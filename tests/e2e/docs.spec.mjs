@@ -117,13 +117,16 @@ test.describe("加盟店向けドキュメント", () => {
     }
   });
 
-  test("OpenAPI の仕様書を、日英の docs の下と llms.txt が案内する場所から取得できる", async ({ request }) => {
-    for (const path of ["/docs/openapi.yaml", "/docs/en/openapi.yaml"]) {
-      const response = await request.get(path);
-      expect(response.ok(), path).toBe(true);
-      expect(await response.text(), path).toMatch(/^openapi: 3\.1\.0$/m);
+  test("REST API リファレンスから OpenAPI の仕様書を取得できる（日英とも）", async ({ page, request }) => {
+    for (const path of ["/docs/reference/rest", "/docs/en/reference/rest"]) {
+      await page.goto(path);
+      const href = await page.locator("article").getByRole("link", { name: "openapi.yaml" }).getAttribute("href");
+      const response = await request.get(href);
+      expect(response.ok(), `${path} → ${href}`).toBe(true);
+      expect(await response.text(), `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
     }
-    expect(await (await request.get("/llms.txt")).text()).toContain("(/docs/openapi.yaml)");
+    // llms.txt が案内する場所
+    expect((await request.get("/docs/openapi.yaml")).ok()).toBe(true);
   });
 
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {

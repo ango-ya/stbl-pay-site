@@ -1269,46 +1269,96 @@ sup.fn a:hover {
   font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
 }
 
-/* 立ち絵：床線（1px）の上に二人を置く */
+/* 立ち絵：床線（1px）の上に二人を置く。左がすてぶるくん、右がすてぶるちゃん（動画と同じ並び） */
 .cast {
   display: flex;
   align-items: flex-end;
   margin: 0;
+  padding-top: 6px; /* すてぶるちゃんが上下で持ち上がっても、髪・座布団の上端が枠で切れない余白（上端が絵の枠に近いコマがある） */
   overflow: hidden; /* すてぶるちゃんの下端を床線で切る */
   border-bottom: 1px solid var(--line-strong);
 }
 
-.cast img {
+/* 直下の img（すてぶるちゃん）だけ。すてぶるくんの部品の img には効かせない */
+.cast > img {
   flex: none;
   max-width: none;
   width: auto;
 }
 
+/* すてぶるくん：同じ大きさの部品（足・腕・体・ほほ・目・口）を左上でそろえて重ね、1 体に組む。
+   足は .kun-rig の直下に残し、腕と体は .kun-bob にまとめる（上下に動くのは .kun-bob だけで、足は床に付けたまま）。
+   高さは --kun-h で決め、幅は絵の縦横比（748:522）を掛けて出す。
+   目と口は assets/characters.js が img の src を差し替えて動かす。
+   部品の絵は下端に透明な行が 3 行（261 行中）あるので、その分だけ下げて足を床線（ティッカー）に付ける */
+.kun-rig {
+  position: relative;
+  display: block;
+  flex: none;
+  height: var(--kun-h);
+  width: calc(var(--kun-h) * 1.4330);
+  margin-bottom: calc(var(--kun-h) * -0.0115);
+}
+
+.kun-rig .kun-part {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+/* 腕と体を 1 つにまとめた枠。ゲームの立ち絵のように、ここだけが軽く上下する（足は含めない） */
+.kun-bob {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 体（体・ほほ・目・口）はひとまとめにして、足元を支点に呼吸させる */
+.kun-body {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 88.36%;
+}
+
+/* 腕は肩（左右の付け根）を支点に振る */
+.kun-arm-l {
+  transform-origin: 28.35% 52.04%;
+}
+
+.kun-arm-r {
+  transform-origin: 71.65% 52.04%;
+}
+
+/* 上半身の絵。下端（胸の切れ目）は床線の下へ 12px 沈めて、上下しても見せない。
+   左のすてぶるくんと少し離して、仕草の手（手のひら・指さし・座布団）がすてぶるくんに重ならず、触れても見えないようにする */
 .cast-chan {
-  height: 250px;
-  margin-bottom: -26px;
+  height: 190px;
+  margin-bottom: -12px;
+  margin-left: 8px;
 }
 
 .cast-kun {
   position: relative;
   z-index: 1;
-  height: 98px;
-}
-
-.cast-videos .cast-kun {
-  margin-left: -26px;
+  --kun-h: 102px;
 }
 
 .cast-guest {
   margin-top: 32px;
 }
 
-.cast-guest .cast-chan {
-  margin-bottom: -12px;
-}
-
+/* すてぶるくんの足の左は透明な余白があるので、見えている左端を床線の左端にそろえる
+   （-8px だと、腕の揺れの途中で左腕が枠から 1px ほど切れるので -7px） */
 .cast-guest .cast-kun {
-  margin-left: -6px;
+  margin-left: -7px;
 }
 
 /* ヒーロー：動画と同じく、左下にすてぶるくん、右下にすてぶるちゃん。
@@ -1329,22 +1379,26 @@ sup.fn a:hover {
     pointer-events: none;
   }
 
-  .hero-cast img {
+  /* 直下の img（すてぶるちゃん）だけ。すてぶるくんの部品の img には効かせない */
+  .hero-cast > img {
     position: absolute;
     bottom: 0;
     max-width: none;
     width: auto;
   }
 
+  /* 部品を組んだすてぶるくん（.kun-rig）自体を左下に置く */
   .hero-cast-kun {
-    left: max(24px, calc(50% - 640px));
-    height: 108px;
+    position: absolute;
+    bottom: 0;
+    left: max(8px, calc(50% - 656px));
+    --kun-h: 112px;
   }
 
   .hero-cast-chan {
     right: max(16px, calc(50% - 650px));
-    height: 246px;
-    margin-bottom: -30px; /* 下端はティッカーの向こうに隠す */
+    height: 204px;
+    margin-bottom: -14px; /* 下端（胸の切れ目）はティッカーの向こうに隠す。上下しても見えない深さ */
   }
 
   .hero.hero-anim .hero-cast {
@@ -1361,12 +1415,120 @@ sup.fn a:hover {
 
 @media (min-width: 1440px) {
   .hero-cast-kun {
-    height: 120px;
+    --kun-h: 124px;
   }
 
   .hero-cast-chan {
-    height: 280px;
+    height: 236px;
   }
+}
+
+/* 立ち絵の動き：軽い上下・呼吸・腕の揺れ・手を振る。
+   .is-live は assets/characters.js が「画面に入っていて、タブが表示中」のときだけ付ける
+   （JS なしでは動かず、画面の外では止まる）。体が動くものなので、減らす設定では止める（後ろの @media） */
+
+/* 腕と体（.kun-bob）が呼吸のように上下する。足は動かない */
+@keyframes kun-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5%);
+  }
+}
+
+/* 沈むときは縮み、上がるときは伸びる（上下と同じ周期・同じ位相） */
+@keyframes kun-breathe {
+  0%,
+  100% {
+    transform: scale(1.012, 0.988);
+  }
+  50% {
+    transform: scale(0.996, 1.004);
+  }
+}
+
+@keyframes kun-arm-l-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes kun-arm-r-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+}
+
+/* 手を振る：右腕を肩から持ち上げて揺らし、下ろす（ヒーローで 1 回だけ） */
+@keyframes kun-wave {
+  0% {
+    transform: rotate(0deg);
+  }
+  18% {
+    transform: rotate(-88deg);
+  }
+  32% {
+    transform: rotate(-70deg);
+  }
+  46% {
+    transform: rotate(-94deg);
+  }
+  60% {
+    transform: rotate(-70deg);
+  }
+  76% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* すてぶるちゃんは絵ごと、数 px だけ上下する（呼吸のように） */
+@keyframes chan-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.8%);
+  }
+}
+
+/* 上下・呼吸・腕の揺れは同じ周期（2.6s）で動かす */
+.kun-rig.is-live .kun-bob {
+  animation: kun-bob 2.6s ease-in-out infinite;
+}
+
+.kun-rig.is-live .kun-body {
+  animation: kun-breathe 2.6s ease-in-out infinite;
+}
+
+.kun-rig.is-live .kun-arm-l {
+  animation: kun-arm-l-sway 2.6s ease-in-out infinite;
+}
+
+.kun-rig.is-live .kun-arm-r {
+  animation: kun-arm-r-sway 2.6s ease-in-out infinite;
+}
+
+/* 揺れより後ろに書いて、手を振る間はこちらを勝たせる */
+.kun-rig.is-waving .kun-arm-r {
+  animation: kun-wave 1.8s ease-in-out 1;
+}
+
+[data-chan].is-live {
+  animation: chan-bob 3.2s ease-in-out infinite;
 }
 
 /* FAQ：寝て浮いているすてぶるくんと、下に置かれた座布団（説明はしない） */
@@ -1453,7 +1615,7 @@ sup.fn a:hover {
 
 .cast-videos {
   justify-content: center;
-  width: 320px;
+  width: 368px;
 }
 
 .video-stage {
@@ -1466,8 +1628,53 @@ sup.fn a:hover {
 }
 
 .video-frame {
+  position: relative;
   border: 1px solid var(--line-strong);
   background: var(--paper-dim);
+}
+
+/* 押してから YouTube のプレーヤーを読み終わるまで（lp.js が is-loading を付ける）。
+   再生ボタンと同じ位置・大きさの四角の中を白い棒が左右に動き、下に「読み込み中…」（data-loading-label）を出す */
+.video-frame.is-loading::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
+  background: linear-gradient(#fff, #fff) no-repeat 14px 50% / 20px 4px, rgba(22, 22, 22, 0.86);
+  animation: video-loading 0.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.video-frame.is-loading::after {
+  content: attr(data-loading-label);
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  margin-top: 46px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+@keyframes video-loading {
+  from {
+    background-position: 14px 50%, 0 0;
+  }
+  to {
+    background-position: 38px 50%, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-frame.is-loading::before {
+    animation: none;
+  }
 }
 
 .video-frame iframe,
@@ -1826,11 +2033,11 @@ sup.fn a:hover {
   }
 
   .cast-chan {
-    height: 210px;
+    height: 164px;
   }
 
   .cast-kun {
-    height: 84px;
+    --kun-h: 88px;
   }
 
   .video-now-title {
@@ -1848,6 +2055,17 @@ sup.fn a:hover {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  /* 体が動くもの（上下・呼吸・腕の揺れ・手を振る）は止める。まばたき・口パクは絵の差し替えなので JS 側で残す。
+     上の動きと同じ詳細度で、後ろに書いて勝たせる */
+  .kun-rig.is-live .kun-bob,
+  .kun-rig.is-live .kun-body,
+  .kun-rig.is-live .kun-arm-l,
+  .kun-rig.is-live .kun-arm-r,
+  .kun-rig.is-waving .kun-arm-r,
+  [data-chan].is-live {
+    animation: none;
   }
 }
 
