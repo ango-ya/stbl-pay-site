@@ -37,7 +37,7 @@ STBLpay（すてぶるペイ）は、銀行振込による日本円の支払い�
 |---|---|
 | 決済 API・状態・Webhook | 本ガイドに載せている連携内容 |
 | 返金 | 加盟店コンソールから owner がパスキーで承認する経路のみ。加盟店サーバーから呼べる返金 API は無い |
-| Sandbox | 準備中（[Sandbox](/testing/sandbox)） |
+| Sandbox | 組み込みを試す環境（[Sandbox](/testing/sandbox)） |
 | 複数アカウントでの管理・WooCommerce プラグイン | 1st リリースのあとに提供予定（[今後の予定](/support/roadmap)） |
 
 提供状況と既知の制約は[既知の制限](/support/limitations)にまとめています。

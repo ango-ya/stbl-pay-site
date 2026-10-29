@@ -62,6 +62,6 @@ No. There is no refund API that you can call from the merchant server. The owner
 
 No. Apply your own authentication and authorization when you let people view your own orders.
 
-## Can I try mobile and failures in the sandbox?
+## Is there an environment for trying my integration?
 
-The environment for merchants to test in is in preparation ([Sandbox](/testing/sandbox)). The items to check are in [Test scenarios](/testing/scenarios).
+Yes, the [Sandbox](/testing/sandbox). The items to check are in [Test scenarios](/testing/scenarios).

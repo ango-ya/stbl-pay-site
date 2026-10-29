@@ -19,7 +19,7 @@ sidebar_position: 3
 | 加盟店の登録ドメイン（ホスト名。例：`shop.example.com`。[ドメイン登録](/security/domain)） | EC 決済の作成に必須（未登録だと 409 `merchant/domain_required`）。`returnUrl` のホスト名の照合にも使う |
 | Webhook 受信先と署名鍵（任意。推奨） | サーバーでの結果通知受信。使わない場合は、状態照会で `settled` を確かめてから注文を確定する |
 
-ブラウザへ API キーを渡さないでください。加盟店が試す環境は準備中です（[Sandbox](/testing/sandbox)）。決済ページの URL は作成応答から取得します。
+ブラウザへ API キーを渡さないでください。試すときは [Sandbox](/testing/sandbox) を使えます。決済ページの URL は作成応答から取得します。
 
 ## 加盟店側の準備
 

@@ -62,6 +62,6 @@ API の `canceled` は終端なので成立しません。発行体での予約�
 
 秘密ではありません。自社注文の閲覧には自社の認証・認可を適用してください。
 
-## Sandbox でモバイルや失敗を試せますか
+## 組み込みを試す環境はありますか
 
-加盟店が試す環境は準備中です（[Sandbox](/testing/sandbox)）。確認項目は[テストシナリオ](/testing/scenarios)にあります。
+[Sandbox](/testing/sandbox) があります。確認項目は[テストシナリオ](/testing/scenarios)にあります。

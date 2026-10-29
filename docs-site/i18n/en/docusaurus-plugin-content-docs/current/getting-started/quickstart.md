@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Quick Start
 
-These are the minimal steps to check payment creation, navigation, and status lookup against an endpoint that behaves as this guide describes. Prepare the [connection information](/getting-started/prerequisites) first. The environment for merchants to try is in preparation ([Sandbox](/testing/sandbox)).
+These are the minimal steps to check payment creation, navigation, and status lookup against an endpoint that behaves as this guide describes. Prepare the [connection information](/getting-started/prerequisites) first. To try things out, you can use the [Sandbox](/testing/sandbox).
 
 ## 1. Create a payment from the server
 

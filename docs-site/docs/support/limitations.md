@@ -9,7 +9,7 @@ sidebar_position: 3
 本サイトは仕様の説明です。仕様・実装・本番提供の状態を同じものとして扱いません。
 
 - **返金**：加盟店コンソールで owner がパスキーで承認する経路のみ。加盟店サーバーから呼べる返金 API と、加盟店サーバーの鍵で実行する機械返金は提供していない
-- **Sandbox**：加盟店が試す環境は準備中（[Sandbox](/testing/sandbox)）
+- **Sandbox**：JPYC EX の部分はモック（[Sandbox](/testing/sandbox)）
 - **決済の完了**：Webhook の配信の成否やブラウザの復帰とは別に決まる
 - **`nonce_conflict`**：結末を特定できない終端。通知はなく、照会と調査が必要
 - **複数アカウントでの管理・WooCommerce プラグイン**：1st リリースでは提供しない（[今後の予定](/support/roadmap)）

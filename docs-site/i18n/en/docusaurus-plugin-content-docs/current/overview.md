@@ -37,7 +37,7 @@ STBLpay and the buyer handle everything else:
 |---|---|
 | Payment API, statuses, Webhooks | Integration details covered in this guide |
 | Refunds | Only through the merchant console, where the owner approves with a passkey. Merchant servers cannot call a refund API (none exists) |
-| Sandbox | In preparation ([Sandbox](/testing/sandbox)) |
+| Sandbox | An environment for trying your integration ([Sandbox](/testing/sandbox)) |
 | Multi-account management, WooCommerce plugin | Planned after the first release ([Roadmap](/support/roadmap)) |
 
 Availability and known limitations are summarized in [Known limitations](/support/limitations).

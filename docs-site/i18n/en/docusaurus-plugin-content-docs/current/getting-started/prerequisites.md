@@ -19,7 +19,7 @@ This guide targets an environment that behaves as the guide describes. Before yo
 | Merchant's registered domain (host name, for example `shop.example.com`; see [Domain registration](/security/domain)) | Required to create an EC payment (409 `merchant/domain_required` if not registered). Also used to match the host name of `returnUrl` |
 | Webhook endpoint and signing secret (optional, recommended) | Receiving result notifications on the server. If you do not use Webhooks, confirm `settled` with a status lookup before finalizing the order |
 
-Do not pass the API key to the browser. The environment for merchants to try is in preparation ([Sandbox](/testing/sandbox)). Get the checkout page URL from the creation response.
+Do not pass the API key to the browser. To try things out, you can use the [Sandbox](/testing/sandbox). Get the checkout page URL from the creation response.
 
 ## Merchant-side preparation
 

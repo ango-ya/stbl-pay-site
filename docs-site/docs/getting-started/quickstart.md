@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Quick Start
 
-本ガイドの記述どおりに動く接続先で、決済作成・遷移・状態照会を確認する最小手順です。[接続情報](/getting-started/prerequisites)を用意してください。加盟店が試す環境は準備中です（[Sandbox](/testing/sandbox)）。
+本ガイドの記述どおりに動く接続先で、決済作成・遷移・状態照会を確認する最小手順です。[接続情報](/getting-started/prerequisites)を用意してください。試すときは [Sandbox](/testing/sandbox) を使えます。
 
 ## 1. サーバーから決済を作成する
 

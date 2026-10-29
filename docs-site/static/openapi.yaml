@@ -24,6 +24,8 @@ servers:
       baseUrl:
         default: https://api.example.com
         description: 確認した接続先の URL（末尾の / は付けない）。既定値は置き換え用の仮の値です
+  - url: https://api.sandbox.stbl-pay.com
+    description: Sandbox（JPYC EX の部分はモック。https://stbl-pay.com/docs/testing/sandbox）
 tags:
   - name: 決済
     description: 決済の作成と状態の照会
