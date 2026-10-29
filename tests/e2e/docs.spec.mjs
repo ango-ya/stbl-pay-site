@@ -133,6 +133,8 @@ test.describe("加盟店向けドキュメント", () => {
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {
     const headers = readFileSync(`${dist}_headers`, "utf8");
     expect(headers).not.toContain("__DOCS_SCRIPT_HASHES__");
+    // OpenAPI の仕様書だけ検索結果に載せない
+    expect(headers).toMatch(/^\/docs\/openapi\.yaml\n  X-Robots-Tag: noindex$/m);
 
     // 概要ページのテーマ切り替えのスクリプトが、CSP のハッシュで許可されている
     const html = readFileSync(`${dist}docs/index.html`, "utf8");

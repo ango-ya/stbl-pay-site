@@ -26,3 +26,7 @@
 /docs/*
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'self'; script-src 'self' __DOCS_SCRIPT_HASHES__; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'; worker-src 'none'; report-uri /csp-report
+
+# API の仕様書（OpenAPI）は検索結果に載せない。docs と llms.txt からのリンクで取得はできる
+/docs/openapi.yaml
+  X-Robots-Tag: noindex
