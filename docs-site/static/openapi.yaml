@@ -388,20 +388,9 @@ components:
       description: UTC の `Z` で終わる ISO 8601 の日時。`+09:00` のようなオフセット付きと、暦に無い日付（2 月 30 日など）は受け付けない。リクエストでは秒とミリ秒を省略できる。応答はミリ秒まで付く
       examples: ['2026-10-20T03:00:00.000Z']
     PaymentStatus:
+      # enum にしない。値が増えたとき、生成したバリデータが確認中として扱う前に弾くため
       type: string
-      enum:
-        - created
-        - signed
-        - issue_pending
-        - deposit_seen
-        - deposit_confirmed
-        - deploying
-        - executing
-        - settled
-        - canceled
-        - expired
-        - failed
-        - nonce_conflict
+      examples: [created, settled]
       description: |
         決済の状態。`settled` だけが成立で、商品の提供や入金の計上はこの状態を根拠にします。
 
@@ -452,6 +441,8 @@ components:
         amountJpy:
           type: string
           pattern: '^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$'
+          not:
+            pattern: '^0(\.0+)?$'
           description: |
             請求額（円）。10 進の数の文字列で、整数部に先頭のゼロは付けない（例：`"4980"`、`"0.5"`）。
             0 を超える金額にする（`"0"` は 400 `common/invalid_request`）。小数部は 6 桁まで。
@@ -462,7 +453,7 @@ components:
           maxLength: 128
           description: |
             自社の注文 ID。冪等性のキー。同じ店舗から同じ値で再作成すると既存の決済を返します。
-            長さは UTF-16 のコード単位で数えて 128 までです（絵文字などは 1 文字で 2 単位）。
+            長さは UTF-16 のコード単位で数えて 128 までです（絵文字などは 1 文字で 2 単位）。`maxLength` は文字数で数えるので、絵文字などを含むとスキーマを通っても 400 `common/invalid_request` になることがあります。
             省略すると、呼ぶたびに新しい決済を作ります。複数の店舗があるときは、加盟店全体で一意に採番してください（別の店舗で使った値は 500 `common/internal`）
           examples: [ord_0001]
         returnUrl:

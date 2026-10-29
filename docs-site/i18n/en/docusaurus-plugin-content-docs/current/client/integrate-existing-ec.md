@@ -42,7 +42,7 @@ flowchart TD
   C -- nonce_conflict --> F[Do not re-create; ask the contact to investigate]
   C -- created --> H
   C -- signed / issue_pending --> G{Can you wait for the deadline}
-  C -- other in-progress statuses --> J[Keep checking the status until it reaches a terminal status]
+  C -- deposit_confirmed / deploying / executing / unknown --> J[Keep checking the status until it reaches a terminal status]
   J --> B
   G -- yes --> H[Keep checking the status and wait for it to expire. It becomes expired and payment.expired arrives]
   G -- no --> I[Ask the buyer to cancel it on My Page. It becomes canceled and payment.canceled arrives]
@@ -57,6 +57,6 @@ flowchart TD
 5. If it is `created`, `signed`, or `issue_pending`, do not create a new payment. Wait until it reaches a terminal status in the following ways, then go back to step 1. Keep checking the status while you wait, and if it changes (for example, from `created` to `signed`), start again from step 1.
    - **Wait for the deadline**: `created` and `signed` before the reservation starts expire at `checkoutExpiresAt`, and `issue_pending` expires after the deposit deadline plus the confirmation-wait grace period. The status becomes `expired` and `payment.expired` arrives (see [Operation deadline and deposit deadline](/lifecycle/transitions#operation-deadline-and-deposit-deadline)).
    - **Ask the buyer to cancel (`signed` and `issue_pending` only)**: If you cannot wait, ask the buyer to cancel it on STBLpay's My Page (マイページ). Only `signed`, and `issue_pending` before the deposit is confirmed, can be canceled. Canceling makes the status `canceled`, and `payment.canceled` arrives. Once the deposit is confirmed, it cannot be canceled (see [Cancellation](/lifecycle/transitions#cancellation)).
-6. If it is in any other in-progress status (after the deposit is confirmed), it can neither be canceled nor expire. Do not create a new payment. Keep checking the status until it reaches a terminal status, then go back to step 1.
+6. If it is `deposit_confirmed`, `deploying`, or `executing`, it can neither be canceled nor expire. Do not create a new payment. Keep checking the status until it reaches a terminal status, then go back to step 1. If it is a status you do not recognize, do not re-create either; keep checking the status in the same way.
 
 On the return page, authorize the order from your own session. Do not return order details just because the requester knows the payment ID.
