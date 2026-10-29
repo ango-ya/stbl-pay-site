@@ -52,7 +52,7 @@ API の項目ごとの型・形式・制約・エラーは、OpenAPI 3.1 の仕�
 - `orderId` は、同じ店舗から同じ値で再作成すると既存の決済を返します。注文ごとに安定した値を指定してください。省略した場合、この注文識別子による冪等性は使えません。複数店舗では加盟店全体で一意に採番してください（[店舗をまたぐ制約](/server/create-payment#冪等性)）。
 - `returnUrl` は、次の条件をすべて満たす必要があります。満たさないと決済は作成されません。`https` でない URL は 400 `common/invalid_request` です。ただし `http://localhost`・`http://127.0.0.1`・`http://[::1]` は形式の検査を通るため、403 `merchant/origin_mismatch` になります。`https` で、ほかの条件に合わないときも 403 `merchant/origin_mismatch` です。
   - スキームは `https` です。`http` は使えません。`http://localhost` のような開発用の URL も使えません（403 `merchant/origin_mismatch`）。
-  - ポート番号を付けられません（`https://shop.example.com:8443/` は不可）。
+  - ポート番号を付けられません（`https://shop.example.com:8443/` は不可。`:443` は付けない場合と同じ扱い）。
   - `user:pass@` のような userinfo を含められません。
   - ホスト名が、加盟店コンソールで登録したドメインと**完全に一致**します（大文字小文字は区別しません）。サブドメインは別のドメインとして扱うため、`shop.example.com` を登録したときに `www.shop.example.com` は使えません。ドメインの登録は[ドメイン登録](/security/domain)を参照してください。
   - パスとクエリには制限がありません（例：`https://shop.example.com/orders/ord_0001/return`）。
@@ -253,7 +253,7 @@ GET /payment_status/pi_0123456789abcdef0123456789abcdef
 | `auth/api_key_invalid` | 401 | API キーが無効、失効済み、または送られていない。キーを確認する |
 | `store/disabled` | 409 | 店舗が無効化されている。加盟店コンソールで店舗の状態を確認する |
 | `payment/expires_at_too_soon` | 400 | `merchantExpiresAt` が近すぎる（作成時点から 3 日以内に切れる指定）。[期限の扱い](/lifecycle/transitions)を参照し、より後の時刻を指定する |
-| `common/invalid_request` | 400 | リクエストの形式が正しくない（フィールドの型・形式の違反）。入力を直す。`details.issues` に、違反ごとの配列が入る（各要素の `path` が該当フィールド、`message` が理由） |
+| `common/invalid_request` | 400 | リクエストの形式が正しくない（フィールドの型・形式の違反）。入力を直す。`details.issues` がある場合は、違反ごとの配列が入る（各要素の `path` が該当フィールド、`message` が理由） |
 | `common/internal` | 500 | サーバー側の障害。同じ `orderId` で再試行しても決済が二重に立つことはない。ただし、別の店舗で使った `orderId` を指定したときもこのエラーになり、こちらは再試行しても解消しない（[店舗をまたぐ制約](/server/create-payment#冪等性)） |
 
 状態照会（`GET /payment_status/:paymentIntentId`）は、存在しない決済 ID に `payment/not_found`（404）を返します。決済 ID の形式（`pi_` に小文字の16進が8〜32桁）に合わないときは、存在を確かめる前に `common/invalid_request`（400）を返します。

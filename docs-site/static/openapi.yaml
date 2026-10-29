@@ -411,7 +411,7 @@ components:
         | `signed` | 途中 | 利用者の署名が済んだ |
         | `issue_pending` | 途中 | 利用者が JPYC EX の手続きへ進んだ。手続きが済んだことは意味しない |
         | `deposit_confirmed` | 途中 | 着金（または残高）を確認した。決済の実行前 |
-        | `deploying` | 途中 | 利用者のウォレットを作成している |
+        | `deploying` | 途中 | 必要なウォレット（利用者のウォレット、加盟店の受取ウォレット）を作成している |
         | `executing` | 途中 | 決済の実行を始めた。結果を確認している |
         | `settled` | 成立 | 決済が成立し、加盟店へ送金された |
         | `canceled` | 成立しなかった | 決済が取り消された |
@@ -431,7 +431,7 @@ components:
         |---|---|
         | `userop_expired` | 着金または残高の充足は確認できたが、決済を実行できる時刻を過ぎていた。お金は届いている |
         | `deposit_recipient_mismatch` | 着金の宛先が、決済で想定した宛先と違う |
-        | `wallet_deploy_failed` | 利用者のウォレットの作成に失敗した |
+        | `wallet_deploy_failed` | 必要なウォレット（利用者のウォレットまたは加盟店の受取ウォレット）の作成に失敗した |
         | `missing_signed_userop` | 実行に必要な署名済みの操作が無かった |
         | `insufficient_balance` | 支払人の残高が足りない |
         | `policy_violation` | 支払人のウォレットの金額上限・頻度上限に触れた |

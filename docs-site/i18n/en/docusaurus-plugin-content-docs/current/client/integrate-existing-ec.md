@@ -40,7 +40,9 @@ flowchart TD
   C -- settled --> D[Already paid. Do not re-create; proceed with that payment]
   C -- canceled / expired / failed --> E[Re-create with a new orderId]
   C -- nonce_conflict --> F[Do not re-create; ask the contact to investigate]
-  C -- in progress --> G{Can you wait for the deadline}
+  C -- created / signed / issue_pending --> G{Can you wait for the deadline}
+  C -- other in-progress statuses --> J[Keep checking the status until it reaches a terminal status]
+  J --> B
   G -- yes --> H[Wait for it to expire. It becomes expired and payment.expired arrives]
   G -- no --> I[Ask the buyer to cancel it on My Page. It becomes canceled and payment.canceled arrives]
   H --> B
@@ -51,8 +53,9 @@ flowchart TD
 2. If it is `settled`, the payment is done. Do not re-create; proceed with the order using that payment.
 3. If it is `canceled`, `expired`, or `failed`, it will definitely not succeed. You can re-create it with a new `orderId`.
 4. If it is `nonce_conflict`, do not re-create; ask the [contact](/support/troubleshooting#contact) to investigate (see [The transfer result cannot be determined](/lifecycle/edge-cases#nonce-conflict)).
-5. If it is in progress, do not create a new payment. Wait until it reaches a terminal status in one of the following ways, then go back to step 1.
+5. If it is `created`, `signed`, or `issue_pending`, do not create a new payment. Wait until it reaches a terminal status in one of the following ways, then go back to step 1.
    - **Wait for the deadline**: `created` and `signed` before the reservation starts expire at `checkoutExpiresAt`, and `issue_pending` expires after the deposit deadline plus the confirmation-wait grace period. The status becomes `expired` and `payment.expired` arrives (see [Operation deadline and deposit deadline](/lifecycle/transitions#operation-deadline-and-deposit-deadline)).
-   - **Ask the buyer to cancel**: If you cannot wait, ask the buyer to cancel it on STBLpay's My Page (マイページ). Only `signed`, and `issue_pending` before the deposit is confirmed, can be canceled. Canceling makes the status `canceled`, and `payment.canceled` arrives. Once the deposit is confirmed, it cannot be canceled and proceeds to `settled` (see [Cancellation](/lifecycle/transitions#cancellation)).
+   - **Ask the buyer to cancel**: If you cannot wait, ask the buyer to cancel it on STBLpay's My Page (マイページ). Only `signed`, and `issue_pending` before the deposit is confirmed, can be canceled. Canceling makes the status `canceled`, and `payment.canceled` arrives. Once the deposit is confirmed, it cannot be canceled (see [Cancellation](/lifecycle/transitions#cancellation)).
+6. If it is in any other in-progress status (after the deposit is confirmed), it can neither be canceled nor expire. Do not create a new payment. Keep checking the status until it reaches a terminal status, then go back to step 1.
 
 On the return page, authorize the order from your own session. Do not return order details just because the requester knows the payment ID.

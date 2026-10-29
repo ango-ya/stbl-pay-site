@@ -52,7 +52,7 @@ Creates a payment and returns the `checkoutUrl` that you send the buyer to.
 - If you create a payment again from the same store with the same `orderId`, the existing payment is returned. Specify a stable value for each order. If you omit it, idempotency by this order identifier is not available. With multiple stores, assign values that are unique across the whole merchant ([constraint across stores](/server/create-payment#idempotency)).
 - `returnUrl` must satisfy all of the following conditions. If it does not, the payment is not created. A URL that is not `https` returns 400 `common/invalid_request`. However, `http://localhost`, `http://127.0.0.1`, and `http://[::1]` pass the format check, so they return 403 `merchant/origin_mismatch`. An `https` URL that fails the other conditions also returns 403 `merchant/origin_mismatch`.
   - The scheme is `https`. `http` cannot be used. Development URLs such as `http://localhost` cannot be used either (403 `merchant/origin_mismatch`).
-  - A port number cannot be included (`https://shop.example.com:8443/` is not allowed).
+  - A port number cannot be included (`https://shop.example.com:8443/` is not allowed; `:443` is treated the same as no port).
   - userinfo such as `user:pass@` cannot be included.
   - The hostname **exactly matches** a domain registered in the merchant console (case-insensitive). Subdomains are treated as different domains, so if you registered `shop.example.com`, `www.shop.example.com` cannot be used. For domain registration, see [Domain registration](/security/domain).
   - There are no restrictions on the path and query (example: `https://shop.example.com/orders/ord_0001/return`).
@@ -253,7 +253,7 @@ The errors that `POST /payment_intents` can return are as follows (excluding tho
 | `auth/api_key_invalid` | 401 | The API key is invalid, revoked, or was not sent. Check the key |
 | `store/disabled` | 409 | The store is disabled. Check the store's status in the merchant console |
 | `payment/expires_at_too_soon` | 400 | `merchantExpiresAt` is too soon (it would expire within 3 days of creation). See [How deadlines work](/lifecycle/transitions) and specify a later time |
-| `common/invalid_request` | 400 | The request format is invalid (a field type or format violation). Fix the input. `details.issues` holds an array with one entry per violation (`path` of each entry is the field, `message` is the reason) |
+| `common/invalid_request` | 400 | The request format is invalid (a field type or format violation). Fix the input. When present, `details.issues` holds an array with one entry per violation (`path` of each entry is the field, `message` is the reason) |
 | `common/internal` | 500 | A server-side failure. Retrying with the same `orderId` does not create the payment twice. However, specifying an `orderId` used at a different store also returns this error, and retrying does not resolve that case ([constraint across stores](/server/create-payment#idempotency)) |
 
 The status lookup (`GET /payment_status/:paymentIntentId`) returns `payment/not_found` (404) for a payment ID that does not exist. If the payment ID does not match the format (`pi_` followed by 8 to 32 lowercase hex digits), it returns `common/invalid_request` (400) before checking whether the payment exists.

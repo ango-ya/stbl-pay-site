@@ -127,6 +127,7 @@ test.describe("加盟店向けドキュメント", () => {
     }
     // llms.txt が案内する場所
     expect((await request.get("/docs/openapi.yaml")).ok()).toBe(true);
+    expect(await (await request.get("/llms.txt")).text()).toContain("(/docs/openapi.yaml)");
   });
 
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {
