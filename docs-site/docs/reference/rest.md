@@ -8,7 +8,7 @@ sidebar_position: 2
 
 このページは、加盟店サーバーが呼ぶ API のメソッド・パス・認証・フィールド・エラーをまとめています。接続先 URL は導入時に STBLpay の担当者へ問い合わせて受け取り（[問い合わせ先](/support/troubleshooting#問い合わせ先)）、公開 URL や localhost の既定値を仮定しないでください。
 
-API の項目ごとの型・形式・制約・エラーは、OpenAPI 3.1 の仕様書 [openapi.yaml](pathname:///openapi.yaml) に定義しています。このページは、その概要と使い方の注意です。コードの生成や、AI コーディングエージェントに読ませるときは、仕様書を使ってください。
+API の項目ごとの型・形式・制約・エラーは、OpenAPI 3.1 の仕様書に定義しています（[ブラウザーで見る](pathname:///openapi/)・[openapi.yaml](pathname:///openapi.yaml)）。このページは、その概要と使い方の注意です。コードの生成や、AI コーディングエージェントに読ませるときは、openapi.yaml を使ってください。
 
 ## エンドポイント一覧
 
@@ -21,7 +21,7 @@ API の項目ごとの型・形式・制約・エラーは、OpenAPI 3.1 の仕�
 
 ## 決済作成
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `POST /payment_intents`（`CreatePaymentIntentRequest`・`CreatePaymentIntentResponse`） にあります。
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/createPaymentIntent)の `POST /payment_intents`（`CreatePaymentIntentRequest`・`CreatePaymentIntentResponse`） にあります。
 
 `POST /payment_intents`
 
@@ -114,7 +114,7 @@ Content-Type: application/json
 
 ## 状態照会
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `GET /payment_status/{paymentIntentId}`（`PaymentStatusView`） にあります。
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/getPaymentStatus)の `GET /payment_status/{paymentIntentId}`（`PaymentStatusView`） にあります。
 
 `GET /payment_status/:paymentIntentId`
 
@@ -164,7 +164,7 @@ GET /payment_status/pi_0123456789abcdef0123456789abcdef
 
 ## 状態の値
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `PaymentStatus` にあります。
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/getPaymentStatus)の `PaymentStatus` にあります。
 
 `status` は次のいずれかです。`settled` だけが成立で、商品の提供や入金の計上はこの状態を根拠にします。区分の意味と遷移は[ステータス一覧](/lifecycle/statuses)を参照してください。
 
@@ -186,7 +186,7 @@ GET /payment_status/pi_0123456789abcdef0123456789abcdef
 
 ## 値の形式
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `PaymentIntentId`・`AmountJpy`・`DateTime` にあります。
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/createPaymentIntent)の `PaymentIntentId`・`AmountJpy`・`DateTime` にあります。
 
 | 値 | 形式 | 例 |
 |---|---|---|
@@ -201,7 +201,7 @@ GET /payment_status/pi_0123456789abcdef0123456789abcdef
 
 ## `failed_reason` の分類コード
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `FailedReason` にあります。
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/getPaymentStatus)の `FailedReason` にあります。
 
 `failedReason`（状態照会）と Webhook の `failed_reason` に入る値は、次の表のコードのいずれかです。生のチェーンのエラー文字列は入りません。コードは今後増えることがあります。受け手は値を列挙で厳密に検証せず、**未知の値を、失敗として扱うフォールバックに落としてください。** 発行体の取引可否判断の理由は入りません。
 
@@ -227,7 +227,7 @@ GET /payment_status/pi_0123456789abcdef0123456789abcdef
 
 ## エラー
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `Error` と、各エンドポイントの応答 にあります。
+項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/)の `Error` と、各エンドポイントの応答 にあります。
 
 サーバーのエラー形式は `{ code, details? }` です。たとえば次の形です。
 

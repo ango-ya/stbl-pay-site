@@ -125,9 +125,35 @@ test.describe("加盟店向けドキュメント", () => {
       expect(response.ok(), `${path} → ${href}`).toBe(true);
       expect(await response.text(), `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
     }
+    // Redoc のページを JS なしで読んでも、本体の yaml へたどれる
+    const viewer = await (await request.get("/docs/openapi/")).text();
+    expect(viewer).toContain('<a href="../openapi.yaml">openapi.yaml</a>');
+    expect(viewer).toContain('<link rel="alternate" type="application/yaml" href="../openapi.yaml">');
     // llms.txt が案内する場所
     expect((await request.get("/docs/openapi.yaml")).ok()).toBe(true);
     expect(await (await request.get("/llms.txt")).text()).toContain("(/docs/openapi.yaml)");
+  });
+
+  test("docs から開く OpenAPI の仕様書（Redoc）で、リンク先の節が表示される（日英とも）", async ({ page }) => {
+    for (const [path, name] of [
+      ["/docs/reference/rest", "ブラウザーで見る"],
+      ["/docs/reference/webhook-events", "ブラウザーで見る"],
+      ["/docs/en/reference/rest", "view in the browser"],
+      ["/docs/en/reference/webhook-events", "view in the browser"],
+    ]) {
+      await page.goto(path);
+      const hrefs = await page.locator("article a[href*='/openapi/#']").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+      expect(hrefs.length, path).toBeGreaterThan(3);
+      // pathname:// のリンクは新しいタブで開くので、href を開く
+      await page.goto(await page.locator("article").getByRole("link", { name }).getAttribute("href"));
+      await expect(page.locator("h1")).toContainText("STBLpay API");
+      // JS を動かさずに読む AI 向けの案内は、Redoc が描画すると消える
+      await expect(page.getByText("AI エージェントは")).toHaveCount(0);
+      // 本文のリンクが指す節（operation の id）が、Redoc の画面にある
+      for (const href of new Set(hrefs)) {
+        await expect(page.locator(`[id="${decodeURIComponent(href.split("#")[1])}"]`).first(), `${path} → ${href}`).toBeAttached();
+      }
+    }
   });
 
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {
@@ -135,6 +161,7 @@ test.describe("加盟店向けドキュメント", () => {
     expect(headers).not.toContain("__DOCS_SCRIPT_HASHES__");
     // OpenAPI の仕様書だけ検索結果に載せない
     expect(headers).toMatch(/^\/docs\/openapi\.yaml\n  X-Robots-Tag: noindex$/m);
+    expect(headers).toMatch(/^\/docs\/en\/openapi\.yaml\n  X-Robots-Tag: noindex$/m);
 
     // 概要ページのテーマ切り替えのスクリプトが、CSP のハッシュで許可されている
     const html = readFileSync(`${dist}docs/index.html`, "utf8");

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>STBLpay API（OpenAPI）</title>
+  <link rel="alternate" type="application/yaml" href="../openapi.yaml">
+  <link rel="icon" href="../img/favicon.ico">
+  <link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+  <!-- docs の上部バーと同じ形。英語版（/docs/en/openapi/）では viewer.js がロゴと文言を差し替える -->
+  <header class="stbl-header">
+    <a class="stbl-brand" href="../"><img src="../img/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" width="885" height="165"></a>
+    <a class="stbl-back" href="../reference/rest">REST API リファレンスへ</a>
+  </header>
+  <!-- redoc.standalone.js は redoc@2.5.2（MIT、LICENSE）の bundles/ の写し。外部のロゴ画像（cdn.redoc.ly）だけ data:, に置き換えてある（CSP の img-src で止まるため）。
+       中の文は Redoc が描画すると置き換わる。JS を動かさずに読む AI やツールには、仕様書の本体（yaml）を案内する -->
+  <div id="redoc">
+    <p>STBLpay API の仕様書（OpenAPI 3.1）です。このページは仕様書を JavaScript で表示します。プログラムや AI エージェントは、本体の <a href="../openapi.yaml">openapi.yaml</a> を読んでください。</p>
+    <p lang="en">STBLpay API specification (OpenAPI 3.1). This page renders it with JavaScript. Programs and AI agents should read the source <a href="../openapi.yaml">openapi.yaml</a>.</p>
+  </div>
+  <script src="redoc.standalone.js"></script>
+  <script src="viewer.js"></script>
+</body>
+</html>

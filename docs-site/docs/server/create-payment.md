@@ -17,7 +17,7 @@ sidebar_position: 2
 3. `paymentIntentId` と注文の対応を永続化する。
 4. 返ってきた `checkoutUrl` をブラウザに渡す。
 
-本文と応答の項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `POST /payment_intents` にあります。
+本文と応答の項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/createPaymentIntent)の `POST /payment_intents` にあります。
 
 ```js
 // order は認可と価格計算を済ませたサーバー側の注文。

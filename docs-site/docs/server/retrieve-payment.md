@@ -20,7 +20,7 @@ const payment = await response.json();
 
 ## 応答の扱い
 
-応答のフィールドは [REST リファレンス](/reference/rest#状態照会)にまとめています。項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `PaymentStatusView` にあります。金額や手数料はこの応答に含まれません。照会失敗やタイムアウトを、決済の `failed` として扱わないでください。
+応答のフィールドは [REST リファレンス](/reference/rest#状態照会)にまとめています。項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/getPaymentStatus)の `PaymentStatusView` にあります。金額や手数料はこの応答に含まれません。照会失敗やタイムアウトを、決済の `failed` として扱わないでください。
 
 | 状態 | 注文側の処理 |
 |---|---|

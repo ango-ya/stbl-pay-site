@@ -17,7 +17,7 @@ Determine the amount and the order number on the merchant server. Do not use an 
 3. Persist the mapping between `paymentIntentId` and the order.
 4. Pass the returned `checkoutUrl` to the browser.
 
-For the definition of each field in the body and the response, see `POST /payment_intents` in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field in the body and the response, see `POST /payment_intents` in the [OpenAPI specification](pathname:///openapi/#operation/createPaymentIntent).
 
 ```js
 // order is the server-side order that has already gone through authorization and price calculation.

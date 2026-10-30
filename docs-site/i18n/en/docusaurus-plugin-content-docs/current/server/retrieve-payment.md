@@ -20,7 +20,7 @@ Your own order display API needs login and an order ownership check. Use the ID 
 
 ## Handling the response
 
-The response fields are summarized in the [REST reference](/reference/rest#retrieve-payment). For the definition of each field, see `PaymentStatusView` in the [OpenAPI specification](pathname:///openapi.yaml). Amounts and fees are not included in this response. Do not treat a lookup failure or timeout as a `failed` payment.
+The response fields are summarized in the [REST reference](/reference/rest#retrieve-payment). For the definition of each field, see `PaymentStatusView` in the [OpenAPI specification](pathname:///openapi/#operation/getPaymentStatus). Amounts and fees are not included in this response. Do not treat a lookup failure or timeout as a `failed` payment.
 
 | Status | Order-side handling |
 |---|---|

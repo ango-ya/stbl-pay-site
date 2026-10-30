@@ -8,11 +8,11 @@ sidebar_position: 3
 
 While the regular REST API uses camelCase, the **Webhook payload uses snake_case**.
 
-The definition of each field in the Webhook body and headers is in `webhooks` in the OpenAPI 3.1 specification [openapi.yaml](pathname:///openapi.yaml). This page gives an overview and usage notes.
+The definition of each field in the Webhook body and headers is in `webhooks` in the OpenAPI 3.1 specification ([view in the browser](pathname:///openapi/#operation/receivePaymentEvent), [openapi.yaml](pathname:///openapi.yaml)). This page gives an overview and usage notes.
 
 ## Common format
 
-For the definition of each field, see `webhooks.paymentEvent` (`WebhookEvent`) in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `webhooks.paymentEvent` (`WebhookEvent`) in the [OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 The body has `id` (the event ID, starting with `evt_`), `type`, `created_at` (ISO 8601 ending in UTC `Z`), and `data`. `created_at` is the time the event was generated, and differs from the send time `t` in the signature header.
 
@@ -25,7 +25,7 @@ Use the **`id` of the signature-verified body** for deduplication. The event ID 
 
 ## Events and data
 
-For the definition of each field, see `WebhookPaymentData` in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `WebhookPaymentData` in the [OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 The four types `payment.settled`, `payment.failed`, `payment.canceled`, and `payment.expired` use a common `data` shape. Even in `payment.failed`, common fields such as the amount are not omitted.
 
@@ -53,7 +53,7 @@ Notifications for failure, cancellation, and expiry mean no funds moved, so `fee
 
 ## Delivery and handling
 
-The send timeout, the responses treated as failures, and the retry intervals are also in `webhooks.paymentEvent` in the [OpenAPI specification](pathname:///openapi.yaml).
+The send timeout, the responses treated as failures, and the retry intervals are also in `webhooks.paymentEvent` in the [OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 A successful receipt is a `2xx`. Implement [signature verification](/webhooks/signature), the [retry policy](/webhooks/retry), and [idempotency](/webhooks/idempotency). Make sure unknown types can be safely ignored.
 
@@ -61,7 +61,7 @@ There is no notification for `nonce_conflict`. Confirm it with the status lookup
 
 ## Test notifications {/* #test-notifications */}
 
-For the definition of each field, see `TestWebhookEvent` in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `TestWebhookEvent` in the [OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 Only the test notification sent from the merchant console keeps `type` as `payment.settled` and carries `test: true` in the body. Regular notifications have no `test` key. The values of each field are as follows.
 

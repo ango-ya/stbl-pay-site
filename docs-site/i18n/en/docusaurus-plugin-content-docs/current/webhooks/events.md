@@ -36,7 +36,7 @@ Merchant account events and refund completion are not payment Webhook events.
 
 ## Test notifications {/* #test-notifications */}
 
-The body of a test notification is defined in `TestWebhookEvent` in the [OpenAPI specification](pathname:///openapi.yaml).
+The body of a test notification is defined in `TestWebhookEvent` in the [OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 You can send a test notification to check that your endpoint works. In the merchant console, open Store & QR code (お店と QR コード) from the menu and select your online store. In the Integration setup (組み込みの準備) tab, go to Payment completion notification endpoint (お支払い完了のお知らせ先) and find Test delivery (テスト送信). Select the checkbox that confirms you have finished the receiving-side handling, then click Send test notification (テスト通知を送る). STBLpay sends the notification once to the saved URL and does not retry. You can send up to 5 per minute.
 
