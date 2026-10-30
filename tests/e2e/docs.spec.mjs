@@ -144,8 +144,13 @@ test.describe("加盟店向けドキュメント", () => {
       await page.goto(path);
       const hrefs = await page.locator("article a[href*='/openapi/#']").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
       expect(hrefs.length, path).toBeGreaterThan(3);
+      const viewer = path.startsWith("/docs/en/") ? "/docs/en/openapi/" : "/docs/openapi/";
+      for (const href of hrefs) expect(href, path).toContain(viewer);
+      expect(await page.locator("nav a", { hasText: /OpenAPI/ }).getAttribute("href"), path).toBe(viewer);
       // pathname:// のリンクは新しいタブで開くので、href を開く
       await page.goto(await page.locator("article").getByRole("link", { name }).getAttribute("href"));
+      // 英語版のビルドでは pathname:/// に /docs/en/ が付くので、英語版の本文からは英語版のビューアーを開く
+      expect(new URL(page.url()).pathname, path).toBe(viewer);
       await expect(page.locator("h1")).toContainText("STBLpay API");
       // JS を動かさずに読む AI 向けの案内は、Redoc が描画すると消える
       await expect(page.getByText("AI エージェントは")).toHaveCount(0);
