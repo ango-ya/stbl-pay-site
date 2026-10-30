@@ -1,0 +1,19 @@
+/* docs（src/css/custom.css）の色・書体に合わせる。モノクロ＋リンク青、影と角丸なし */
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("../fonts/schibsted-grotesk-latin-wght.woff2") format("woff2-variations");
+  font-weight: 400 900;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2013-2014, U+2018-201A, U+201C-201E, U+2026, U+2212;
+}
+body { margin: 0; background: #fff; color: #161616; }
+.stbl-header {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  height: 64px; padding: 0 16px; box-sizing: border-box;
+  background: #fff; border-bottom: 1px solid #e2e2e2;
+  font: 14px/1.5 "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+}
+.stbl-brand img { display: block; height: 22px; width: auto; }
+.stbl-back { color: #6b6b6b; text-decoration: none; }
+.stbl-back:hover { color: #161616; text-decoration: underline; }

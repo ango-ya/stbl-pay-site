@@ -30,3 +30,5 @@
 # API の仕様書（OpenAPI）は検索結果に載せない。docs と llms.txt からのリンクで取得はできる
 /docs/openapi.yaml
   X-Robots-Tag: noindex
+/docs/en/openapi.yaml
+  X-Robots-Tag: noindex

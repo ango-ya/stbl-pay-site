@@ -8,7 +8,7 @@ sidebar_position: 2
 
 This page lists the methods, paths, authentication, fields, and errors of the API that your server calls. You get the endpoint URL from your STBLpay contact when you onboard ([contact](/support/troubleshooting#contact)). Don't assume a public URL or a localhost default.
 
-The type, format, constraints, and errors of each API field are defined in the OpenAPI 3.1 specification [openapi.yaml](pathname:///openapi.yaml). This page gives an overview and usage notes. Use the specification for code generation or to give to an AI coding agent.
+The type, format, constraints, and errors of each API field are defined in the OpenAPI 3.1 specification ([view in the browser](pathname:///openapi/), [openapi.yaml](pathname:///openapi.yaml)). This page gives an overview and usage notes. Use openapi.yaml for code generation or to give to an AI coding agent.
 
 ## Endpoint list
 
@@ -21,7 +21,7 @@ Request and response bodies are JSON.
 
 ## Create payment {/* #create-payment */}
 
-For the definition of each field, see `POST /payment_intents` (`CreatePaymentIntentRequest` and `CreatePaymentIntentResponse`) in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `POST /payment_intents` (`CreatePaymentIntentRequest` and `CreatePaymentIntentResponse`) in the [OpenAPI specification](pathname:///openapi/#operation/createPaymentIntent).
 
 `POST /payment_intents`
 
@@ -114,7 +114,7 @@ Response (values are examples):
 
 ## Retrieve payment status {/* #retrieve-payment */}
 
-For the definition of each field, see `GET /payment_status/{paymentIntentId}` (`PaymentStatusView`) in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `GET /payment_status/{paymentIntentId}` (`PaymentStatusView`) in the [OpenAPI specification](pathname:///openapi/#operation/getPaymentStatus).
 
 `GET /payment_status/:paymentIntentId`
 
@@ -164,7 +164,7 @@ GET /payment_status/pi_0123456789abcdef0123456789abcdef
 
 ## Status values {/* #status-values */}
 
-For the definition of each field, see `PaymentStatus` in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `PaymentStatus` in the [OpenAPI specification](pathname:///openapi/#operation/getPaymentStatus).
 
 `status` is one of the following. Only `settled` means the payment succeeded. Base delivery of goods and recording of revenue on this status. For the meaning of the categories and the transitions, see the [status list](/lifecycle/statuses).
 
@@ -186,7 +186,7 @@ If you receive an unknown value, do not deliver goods or charge again; treat it 
 
 ## Value formats {/* #value-formats */}
 
-For the definition of each field, see `PaymentIntentId`, `AmountJpy`, and `DateTime` in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `PaymentIntentId`, `AmountJpy`, and `DateTime` in the [OpenAPI specification](pathname:///openapi/#operation/createPaymentIntent).
 
 | Value | Format | Example |
 |---|---|---|
@@ -201,7 +201,7 @@ The IDs in a [test notification](/reference/webhook-events#test-notifications) a
 
 ## `failed_reason` classification codes {/* #failed-reason-codes */}
 
-For the definition of each field, see `FailedReason` in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `FailedReason` in the [OpenAPI specification](pathname:///openapi/#operation/getPaymentStatus).
 
 The value in `failedReason` (status lookup) and in the Webhook `failed_reason` is one of the codes in the following table. Raw chain error strings are not included. Codes may be added in the future. Receivers should not validate the value strictly as an enumeration; **fall back to treating an unknown value as a failure.** The reasons behind the issuer's decision on whether to allow a transaction are not included.
 
@@ -227,7 +227,7 @@ With any code except `nonce_conflict`, the payment ends as `failed` and has not 
 
 ## Errors {/* #errors */}
 
-For the definition of each field, see `Error` and the responses of each endpoint in the [OpenAPI specification](pathname:///openapi.yaml).
+For the definition of each field, see `Error` and the responses of each endpoint in the [OpenAPI specification](pathname:///openapi/).
 
 The server's error format is `{ code, details? }`. For example:
 

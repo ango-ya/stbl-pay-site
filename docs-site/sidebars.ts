@@ -86,7 +86,13 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: en ? 'Reference' : 'リファレンス',
-      items: ['reference/rest', 'reference/webhook-events', 'reference/glossary'],
+      items: [
+        'reference/rest',
+        'reference/webhook-events',
+        // Redoc で表示した OpenAPI の仕様書（static/openapi/）
+        {type: 'link', label: en ? 'OpenAPI specification' : 'OpenAPI 仕様書', href: 'pathname:///openapi/'},
+        'reference/glossary',
+      ],
     },
     {
       type: 'category',

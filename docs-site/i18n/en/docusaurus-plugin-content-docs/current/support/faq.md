@@ -44,7 +44,7 @@ No. `signed` and `deposit_confirmed` are in-progress statuses. [Confirm success 
 
 ## Which Webhooks are delivered?
 
-Four kinds: success, failure, cancellation, and expiry. For `nonce_conflict`, you need to run a status lookup and investigate. Deduplicate by the `id` in the signature-verified body. A test notification sent from the merchant console has the `payment.settled` form with `test: true` in the body. Return `2xx` without changing any order ([Test notifications](/webhooks/events#test-notifications)). The body is defined in `WebhookEvent` and `TestWebhookEvent` in the [OpenAPI specification](pathname:///openapi.yaml).
+Four kinds: success, failure, cancellation, and expiry. For `nonce_conflict`, you need to run a status lookup and investigate. Deduplicate by the `id` in the signature-verified body. A test notification sent from the merchant console has the `payment.settled` form with `test: true` in the body. Return `2xx` without changing any order ([Test notifications](/webhooks/events#test-notifications)). The body is defined in `WebhookEvent` and `TestWebhookEvent` in the [OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 ## Can a payment succeed after cancellation?
 

@@ -44,7 +44,7 @@ API の金額は円建ての文字列です。Webhook の金額も文字列で�
 
 ## Webhook は何が届きますか
 
-成立・失敗・取消・失効の4種類です。`nonce_conflict` は照会と調査が必要です。署名検証済みボディの `id` で重複を排除してください。加盟店コンソールから送るテスト通知は、`payment.settled` の形で本文に `test: true` が付きます。注文を変えずに `2xx` を返してください（[テスト通知](/webhooks/events#テスト通知)）。本文の定義は、[OpenAPI 仕様書](pathname:///openapi.yaml)の `WebhookEvent` と `TestWebhookEvent` にあります。
+成立・失敗・取消・失効の4種類です。`nonce_conflict` は照会と調査が必要です。署名検証済みボディの `id` で重複を排除してください。加盟店コンソールから送るテスト通知は、`payment.settled` の形で本文に `test: true` が付きます。注文を変えずに `2xx` を返してください（[テスト通知](/webhooks/events#テスト通知)）。本文の定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/receivePaymentEvent)の `WebhookEvent` と `TestWebhookEvent` にあります。
 
 ## キャンセル後に決済が成立しますか
 
