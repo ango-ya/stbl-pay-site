@@ -19,6 +19,7 @@ python3 -m http.server 4173 --directory dist
 - 書きながら確認するときは `cd docs-site && npm start`（`/docs/` 以下を dev サーバーで表示）
 - 英語版は `/docs/en/`。訳は `docs-site/i18n/en/docusaurus-plugin-content-docs/current/` に、日本語と同じパスで置く。日本語のページを直したら英語も直す
   - 書きながら確認するときは `cd docs-site && npm start -- --locale en`（dev サーバーは 1 言語ずつしか出さない）
+  - OpenAPI の仕様書の英訳は `docs-site/i18n/en/openapi.yaml`。`scripts/build-dist.sh` が `dist/docs/en/openapi.yaml` を英訳に差し替え、日本語版と構造が食い違うとビルドを止める（`scripts/openapi-en.mjs`）。dev サーバーや Docusaurus 単体のビルドでは英語版にも日本語の仕様書が出るので、英訳は `dist/` を配信して確かめる
   - リンク先になる見出しは、英語では `## Idempotency {/* #idempotency */}` のように id を明示する。リンク切れ・アンカー切れはビルドで落ちる
   - 画面（加盟店コンソール・決済ページ）は日本語だけなので、画面の名前は英語の後ろに日本語を括弧で添える（例：`Store & QR code (お店と QR コード)`）。それ以外に日本語を残さない（E2E で確かめる）
   - ナビ・フッター・サイドバーのカテゴリ名は `docusaurus.config.ts`・`sidebars.ts` で、状態遷移の図の文は `StateFlowchart.tsx` の `EN` で書き分ける

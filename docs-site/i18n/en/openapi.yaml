@@ -16,7 +16,7 @@ info:
     - There is no refund API that the merchant server can call. Refunds are a merchant console feature.
   contact:
     name: STBLpay contact
-    url: https://stbl-pay.com/docs/support/troubleshooting
+    url: https://stbl-pay.com/docs/en/support/troubleshooting
 servers:
   - url: '{baseUrl}'
     description: Check the endpoint URL with your [contact](https://stbl-pay.com/docs/en/support/troubleshooting). Do not assume a public URL or a localhost default

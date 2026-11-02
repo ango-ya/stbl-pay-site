@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { diffSpecs } from "../../scripts/openapi-parity.mjs";
 
 // 加盟店向けドキュメント（/docs/・docs-site のビルド結果）
 
@@ -170,6 +171,39 @@ test.describe("加盟店向けドキュメント", () => {
       for (const href of new Set(hrefs)) {
         await expect(page.locator(`[id="${decodeURIComponent(href.split("#")[1])}"]`).first(), `${path} → ${href}`).toBeAttached();
       }
+    }
+  });
+
+  test("OpenAPI の英訳の構造検査は、訳してよい文だけを見逃し、例・既定値・const の中の差は止める", () => {
+    const ja = {
+      info: { contact: { name: "問い合わせ先", url: "https://stbl-pay.com/docs/support/x" } },
+      tags: [{ name: "決済", description: "説明" }],
+      paths: { "/p": { post: { tags: ["決済"], summary: "作る", responses: { default: { description: "失敗" }, 400: { content: { "application/json": {
+        examples: { bad: { summary: "例", value: { details: { description: "サーバーの文" } } } },
+      } } } } } } },
+      components: { schemas: { S: { description: "説明", const: { description: "値" }, default: "既定", examples: [{ title: "値" }] } } },
+    };
+    const en = structuredClone(ja);
+    Object.assign(en.info.contact, { name: "Contact", url: "https://stbl-pay.com/docs/en/support/x" });
+    Object.assign(en.tags[0], { name: "Payments", description: "Description" });
+    Object.assign(en.paths["/p"].post, { tags: ["Payments"], summary: "Create" });
+    en.paths["/p"].post.responses.default.description = "Failure";
+    en.paths["/p"].post.responses[400].content["application/json"].examples.bad.summary = "Example";
+    en.components.schemas.S.description = "Description";
+    expect(diffSpecs(ja, en)).toEqual([]);
+
+    for (const change of [
+      (s) => { s.paths["/p"].post.responses[400].content["application/json"].examples.bad.value.details.description = "text"; },
+      (s) => { s.components.schemas.S.const.description = "value"; },
+      (s) => { s.components.schemas.S.default = "default"; },
+      (s) => { s.components.schemas.S.examples[0].title = "value"; },
+      (s) => { s.paths["/p"].post.tags = ["Other"]; },
+      (s) => { s.info.contact.url = "https://example.com/"; },
+      (s) => { delete s.paths["/p"].post.summary; },
+    ]) {
+      const broken = structuredClone(en);
+      change(broken);
+      expect(diffSpecs(ja, broken), change.toString()).not.toEqual([]);
     }
   });
 
