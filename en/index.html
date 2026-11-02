@@ -26,8 +26,8 @@
       content="Toward a new way to pay, not tied to payment processors. Buyers pay by Japanese-yen bank transfer; merchants receive their sales in stablecoin without relying on card companies' credit screening. STBLpay is under development."
     />
     <meta property="og:url" content="https://stbl-pay.com/en/" />
-    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
-    <meta property="og:image:secure_url" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image:secure_url" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -38,11 +38,12 @@
       name="twitter:description"
       content="Toward a new way to pay, not tied to payment processors. JPY stablecoin payments (under development)."
     />
-    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png" />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
     <meta name="twitter:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
     <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/" />
     <link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/" />
     <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/" />
+    <link rel="canonical" href="https://stbl-pay.com/en/" />
     <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/schibsted-grotesk-latin-wght.woff2" crossorigin />
     <link rel="preload" as="image" href="/assets/logo-wordmark-stblpay-black.png" />
     <link rel="stylesheet" href="/assets/lp.css" />
@@ -56,7 +57,7 @@
       primary_audience: Sole proprietors (creators selling digital works, freelance hairdressers and nail artists, and others), online shops that cannot easily adopt card payments, overseas online shops that want a payment method for Japan
       buyer_value: Payments are approved with a passkey (Face/fingerprint). When your JPYC balance is enough, no transfer is needed. When it is not, decide the amount to issue (¥3,000 to ¥1,000,000 per issuance) and make a bank transfer in Japanese yen; the remainder stays as a balance for your next payment. From transfer to reflection takes about 5 to 10 minutes as a guide. At a shop's register, scan a QR code and pay from your balance. No fees added to the buyer.
       merchant_value: No reliance on card companies' credit screening. No up-front KYB or KYC (open a merchant account on the web by yourself). Payment fees under consideration (a single flat rate for all merchants is planned, finalized at launch). Funds arrive in JPYC the moment the payment is made, and no reconciliation of deposits is needed. Withdrawal to Japanese yen is done from the merchant's own JPYC EX account.
-      implementation: Your site does three things: place a button, guide customers to the payment screen, and receive the result. An API specification (OpenAPI) and a document of implementation notes are planned (an AI coding agent can read them to help you integrate). A plugin for WordPress (WooCommerce) is in preparation. You can also start with QR codes alone.
+      implementation: Your site does three things: place a button, guide customers to the payment screen, and receive the result. The merchant documentation (https://stbl-pay.com/docs/en/) and the API specification (OpenAPI 3.1, https://stbl-pay.com/docs/openapi.yaml) are published, and an AI coding agent can read them to help you integrate. A Sandbox for trying the integration is also available (as of November 2026). A plugin for WordPress (WooCommerce) is in preparation. You can also start with QR codes alone.
       compliance_note: Requires agreement to the terms of use and the requirements of external services such as JPYC EX. Non-custodial design (the provider holds no funds or private keys).
     -->
 
@@ -66,16 +67,43 @@
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "#org-angoya",
+      "@id": "https://stbl-pay.com/#org-angoya",
       "name": "Ango-ya LLC",
-      "url": "https://www.ango-ya.org/"
+      "alternateName": "合同会社暗号屋",
+      "url": "https://www.ango-ya.org/",
+      "foundingDate": "2019-02",
+      "address": { "@type": "PostalAddress", "addressLocality": "Fukuoka", "addressCountry": "JP" },
+      "sameAs": [
+        "https://github.com/ango-ya",
+        "https://prtimes.jp/main/html/searchrlp/company_id/62107"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://stbl-pay.com/#website",
+      "url": "https://stbl-pay.com/",
+      "name": "すてぶるペイ / STBLpay",
+      "inLanguage": ["ja", "en"],
+      "publisher": { "@id": "https://stbl-pay.com/#org-angoya" }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://stbl-pay.com/en/#webpage",
+      "url": "https://stbl-pay.com/en/",
+      "inLanguage": "en",
+      "isPartOf": { "@id": "https://stbl-pay.com/#website" },
+      "about": { "@id": "https://stbl-pay.com/#service" },
+      "primaryImageOfPage": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "dateModified": "2026-11-03"
     },
     {
       "@type": "Service",
+      "@id": "https://stbl-pay.com/#service",
+      "url": "https://stbl-pay.com/",
       "name": "STBLpay",
       "alternateName": "すてぶるペイ",
       "serviceType": "JPY stablecoin payment service for online shops and sole proprietors",
-      "provider": { "@id": "#org-angoya" },
+      "provider": { "@id": "https://stbl-pay.com/#org-angoya" },
       "areaServed": ["JP", "Global"],
       "audience": [
         {
@@ -274,6 +302,7 @@
             <a class="button button-secondary" href="/demo">View demo (Japanese)</a>
           </div>
           <p class="hero-note">
+            STBLpay is a payment service where buyers pay by Japanese-yen bank transfer with a passkey, and merchants receive their sales in JPYC, a Japanese-yen stablecoin.
             Fees are under consideration; a single flat rate for all merchants is planned<sup class="fn"><a href="#fn-1" id="fnref-h1">*1</a></sup>. STBLpay is under development<sup class="fn"><a href="#fn-2" id="fnref-h2">*2</a></sup>.
             Subject to agreement to the terms of use and the requirements of external services such as JPYC EX.
           </p>
@@ -485,11 +514,11 @@
       <section class="section" id="integration" aria-labelledby="integration-title">
         <div class="shell">
           <h2 id="integration-title"><span class="sec-no">04</span>Integration</h2>
-          <p class="sec-lead">Your site does three things: place a button, guide customers to the payment screen, and receive the result. Our target for a standard integration is one day<sup class="fn"><a href="#fn-2" id="fnref-i1">*2</a></sup>. An API specification (OpenAPI) and a document of implementation notes are planned. Give them to an AI coding agent and it can help you write the integration code. For those who find building a site hard, a plugin for WordPress (WooCommerce) is also in preparation. You can try it on just part of your catalog.</p>
+          <p class="sec-lead">Your site does three things: place a button, guide customers to the payment screen, and receive the result. Our target for a standard integration is one day<sup class="fn"><a href="#fn-2" id="fnref-i1">*2</a></sup>. The <a href="/docs/en/">merchant documentation</a> and the API <a href="/docs/openapi/">specification (OpenAPI)</a> are published. Give them to an AI coding agent and it can help you write the integration code. A <a href="/docs/en/testing/sandbox/">Sandbox</a> for trying the integration is also available (as of November 2026). For those who find building a site hard, a plugin for WordPress (WooCommerce) is also in preparation. You can try it on just part of your catalog.</p>
           <ol class="flow">
             <li><strong>Open an account</strong><p>On the web, by yourself. Agree to the terms of use and create a passkey, and the place where you receive your sales is created too</p></li>
-            <li><strong>Embed</strong><p>Place a button, guide customers to the payment screen, and receive the result. The specification and implementation-notes document (planned) keep development effort small</p></li>
-            <li><strong>Test payments</strong><p>Check the customer's flow and the arrival of funds in a test environment. You can also start small with part of your catalog</p></li>
+            <li><strong>Embed</strong><p>Place a button, guide customers to the payment screen, and receive the result. The published specification and documentation keep development effort small</p></li>
+            <li><strong>Test payments</strong><p>Check the customer's flow and the arrival of funds in the Sandbox (test environment). You can also start small with part of your catalog</p></li>
             <li><strong>Start accepting payments</strong><p>Publish the button and start accepting payments. With QR codes, you can start by putting one up in your shop, with no integration into a site</p></li>
           </ol>
           <p class="flow-note">If you have any questions, such as how to use it or how to integrate it, talk to Ango-ya. A referral reward program is also planned for those who refer others.</p>

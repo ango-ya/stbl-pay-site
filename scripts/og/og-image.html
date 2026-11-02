@@ -1,0 +1,128 @@
+<!doctype html>
+<!--
+  OGP 画像（assets/og-stblpay-generative-1200x630.png）の元。scripts/make-og-image.mjs が 1200×630 で撮る。
+  ブラウザで直接開いても同じ絵が見える。
+  - 背景の模様は LP のヒーロー（assets/lp.js の hero-art）と同じ式を、時刻を止めて 1 枚だけ描く
+  - ロゴは正の SVG（Google Drive の STBLpay_japanese_logo.svg を写したもの）
+  - キャラクターは素材集 stbl-pay-characters の kun/poses/kun_pose_wave と chan/thigh/chan_thigh_reach_wink
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>OGP すてぶるペイ</title>
+<style>
+  @font-face {
+    font-family: "Schibsted Grotesk";
+    src: url("../../assets/fonts/schibsted-grotesk-latin-wght.woff2") format("woff2-variations");
+    font-weight: 400 900;
+  }
+  html, body { margin: 0; background: #060d24; }
+  .og {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #060d24 0%, #0a1a40 55%, #10306b 100%);
+    font-family: "Schibsted Grotesk", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    color: #fff;
+  }
+  canvas { position: absolute; inset: 0; }
+  .inner {
+    position: absolute;
+    left: 0; right: 0; top: 146px;
+    text-align: center;
+    z-index: 2;
+  }
+  .logo {
+    width: 720px;
+    filter: invert(1) hue-rotate(180deg) brightness(1.12) drop-shadow(0 0 28px rgba(99, 217, 255, 0.28));
+  }
+  h1 {
+    margin: 34px 0 0;
+    font-size: 54px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    background: linear-gradient(96deg, #ffffff 40%, #a8d4ff 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .sub {
+    margin: 14px 0 0;
+    color: #cfe0f5;
+    font-size: 23px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  .kun, .chan { position: absolute; z-index: 1; }
+  .kun { left: 26px; bottom: 44px; height: 172px; }
+  .chan { right: 6px; bottom: 26px; height: 300px; }
+  .ticker {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    padding: 11px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(4, 10, 28, 0.78);
+    color: #cfe0f5;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+  .ticker span + span::before {
+    content: "◆";
+    margin: 0 20px;
+    color: #63d9ff;
+    font-size: 11px;
+    vertical-align: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="og" id="og">
+  <canvas id="art" width="1200" height="630"></canvas>
+  <img class="kun" src="kun_pose_wave.webp" alt="" />
+  <img class="chan" src="chan_thigh_reach_wink.webp" alt="" />
+  <div class="inner">
+    <img class="logo" src="logo-suteburu.svg" alt="すてぶるペイ" />
+    <h1>円を使って、ステーブルで払う。</h1>
+    <p class="sub">決済事業者に縛られない、新しい決済のかたちへ。</p>
+  </div>
+  <div class="ticker"><span>JPYステーブルコイン決済</span><span>支払いは日本円の銀行振込で</span><span>与信審査 なし</span><span>決済と同時に着金</span></div>
+</div>
+<script>
+  // assets/lp.js の hero-art と同じ定数・同じ式（バーストとポインターは除く）
+  const W = 1200, H = 630, GRID = 22, CELL_W = 12, CELL_H = 12, SHEAR = 4.4, SLANT = 2.6;
+  const COLORS = ["#12315c", "#1b4c8f", "#2775ca", "#63d9ff"];
+  const T = 3.6; // LP の prefers-reduced-motion と同じ静止フレーム
+  const ctx = document.getElementById("art").getContext("2d");
+  const hash = (c, r) => { const v = Math.sin(c * 127.1 + r * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const cell = new Path2D();
+  cell.moveTo(SHEAR, 0); cell.lineTo(CELL_W + SHEAR, 0); cell.lineTo(CELL_W, CELL_H); cell.lineTo(0, CELL_H); cell.closePath();
+  const cols = Math.ceil(W / GRID) + 2, rows = Math.ceil(H / GRID) + 2;
+  const cx = W * 0.5, cy = H * 0.48, rx = W * 0.4, ry = H * 0.44;
+  for (let r = 0; r < rows; r++) {
+    const y = r * GRID - GRID * 0.5;
+    for (let c = 0; c < cols; c++) {
+      const x = c * GRID - GRID * 0.5;
+      const d = x + (H - y) * SLANT;
+      let v = 0.30 + 0.38 * Math.sin(d * 0.006 + T * 0.9);
+      v += 0.16 * Math.sin(d * 0.016 + T * 1.7);
+      v += 0.10 * Math.sin(T * 1.1 + hash(c, r) * Math.PI * 2);
+      const ex = (x - cx) / rx, ey = (y - cy) / ry, e2 = ex * ex + ey * ey;
+      if (e2 < 1) v *= 0.22 + 0.78 * e2;
+      const q = Math.round(Math.max(0, Math.min(1, v)) * 4);
+      if (q > 0) {
+        ctx.setTransform(1, 0, 0, 1, x, y);
+        ctx.fillStyle = COLORS[q - 1];
+        ctx.fill(cell);
+      }
+    }
+  }
+</script>
+</body>
+</html>

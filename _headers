@@ -16,6 +16,23 @@
 # frame-src: つかいかた動画は youtube-nocookie の埋め込み。iframe に referrerpolicy を付けている
 # （ページの Referrer-Policy: no-referrer のままだと YouTube がエラーになるため）。ポスターは img-src の 'self' から出る。
 
+# デモ画面（架空のお店・決済ページ・JPYC EX の画面のモック）は検索結果に出さない。
+# 特に /jpyc-ex は JPYC EX の画面をまねているので、検索から本物と間違えて来られないようにする。
+/demo
+  X-Robots-Tag: noindex
+/demo/*
+  X-Robots-Tag: noindex
+/demo.html
+  X-Robots-Tag: noindex
+/pay
+  X-Robots-Tag: noindex
+/pay.html
+  X-Robots-Tag: noindex
+/jpyc-ex
+  X-Robots-Tag: noindex
+/jpyc-ex.html
+  X-Robots-Tag: noindex
+
 # 加盟店向けドキュメント（/docs/ 以下・Docusaurus のビルド結果）。サイト全体の CSP を外して付け直す。
 # - script-src：Docusaurus のテーマ切り替えのインラインスクリプトだけをハッシュで許可する。
 #   __DOCS_SCRIPT_HASHES__ は scripts/build-dist.sh（docs-csp.mjs）がビルド結果から計算して置き換える

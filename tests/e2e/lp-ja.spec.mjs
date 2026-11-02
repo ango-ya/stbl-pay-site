@@ -57,7 +57,7 @@ test.describe("日本語LP OGP画像", () => {
     await page.goto("/");
 
     const imageUrl =
-      "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png";
+      "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2";
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
       "content",
       "https://stbl-pay.com/"
