@@ -23,9 +23,9 @@ async function startCheckout(orderId) {
 }
 ```
 
-`/api/checkout` is an example of an endpoint you provide. Apply your own session authentication and CSRF protection, and verify the order's owner and amount on the server. If STBLpay returns an existing terminal payment for a retry of the same order, your server checks the `status` in the response and does not return `checkoutUrl` to the browser. The STBLpay response still contains `checkoutUrl` (see [Idempotency](/server/create-payment#idempotency)).
+`/api/checkout` is an example of an endpoint you provide. Apply your own session authentication and CSRF protection, and verify the order's owner and amount on the server. If STBLpay returns an existing terminal payment when you resend the request, your server checks the `status` in the response and does not return `checkoutUrl` to the browser. The STBLpay response still contains `checkoutUrl` (see [Idempotency](/server/create-payment#idempotency)).
 
-Disable the button while the request is in flight. On the server, use the same `orderId` when retrying the same order. Do not create a new order number just because of a communication failure.
+Disable the button while the request is in flight. On the server, use the same `orderId` when resending the request. Do not create a new `orderId` just because of a communication failure.
 
 Persist the order details before navigating, and specify the return destination as `returnUrl` when you create the payment. Do not mark an order as paid merely because the buyer navigated or returned.
 

@@ -6,13 +6,13 @@ sidebar_position: 2
 
 # Create a payment
 
-To "create a payment" is to register an amount and an order number with STBLpay and have it create a record of the payment request (a [payment intent](/reference/glossary)).
+To "create a payment" is to register an amount and an `orderId` with STBLpay and have it create a record of the payment request (a [payment intent](/reference/glossary)).
 
-Determine the amount and the order number on the merchant server. Do not use an amount received from the browser as is, and verify that the logged-in buyer can pay for that order.
+Determine the amount and the `orderId` on the merchant server. Do not use an amount received from the browser as is, and verify that the logged-in buyer can pay for that order.
 
 ## Creation flow
 
-1. Save the order and assign an `orderId` that does not change across payment retries.
+1. Save the order and assign an `orderId` for each payment attempt. Keep it when you resend the request, and use a new one when the buyer pays again.
 2. Call `POST /payment_intents` with the API key.
 3. Persist the mapping between `paymentIntentId` and the order.
 4. Pass the returned `checkoutUrl` to the browser.
@@ -20,7 +20,7 @@ Determine the amount and the order number on the merchant server. Do not use an 
 For the definition of each field in the body and the response, see `POST /payment_intents` in the [OpenAPI specification](pathname:///openapi/#operation/createPaymentIntent).
 
 ```js
-// order is the server-side order that has already gone through authorization and price calculation.
+// order is the server-side order that has already gone through authorization and price calculation. attempt is a payment attempt for that order.
 const response = await fetch(`${process.env.STBL_PAY_BACKEND}/payment_intents`, {
   method: 'POST',
   headers: {
@@ -29,7 +29,7 @@ const response = await fetch(`${process.env.STBL_PAY_BACKEND}/payment_intents`, 
   },
   body: JSON.stringify({
     amountJpy: order.totalJpy, // decimal string
-    orderId: order.id,
+    orderId: attempt.id, // same value when you resend the request
     returnUrl: `https://shop.example.com/orders/${encodeURIComponent(order.id)}/return`,
   }),
 });
@@ -49,7 +49,7 @@ As an exception, creating again **after a merchant suspension is lifted** may no
 
 Sending a different amount or deadline with the same `orderId` does not update the existing payment. Manage a change to the order terms, or a new payment after a terminal status, as a separate payment attempt, after confirming that the existing payment has reached a terminal status. If you create a new payment with a new `orderId` while the existing one is not terminal, the buyer can pay either of them, and paying both means paying twice. The merchant cannot cancel the existing payment (see [State transitions and deadlines](/lifecycle/transitions)).
 
-If you have multiple stores, assign order numbers that are unique within the merchant. In the current specification, the uniqueness constraint is per merchant, while retrieving an existing payment is per store. If you use the same number in another store, that store cannot retrieve the existing payment, and the result is 500 `common/internal`. Retrying does not resolve it.
+If you have multiple stores, assign `orderId` values that are unique within the merchant. In the current specification, the uniqueness constraint is per merchant, while retrieving an existing payment is per store. If you use the same value in another store, that store cannot retrieve the existing payment, and the result is 500 `common/internal`. Retrying does not resolve it.
 
 ## Domain registration
 

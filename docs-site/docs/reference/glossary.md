@@ -10,8 +10,8 @@ sidebar_position: 4
 
 ## 決済の進み方
 
-- **決済を作成する**：金額と注文番号を STBLpay に登録し、決済の受付票を作ってもらうこと。`POST /payment_intents` を呼ぶ操作で、返ってくる `checkoutUrl` に利用者を案内します。
-- **決済意図**：作成した決済の受付票です。`paymentIntentId` で呼び分けます。例：注文 `ord_0001` に対して `paymentIntentId` が 1 つ決まります。
+- **決済を作成する**：金額と `orderId` を STBLpay に登録し、決済の受付票を作ってもらうこと。`POST /payment_intents` を呼ぶ操作で、返ってくる `checkoutUrl` に利用者を案内します。
+- **決済意図**：作成した決済の受付票です。`paymentIntentId` で呼び分けます。例：`orderId` `ord_0001` で作成すると、`paymentIntentId` が 1 つ決まります。
 - **成立**：加盟店が商品を提供してよい状態です。状態が `settled` になったときだけを指します。例外として、`nonce_conflict` の調査で送金が行われていたと返答を受けた注文は、状態が `nonce_conflict` のままでも成立として扱います（[送金の結果が確定できない](/lifecycle/edge-cases#送金の結果が確定できないnonce_conflict)）。
 - **終端**：その決済がそれ以上先へ進まない状態です。`settled`・`failed`・`canceled`・`expired`・`nonce_conflict` が当たります。それぞれの意味は[状態の値](/reference/rest#状態の値)にあります。終端に着いた決済が別の状態へ変わることはありません。
 - **遷移**：決済の状態が別の状態に変わること。例：`created` から `signed` に変わる。

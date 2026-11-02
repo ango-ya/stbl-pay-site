@@ -63,17 +63,25 @@ You cannot register an IP address or a domain shared by multiple sites (the publ
 
 Proof of ownership is optional. Under Proof of ownership (optional) (所有の証明（任意）) for the registered domain, STBLpay shows a token. Place it using **any one** of the following three methods, then click Verify the placed value (設置した値を確認する).
 
-1. A DNS TXT record
-2. A well-known file (STBLpay checks the registered host name itself over `https` and does not follow redirects)
-3. An HTML meta tag (inside `<head>`; STBLpay does not check the body)
+| Method | Where to place it | Value |
+|---|---|---|
+| DNS TXT record | Record name `_stbl-pay-verification.<hostname>` | The token |
+| Well-known file | `https://<hostname>/.well-known/stbl-pay-merchant.txt` | Only the token in the body |
+| HTML meta tag | Inside `<head>` of `https://<hostname>/` (the body is not checked) | `<meta name="stbl-pay-verification" content="<token>">` |
+
+The token differs for each merchant, so check it in the merchant console. For the well-known file and the meta tag, STBLpay reads the registered host name itself over `https`. It does not follow redirects.
+
+**If your site is private behind Basic authentication or access restrictions, use the DNS TXT record.** The well-known file and the meta tag can only be checked if they can be read without authentication (a 401 or 403 withdraws the proof immediately). Periodic re-verification reads them the same way, so removing authentication only while you verify does not help: once you restore it, the proof is withdrawn when a re-verification gets a 401 or 403.
+
+The result appears above the Verify the placed value (設置した値を確認する) button, between the registered domain and the input field. On success, "Ownership confirmed" (所有を確認しました) appears, and "Ownership proven" (所有を証明済み) appears next to the registered domain. On failure, the reason appears there.
 
 When the proof succeeds, the checkout screen shows a verified indicator. **This indicator shows that ownership of the domain has been proven. It does not mean STBLpay has reviewed or endorsed the merchant, and it is not a guarantee of the safety of the payment.** STBLpay does not show a negative indicator for merchants that have not proven ownership.
 
 The proof is not finished once it succeeds. STBLpay re-verifies it periodically (every 24 hours). **The periodic re-verification checks only the method that last succeeded.** If you change the placement method (for example, from DNS to a meta tag), place the value with the new method and click Verify the placed value (設置した値を確認する) again. If you remove the previous placement without clicking it again, STBLpay withdraws the proof at the next re-verification.
 
 - If the placed value does not match the token (or cannot be found), the verified indicator is withdrawn immediately.
-- The indicator is also withdrawn immediately, on a single occurrence, in these cases: the domain resolves to a non-public address, such as an internal one; or the well-known file check returns a 4xx (except 408 and 429) or a redirect.
-- The indicator is also withdrawn when the site or DNS cannot be reached (5xx, 408, 429, connection failure, timeout) three times in a row. One or two failures from a temporary outage do not withdraw it.
+- The indicator is also withdrawn immediately, on a single occurrence, in these cases: the domain resolves to a non-public address, such as an internal one; or the well-known file or meta tag check returns a 4xx (except 408 and 429, including 401 and 403) or a redirect.
+- The indicator is also withdrawn when the site or DNS cannot be reached (5xx, 408, 429, connection failure, timeout, certificate verification failure) three times in a row. One or two failures from a temporary outage do not withdraw it.
 - Re-verification continues after withdrawal, and the verified indicator returns when verification succeeds again.
 - If you change or remove the domain, the previous proof is not restored.
 
