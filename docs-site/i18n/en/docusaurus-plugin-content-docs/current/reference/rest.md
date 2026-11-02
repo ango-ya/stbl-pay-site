@@ -39,7 +39,7 @@ Creates a payment and returns the `checkoutUrl` that you send the buyer to.
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `amountJpy` | Amount string | Required | Amount to charge (JPY) |
-| `orderId` | String (up to 128 characters) | Optional | Your own order ID. The idempotency key |
+| `orderId` | String (up to 128 characters) | Optional | An ID for each payment attempt. The idempotency key |
 | `returnUrl` | HTTPS URL string | Optional | URL the buyer returns to after payment |
 | `merchantExpiresAt` | Datetime string | Optional | Upper limit of the deposit deadline |
 
@@ -49,7 +49,7 @@ Creates a payment and returns the `checkoutUrl` that you send the buyer to.
   - `"0"` is not accepted. Specify an amount greater than 0 (400 `common/invalid_request`).
   - The fractional part is limited to 6 digits. More than that returns 400 `common/invalid_request`.
   - This API does not impose its own upper or lower limit on the amount. At payment time, the payment may not succeed because it hits the amount limit or frequency limit of the buyer's wallet (`failed_reason` is `policy_violation`). For operational upper and lower limits, check with your [contact](/support/troubleshooting#contact).
-- If you create a payment again from the same store with the same `orderId`, the existing payment is returned. Specify a stable value for each order. If you omit it, idempotency by this order identifier is not available. With multiple stores, assign values that are unique across the whole merchant ([constraint across stores](/server/create-payment#idempotency)).
+- If you create a payment again from the same store with the same `orderId`, the existing payment is returned. Use the same value when you resend the request, and a new value when the buyer pays again after `failed`, `expired`, or `canceled`. If you omit it, idempotency by this order identifier is not available. With multiple stores, assign values that are unique across the whole merchant ([constraint across stores](/server/create-payment#idempotency)).
 - `returnUrl` must satisfy all of the following conditions. If it does not, the payment is not created. A URL that is not `https` returns 400 `common/invalid_request`. However, `http://localhost`, `http://127.0.0.1`, and `http://[::1]` pass the format check, so they return 403 `merchant/origin_mismatch`. An `https` URL that fails the other conditions also returns 403 `merchant/origin_mismatch`.
   - The scheme is `https`. `http` cannot be used. Development URLs such as `http://localhost` cannot be used either (403 `merchant/origin_mismatch`).
   - A port number cannot be included (`https://shop.example.com:8443/` is not allowed; `:443` is treated the same as no port).

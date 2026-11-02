@@ -16,7 +16,7 @@ No. The API has only created a payment intent (a record of the payment request),
 
 ## Can I choose `orderId` freely?
 
-Yes. You can use your own order number as is (up to 128 characters). Assign numbers so they are unique across the whole merchant. Example: use your system's order number, such as `ord_0001`. If you create a payment again with the same `orderId`, the existing payment is returned.
+`orderId` identifies each payment attempt (up to 128 characters). Assign values that are unique across the whole merchant. Creating a payment again with the same `orderId` returns the existing payment, so use the same value when you resend a request (after a timeout or a double click). To let the buyer pay again after `failed`, `expired`, or `canceled`, create the payment with a new `orderId` ([Idempotency](/server/create-payment#idempotency)). You can use your own order number as is only if you never create another payment attempt for the same order. If you do, keep track of which payment attempts belong to each order on your side.
 
 ## What is a top-level navigation?
 
@@ -30,7 +30,7 @@ When the payment reaches a terminal state, the STBLpay checkout page shows a but
 
 No. We do not provide a merchant integration SDK. After you create the payment, navigate to `checkoutUrl`. See [How to integrate today](/client/install).
 
-## Can I retry creating the same order?
+## Can I resend a request to create a payment?
 
 Yes. The same store gets the existing payment back for the same `orderId`. Do not generate a new number on every communication failure. Retrying does not update the amount or deadline of an existing payment. The payment that comes back may already be terminal (it goes no further), so check `status` in the response before sending the buyer to `checkoutUrl`. How to handle each status is in [Idempotency](/server/create-payment#idempotency).
 

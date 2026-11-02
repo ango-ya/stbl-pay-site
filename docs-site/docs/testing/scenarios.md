@@ -8,6 +8,15 @@ sidebar_position: 2
 
 本ガイドの記載どおりに動くかを確認するチェックリストです。再現できない項目は、成功ではなく未検証として記録してください。
 
+## Sandbox での起こし方
+
+決済を任意の状態へ進めるテスト用の操作はありません。終端の状態は、次のように起こします。
+
+- `canceled`：利用者が STBLpay のマイページで取り消します。取り消せるのは `signed` と、着金が確認される前の `issue_pending` です（[キャンセル](/lifecycle/transitions#キャンセル)）。
+- 署名しないままの `expired`：応答の `checkoutExpiresAt`（操作期限）まで待ちます。Sandbox では作成から 3 時間です。
+- 発行予約のあとの `expired`：着金期限に確定待ちの猶予（Sandbox では 1 時間）を足した時刻まで待ちます。`merchantExpiresAt` に指定できるのは作成から 3 日より先だけなので、数日かかります（[期限](/lifecycle/transitions)）。
+- `failed` と `nonce_conflict`：任意に起こすテスト用の操作は用意していません。STBLpay をモックにしたテストで確かめてください。`failed` は Webhook の本文と状態照会の応答を、`nonce_conflict` は Webhook が届かないので状態照会の応答だけを再現します（値の形は [OpenAPI 仕様書](pathname:///openapi.yaml)にあります）。
+
 ## 決済の作成
 
 - [ ] 文字列の `amountJpy` で決済を作成したとき、作成応答と `checkoutUrl` が返る

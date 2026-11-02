@@ -39,7 +39,7 @@ API の項目ごとの型・形式・制約・エラーは、OpenAPI 3.1 の仕�
 | フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
 | `amountJpy` | 金額の文字列 | 必須 | 請求額（円） |
-| `orderId` | 文字列（最大128文字） | 任意 | 自社の注文 ID。冪等性のキー |
+| `orderId` | 文字列（最大128文字） | 任意 | 決済を試すたびの ID。冪等性のキー |
 | `returnUrl` | HTTPS URL の文字列 | 任意 | 決済後に利用者が戻る URL |
 | `merchantExpiresAt` | 日時の文字列 | 任意 | 着金期限の上限 |
 
@@ -49,7 +49,7 @@ API の項目ごとの型・形式・制約・エラーは、OpenAPI 3.1 の仕�
   - `"0"` は受け付けません。0 を超える金額を指定します（400 `common/invalid_request`）。
   - 小数部は6桁までです。超えると 400 `common/invalid_request` です。
   - この API は、金額の上限と下限を独自にはかけていません。支払い時に、利用者のウォレットの金額上限・頻度上限に触れて成立しないことがあります（`failed_reason` は `policy_violation`）。運用上の上限・下限の取り決めは、[問い合わせ先](/support/troubleshooting#問い合わせ先)に確認してください。
-- `orderId` は、同じ店舗から同じ値で再作成すると既存の決済を返します。注文ごとに安定した値を指定してください。省略した場合、この注文識別子による冪等性は使えません。複数店舗では加盟店全体で一意に採番してください（[店舗をまたぐ制約](/server/create-payment#冪等性)）。
+- `orderId` は、同じ店舗から同じ値で再作成すると既存の決済を返します。通信の再送では同じ値を、`failed`・`expired`・`canceled` のあとの払い直しでは新しい値を指定してください。省略した場合、この注文識別子による冪等性は使えません。複数店舗では加盟店全体で一意に採番してください（[店舗をまたぐ制約](/server/create-payment#冪等性)）。
 - `returnUrl` は、次の条件をすべて満たす必要があります。満たさないと決済は作成されません。`https` でない URL は 400 `common/invalid_request` です。ただし `http://localhost`・`http://127.0.0.1`・`http://[::1]` は形式の検査を通るため、403 `merchant/origin_mismatch` になります。`https` で、ほかの条件に合わないときも 403 `merchant/origin_mismatch` です。
   - スキームは `https` です。`http` は使えません。`http://localhost` のような開発用の URL も使えません（403 `merchant/origin_mismatch`）。
   - ポート番号を付けられません（`https://shop.example.com:8443/` は不可。`:443` は付けない場合と同じ扱い）。

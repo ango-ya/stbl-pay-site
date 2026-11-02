@@ -6,13 +6,13 @@ sidebar_position: 2
 
 # 決済を作成する
 
-「決済を作成する」とは、金額と注文番号を STBLpay に登録し、決済の受付票（[決済意図](/reference/glossary)）を作ってもらうことです。
+「決済を作成する」とは、金額と `orderId` を STBLpay に登録し、決済の受付票（[決済意図](/reference/glossary)）を作ってもらうことです。
 
-金額と注文番号は加盟店サーバーで確定します。ブラウザから受け取った金額をそのまま使わず、ログイン利用者がその注文を支払えることを検証してください。
+金額と `orderId` は加盟店サーバーで決めます。ブラウザから受け取った金額をそのまま使わず、ログイン利用者がその注文を支払えることを検証してください。
 
 ## 作成の流れ
 
-1. 注文を保存し、決済の再試行でも変えない `orderId` を割り当てる。
+1. 注文を保存し、決済を試すたびの `orderId` を割り当てる。通信の再送では変えず、払い直しでは新しくする。
 2. API キーを付けて `POST /payment_intents` を呼ぶ。
 3. `paymentIntentId` と注文の対応を永続化する。
 4. 返ってきた `checkoutUrl` をブラウザに渡す。
@@ -20,7 +20,7 @@ sidebar_position: 2
 本文と応答の項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/createPaymentIntent)の `POST /payment_intents` にあります。
 
 ```js
-// order は認可と価格計算を済ませたサーバー側の注文。
+// order は認可と価格計算を済ませたサーバー側の注文。attempt はその注文の決済の試行。
 const response = await fetch(`${process.env.STBL_PAY_BACKEND}/payment_intents`, {
   method: 'POST',
   headers: {
@@ -29,7 +29,7 @@ const response = await fetch(`${process.env.STBL_PAY_BACKEND}/payment_intents`, 
   },
   body: JSON.stringify({
     amountJpy: order.totalJpy, // 10進文字列
-    orderId: order.id,
+    orderId: attempt.id, // 通信の再送では同じ値
     returnUrl: `https://shop.example.com/orders/${encodeURIComponent(order.id)}/return`,
   }),
 });
@@ -49,7 +49,7 @@ const payment = await response.json();
 
 同じ `orderId` に異なる金額や期限を送っても、既存の決済を更新する操作にはなりません。注文の条件変更や終端後の再決済は、既存決済の `status` が終端になったことを確認してから、別の決済試行として管理します。終端でない間に新しい `orderId` で作ると、利用者がどちらでも支払える状態になり、両方を払うと二重に支払うことになります。加盟店から既存決済を取り消す方法はありません（[キャンセル](/lifecycle/transitions#キャンセル)）。
 
-複数店舗を持つ場合は、注文番号を加盟店内で一意に採番してください。現在の仕様では、一意制約は加盟店単位、既存決済の取得は店舗単位のため、別店舗で同じ番号を使うと、その店舗からは既存の決済を取得できず、500 `common/internal` になります。再試行しても解消しません。
+複数店舗を持つ場合は、`orderId` を加盟店内で一意に採番してください。現在の仕様では、一意制約は加盟店単位、既存決済の取得は店舗単位のため、別店舗で同じ値を使うと、その店舗からは既存の決済を取得できず、500 `common/internal` になります。再試行しても解消しません。
 
 ## ドメインの登録
 
