@@ -73,7 +73,7 @@ The token differs for each merchant, so check it in the merchant console. For th
 
 **If your site is private behind Basic authentication or access restrictions, use the DNS TXT record.** The well-known file and the meta tag can only be checked if they can be read without authentication (a 401 or 403 withdraws the proof immediately). Periodic re-verification reads them the same way, so removing authentication only while you verify does not help: once you restore it, the proof is withdrawn when a re-verification gets a 401 or 403.
 
-The result appears above the Verify the placed value (設置した値を確認する) button, between the registered domain and the input field. On success, "Ownership confirmed" (所有を確認しました) appears, and "Ownership proven" (所有を証明済み) appears next to the registered domain. On failure, the reason appears there.
+The result appears just below the collapsible section that contains the Verify the placed value (設置した値を確認する) button. On success, "Ownership confirmed" (所有を確認しました) appears, and "Ownership proven" (所有を証明済み) appears next to the registered domain. On failure, the reason appears there.
 
 When the proof succeeds, the checkout screen shows a verified indicator. **This indicator shows that ownership of the domain has been proven. It does not mean STBLpay has reviewed or endorsed the merchant, and it is not a guarantee of the safety of the payment.** STBLpay does not show a negative indicator for merchants that have not proven ownership.
 

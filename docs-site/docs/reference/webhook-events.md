@@ -12,31 +12,18 @@ Webhook の本文とヘッダーの項目ごとの定義は、OpenAPI 3.1 の仕
 
 ## 共通形式
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/receivePaymentEvent)の `webhooks.paymentEvent`（`WebhookEvent`） にあります。
+本文は `id`（イベント ID）・`type`・`created_at`・`data` を持ちます。署名は `Stbl-Pay-Signature` ヘッダーに入ります。ヘッダーと本文の項目は、[OpenAPI 仕様書の「決済の結果を受け取る」](pathname:///openapi/#operation/receivePaymentEvent)にあります。
 
-ボディは `id`（`evt_` で始まるイベント ID）、`type`、`created_at`（UTC の `Z` で終わる ISO 8601）、`data` を持ちます。`created_at` はイベント生成時刻で、署名ヘッダの送信時刻 `t` とは異なります。
-
-| ヘッダ | 内容 |
-|---|---|
-| `Stbl-Pay-Signature` | `t=<Unix秒>,v1=<HMAC-SHA256のhex>`。鍵の移行期間は `v1` が複数 |
-| `Stbl-Pay-Event-Id` | ボディの `id` の複製。再送でも不変 |
-
-重複排除には **署名検証済みボディの `id`** を使います。ヘッダのイベント ID は署名対象外です。
+- 重複排除には **署名検証済みの本文の `id`** を使います。`Stbl-Pay-Event-Id` ヘッダーは署名の対象外です。
+- `created_at` はイベントを作った時刻で、署名ヘッダーの送信時刻 `t` とは別です。
 
 ## イベントと data
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/receivePaymentEvent)の `WebhookPaymentData` にあります。
+`payment.settled`、`payment.failed`、`payment.canceled`、`payment.expired` の4種類は、共通の `data` の形を使います。`payment.failed` でも金額などの共通フィールドは省略しません。取消・失効では `tx_hash` と `settled_at` が null になり、キーは省略しません。
 
-`payment.settled`、`payment.failed`、`payment.canceled`、`payment.expired` の4種類は、共通の `data` の形を使います。`payment.failed` でも金額などの共通フィールドは省略しません。
-
-| フィールド | 参照・注意点 |
-|---|---|
-| `payment_intent_id` / `order_id` | 自社注文との対応。`payment_intent_id` は `pi_` で始まる ID。`order_id` は決済作成時に渡した `orderId` で、渡さなかったときは null |
-| `status` | イベントに対応する終端状態 |
-| `merchant_id` / `payout` | 加盟店（`m_` で始まる ID）と受取先（小文字の `0x` 付き 20 バイトのアドレス） |
-| `amount_jpy` / `fee_jpy` / `net_received_jpy` | すべて円建ての文字列。数値型へ無造作に変換しない。イベントごとの値は[金額の扱い](#金額の扱い)を参照 |
-| `tx_hash` / `settled_at` | null 許容。`tx_hash` は小文字の `0x` 付き 32 バイト、`settled_at` は UTC の `Z` で終わる ISO 8601。取消・失効では両方 null とし、キーは省略しない |
-| `failed_reason` | null 許容の文字列。値は、現時点で定義されている[分類コード](/reference/rest#failed_reason-の分類コード)のどれか。コードは増えることがあるので、受け手は未知の値でも Webhook を拒否せず、失敗のフォールバックに落とす。発行体の取引可否判断の理由は含まない |
+- `order_id` は決済作成時に渡した `orderId` です。渡さなかったときは null です。
+- 金額は円建ての文字列です。数値型へ無造作に変換しないでください。イベントごとの値は[金額の扱い](#金額の扱い)にあります。
+- `failed_reason` は、`payment.failed` では[分類コード](/reference/rest#failed_reason-の分類コード)のどれかで、それ以外のイベントでは null です。未知の値でも Webhook を拒否せず、失敗のフォールバックに落とします。
 
 ## 金額の扱い
 
@@ -53,32 +40,12 @@ Webhook の本文とヘッダーの項目ごとの定義は、OpenAPI 3.1 の仕
 
 ## 配信と処理
 
-送信のタイムアウト・失敗として扱う応答・再送の間隔は、[OpenAPI 仕様書](pathname:///openapi/#operation/receivePaymentEvent)の `webhooks.paymentEvent` にもあります。
-
 受信成功は `2xx` です。[署名検証](/webhooks/signature)、[再送ポリシー](/webhooks/retry)、[冪等性](/webhooks/idempotency)を実装してください。未知の種別は安全に無視できるようにします。
 
 `nonce_conflict` の通知はありません。確認は状態照会 API と運用調査で行います。
 
 ## テスト通知
 
-項目ごとの定義は、[OpenAPI 仕様書](pathname:///openapi/#operation/receivePaymentEvent)の `TestWebhookEvent` にあります。
-
-加盟店コンソールから送るテスト通知だけは、`type` が `payment.settled` のまま、本文に `test: true` を持ちます。通常の通知に `test` というキーはありません。各フィールドの値は次のとおりです。
-
-| フィールド | テスト通知の値 |
-|---|---|
-| `id` | `evt_test_` で始まる |
-| `type` | `payment.settled` |
-| `created_at` | 送信した日時 |
-| `test` | `true` |
-| `data.payment_intent_id` | `pi_test_` で始まる。実在する決済を指さない |
-| `data.order_id` | `test_` で始まる。実在する注文を指さない |
-| `data.status` | `settled` |
-| `data.merchant_id` | 自社の加盟店 ID |
-| `data.payout` | 登録している受取先のアドレス |
-| `data.amount_jpy` / `data.net_received_jpy` | `"1000"` |
-| `data.fee_jpy` | `"0"` |
-| `data.settled_at` | 送信した日時 |
-| `data.tx_hash` / `data.failed_reason` | `null` |
+加盟店コンソールから送るテスト通知だけは、`type` が `payment.settled` のまま、本文に `test: true` を持ちます。通常の通知に `test` というキーはありません。ID は `evt_test_`・`pi_test_` で始まり、実在する決済や注文を指しません。各フィールドの値は、[OpenAPI 仕様書](pathname:///openapi/#operation/receivePaymentEvent)の本文の `TestWebhookEvent` にあります。
 
 受信側での判定の手順は、[テスト通知の受信](/webhooks/events#テスト通知)を参照してください。
