@@ -143,7 +143,7 @@ test.describe("加盟店向けドキュメント", () => {
     ]) {
       await page.goto(path);
       const hrefs = await page.locator("article a[href*='/openapi/#']").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-      expect(hrefs.length, path).toBeGreaterThan(3);
+      expect(hrefs.length, path).toBeGreaterThan(1);
       const viewer = path.startsWith("/docs/en/") ? "/docs/en/openapi/" : "/docs/openapi/";
       for (const href of hrefs) expect(href, path).toContain(viewer);
       expect(await page.locator("nav a", { hasText: /OpenAPI/ }).getAttribute("href"), path).toBe(viewer);

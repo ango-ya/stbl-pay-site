@@ -619,6 +619,7 @@ components:
           const: payment.settled
         created_at:
           $ref: '#/components/schemas/DateTime'
+          description: 送信した日時
         test:
           const: true
         data:
