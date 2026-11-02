@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- LP の日本語版と英語版。docs は /docs/sitemap.xml（Docusaurus が作る）。デモ画面は noindex なので載せない -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://stbl-pay.com/</loc>
+    <lastmod>2026-11-03</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/" />
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/en/</loc>
+    <lastmod>2026-11-03</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/" />
+  </url>
+</urlset>

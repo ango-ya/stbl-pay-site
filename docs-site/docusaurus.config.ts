@@ -23,6 +23,8 @@ const config: Config = {
   // stbl-pay.com の /docs/ 以下に置く（ビルド結果は scripts/build-dist.sh が dist/docs/ へ入れる）
   url: 'https://stbl-pay.com',
   baseUrl: '/docs/',
+  // 配信先（Cloudflare Pages）は /docs/foo を /docs/foo/ へ 308 で飛ばす。canonical と内部リンクを飛ばした先にそろえる
+  trailingSlash: true,
 
   onBrokenLinks: 'throw',
   // 英語版は見出しに明示の id を付けてリンク先をそろえている。ずれたらビルドで落とす
@@ -70,6 +72,8 @@ const config: Config = {
   ],
 
   themeConfig: {
+    // SNS で共有したときの画像は LP と同じもの
+    image: 'https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2',
     colorMode: {
       respectPrefersColorScheme: true,
       // 切り替えのボタンは出さない（ヘッダーを LP と同じ並びにするため）。ライト／ダークは OS の設定に従う

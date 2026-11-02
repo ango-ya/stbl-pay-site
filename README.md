@@ -153,6 +153,16 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
   - 主なブラウザ（Chrome・Edge・Firefox・Safari 14 以降・iOS Safari 14 以降）でそのまま動く範囲に収めます。2D の `transform`・`@keyframes`・`transition` だけを使い、`aspect-ratio`・`inset`・flex の `gap`・個別の transform プロパティ・Web Animations API・Canvas は使いません。JS は ES2017 までです。
 - テストは `tests/e2e/characters-motion.spec.mjs`（素材のそろい・組み立て・並び・会話の再生と仕草・まばたき・上下・生きている間だけ動く・reduce・ヒーローの登場と待機の仕草・手を振る・狭い幅・JS なし・本番ヘッダの CSP）。
 
+## 検索と AI 向け（SEO・LLMO）
+
+- **OGP 画像**：`assets/og-stblpay-generative-1200x630.png`。元は `scripts/og/og-image.html`（ロゴは正の SVG、背景はヒーローと同じ式）で、`node scripts/make-og-image.mjs` で書き出し直す。絵を変えたら、SNS が前の画像を覚えているので `index.html`・`en/index.html`・docs（`docusaurus.config.ts` の `image`）の `?v=` を上げる
+- **canonical・構造化データ**：LP の head。`WebPage` の `dateModified` は、本文を直したら日付を上げる。「現在の状況」（`2026年11月時点` など）は LP の導入の節と `llms.txt` の両方にあるので、状況が変わったらそろえて直す
+- **サイトマップ**：LP は `sitemap.xml`（手で書く。ページを足したら足す）、docs は Docusaurus が言語ごとに作る（`/docs/sitemap.xml`・`/docs/en/sitemap.xml`。robots.txt に 3 本とも書く）。docs は `trailingSlash: true`（配信先が末尾にスラッシュを付けて飛ばすので、canonical をそろえる）
+- **noindex**：デモ画面（`/demo`・`/pay`・`/jpyc-ex`）は `_headers` の `X-Robots-Tag`。`404.html` があるので、存在しない URL は 404 になる（無いと Cloudflare Pages は LP を 200 で返す）
+- **クローラー**：`robots.txt` は AI の学習用も含めて許可。Cloudflare の AI Crawl Control でブロックしていると 403 になるので、方針を変えるときは両方そろえる
+- **点検**：E2E の `tests/e2e/seo.spec.mjs` が上の形を守る。本番の応答（404・noindex・クローラーごとの可否）は、デプロイのあとに `./scripts/seo-live-check.sh` で見る
+- **Search Console**：URL プレフィックスのプロパティ `https://stbl-pay.com/`。所有権の確認は `index.html` の `google-site-verification` の meta（消すと確認が外れる）
+
 ## デプロイ
 
 `main` への push で GitHub Actions が Cloudflare Pages へ自動デプロイします（`workflow_dispatch` で手動実行も可能）。配信対象は `scripts/build-dist.sh` で `dist/` に組み立てた本番ファイルのみです。

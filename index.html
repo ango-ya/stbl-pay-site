@@ -42,6 +42,8 @@
     <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/" />
     <link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/" />
     <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/" />
+    <link rel="canonical" href="https://stbl-pay.com/" />
+    <meta name="google-site-verification" content="KacwtovdhgfHS1WSpish8RZdZ0uHM0KVijjC2VZoN0o" />
     <link rel="preload" as="font" type="font/woff2" href="assets/fonts/schibsted-grotesk-latin-wght.woff2" crossorigin />
     <link rel="preload" as="image" href="assets/logo-wordmark-suteburu-black.png" />
     <link rel="stylesheet" href="assets/lp.css" />
@@ -55,7 +57,7 @@
       primary_audience: 個人事業主（デジタルの作品を売るクリエイター、フリーの美容師・ネイリストなど）、クレジットカード決済の導入が難しいネットショップ、日本向け決済を持ちたい海外のネットショップ
       buyer_value: 支払いはパスキー（顔・指紋認証）で承認。JPYC残高で足りるときは振込なし。足りないときは、発行する額（1回3,000円〜100万円）を決めて日本円で銀行振込し、余りは次回のお支払いに使える残高になる。振込から反映まで5〜10分ほどが目安。お店のレジではQRを読んで残高から払える。購入者への手数料の上乗せなし。
       merchant_value: カード会社の与信審査に頼らない。事前のKYB・KYCなし（加盟店アカウントはウェブからおひとりで開設）。決済手数料は検討中（全加盟店一律の固定料率を予定・提供開始時に確定）。決済と同時にJPYCで受け取り、入金の消込も不要。日本円への引き出しは加盟店ご自身のJPYC EXアカウントで。
-      implementation: サイトでやることは3つ（ボタンを置く、お支払いの画面へ案内する、結果を受け取る）。API の仕様書（OpenAPI）と実装の注意点をまとめた資料を用意予定（AI コーディングエージェントに読ませて組み込める）。WordPress（WooCommerce）向けのプラグインを準備中。QR だけで始めることもできる。
+      implementation: サイトでやることは3つ（ボタンを置く、お支払いの画面へ案内する、結果を受け取る）。加盟店向けドキュメント（https://stbl-pay.com/docs/）と API の仕様書（OpenAPI 3.1、https://stbl-pay.com/docs/openapi.yaml）を公開中で、AI コーディングエージェントに読ませて組み込める。組み込みを試せる Sandbox も公開中（2026年11月時点）。WordPress（WooCommerce）向けのプラグインを準備中。QR だけで始めることもできる。
       compliance_note: 利用規約への同意と、JPYC EX 等の外部サービスの要件がある。ノンカストディアル設計（提供元は資金・秘密鍵を保持しない）。
     -->
 
@@ -65,16 +67,43 @@
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "#org-angoya",
+      "@id": "https://stbl-pay.com/#org-angoya",
       "name": "合同会社暗号屋",
-      "url": "https://www.ango-ya.org/"
+      "alternateName": "Ango-ya LLC",
+      "url": "https://www.ango-ya.org/",
+      "foundingDate": "2019-02",
+      "address": { "@type": "PostalAddress", "addressLocality": "Fukuoka", "addressCountry": "JP" },
+      "sameAs": [
+        "https://github.com/ango-ya",
+        "https://prtimes.jp/main/html/searchrlp/company_id/62107"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://stbl-pay.com/#website",
+      "url": "https://stbl-pay.com/",
+      "name": "すてぶるペイ / STBLpay",
+      "inLanguage": ["ja", "en"],
+      "publisher": { "@id": "https://stbl-pay.com/#org-angoya" }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://stbl-pay.com/#webpage",
+      "url": "https://stbl-pay.com/",
+      "inLanguage": "ja",
+      "isPartOf": { "@id": "https://stbl-pay.com/#website" },
+      "about": { "@id": "https://stbl-pay.com/#service" },
+      "primaryImageOfPage": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "dateModified": "2026-11-03"
     },
     {
       "@type": "Service",
+      "@id": "https://stbl-pay.com/#service",
+      "url": "https://stbl-pay.com/",
       "name": "すてぶるペイ",
       "alternateName": "STBLpay",
       "serviceType": "JPY stablecoin payment service for online shops and sole proprietors",
-      "provider": { "@id": "#org-angoya" },
+      "provider": { "@id": "https://stbl-pay.com/#org-angoya" },
       "areaServed": ["JP", "Global"],
       "audience": [
         {
@@ -273,6 +302,7 @@
             <a class="button button-secondary" href="/demo">デモを見る</a>
           </div>
           <p class="hero-note">
+            すてぶるペイは、購入者が日本円の銀行振込とパスキーで払い、加盟店が売上を JPYC（日本円ステーブルコイン）で受け取る決済です。
             手数料は検討中で、全加盟店一律の固定料率を予定<sup class="fn"><a href="#fn-1" id="fnref-h1">※1</a></sup>。開発中のサービスです<sup class="fn"><a href="#fn-2" id="fnref-h2">※2</a></sup>。
             利用規約への同意と、JPYC EX など外部サービスの要件が前提です。
           </p>
@@ -547,11 +577,11 @@
       <section class="section" id="integration" aria-labelledby="integration-title">
         <div class="shell">
           <h2 id="integration-title"><span class="sec-no">04</span>導入</h2>
-          <p class="sec-lead">サイトでやることは3つ。ボタンを置く、お支払いの画面へ案内する、結果を受け取る。標準的な組み込みは1日を目標<sup class="fn"><a href="#fn-2" id="fnref-i1">※2</a></sup>にしています。API の仕様書（OpenAPI）と、実装の注意点をまとめた資料をご用意予定です。AI コーディングエージェントに読ませれば、組み込むコードを書くのを手伝ってもらえます。サイトを作るのが大変な方には、WordPress（WooCommerce）向けのプラグインも準備中です。まず一部の商品からでも試せます。</p>
+          <p class="sec-lead">サイトでやることは3つ。ボタンを置く、お支払いの画面へ案内する、結果を受け取る。標準的な組み込みは1日を目標<sup class="fn"><a href="#fn-2" id="fnref-i1">※2</a></sup>にしています。<a href="/docs/">加盟店向けドキュメント</a>と、API の<a href="/docs/openapi/">仕様書（OpenAPI）</a>を公開しています。AI コーディングエージェントに読ませれば、組み込むコードを書くのを手伝ってもらえます。組み込みを試せる <a href="/docs/testing/sandbox/">Sandbox</a> もあります（2026年11月時点）。サイトを作るのが大変な方には、WordPress（WooCommerce）向けのプラグインも準備中です。まず一部の商品からでも試せます。</p>
           <ol class="flow">
             <li><strong>アカウント開設</strong><p>ウェブから、おひとりで。利用規約に同意して、パスキーをつくると、売上の受け取り先もできます</p></li>
-            <li><strong>組み込み</strong><p>ボタンを置く、お支払いの画面へ案内する、結果を受け取る。仕様書と実装の注意点の資料（ご用意予定）で、開発の手間を小さくします</p></li>
-            <li><strong>テスト決済</strong><p>テスト環境で、お客さまの流れと着金を確かめます。一部の商品からのスモールスタートもできます</p></li>
+            <li><strong>組み込み</strong><p>ボタンを置く、お支払いの画面へ案内する、結果を受け取る。公開している仕様書とドキュメントで、開発の手間を小さくします</p></li>
+            <li><strong>テスト決済</strong><p>Sandbox（テスト環境）で、お客さまの流れと着金を確かめます。一部の商品からのスモールスタートもできます</p></li>
             <li><strong>受け付け開始</strong><p>ボタンを公開して、お支払いを受け付けます。QR なら、サイトへの組み込みなしで、お店に貼って始められます</p></li>
           </ol>
           <p class="flow-note">使い方や組み込みなど、困ったことがあれば、暗号屋にご相談ください。ご紹介いただいた方への紹介報酬プログラムもご用意予定です。</p>

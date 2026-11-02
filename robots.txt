@@ -1,7 +1,10 @@
-# すてぶるペイ LP — クローラーポリシー
-# AI検索・生成エンジンからの参照・引用を歓迎する設定（GEO対応）。
-# 本番ドメイン確定後に Sitemap 行を絶対URLで追加すること（docs/lp-geo-seo.md 参照）。
-# 注: 公開前は Basic 認証（functions/_middleware.js）によりクローラーは 401 で到達できない。
+# すてぶるペイ — クローラーポリシー
+# AI検索・生成エンジンからの参照・引用を歓迎する（学習用クローラーも許可）。
+# 注: Cloudflare の AI Crawl Control でブロックしていると、ここで許可しても 403 になる。方針を変えるときは両方そろえる。
+
+Sitemap: https://stbl-pay.com/sitemap.xml
+Sitemap: https://stbl-pay.com/docs/sitemap.xml
+Sitemap: https://stbl-pay.com/docs/en/sitemap.xml
 
 User-agent: *
 Allow: /

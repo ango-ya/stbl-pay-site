@@ -75,10 +75,10 @@ test.describe("加盟店向けドキュメント", () => {
   test("言語の切り替えは LP と同じく、もう一方の言語の同じページへのリンク 1 つ", async ({ page }) => {
     const nav = page.locator(".navbar__inner");
     await page.goto("/docs/lifecycle/transitions");
-    await expect(nav.getByRole("link", { name: "EN", exact: true })).toHaveAttribute("href", "/docs/en/lifecycle/transitions");
+    await expect(nav.getByRole("link", { name: "EN", exact: true })).toHaveAttribute("href", "/docs/en/lifecycle/transitions/");
     await expect(nav.getByRole("link", { name: "日本語", exact: true })).toHaveCount(0);
     await page.goto("/docs/en/lifecycle/transitions");
-    await expect(nav.getByRole("link", { name: "日本語", exact: true })).toHaveAttribute("href", "/docs/lifecycle/transitions");
+    await expect(nav.getByRole("link", { name: "日本語", exact: true })).toHaveAttribute("href", "/docs/lifecycle/transitions/");
     await expect(nav.getByRole("link", { name: "EN", exact: true })).toHaveCount(0);
   });
 
