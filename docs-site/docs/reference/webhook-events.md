@@ -23,7 +23,7 @@ Webhook の本文とヘッダーの項目ごとの定義は、OpenAPI 3.1 の仕
 
 - `order_id` は決済作成時に渡した `orderId` です。渡さなかったときは null です。
 - 金額は円建ての文字列です。数値型へ無造作に変換しないでください。イベントごとの値は[金額の扱い](#金額の扱い)にあります。
-- `failed_reason` の値は[分類コード](/reference/rest#failed_reason-の分類コード)のどれかです。未知の値でも Webhook を拒否せず、失敗のフォールバックに落とします。
+- `failed_reason` は、`payment.failed` では[分類コード](/reference/rest#failed_reason-の分類コード)のどれかで、それ以外のイベントでは null です。未知の値でも Webhook を拒否せず、失敗のフォールバックに落とします。
 
 ## 金額の扱い
 

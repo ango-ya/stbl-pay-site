@@ -23,7 +23,7 @@ sidebar_position: 2
 
 `POST /payment_intents` で決済を作成し、利用者を遷移させる `checkoutUrl` を受け取ります。項目・エラー・例は [OpenAPI 仕様書の「決済を作成する」](pathname:///openapi/#operation/createPaymentIntent)にあります。
 
-- 金額（`amountJpy` など）は、JSON number ではなく 10 進の文字列です（例：`"4980"`）。手数料などの端数も、浮動小数点数へ変換せずに扱ってください。API は金額の上限・下限をかけていません。運用上の取り決めは[問い合わせ先](/support/troubleshooting#問い合わせ先)に確認してください。
+- 金額（`amountJpy` など）は、JSON number ではなく 10 進の文字列です（例：`"4980"`）。手数料などの端数も、浮動小数点数へ変換せずに扱ってください。`amountJpy` は 0 を超える値だけを受け付けます（`"0"` や負の値は 400 `common/invalid_request`）。それ以外に、API は金額の上限・下限をかけていません。運用上の取り決めは[問い合わせ先](/support/troubleshooting#問い合わせ先)に確認してください。
 - `orderId` は決済を試すたびの ID で、冪等性のキーです。同じ店舗から同じ値で呼ぶと、既存の決済を返します。通信の再送では同じ値を、`failed`・`expired`・`canceled` のあとの払い直しでは新しい値を指定してください。複数店舗では加盟店全体で一意に採番してください（[店舗をまたぐ制約](/server/create-payment#冪等性)）。
 - `returnUrl` のホスト名は、加盟店コンソールで登録したドメインと完全に一致させます（[ドメイン登録](/security/domain)）。決済が終端に着くと、決済ページに戻るリンク（成立したときは「ショップに戻る」、それ以外の終端では「お支払い先に戻る」）が出ます。利用者が押すと、`returnUrl` に `stbl_pay_intent` クエリ（値は決済 ID）が付いて開きます。`returnUrl` に同じ名前のクエリがあると上書きされます。
 - `merchantExpiresAt` は着金期限の上限です（[期限の扱い](/lifecycle/transitions)）。
