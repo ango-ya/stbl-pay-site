@@ -23,7 +23,7 @@ The four types `payment.settled`, `payment.failed`, `payment.canceled`, and `pay
 
 - `order_id` is the `orderId` you passed when creating the payment. It is null if you did not pass one.
 - Amounts are JPY-denominated strings. Do not carelessly convert them to a numeric type. The value per event is in [How amounts are handled](#amounts).
-- The value of `failed_reason` is one of the [classification codes](/reference/rest#failed-reason-codes). Do not reject the Webhook on an unknown value; fall back to treating it as a failure.
+- For `payment.failed`, `failed_reason` is one of the [classification codes](/reference/rest#failed-reason-codes). For other events it is null. Do not reject the Webhook on an unknown value; fall back to treating it as a failure.
 
 ## How amounts are handled {/* #amounts */}
 
