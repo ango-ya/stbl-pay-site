@@ -8,8 +8,11 @@ const DATA_KEYS = new Set(["example", "default", "const", "enum"]);
 const MAP_KEYS = new Set([
   "paths", "webhooks", "callbacks", "properties", "patternProperties", "$defs", "dependentSchemas",
   "schemas", "responses", "parameters", "requestBodies", "headers", "securitySchemes", "links",
-  "content", "encoding", "variables", "mapping", "examples", "scopes", "pathItems",
+  "content", "encoding", "variables", "mapping", "examples", "pathItems",
 ]);
+// 説明文を区別せず、まるごと値として比べるもの。拡張（x-）は任意のデータ、security は要求するスコープ、
+// links は送る値を持つ。shortcut: Link の description や OAuth の scopes の説明も訳せない。使うようになったら場所を足す
+const EXACT_KEYS = new Set(["security", "links", "flows"]);
 
 export function diffSpecs(ja, en) {
   // タグの名前は訳すので、操作の tags は対応表で日本語の名前に戻して比べる
@@ -46,7 +49,9 @@ export function diffSpecs(ja, en) {
       else if (typeof x === "string" && typeof y === "string" && (TEXT_KEYS.has(k) || p === "/info/contact/name" || /^\/tags\/\d+\/name$/.test(p))) continue;
       // 問い合わせ先は英語版の docs を指す
       else if (p === "/info/contact/url" && typeof x === "string" && y === x.replace("/docs/", "/docs/en/")) continue;
-      else if (k === "tags" && path !== "" && Array.isArray(y)) compare(x, y.map((n) => tagName.get(n) ?? n), p, "data");
+      else if (k.startsWith("x-") || EXACT_KEYS.has(k)) compare(x, y, p, "data");
+      // タグの名前を戻すのは、操作（paths・webhooks の下のメソッド）の tags だけ
+      else if (k === "tags" && /^\/(paths|webhooks)\/.+\/(get|put|post|delete|options|head|patch|trace)$/.test(path) && Array.isArray(y)) compare(x, y.map((n) => tagName.get(n) ?? n), p, "data");
       // Example Object の value、JSON Schema の examples（配列）は値そのもの
       else if (DATA_KEYS.has(k) || (kind === "example" && k === "value") || (k === "examples" && Array.isArray(x))) compare(x, y, p, "data");
       else if (MAP_KEYS.has(k) && x && typeof x === "object" && !Array.isArray(x)) compare(x, y, p, k === "examples" ? "examples" : "map");
