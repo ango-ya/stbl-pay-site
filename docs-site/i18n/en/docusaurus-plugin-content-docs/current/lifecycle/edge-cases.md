@@ -14,7 +14,7 @@ A payment can progress even if the browser does not return. `created` before sig
 
 ## The create request timed out
 
-It is unknown whether the payment was created, so retry with the same `orderId`. Issuing a new order number can create a different payment.
+It is unknown whether the payment was created, so retry with the same `orderId`. Using a new `orderId` can create a different payment.
 
 ## Cannot retrieve the status
 

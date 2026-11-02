@@ -8,6 +8,15 @@ sidebar_position: 2
 
 Use this checklist to confirm that behavior matches this guide. Record items you cannot reproduce as unverified, not as successful.
 
+## Producing each status in the sandbox {/* #producing-statuses */}
+
+There is no test operation that moves a payment to any status you choose. Produce the terminal statuses as follows.
+
+- `canceled`: The buyer cancels on STBLpay's My Page (マイページ). Cancellation is possible in `signed`, and in `issue_pending` before the deposit is confirmed ([Cancellation](/lifecycle/transitions#cancellation)).
+- `expired` without signing: Wait until `checkoutExpiresAt` (the operation deadline) in the response. In the sandbox, this is 3 hours after creation.
+- `expired` after the issuance reservation: Wait until the deposit deadline plus the grace period for confirmation (1 hour in the sandbox). `merchantExpiresAt` can only be set more than 3 days after creation, so this takes several days ([Deadlines](/lifecycle/transitions)).
+- `failed` and `nonce_conflict`: There is no test operation that produces them on demand. Verify them with tests that mock STBLpay. For `failed`, reproduce the Webhook body and the status lookup response. For `nonce_conflict`, no Webhook is sent, so reproduce only the status lookup response (their shapes are in the [OpenAPI specification](pathname:///openapi.yaml)).
+
 ## Creating a payment
 
 - [ ] When you create a payment with `amountJpy` as a string, the create response and `checkoutUrl` are returned

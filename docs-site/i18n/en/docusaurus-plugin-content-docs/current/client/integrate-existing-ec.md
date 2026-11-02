@@ -27,7 +27,7 @@ Even after you close your own order, the STBLpay payment may still succeed if it
 
 ## Double clicks and retries
 
-Disable the button in the browser, and have the server use the same `orderId` for retries of the same order. Creating a payment with the same `orderId` does not create a new payment; it returns the existing one.
+Disable the button in the browser, and have the server use the same `orderId` when resending the request. Creating a payment with the same `orderId` does not create a new payment; it returns the existing one.
 
 ### Re-creating a payment with different conditions
 
