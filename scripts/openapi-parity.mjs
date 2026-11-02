@@ -13,6 +13,8 @@ const MAP_KEYS = new Set([
 // 説明文を区別せず、まるごと値として比べるもの。拡張（x-）は任意のデータ、security は要求するスコープ、
 // links は送る値を持つ。shortcut: Link の description や OAuth の scopes の説明も訳せない。使うようになったら場所を足す
 const EXACT_KEYS = new Set(["security", "links", "flows"]);
+// 名前と並んで拡張（x-）を置ける対応表。properties などでは x- で始まっても名前
+const EXT_MAPS = new Set(["paths", "webhooks", "responses", "callbacks"]);
 
 export function diffSpecs(ja, en) {
   // タグの名前は訳すので、操作の tags は対応表で日本語の名前に戻して比べる
@@ -44,6 +46,7 @@ export function diffSpecs(ja, en) {
       const p = `${path}/${k}`;
       const [x, y] = [a[k], b[k]];
       if (kind === "data") compare(x, y, p, "data");
+      else if (kind === "map" && k.startsWith("x-") && EXT_MAPS.has(path.split("/").pop())) compare(x, y, p, "data");
       else if (kind === "map" || kind === "examples") compare(x, y, p, kind === "examples" ? "example" : "obj");
       else if (Array.isArray(a)) compare(x, y, p, "obj");
       else if (typeof x === "string" && typeof y === "string" && (TEXT_KEYS.has(k) || p === "/info/contact/name" || /^\/tags\/\d+\/name$/.test(p))) continue;
