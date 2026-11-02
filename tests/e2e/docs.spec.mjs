@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { diffSpecs } from "../../scripts/openapi-parity.mjs";
 
 // 加盟店向けドキュメント（/docs/・docs-site のビルド結果）
 
@@ -123,7 +124,16 @@ test.describe("加盟店向けドキュメント", () => {
       const href = await page.locator("article").getByRole("link", { name: "openapi.yaml" }).getAttribute("href");
       const response = await request.get(href);
       expect(response.ok(), `${path} → ${href}`).toBe(true);
-      expect(await response.text(), `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
+      const spec = await response.text();
+      expect(spec, `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
+      // 英語版の docs からは英訳した仕様書を開く。日本語は、サーバーが返す文そのままの例と、ブランド名・国際化ドメイン名の例だけ
+      if (path.startsWith("/docs/en/")) {
+        expect(spec).toContain("summary: Create a payment");
+        const rest = spec.replace(/message: 10 進の非負数|\(すてぶるペイ\)|例え\.テスト/g, "");
+        expect(rest).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+      } else {
+        expect(spec).toContain("summary: 決済を作成する");
+      }
     }
     // Redoc のページを JS なしで読んでも、本体の yaml へたどれる
     const viewer = await (await request.get("/docs/openapi/")).text();
@@ -152,6 +162,9 @@ test.describe("加盟店向けドキュメント", () => {
       // 英語版のビルドでは pathname:/// に /docs/en/ が付くので、英語版の本文からは英語版のビューアーを開く
       expect(new URL(page.url()).pathname, path).toBe(viewer);
       await expect(page.locator("h1")).toContainText("STBLpay API");
+      // 英語版のビューアーは英訳した仕様書を描く
+      const summary = path.startsWith("/docs/en/") ? "Create a payment" : "決済を作成する";
+      await expect(page.getByRole("heading", { name: `operation/createPaymentIntent ${summary}` })).toBeAttached();
       // JS を動かさずに読む AI 向けの案内は、Redoc が描画すると消える
       await expect(page.getByText("AI エージェントは")).toHaveCount(0);
       // 本文のリンクが指す節（operation の id）が、Redoc の画面にある
@@ -159,6 +172,63 @@ test.describe("加盟店向けドキュメント", () => {
         await expect(page.locator(`[id="${decodeURIComponent(href.split("#")[1])}"]`).first(), `${path} → ${href}`).toBeAttached();
       }
     }
+  });
+
+  test("OpenAPI の英訳の構造検査は、訳してよい文だけを見逃し、例・既定値・const の中の差は止める", () => {
+    const ja = {
+      info: { contact: { name: "問い合わせ先", url: "https://stbl-pay.com/docs/support/x" } },
+      tags: [{ name: "決済", description: "説明" }],
+      paths: { "/p": { post: { tags: ["決済"], summary: "作る", responses: { default: { description: "失敗" }, 400: { content: { "application/json": {
+        examples: {
+          bad: { summary: "例", value: { details: { description: "サーバーの文" } } },
+          "foo/bar": { summary: "例", value: { description: "値" } },
+        },
+      } } } } } } },
+      security: [{ tags: ["read"] }],
+      components: { links: { L: { operationId: "op", parameters: { payload: { title: "値" } }, requestBody: { description: "値" } } }, schemas: {
+        S: { description: "説明", const: { description: "値" }, enum: [{ summary: "値" }], default: "既定", examples: [{ title: "値" }] },
+        // プロパティやスキーマの名前が default・responses でも、名前として扱う
+        P: { properties: { default: { description: "説明" } }, discriminator: { propertyName: "k", mapping: { description: "#/components/schemas/A" } } },
+        responses: { default: { description: "既定", const: { title: "値" }, enum: [{ summary: "値" }] } },
+      } },
+    };
+    const en = structuredClone(ja);
+    Object.assign(en.info.contact, { name: "Contact", url: "https://stbl-pay.com/docs/en/support/x" });
+    Object.assign(en.tags[0], { name: "Payments", description: "Description" });
+    Object.assign(en.paths["/p"].post, { tags: ["Payments"], summary: "Create" });
+    en.paths["/p"].post.responses.default.description = "Failure";
+    en.paths["/p"].post.responses[400].content["application/json"].examples.bad.summary = "Example";
+    en.components.schemas.S.description = "Description";
+    en.paths["/p"].post.responses[400].content["application/json"].examples["foo/bar"].summary = "Example";
+    en.components.schemas.P.properties.default.description = "Description";
+    expect(diffSpecs(ja, en)).toEqual([]);
+
+    for (const change of [
+      (s) => { s.paths["/p"].post.responses[400].content["application/json"].examples.bad.value.details.description = "text"; },
+      (s) => { s.components.schemas.S.const.description = "value"; },
+      (s) => { s.components.schemas.S.default = "default"; },
+      (s) => { s.components.schemas.S.enum[0].summary = "value"; },
+      (s) => { s.components.links.L.parameters.payload.title = "value"; },
+      (s) => { s.components.links.L.requestBody.description = "value"; },
+      (s) => { s.security[0].tags = ["write"]; },
+      (s) => { s.components.schemas.S.examples[0].title = "value"; },
+      (s) => { s.paths["/p"].post.tags = ["Other"]; },
+      (s) => { s.info.contact.url = "https://example.com/"; },
+      (s) => { delete s.paths["/p"].post.summary; },
+      (s) => { s.paths["/p"].post.responses[400].content["application/json"].examples["foo/bar"].value.description = "value"; },
+      (s) => { s.components.schemas.P.discriminator.mapping.description = "#/components/schemas/B"; },
+      (s) => { s.components.schemas.responses.default.description = "value"; },
+      (s) => { s.components.schemas.responses.default.const.title = "value"; },
+      (s) => { s.components.schemas.responses.default.enum[0].summary = "value"; },
+    ]) {
+      const broken = structuredClone(en);
+      change(broken);
+      expect(diffSpecs(ja, broken), change.toString()).not.toEqual([]);
+    }
+    // 拡張（x-）は、置いた場所にかかわらず扱わずに止める
+    const withExtension = structuredClone(ja);
+    withExtension.paths["x-config"] = { description: "値" };
+    expect(diffSpecs(withExtension, structuredClone(withExtension))).not.toEqual([]);
   });
 
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {

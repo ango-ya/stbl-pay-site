@@ -1,5 +1,6 @@
 # STBLpay の加盟店向け API の仕様書（OpenAPI 3.1）。https://stbl-pay.com/docs/openapi.yaml で配信する。
 # 加盟店 API と Webhook の項目ごとの決まり（型・形式・必須・エラー・本文の形）はこの仕様書が正本。docs には概要と図を書き、詳細はここへリンクする
+# 英訳は docs-site/i18n/en/openapi.yaml（/docs/en/openapi.yaml で配信）。ここを変えたら英語版も同じ構造に直す（scripts/openapi-en.mjs がビルドで突き合わせる）
 openapi: 3.1.0
 info:
   title: STBLpay API

@@ -21,7 +21,7 @@ Request and response bodies are JSON, and the fields are camelCase.
 
 ## Create payment {/* #create-payment */}
 
-`POST /payment_intents` creates a payment and returns the `checkoutUrl` that you send the buyer to. The fields, errors, and examples are in ["Create a payment" (決済を作成する) in the OpenAPI specification](pathname:///openapi/#operation/createPaymentIntent).
+`POST /payment_intents` creates a payment and returns the `checkoutUrl` that you send the buyer to. The fields, errors, and examples are in ["Create a payment" in the OpenAPI specification](pathname:///openapi/#operation/createPaymentIntent).
 
 - Amounts (such as `amountJpy`) are decimal strings, not JSON numbers (example: `"4980"`). Handle fractions such as fees without converting them to floating-point numbers. `amountJpy` must be greater than 0 (`"0"` or a negative value returns 400 `common/invalid_request`). Beyond that, the API imposes no upper or lower limit on the amount. For operational limits, check with your [contact](/support/troubleshooting#contact).
 - `orderId` is an ID for each payment attempt and the idempotency key. Calling again from the same store with the same value returns the existing payment. Use the same value when you resend the request, and a new value when the buyer pays again after `failed`, `expired`, or `canceled`. With multiple stores, assign values that are unique across the whole merchant ([constraint across stores](/server/create-payment#idempotency)).
@@ -32,7 +32,7 @@ Request and response bodies are JSON, and the fields are camelCase.
 
 ## Retrieve payment status {/* #retrieve-payment */}
 
-`GET /payment_status/:paymentIntentId` returns the current status of a payment. The fields, errors, and examples are in ["Retrieve payment status" (決済の状態を照会する) in the OpenAPI specification](pathname:///openapi/#operation/getPaymentStatus).
+`GET /payment_status/:paymentIntentId` returns the current status of a payment. The fields, errors, and examples are in ["Retrieve payment status" in the OpenAPI specification](pathname:///openapi/#operation/getPaymentStatus).
 
 - **There is no authentication.** No API key or Authorization header is needed.
 - A payment ID is not a secret. Do not use it in place of permission to view your own orders.
