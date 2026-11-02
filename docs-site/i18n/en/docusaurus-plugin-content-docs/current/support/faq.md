@@ -30,7 +30,7 @@ When the payment reaches a terminal state, the STBLpay checkout page shows a but
 
 No. We do not provide a merchant integration SDK. After you create the payment, navigate to `checkoutUrl`. See [How to integrate today](/client/install).
 
-## Can I resend a request to create a payment?
+## Can I resend a request to create a payment? {/* #can-i-retry-creating-the-same-order */}
 
 Yes. The same store gets the existing payment back for the same `orderId`. Do not generate a new number on every communication failure. Retrying does not update the amount or deadline of an existing payment. The payment that comes back may already be terminal (it goes no further), so check `status` in the response before sending the buyer to `checkoutUrl`. How to handle each status is in [Idempotency](/server/create-payment#idempotency).
 
