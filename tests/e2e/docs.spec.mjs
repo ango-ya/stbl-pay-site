@@ -123,7 +123,16 @@ test.describe("加盟店向けドキュメント", () => {
       const href = await page.locator("article").getByRole("link", { name: "openapi.yaml" }).getAttribute("href");
       const response = await request.get(href);
       expect(response.ok(), `${path} → ${href}`).toBe(true);
-      expect(await response.text(), `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
+      const spec = await response.text();
+      expect(spec, `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
+      // 英語版の docs からは英訳した仕様書を開く。日本語は、サーバーが返す文そのままの例と、ブランド名・国際化ドメイン名の例だけ
+      if (path.startsWith("/docs/en/")) {
+        expect(spec).toContain("summary: Create a payment");
+        const rest = spec.replace(/message: 10 進の非負数|\(すてぶるペイ\)|例え\.テスト/g, "");
+        expect(rest).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+      } else {
+        expect(spec).toContain("summary: 決済を作成する");
+      }
     }
     // Redoc のページを JS なしで読んでも、本体の yaml へたどれる
     const viewer = await (await request.get("/docs/openapi/")).text();
@@ -152,6 +161,9 @@ test.describe("加盟店向けドキュメント", () => {
       // 英語版のビルドでは pathname:/// に /docs/en/ が付くので、英語版の本文からは英語版のビューアーを開く
       expect(new URL(page.url()).pathname, path).toBe(viewer);
       await expect(page.locator("h1")).toContainText("STBLpay API");
+      // 英語版のビューアーは英訳した仕様書を描く
+      const summary = path.startsWith("/docs/en/") ? "Create a payment" : "決済を作成する";
+      await expect(page.getByRole("heading", { name: `operation/createPaymentIntent ${summary}` })).toBeAttached();
       // JS を動かさずに読む AI 向けの案内は、Redoc が描画すると消える
       await expect(page.getByText("AI エージェントは")).toHaveCount(0);
       // 本文のリンクが指す節（operation の id）が、Redoc の画面にある

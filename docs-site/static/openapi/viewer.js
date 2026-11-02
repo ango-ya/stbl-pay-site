@@ -3,7 +3,8 @@
   var font = '"Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif';
   var mono = '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
 
-  // 同じファイルが /docs/en/openapi/ にも出るので、英語版ではロゴと文言を替える
+  // 同じファイルが /docs/en/openapi/ にも出るので、英語版ではロゴと文言を替える。
+  // 読み込む ../openapi.yaml は、英語版では英訳したもの（scripts/openapi-en.mjs が差し替える）
   if (/\/en\/openapi\//.test(location.pathname)) {
     document.documentElement.lang = 'en';
     var logo = document.querySelector('.stbl-brand img');
@@ -12,6 +13,7 @@
     logo.width = 882;
     logo.height = 199;
     document.querySelector('.stbl-back').textContent = 'REST API reference';
+    document.title = 'STBLpay API (OpenAPI)';
   }
 
   Redoc.init('../openapi.yaml', {

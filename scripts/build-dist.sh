@@ -3,7 +3,8 @@
 #
 # 1. 配信対象のファイルを dist/ に集める（開発用ファイルは入れない）
 # 2. docs-site（Docusaurus）をビルドして dist/docs/ に入れる
-# 3. docs のインラインスクリプトのハッシュを dist/_headers の CSP に書き込む
+# 3. 英語版の docs に、英語版の OpenAPI の仕様書を入れる
+# 4. docs のインラインスクリプトのハッシュを dist/_headers の CSP に書き込む
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -35,6 +36,7 @@ fi
 (cd docs-site && npm run build)
 cp -R docs-site/build dist/docs
 
+node scripts/openapi-en.mjs dist
 node scripts/docs-csp.mjs dist
 
 echo "dist contents:"

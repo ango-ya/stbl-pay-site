@@ -12,7 +12,7 @@ The definition of each field in the Webhook body and headers is in `webhooks` in
 
 ## Common format
 
-The body has `id` (the event ID), `type`, `created_at`, and `data`. The signature is in the `Stbl-Pay-Signature` header. The header and body fields are in ["Receive the payment result" (決済の結果を受け取る) in the OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
+The body has `id` (the event ID), `type`, `created_at`, and `data`. The signature is in the `Stbl-Pay-Signature` header. The header and body fields are in ["Receive the payment result" in the OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 - Use the **`id` of the signature-verified body** for deduplication. The `Stbl-Pay-Event-Id` header is not covered by the signature.
 - `created_at` is the time the event was created, and differs from the send time `t` in the signature header.
