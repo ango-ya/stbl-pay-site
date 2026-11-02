@@ -126,10 +126,10 @@ test.describe("加盟店向けドキュメント", () => {
       expect(response.ok(), `${path} → ${href}`).toBe(true);
       const spec = await response.text();
       expect(spec, `${path} → ${href}`).toMatch(/^openapi: 3\.1\.0$/m);
-      // 英語版の docs からは英訳した仕様書を開く。日本語は、サーバーが返す文そのままの例と、ブランド名・国際化ドメイン名の例だけ
+      // 英語版の docs からは英訳した仕様書を開く。日本語は、サーバーが返す文そのままの例と、国際化ドメイン名の例だけ
       if (path.startsWith("/docs/en/")) {
         expect(spec).toContain("summary: Create a payment");
-        const rest = spec.replace(/message: 10 進の非負数|\(すてぶるペイ\)|例え\.テスト/g, "");
+        const rest = spec.replace(/message: 10 進の非負数|例え\.テスト/g, "");
         expect(rest).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
       } else {
         expect(spec).toContain("summary: 決済を作成する");

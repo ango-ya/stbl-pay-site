@@ -6,7 +6,7 @@ info:
   version: '2026-10-28'
   summary: The API your merchant server calls, and the Webhook your merchant server receives
   description: |
-    The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server receives, for STBLpay (すてぶるペイ).
+    The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server receives, for STBLpay (pronounced "stable pay").
     The integration flow and notes are in the [merchant documentation](https://stbl-pay.com/docs/en/).
 
     - Bodies are JSON. REST API fields are camelCase, and Webhook bodies are snake_case.
