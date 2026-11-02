@@ -10,11 +10,9 @@ const MAP_KEYS = new Set([
   "schemas", "responses", "parameters", "requestBodies", "headers", "securitySchemes", "links",
   "content", "encoding", "variables", "mapping", "examples", "pathItems",
 ]);
-// 説明文を区別せず、まるごと値として比べるもの。拡張（x-）は任意のデータ、security は要求するスコープ、
-// links は送る値を持つ。shortcut: Link の description や OAuth の scopes の説明も訳せない。使うようになったら場所を足す
+// 説明文を区別せず、まるごと値として比べるもの。security は要求するスコープ、links は送る値を持つ。
+// shortcut: Link の description や OAuth の scopes の説明も訳せない。使うようになったら場所を足す
 const EXACT_KEYS = new Set(["security", "links", "flows"]);
-// 名前と並んで拡張（x-）を置ける対応表。properties などでは x- で始まっても名前
-const EXT_MAPS = new Set(["paths", "webhooks", "responses", "callbacks"]);
 
 export function diffSpecs(ja, en) {
   // タグの名前は訳すので、操作の tags は対応表で日本語の名前に戻して比べる
@@ -46,13 +44,14 @@ export function diffSpecs(ja, en) {
       const p = `${path}/${k}`;
       const [x, y] = [a[k], b[k]];
       if (kind === "data") compare(x, y, p, "data");
-      else if (kind === "map" && k.startsWith("x-") && EXT_MAPS.has(path.split("/").pop())) compare(x, y, p, "data");
+      // shortcut: 拡張（x-）は、名前と区別できない場所があるので扱わず、置いたら止める。使うようになったら置く場所ごとに足す
+      else if (k.startsWith("x-")) errors.push(`${p}: x- で始まるキーは、この検査が扱わない`);
       else if (kind === "map" || kind === "examples") compare(x, y, p, kind === "examples" ? "example" : "obj");
       else if (Array.isArray(a)) compare(x, y, p, "obj");
       else if (typeof x === "string" && typeof y === "string" && (TEXT_KEYS.has(k) || p === "/info/contact/name" || /^\/tags\/\d+\/name$/.test(p))) continue;
       // 問い合わせ先は英語版の docs を指す
       else if (p === "/info/contact/url" && typeof x === "string" && y === x.replace("/docs/", "/docs/en/")) continue;
-      else if (k.startsWith("x-") || EXACT_KEYS.has(k)) compare(x, y, p, "data");
+      else if (EXACT_KEYS.has(k)) compare(x, y, p, "data");
       // タグの名前を戻すのは、操作（paths・webhooks の下のメソッド）の tags だけ
       else if (k === "tags" && /^\/(paths|webhooks)\/.+\/(get|put|post|delete|options|head|patch|trace)$/.test(path) && Array.isArray(y)) compare(x, y.map((n) => tagName.get(n) ?? n), p, "data");
       // Example Object の value、JSON Schema の examples（配列）は値そのもの

@@ -178,18 +178,17 @@ test.describe("加盟店向けドキュメント", () => {
     const ja = {
       info: { contact: { name: "問い合わせ先", url: "https://stbl-pay.com/docs/support/x" } },
       tags: [{ name: "決済", description: "説明" }],
-      paths: { "x-config": { description: "値" }, "/p": { post: { tags: ["決済"], summary: "作る", responses: { "x-config": { description: "値" }, default: { description: "失敗" }, 400: { content: { "application/json": {
+      paths: { "/p": { post: { tags: ["決済"], summary: "作る", responses: { default: { description: "失敗" }, 400: { content: { "application/json": {
         examples: {
           bad: { summary: "例", value: { details: { description: "サーバーの文" } } },
           "foo/bar": { summary: "例", value: { description: "値" } },
         },
       } } } } } } },
       security: [{ tags: ["read"] }],
-      "x-config": { description: "値" },
       components: { links: { L: { operationId: "op", parameters: { payload: { title: "値" } }, requestBody: { description: "値" } } }, schemas: {
         S: { description: "説明", const: { description: "値" }, enum: [{ summary: "値" }], default: "既定", examples: [{ title: "値" }] },
         // プロパティやスキーマの名前が default・responses でも、名前として扱う
-        P: { properties: { default: { description: "説明" }, "x-config": { description: "説明" } }, discriminator: { propertyName: "k", mapping: { description: "#/components/schemas/A" } } },
+        P: { properties: { default: { description: "説明" } }, discriminator: { propertyName: "k", mapping: { description: "#/components/schemas/A" } } },
         responses: { default: { description: "既定", const: { title: "値" }, enum: [{ summary: "値" }] } },
       } },
     };
@@ -202,7 +201,6 @@ test.describe("加盟店向けドキュメント", () => {
     en.components.schemas.S.description = "Description";
     en.paths["/p"].post.responses[400].content["application/json"].examples["foo/bar"].summary = "Example";
     en.components.schemas.P.properties.default.description = "Description";
-    en.components.schemas.P.properties["x-config"].description = "Description";
     expect(diffSpecs(ja, en)).toEqual([]);
 
     for (const change of [
@@ -213,9 +211,6 @@ test.describe("加盟店向けドキュメント", () => {
       (s) => { s.components.links.L.parameters.payload.title = "value"; },
       (s) => { s.components.links.L.requestBody.description = "value"; },
       (s) => { s.security[0].tags = ["write"]; },
-      (s) => { s["x-config"].description = "value"; },
-      (s) => { s.paths["x-config"].description = "value"; },
-      (s) => { s.paths["/p"].post.responses["x-config"].description = "value"; },
       (s) => { s.components.schemas.S.examples[0].title = "value"; },
       (s) => { s.paths["/p"].post.tags = ["Other"]; },
       (s) => { s.info.contact.url = "https://example.com/"; },
@@ -230,6 +225,10 @@ test.describe("加盟店向けドキュメント", () => {
       change(broken);
       expect(diffSpecs(ja, broken), change.toString()).not.toEqual([]);
     }
+    // 拡張（x-）は、置いた場所にかかわらず扱わずに止める
+    const withExtension = structuredClone(ja);
+    withExtension.paths["x-config"] = { description: "値" };
+    expect(diffSpecs(withExtension, structuredClone(withExtension))).not.toEqual([]);
   });
 
   test("_headers の docs 用 CSP に、インラインスクリプトのハッシュが入っている", () => {
