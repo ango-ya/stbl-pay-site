@@ -179,9 +179,17 @@ test.describe("加盟店向けドキュメント", () => {
       info: { contact: { name: "問い合わせ先", url: "https://stbl-pay.com/docs/support/x" } },
       tags: [{ name: "決済", description: "説明" }],
       paths: { "/p": { post: { tags: ["決済"], summary: "作る", responses: { default: { description: "失敗" }, 400: { content: { "application/json": {
-        examples: { bad: { summary: "例", value: { details: { description: "サーバーの文" } } } },
+        examples: {
+          bad: { summary: "例", value: { details: { description: "サーバーの文" } } },
+          "foo/bar": { summary: "例", value: { description: "値" } },
+        },
       } } } } } } },
-      components: { schemas: { S: { description: "説明", const: { description: "値" }, default: "既定", examples: [{ title: "値" }] } } },
+      components: { schemas: {
+        S: { description: "説明", const: { description: "値" }, default: "既定", examples: [{ title: "値" }] },
+        // プロパティやスキーマの名前が default・responses でも、名前として扱う
+        P: { properties: { default: { description: "説明" } }, discriminator: { propertyName: "k", mapping: { description: "#/components/schemas/A" } } },
+        responses: { default: { description: "既定", const: { title: "値" }, enum: [{ summary: "値" }] } },
+      } },
     };
     const en = structuredClone(ja);
     Object.assign(en.info.contact, { name: "Contact", url: "https://stbl-pay.com/docs/en/support/x" });
@@ -190,6 +198,8 @@ test.describe("加盟店向けドキュメント", () => {
     en.paths["/p"].post.responses.default.description = "Failure";
     en.paths["/p"].post.responses[400].content["application/json"].examples.bad.summary = "Example";
     en.components.schemas.S.description = "Description";
+    en.paths["/p"].post.responses[400].content["application/json"].examples["foo/bar"].summary = "Example";
+    en.components.schemas.P.properties.default.description = "Description";
     expect(diffSpecs(ja, en)).toEqual([]);
 
     for (const change of [
@@ -200,6 +210,11 @@ test.describe("加盟店向けドキュメント", () => {
       (s) => { s.paths["/p"].post.tags = ["Other"]; },
       (s) => { s.info.contact.url = "https://example.com/"; },
       (s) => { delete s.paths["/p"].post.summary; },
+      (s) => { s.paths["/p"].post.responses[400].content["application/json"].examples["foo/bar"].value.description = "value"; },
+      (s) => { s.components.schemas.P.discriminator.mapping.description = "#/components/schemas/B"; },
+      (s) => { s.components.schemas.responses.default.description = "value"; },
+      (s) => { s.components.schemas.responses.default.const.title = "value"; },
+      (s) => { s.components.schemas.responses.default.enum[0].summary = "value"; },
     ]) {
       const broken = structuredClone(en);
       change(broken);
