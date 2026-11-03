@@ -156,13 +156,15 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ## 検索と AI 向け（SEO・LLMO）
 
-- **OGP 画像**：`assets/og-stblpay-generative-1200x630.png`。元は `scripts/og/og-image.html`（ロゴは正の SVG、背景はヒーローと同じ式）で、`node scripts/make-og-image.mjs` で書き出し直す。絵を変えたら、SNS が前の画像を覚えているので `index.html`・`en/index.html`・docs（`docusaurus.config.ts` の `image`）の `?v=` を上げる
+- **OGP 画像**：日本語版 `assets/og-stblpay-generative-1200x630.png`、英語版 `assets/og-stblpay-generative-en-1200x630.png`（英語版 LP と英語版 docs で使う）。元は `scripts/og/og-image.html`（ロゴは正の SVG、背景はヒーローと同じ式。`?lang=en` で英語版）で、`node scripts/make-og-image.mjs [en]` で書き出し直す。絵を変えたら、SNS が前の画像を覚えているので `index.html`・`en/index.html`・docs（`docusaurus.config.ts` の `image`）の `?v=` を上げる
 - **canonical・構造化データ**：LP の head。`WebPage` の `dateModified` は、本文を直したら日付を上げる。「現在の状況」（`2026年11月時点` など）は LP の導入の節と `llms.txt` の両方にあるので、状況が変わったらそろえて直す
 - **サイトマップ**：LP は `sitemap.xml`（手で書く。ページを足したら足す）、docs は Docusaurus が言語ごとに作る（`/docs/sitemap.xml`・`/docs/en/sitemap.xml`。robots.txt に 3 本とも書く）。docs は `trailingSlash: true`（配信先が末尾にスラッシュを付けて飛ばすので、canonical をそろえる）
 - **noindex**：デモ画面（`/demo`・`/pay`・`/jpyc-ex`）は `_headers` の `X-Robots-Tag`。`404.html` があるので、存在しない URL は 404 になる（無いと Cloudflare Pages は LP を 200 で返す）
 - **クローラー**：`robots.txt` は AI の学習用も含めて許可。Cloudflare の AI Crawl Control でブロックしていると 403 になるので、方針を変えるときは両方そろえる
 - **点検**：E2E の `tests/e2e/seo.spec.mjs` が上の形を守る。本番の応答（404・noindex・クローラーごとの可否）は、デプロイのあとに `./scripts/seo-live-check.sh` で見る
 - **Search Console**：URL プレフィックスのプロパティ `https://stbl-pay.com/`。所有権の確認は `index.html` の `google-site-verification` の meta（消すと確認が外れる）
+- **IndexNow（Bing など）**：`main` への push でデプロイしたあと、`scripts/indexnow.mjs` が変わったページ（LP 日英・docs）の URL だけを送る。全件を送り直すときは `./scripts/build-dist.sh` のあと `node scripts/indexnow.mjs --all`。鍵はリポジトリ直下の `<鍵>.txt`（公開してよいもの。消すと送信が拒否される）
+- **週次の点検**：クラウドのルーチン「stbl-pay.com 週次 SEO・LLMO 点検」が毎週金曜 17:00（日本時間）に本番の点検・検索での見え方・改善点を GitHub Issue にまとめる。Search Console と Bing Webmaster Tools の数字は、人がそれぞれの画面で見る
 
 ## デプロイ
 

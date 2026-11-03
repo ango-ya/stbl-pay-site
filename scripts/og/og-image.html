@@ -1,9 +1,9 @@
 <!doctype html>
 <!--
   OGP 画像（assets/og-stblpay-generative-1200x630.png）の元。scripts/make-og-image.mjs が 1200×630 で撮る。
-  ブラウザで直接開いても同じ絵が見える。
+  ブラウザで直接開いても同じ絵が見える。?lang=en を付けると英語版（assets/og-stblpay-generative-en-1200x630.png の元）になる。
   - 背景の模様は LP のヒーロー（assets/lp.js の hero-art）と同じ式を、時刻を止めて 1 枚だけ描く
-  - ロゴは正の SVG（Google Drive の STBLpay_japanese_logo.svg を写したもの）
+  - ロゴは正の SVG（Google Drive の STBLpay_japanese_logo.svg を写したもの）。英語版は英語版 LP と同じワードマーク
   - キャラクターは素材集 stbl-pay-characters の kun/poses/kun_pose_wave と chan/thigh/chan_thigh_reach_wink
 -->
 <html lang="ja">
@@ -95,6 +95,19 @@
   <div class="ticker"><span>JPYステーブルコイン決済</span><span>支払いは日本円の銀行振込で</span><span>与信審査 なし</span><span>決済と同時に着金</span></div>
 </div>
 <script>
+  if (new URLSearchParams(location.search).get("lang") === "en") {
+    document.documentElement.lang = "en";
+    const logo = document.querySelector(".logo");
+    logo.src = "../../assets/logo-wordmark-stblpay-black.png";
+    logo.alt = "STBLpay";
+    logo.style.width = "560px";
+    const h1 = document.querySelector("h1");
+    h1.textContent = "Pay in yen. Settle in stablecoin.";
+    h1.style.fontSize = "48px"; // 英文は和文より横に長く、すてぶるちゃんの髪にかかるため
+    document.querySelector(".sub").textContent = "Toward a new way to pay, not tied to payment processors.";
+    document.querySelector(".ticker").innerHTML =
+      "<span>JPY stablecoin payments</span><span>Pay by bank transfer in yen</span><span>No credit screening</span><span>Funds arrive at payment</span>";
+  }
   // assets/lp.js の hero-art と同じ定数・同じ式（バーストとポインターは除く）
   const W = 1200, H = 630, GRID = 22, CELL_W = 12, CELL_H = 12, SHEAR = 4.4, SLANT = 2.6;
   const COLORS = ["#12315c", "#1b4c8f", "#2775ca", "#63d9ff"];
