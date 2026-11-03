@@ -26,6 +26,14 @@ for p in /sitemap.xml /docs/sitemap.xml /docs/en/sitemap.xml; do
   curl -s "$BASE/robots.txt" | grep -qx "Sitemap: https://stbl-pay.com$p" && ok "robots.txt に $p" || ng "robots.txt に Sitemap: $p が無い"
 done
 
+echo "== OGP 画像と IndexNow の鍵"
+for p in / /en/; do
+  og="$(curl -s "$BASE$p" | grep -o '<meta property="og:image" content="[^"]*"' | sed 's/.*content="https:\/\/stbl-pay.com//; s/"$//')"
+  [ -n "$og" ] && expect_status "$og" 200 || ng "$p に og:image が無い"
+done
+key="$(grep -o 'const KEY = "[0-9a-f]*"' "$(dirname "$0")/indexnow.mjs" | cut -d'"' -f2)"
+[ "$(curl -s "$BASE/$key.txt")" = "$key" ] && ok "IndexNow の鍵ファイル" || ng "/$key.txt が鍵を返さない"
+
 echo "== noindex（デモ画面）"
 # .html は pretty URL へ転送されるので、転送先（-L で最後の応答）が 200 で noindex であることを見る
 for p in /demo /demo/ /demo.html /pay /pay.html /jpyc-ex /jpyc-ex.html; do

@@ -104,3 +104,13 @@ jobs:
 
           console.log(`Pages custom domain created: ${PAGES_CUSTOM_DOMAIN} (${createBody.result.status})`);
           NODE
+
+      - name: Notify search engines (IndexNow)
+        # このデプロイで変わったページだけを Bing などへ知らせる。失敗してもデプロイは成功のままにする
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        continue-on-error: true
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          git fetch --depth=1 origin "$BEFORE"
+          git diff --name-only "$BEFORE" "$GITHUB_SHA" | xargs node scripts/indexnow.mjs

@@ -22,6 +22,14 @@
 - [Sandbox](/docs/testing/sandbox/): 組み込みを試す環境の接続先と始め方
 - [よくある質問](/docs/support/faq/) / [既知の制限](/docs/support/limitations/)
 
+## English summary
+
+STBLpay (すてぶるペイ, pronounced "stable pay") is a JPY stablecoin (JPYC) payment service under development (as of November 2026; launch date not yet set), operated by Ango-ya LLC (合同会社暗号屋, Fukuoka, Japan). Buyers pay by Japanese-yen bank transfer and approve with a passkey; merchants receive sales in JPYC without relying on card companies' credit screening. The provider is non-custodial. A Sandbox, merchant docs, and an OpenAPI 3.1 specification are public.
+
+- [English landing page](/en/): overview, how it works, and FAQ in English
+- [Merchant docs (English)](/docs/en/): integration, webhooks, payment statuses, refunds
+- [API specification (English, OpenAPI 3.1)](/docs/en/openapi.yaml)
+
 ## 主要ページ
 
 - [トップ（LP）](/): サービス概要・仕組み・手数料の考え方・よくある質問
