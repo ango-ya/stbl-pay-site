@@ -49,7 +49,7 @@ As an exception, creating again **after a merchant suspension is lifted** may no
 
 Sending a different amount or deadline with the same `orderId` does not update the existing payment. Manage a change to the order terms, or a new payment after a terminal status, as a separate payment attempt, after confirming that the existing payment has reached a terminal status. If you create a new payment with a new `orderId` while the existing one is not terminal, the buyer can pay either of them, and paying both means paying twice. The merchant cannot cancel the existing payment (see [State transitions and deadlines](/lifecycle/transitions)).
 
-If you have multiple stores, assign `orderId` values that are unique within the merchant. In the current specification, the uniqueness constraint is per merchant, while retrieving an existing payment is per store. If you use the same value in another store, that store cannot retrieve the existing payment, and the result is 500 `common/internal`. Retrying does not resolve it.
+If you have multiple stores, assign `orderId` values that are unique within the merchant. Creating a payment with an `orderId` already used at another store of the same merchant returns 409 `payment/order_id_conflict`. The body is only `{ "code": "payment/order_id_conflict" }`, and the other store's payment is not returned. Retrying with the same value does not resolve it, so create the payment again with a new `orderId`.
 
 ## Domain registration
 

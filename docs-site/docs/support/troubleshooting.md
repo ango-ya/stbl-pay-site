@@ -9,7 +9,7 @@ sidebar_position: 2
 | 症状 | 確認すること |
 |---|---|
 | API キーを発行できない（409 `store/api_key_limit_reached`） | 有効なキーが 1 店舗 10 本に達している。使っていないキーを失効させる |
-| 決済を作れない | 接続先、`x-stbl-api-key`（失効していないか）、文字列の `amountJpy`、エラーの `code`（[エラー](/reference/rest#エラー)）。409 `store/disabled` は店舗が無効化されている。500 `common/internal` が続くときは、同じ加盟店の別の店舗で使った `orderId` を指定していないか（再試行では解消しない） |
+| 決済を作れない | 接続先、`x-stbl-api-key`（失効していないか）、文字列の `amountJpy`、エラーの `code`（[エラー](/reference/rest#エラー)）。409 `store/disabled` は店舗が無効化されている。409 `payment/order_id_conflict` は、同じ加盟店の別の店舗で使った `orderId` を指定している。同じ値での再試行では解消しないので、新しい `orderId` で作り直す（[冪等性](/server/create-payment#冪等性)） |
 | 再試行しても同じ決済が返る | 同じ `orderId` の冪等動作。更新や新規決済にはならない。返った `status` が終端なら `checkoutUrl` へ遷移させない（[冪等性](/server/create-payment#冪等性)） |
 | 決済作成が 409 `merchant/domain_required` になる | 加盟店コンソールでドメインを登録しているか（[ドメイン登録](/security/domain)） |
 | 決済作成が 403 `merchant/suspended` になる | 加盟店が利用停止中。再開されるまで作成できない。API キーは失効していない |

@@ -9,7 +9,7 @@ sidebar_position: 2
 | Symptom | What to check |
 |---|---|
 | Cannot issue an API key (409 `store/api_key_limit_reached`) | The store has reached 10 active keys. Revoke unused keys |
-| Cannot create a payment | The endpoint, `x-stbl-api-key` (check that it is not revoked), `amountJpy` as a string, and the error `code` (see [Errors](/reference/rest#errors)). 409 `store/disabled` means the store is disabled. If 500 `common/internal` keeps occurring, check that you did not use an `orderId` already used at another store of the same merchant (retrying does not resolve it) |
+| Cannot create a payment | The endpoint, `x-stbl-api-key` (check that it is not revoked), `amountJpy` as a string, and the error `code` (see [Errors](/reference/rest#errors)). 409 `store/disabled` means the store is disabled. 409 `payment/order_id_conflict` means you specified an `orderId` already used at another store of the same merchant. Retrying with the same value does not resolve it, so create the payment again with a new `orderId` ([Idempotency](/server/create-payment#idempotency)) |
 | The same payment is returned on retry | This is idempotent behavior for the same `orderId`. It does not update the payment or create a new one. If the returned `status` is terminal, do not send the buyer to `checkoutUrl` ([Idempotency](/server/create-payment#idempotency)) |
 | Payment creation returns 409 `merchant/domain_required` | Check that you registered a domain in the merchant console ([Domain registration](/security/domain)) |
 | Payment creation returns 403 `merchant/suspended` | The merchant is suspended. You cannot create payments until it is resumed. API keys are not revoked |
