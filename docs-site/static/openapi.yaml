@@ -140,6 +140,7 @@ paths:
             - `store/disabled`：店舗が無効化されている。加盟店コンソールで店舗の状態を確認する
             - `merchant/domain_required`：EC の決済にはドメインの登録が必要。加盟店コンソールで登録する
             - `payment/order_terminated`：同じ `orderId` の既存の決済が、加盟店の利用停止で中止済み、または停止前に作られてまだ送信していない。`details` に既存の決済の `paymentIntentId`・`status`・`failedReason` が入る。新しい `orderId` で作り直す
+            - `payment/order_id_conflict`：同じ加盟店の別の店舗で使った `orderId` を指定した。別の店舗の決済は返らない。同じ値で再試行しても解消しないので、新しい `orderId` で作り直す
           content:
             application/json:
               schema:
@@ -158,12 +159,14 @@ paths:
                       paymentIntentId: pi_0123456789abcdef0123456789abcdef
                       status: failed
                       failedReason: merchant_suspended
+                orderIdConflict:
+                  value:
+                    code: payment/order_id_conflict
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           description: |
-            `common/internal`：サーバー側の障害。同じ `orderId` で再試行しても、決済が二重に立つことはありません。
-            ただし、同じ加盟店の別の店舗で使った `orderId` を指定したときもこのエラーになり、こちらは再試行しても解消しません。`orderId` は加盟店全体で一意に採番してください
+            `common/internal`：サーバー側の障害。同じ `orderId` で再試行しても、決済が二重に立つことはありません
           content:
             application/json:
               schema:
@@ -458,7 +461,7 @@ components:
             決済を試すたびの ID。冪等性のキー。同じ店舗から同じ値で再作成すると既存の決済を返します。
             通信の再送では同じ値を使い、`failed`・`expired`・`canceled` のあとの払い直しでは新しい値にします。自社の注文番号をそのまま使えるのは、同じ注文で払い直しをしない場合だけです。
             長さは UTF-16 のコード単位で数えて 128 までです（絵文字などは 1 文字で 2 単位）。`maxLength` は文字数で数えるので、絵文字などを含むとスキーマを通っても 400 `common/invalid_request` になることがあります。
-            省略すると、呼ぶたびに新しい決済を作ります。複数の店舗があるときは、加盟店全体で一意に採番してください（別の店舗で使った値は 500 `common/internal`）
+            省略すると、呼ぶたびに新しい決済を作ります。複数の店舗があるときは、加盟店全体で一意に採番してください（別の店舗で使った値は 409 `payment/order_id_conflict`）
           examples: [ord_0001]
         returnUrl:
           # format: uri は付けない。国際化ドメイン名（https://例え.テスト/）をサーバーは受け付けるが、uri の検査では落ちるため

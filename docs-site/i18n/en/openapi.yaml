@@ -139,6 +139,7 @@ paths:
             - `store/disabled`: The store is disabled. Check the store's status in the merchant console
             - `merchant/domain_required`: An EC payment requires a registered domain. Register one in the merchant console
             - `payment/order_terminated`: The existing payment with the same `orderId` was terminated by a merchant suspension, or was created before the suspension and has not been submitted yet. `details` holds the existing payment's `paymentIntentId`, `status`, and `failedReason`. Create the payment again with a new `orderId`
+            - `payment/order_id_conflict`: The `orderId` was already used at a different store of the same merchant. The other store's payment is not returned. Retrying with the same value does not resolve it, so create the payment again with a new `orderId`
           content:
             application/json:
               schema:
@@ -157,12 +158,14 @@ paths:
                       paymentIntentId: pi_0123456789abcdef0123456789abcdef
                       status: failed
                       failedReason: merchant_suspended
+                orderIdConflict:
+                  value:
+                    code: payment/order_id_conflict
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           description: |
-            `common/internal`: A server-side failure. Retrying with the same `orderId` does not create the payment twice.
-            However, specifying an `orderId` that was used at a different store of the same merchant also returns this error, and retrying does not resolve that case. Assign `orderId` values that are unique across the whole merchant
+            `common/internal`: A server-side failure. Retrying with the same `orderId` does not create the payment twice
           content:
             application/json:
               schema:
@@ -457,7 +460,7 @@ components:
             An ID for each payment attempt. The idempotency key. Creating again from the same store with the same value returns the existing payment.
             Use the same value when you resend the request, and a new value when the buyer pays again after `failed`, `expired`, or `canceled`. You can use your own order number as it is only if you do not let the buyer pay again for the same order.
             The length is counted in UTF-16 code units, up to 128 (an emoji counts as 2 units). `maxLength` counts characters, so a value containing emoji may pass the schema and still get 400 `common/invalid_request`.
-            If omitted, a new payment is created on every call. With multiple stores, assign values that are unique across the whole merchant (a value used at a different store gives 500 `common/internal`)
+            If omitted, a new payment is created on every call. With multiple stores, assign values that are unique across the whole merchant (a value used at a different store gives 409 `payment/order_id_conflict`)
           examples: [ord_0001]
         returnUrl:
           # No format: uri. The server accepts internationalized domain names (https://例え.テスト/), but a uri check would reject them

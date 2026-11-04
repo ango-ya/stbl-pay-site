@@ -68,6 +68,7 @@ The error body is `{ code, details? }`. The error codes and what to do for each 
 - Branch on `code`, and use the HTTP status only as a supplement. **Fall back to your common error handling for unknown codes.** Codes may be added.
 - The server does not return display text, so you decide the text to display.
 - When a 429 is returned, retry after a pause, regardless of the body's shape. When the network layer in front applies rate limiting, the body does not contain a `code`.
-- Retrying `common/internal` (500) with the same `orderId` does not create the payment twice. However, an `orderId` used at a different store also returns this error, and retrying does not resolve that case ([constraint across stores](/server/create-payment#idempotency)).
+- Retrying `common/internal` (500) with the same `orderId` does not create the payment twice.
+- `payment/order_id_conflict` (409) is returned when you create a payment with an `orderId` already used at a different store of the same merchant. Retrying with the same value does not resolve it, so create the payment again with a new `orderId` ([constraint across stores](/server/create-payment#idempotency)).
 
 Refunds are a merchant console feature, and there is no refund API that the merchant server can call ([scope of refunds](/refunds/overview)).
