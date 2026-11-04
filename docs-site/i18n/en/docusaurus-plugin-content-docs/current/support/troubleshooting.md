@@ -27,7 +27,7 @@ sidebar_position: 2
 
 ## Contact {/* #contact */}
 
-If a reseller supported your onboarding, contact the reseller. Otherwise, contact Ango-ya, the developer of STBLpay, through its inquiry form. Include the following with your inquiry:
+If a reseller supported your onboarding, contact the reseller. Otherwise, use the [inquiry form on the STBLpay website](https://stbl-pay.com/en/#early-access) (inquiries are handled by Ango-ya, the developer of STBLpay). Include the following with your inquiry:
 
 - The target environment (the API endpoint URL) and version
 - The time it occurred
