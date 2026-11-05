@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <title>ステーブルコイン決済とは？仕組み・メリット・日本での扱い | すてぶるペイ</title>
+    <meta
+      name="description"
+      content="ステーブルコイン決済とは、円やドルと価値が連動するデジタルのお金で代金を払い、受け取る決済です。日本では、法定通貨と価値が連動するステーブルコインは資金決済法の「電子決済手段」として扱われます。仕組み、カード決済・銀行振込との違い、メリットとデメリット、導入前に確かめることを解説します。"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:site_name" content="すてぶるペイ / STBLpay" />
+    <meta property="og:title" content="ステーブルコイン決済とは？仕組み・メリット・日本での扱い" />
+    <meta
+      property="og:description"
+      content="円やドルと価値が連動するデジタルのお金で払い、受け取る決済。日本での位置づけ、カード決済・銀行振込との違い、メリットとデメリットを解説します。"
+    />
+    <meta property="og:url" content="https://stbl-pay.com/learn/stablecoin-payments/" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="article:published_time" content="2026-11-05" />
+    <meta property="article:modified_time" content="2026-11-05" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ステーブルコイン決済とは？仕組み・メリット・日本での扱い" />
+    <meta
+      name="twitter:description"
+      content="円やドルと価値が連動するデジタルのお金で払い、受け取る決済。日本での位置づけと、カード決済・銀行振込との違いを解説します。"
+    />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/stablecoin-payments/" />
+    <link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/learn/stablecoin-payments-japan/" />
+    <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/stablecoin-payments/" />
+    <link rel="canonical" href="https://stbl-pay.com/learn/stablecoin-payments/" />
+    <link rel="stylesheet" href="/assets/lp.css" />
+    <link rel="stylesheet" href="/assets/learn.css" />
+    <script src="/assets/analytics.js"></script>
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://stbl-pay.com/#org-angoya",
+      "name": "合同会社暗号屋",
+      "url": "https://www.ango-ya.org/"
+    },
+    {
+      "@type": "Article",
+      "@id": "https://stbl-pay.com/learn/stablecoin-payments/#article",
+      "headline": "ステーブルコイン決済とは？仕組み・メリット・日本での扱い",
+      "description": "ステーブルコイン決済とは、円やドルと価値が連動するデジタルのお金で代金を払い、受け取る決済です。日本では、法定通貨と価値が連動するステーブルコインは資金決済法の「電子決済手段」として扱われます。仕組み、カード決済・銀行振込との違い、メリットとデメリット、導入前に確かめることを解説します。",
+      "inLanguage": "ja",
+      "datePublished": "2026-11-05",
+      "dateModified": "2026-11-05",
+      "author": { "@id": "https://stbl-pay.com/#org-angoya" },
+      "publisher": { "@id": "https://stbl-pay.com/#org-angoya" },
+      "mainEntityOfPage": "https://stbl-pay.com/learn/stablecoin-payments/",
+      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "about": { "@id": "https://stbl-pay.com/#service" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "トップ", "item": "https://stbl-pay.com/" },
+        { "@type": "ListItem", "position": 2, "name": "解説", "item": "https://stbl-pay.com/learn/" },
+        { "@type": "ListItem", "position": 3, "name": "ステーブルコイン決済とは", "item": "https://stbl-pay.com/learn/stablecoin-payments/" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "inLanguage": "ja",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "ステーブルコイン決済と、暗号資産（仮想通貨）での支払いは同じですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "違います。日本の法律では、法定通貨と価値が連動するステーブルコインは「電子決済手段」で、ビットコインなどの暗号資産とは別の区分です。価格が円やドルに連動するよう設計されている点も違います。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "ステーブルコイン決済にチャージバックはありますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "カード決済のように、購入者の申し立てで売上を取り消す仕組みはありません。ブロックチェーン上の送金は、確定すると取り消せません。ただし、返品や返金のトラブルがなくなるわけではありません。返金の条件を決めて、購入者に先に案内しておきましょう。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "受け取ったステーブルコインは日本円に戻せますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "払い戻しの条件は、ステーブルコインごとに発行体が決めています。JPYC の場合は、公式の窓口「JPYC EX」で、1 JPYC＝1円で日本円に払い戻せます。1回の金額や必要な口座などの条件は、窓口ごとに決まっています。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "購入者は何を用意すればいいですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ステーブルコインを手に入れる必要があります。JPYC の場合は、JPYC EX で本人確認をして発行を受けます。本人確認は、マイナンバーカードを使う公的個人認証に一本化されています。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "ステーブルコイン決済の手数料はいくらですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "サービスによって違います。サービスの利用料のほか、ブロックチェーンの送金にかかる費用や、日本円に戻す費用がかかることがあります。誰が負担するかも確かめましょう。すてぶるペイの手数料は検討中で、全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。"
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="skip-link" href="#main">本文へ移動</a>
+      <div class="shell header-inner">
+        <a class="brand-link" href="/" aria-label="すてぶるペイ トップ">
+          <img src="/assets/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" class="brand-logo" />
+        </a>
+        <nav class="site-nav" aria-label="主要ナビゲーション">
+          <a href="/learn/">解説</a>
+          <a href="/#flow">仕組み</a>
+          <a href="/#faq">FAQ</a>
+          <a href="/docs/">ドキュメント</a>
+          <a href="/en/" lang="en" hreflang="en">EN</a>
+        </nav>
+        <a class="header-cta" href="/#early-access">導入を相談する</a>
+      </div>
+    </header>
+
+    <main id="main" class="learn-main">
+      <div class="shell">
+        <article class="learn-article">
+          <nav class="breadcrumb" aria-label="パンくず">
+            <ol>
+              <li><a href="/">トップ</a></li>
+              <li><a href="/learn/">解説</a></li>
+              <li aria-current="page">ステーブルコイン決済とは</li>
+            </ol>
+          </nav>
+
+          <h1>ステーブルコイン決済とは？仕組み・メリット・日本での扱い</h1>
+          <p class="learn-lead">ステーブルコイン決済とは、日本円や米ドルと価値が連動するデジタルのお金（ステーブルコイン）で、代金を払い、受け取る決済です。お金はブロックチェーンの上で送られ、確定すると取り消せません。日本では、法定通貨と価値が連動するいわゆるステーブルコインは、資金決済法の「電子決済手段」として、暗号資産とは別に扱われます。</p>
+          <p class="learn-meta">更新日：<time datetime="2026-11-05">2026年11月5日</time>　文：合同会社暗号屋</p>
+
+          <div class="learn-body">
+            <h2 id="what">ステーブルコインとは</h2>
+            <p>ステーブルコインとは、価格が安定するように作られたデジタルのお金です。多くは、日本円や米ドルなどの法定通貨（国が発行するお金）と、1対1で価値が連動するように設計されています。</p>
+            <p>日本円と連動する例が JPYC です。発行体の JPYC 株式会社は、日本円と 1：1 で交換でき、発行残高の 100% 以上を預貯金と国債で保全するとしています<sup class="fn"><a href="#src-3">[3]</a></sup>。米ドルと連動する例には USDC があり、発行体の Circle は 1：1 で米ドルに払い戻せるとしています<sup class="fn"><a href="#src-10">[10]</a></sup>。</p>
+            <p>ステーブルコインは、ブロックチェーンの上で送ります。ブロックチェーンとは、取引の記録を多くのコンピューターで共有し、あとから書き換えにくくした仕組みです。</p>
+
+            <h2 id="law">日本での位置づけ：資金決済法の「電子決済手段」</h2>
+            <p>日本では、2022年6月に改正資金決済法が成立し、2023年6月1日に施行されました<sup class="fn"><a href="#src-1">[1]</a><a href="#src-9">[9]</a></sup>。この改正で「電子決済手段」という区分ができました（資金決済法 第2条第5項）。円やドルなどの通貨で表示されるか、通貨で払い戻されることになっている資産（通貨建資産）のうち、不特定の人への支払いに使え、電子的に移せるものなどを指します<sup class="fn"><a href="#src-8">[8]</a></sup>。法定通貨と価値が連動するステーブルコインを想定した区分です<sup class="fn"><a href="#src-1">[1]</a></sup>。</p>
+            <p>電子決済手段は、法律上、ビットコインなどの暗号資産とは別の区分です。資金決済法の「暗号資産」の定義から、通貨建資産と電子決済手段は除かれています（第2条第14項）<sup class="fn"><a href="#src-8">[8]</a></sup>。主な決まりは次の 2 つです。</p>
+            <ul>
+              <li>発行できるのは、銀行、資金移動業者、信託会社などです<sup class="fn"><a href="#src-2">[2]</a></sup>。</li>
+              <li>電子決済手段の売買や交換、その媒介、他人のための管理を業として行うには、「電子決済手段等取引業者」としての登録が要ります<sup class="fn"><a href="#src-1">[1]</a><a href="#src-2">[2]</a><a href="#src-9">[9]</a></sup>。</li>
+            </ul>
+            <p>決済のサービスがどの区分にあたるかは、サービスの設計で変わります。導入を考えるお店は、相手の事業者が自分の位置づけをどう説明しているかを確かめましょう。</p>
+
+            <h2 id="how">ステーブルコイン決済の仕組み</h2>
+            <p>登場するのは、購入者、お店、ブロックチェーンの 3 つです。円で払いたい購入者のために、発行体（ステーブルコインを発行し、円に戻す会社）も関わります。</p>
+            <ol>
+              <li>購入者が、発行体の窓口で日本円をステーブルコインに替えます。初回は本人確認があります。</li>
+              <li>購入者が、お店の支払い画面で金額と支払い先を確かめて、承認します。</li>
+              <li>ステーブルコインが購入者からお店の受け取り先へ送られ、ブロックチェーンに記録されます。記録が確定すると、取り消せません。</li>
+              <li>お店は、受け取ったステーブルコインをそのまま持つか、発行体の窓口で日本円に戻します。</li>
+            </ol>
+            <p>カード決済では、カード会社が代金を立て替え、あとでお店にまとめて入金します。ステーブルコイン決済に立て替えはありません。購入者がすでに持っている残高から払います。そのため、カードのような後払いや分割払いの仕組みは、ふつうはありません。</p>
+
+            <h2 id="compare">カード決済・銀行振込との違い</h2>
+            <p>お店から見た違いを、一般的な傾向でまとめます。実際の条件は、使う事業者や契約によって変わります。</p>
+            <table class="learn-table">
+              <caption>カード決済・銀行振込・ステーブルコイン決済の違い</caption>
+              <thead>
+                <tr>
+                  <th scope="col">項目</th>
+                  <th scope="col">カード決済</th>
+                  <th scope="col">銀行振込</th>
+                  <th scope="col">ステーブルコイン決済</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">支払いの元手</th>
+                  <td data-label="カード決済">カード会社の立て替え（後払い）</td>
+                  <td data-label="銀行振込">購入者の預金</td>
+                  <td data-label="ステーブルコイン決済">購入者が持つステーブルコインの残高</td>
+                </tr>
+                <tr>
+                  <th scope="row">お店の審査</th>
+                  <td data-label="カード決済">カード会社や決済代行の加盟店審査がある</td>
+                  <td data-label="銀行振込">口座があれば受け取れる</td>
+                  <td data-label="ステーブルコイン決済">サービスごとに確認や規約がある</td>
+                </tr>
+                <tr>
+                  <th scope="row">お店への入金</th>
+                  <td data-label="カード決済">締め日と支払日に沿って、まとめて入金</td>
+                  <td data-label="銀行振込">振り込まれた時点。入金の確認作業が要る</td>
+                  <td data-label="ステーブルコイン決済">送金が確定した時点</td>
+                </tr>
+                <tr>
+                  <th scope="row">取り消し</th>
+                  <td data-label="カード決済">チャージバック（購入者の申し立てで売上が取り消される仕組み）がある</td>
+                  <td data-label="銀行振込">一方的に取り消す仕組みはない</td>
+                  <td data-label="ステーブルコイン決済">確定した送金は取り消せない</td>
+                </tr>
+                <tr>
+                  <th scope="row">お店の費用</th>
+                  <td data-label="カード決済">決済額に応じた料率</td>
+                  <td data-label="銀行振込">振込の費用（誰が払うかは取り決め次第）</td>
+                  <td data-label="ステーブルコイン決済">利用料、送金や円に戻す費用など（サービスで違う）</td>
+                </tr>
+                <tr>
+                  <th scope="row">購入者の準備</th>
+                  <td data-label="カード決済">カード</td>
+                  <td data-label="銀行振込">銀行口座</td>
+                  <td data-label="ステーブルコイン決済">ステーブルコイン（初回は本人確認など）</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="learn-note">カード決済の料率の例として、Stripe の日本の標準料金は、成功したカード決済 1 件ごとに 3.6% です（通貨の換算が要る場合は 2% を加算）<sup class="fn"><a href="#src-7">[7]</a></sup>。料率は事業者・業種・契約で変わります。</p>
+
+            <h2 id="merits">ステーブルコイン決済のメリット</h2>
+            <ul>
+              <li><strong>入金を待たない。</strong>送金が確定した時点で、受け取り先に届きます。カードのような締め日と支払日の待ちがありません。</li>
+              <li><strong>カードの取り消しの仕組みがない。</strong>カード決済のチャージバックにあたる仕組みがありません。</li>
+              <li><strong>カード番号を扱わない。</strong>お店がカード番号を預かる必要がありません。</li>
+              <li><strong>カードの審査とは別の受け取り方。</strong>カード会社の加盟店審査とは別の仕組みで受け取れます。ただし、決済サービスごとに独自の確認や規約があります。</li>
+            </ul>
+
+            <h2 id="demerits">ステーブルコイン決済のデメリットと注意点</h2>
+            <ul>
+              <li><strong>使える購入者がまだ限られる。</strong>購入者はステーブルコインを手に入れる必要があり、初回は本人確認の手間もあります。</li>
+              <li><strong>円に戻す手間がある。</strong>受け取ったステーブルコインを日本円にするには、発行体の窓口などで手続きが要ります。1回の金額の上限や費用は、窓口ごとに違います。</li>
+              <li><strong>取り消せない。</strong>送り先を間違えた送金は、取り戻しにくくなります。返金も、お店から送り返す形になります。</li>
+              <li><strong>発行体への信頼が前提。</strong>価値の連動は、発行体が裏付けの資産をきちんと管理していることが前提です。</li>
+              <li><strong>制度がまだ新しい。</strong>電子決済手段の制度は2023年に始まりました。法令や指針が見直されることもあります。</li>
+              <li><strong>会計・税務の扱い。</strong>受け取ったステーブルコインの会計処理は、取引の内容や会計方針で変わります。税理士などの専門家に確かめてください。</li>
+            </ul>
+
+            <h2 id="checklist">お店が導入するときに確かめること</h2>
+            <ul>
+              <li>どのステーブルコインを受け取るか。その発行体が、銀行・資金移動業者・信託会社などとして登録や免許を受けているか。</li>
+              <li>受け取ったお金を誰が管理するか。事業者が預かる形か、お店が自分で持つ形（ノンカストディアル：事業者が資金や秘密鍵を預からない設計）か。</li>
+              <li>費用の全体。サービスの利用料のほか、送金の費用や円に戻す費用を、誰が負担するか。</li>
+              <li>日本円に戻す方法と条件。1回の上限、口座の名義、かかる日数。</li>
+              <li>購入者の手順。初回の本人確認と、使える人の範囲（国内に住む人だけか など）。</li>
+              <li>返金のやり方。取り消しができないため、返金の条件を決めて、購入者に先に案内できるか。</li>
+              <li>利用規約。対象外の業種や、利用を止める条件。</li>
+            </ul>
+
+            <h2 id="japan">日本の動き</h2>
+            <ul>
+              <li><time datetime="2023-06-01">2023年6月1日</time>：改正資金決済法が施行され、電子決済手段の制度が始まりました<sup class="fn"><a href="#src-1">[1]</a><a href="#src-9">[9]</a></sup>。</li>
+              <li><time datetime="2025-03">2025年3月</time>：SBI VCトレードが、米ドルと連動する USDC を扱うための規制上の承認を得たと報じられました<sup class="fn"><a href="#src-6">[6]</a><a href="#src-10">[10]</a></sup>。</li>
+              <li><time datetime="2025-08-18">2025年8月18日</time>：JPYC 株式会社が資金移動業者として登録されました（関東財務局長 第00099号）<sup class="fn"><a href="#src-3">[3]</a></sup>。</li>
+              <li><time datetime="2025-10-27">2025年10月27日</time>：電子決済手段の「JPYC」と、発行・払い戻しの窓口「JPYC EX」の提供が始まりました<sup class="fn"><a href="#src-3">[3]</a></sup>。</li>
+              <li><time datetime="2026-09-18">2026年9月18日</time>：JPYC の累計発行額が100億円を超えたと、JPYC 株式会社が発表しました<sup class="fn"><a href="#src-4">[4]</a></sup>。</li>
+              <li><time datetime="2026-10-16">2026年10月16日</time>：みずほ銀行・三菱UFJ銀行・三井住友銀行などが、信託の形で日本円のステーブルコインを共同で発行する実証実験（2026年7月17〜23日）を行ったと発表しました<sup class="fn"><a href="#src-5">[5]</a></sup>。</li>
+            </ul>
+
+            <h2 id="stblpay">すてぶるペイの場合</h2>
+            <p>すてぶるペイは、円で払い、ステーブルコイン（JPYC）で受け取る決済です。開発中で、提供開始日は未定です（2026年11月時点）。</p>
+            <ul>
+              <li>購入者は、日本円の銀行振込とパスキー（顔・指紋認証）で支払います。JPYC の残高で足りるときは、振込はいりません。</li>
+              <li>お店は、売上を JPYC で受け取ります。カード会社の与信審査に頼りません。</li>
+              <li>提供元の暗号屋は、購入者やお店の資金・秘密鍵を預かりません（ノンカストディアル）。</li>
+              <li>手数料は検討中です。全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。</li>
+              <li>受け取った JPYC は、お店ご自身の JPYC EX アカウント（日本在住の個人・日本法人）で日本円に引き出せます。</li>
+              <li>利用には、利用規約への同意と、法令上の要件を満たすことが前提です。</li>
+            </ul>
+            <p>組み込みを試せる <a href="/docs/testing/sandbox/">Sandbox</a> と、<a href="/docs/">加盟店向けドキュメント</a>を公開しています。</p>
+          </div>
+
+          <section aria-labelledby="faq-title">
+            <h2 id="faq-title">よくある質問</h2>
+            <div class="faq-list">
+              <details>
+                <summary>ステーブルコイン決済と、暗号資産（仮想通貨）での支払いは同じですか？</summary>
+                <p>違います。日本の法律では、法定通貨と価値が連動するステーブルコインは「電子決済手段」で、ビットコインなどの暗号資産とは別の区分です。価格が円やドルに連動するよう設計されている点も違います。</p>
+              </details>
+              <details>
+                <summary>ステーブルコイン決済にチャージバックはありますか？</summary>
+                <p>カード決済のように、購入者の申し立てで売上を取り消す仕組みはありません。ブロックチェーン上の送金は、確定すると取り消せません。ただし、返品や返金のトラブルがなくなるわけではありません。返金の条件を決めて、購入者に先に案内しておきましょう。</p>
+              </details>
+              <details>
+                <summary>受け取ったステーブルコインは日本円に戻せますか？</summary>
+                <p>払い戻しの条件は、ステーブルコインごとに発行体が決めています。JPYC の場合は、公式の窓口「JPYC EX」で、1 JPYC＝1円で日本円に払い戻せます。1回の金額や必要な口座などの条件は、窓口ごとに決まっています。</p>
+              </details>
+              <details>
+                <summary>購入者は何を用意すればいいですか？</summary>
+                <p>ステーブルコインを手に入れる必要があります。JPYC の場合は、JPYC EX で本人確認をして発行を受けます。本人確認は、マイナンバーカードを使う公的個人認証に一本化されています。</p>
+              </details>
+              <details>
+                <summary>ステーブルコイン決済の手数料はいくらですか？</summary>
+                <p>サービスによって違います。サービスの利用料のほか、ブロックチェーンの送金にかかる費用や、日本円に戻す費用がかかることがあります。誰が負担するかも確かめましょう。すてぶるペイの手数料は検討中で、全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。</p>
+              </details>
+            </div>
+          </section>
+
+          <section class="learn-sources" aria-labelledby="sources-title">
+            <h2 id="sources-title">出典</h2>
+            <p class="learn-note">いずれも 2026年11月5日に内容を確認しました。</p>
+            <ol>
+              <li id="src-1">高松志直「<a href="https://www.businesslawyers.jp/articles/1181">令和4年資金決済法等改正の影響と実務対応のポイント</a>」BUSINESS LAWYERS（2023年6月8日更新）。2026年11月5日確認。</li>
+              <li id="src-2">アンダーソン・毛利・友常法律事務所「<a href="https://www.amt-law.com/asset/pdf/bulletins2_pdf/230327.pdf">ステーブルコイン法制に関する政令・内閣府令案等について（後編）</a>」（2023年3月27日）。2026年11月5日確認。</li>
+              <li id="src-3">JPYC 株式会社「<a href="https://ascii.jp/elem/000/004/336/4336809/">【国内初】日本円ステーブルコイン「JPYC」および発行・償還プラットフォーム「JPYC EX」を正式リリース</a>」（2025年10月24日。ASCII.jp 掲載）。2026年11月5日確認。</li>
+              <li id="src-4">JPYC 株式会社「<a href="https://prtimes.jp/main/html/rd/p/000000331.000054018.html">日本円ステーブルコイン「JPYC」、累計発行額100億円を突破</a>」PR TIMES（2026年9月18日）。2026年11月5日確認。</li>
+              <li id="src-5">三菱UFJ銀行・みずほ銀行・三井住友銀行・三菱UFJ信託銀行・TISI「<a href="https://www.tr.mufg.jp/ippan/release/pdf_mutb/261016_1.pdf">複数銀行によるステーブルコイン共同発行およびクロスボーダー決済高度化に関する実証実験を実施</a>」（2026年10月16日）。2026年11月5日確認。</li>
+              <li id="src-6">The Block「<a href="https://www.theblock.co/post/347896/circle-to-launch-usdc-stablecoin-in-japan-through-sbi-vc-trade-other-local-exchanges-to-follow" lang="en">Circle to launch USDC stablecoin in Japan through SBI VC Trade</a>」（2025年3月25日）。2026年11月5日確認。</li>
+              <li id="src-7">Stripe「<a href="https://stripe.com/jp/pricing">料金体系</a>」。2026年11月5日確認。</li>
+              <li id="src-8">e-Gov 法令検索「<a href="https://laws.e-gov.go.jp/law/421AC0000000059">資金決済に関する法律（平成21年法律第59号）</a>」第2条第5項・第7項・第14項。2026年11月5日確認。</li>
+              <li id="src-9">金融庁「<a href="https://www.fsa.go.jp/policy/virtual_currency02/index.html">暗号資産・電子決済手段関係</a>」。2026年11月5日確認。</li>
+              <li id="src-10">Circle「<a href="https://www.circle.com/usdc" lang="en">USDC</a>」。2026年11月5日確認。</li>
+            </ol>
+          </section>
+
+          <section class="learn-related" aria-labelledby="related-title">
+            <h2 id="related-title">関連する解説</h2>
+            <ul>
+              <li><a href="/learn/jpyc-payments/">JPYC 決済をお店に導入するには</a></li>
+              <li><a href="/learn/chargeback/">チャージバックとは</a></li>
+              <li><a href="/learn/payment-fees/">決済手数料の比べ方</a></li>
+              <li><a href="/learn/card-merchant-screening/">クレジットカード決済の加盟店審査</a></li>
+              <li><a href="/learn/glossary/">決済の用語集</a></li>
+              <li><a href="/en/learn/stablecoin-payments-japan/" lang="en" hreflang="en">Stablecoin payments in Japan (English)</a></li>
+            </ul>
+          </section>
+
+          <aside class="learn-about" aria-labelledby="about-title">
+            <h2 id="about-title">すてぶるペイについて</h2>
+            <p>すてぶるペイは、円で払い、ステーブルコイン（JPYC）で受け取る決済です（開発中）。購入者は日本円の銀行振込とパスキーで支払い、お店はカード会社の与信審査に頼らずに売上を受け取ります。</p>
+            <p><a href="/">サービスの紹介を見る</a>　<a href="/docs/">加盟店向けドキュメント</a></p>
+          </aside>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div>
+          <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
+          <p>運営会社：<a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">合同会社暗号屋</a></p>
+          <p><a href="/docs/">加盟店向けドキュメント</a>　<a href="/learn/">決済の解説</a></p>
+          <ul class="footer-facts">
+            <li>2019年2月設立。本社は福岡市です。</li>
+            <li>アステリア株式会社と共同で、JPYC の会計監査支援ツール「JPYC Explorer」を開発（2026年3月13日 アステリア発表）</li>
+            <li>株式会社QTnetと、バリデータノードの運用を含む Web3 インフラ事業の共同実証実験を開始（2024年2月19日 発表）</li>
+            <li>IoT データ取引基盤「PTPF」を活用した実証プロジェクトが、「福岡市実証実験フルサポート事業」に採択（2022年1月31日 福岡市発表）</li>
+          </ul>
+        </div>
+        <p class="footer-note">© 2026 STBLpay. 運営: 暗号屋</p>
+      </div>
+    </footer>
+  </body>
+</html>

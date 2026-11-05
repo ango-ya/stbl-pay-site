@@ -1,0 +1,336 @@
+/* ============================================================
+   すてぶるペイ 解説ページ（/learn/）— lp.css の上に重ねる記事の組版
+   lp.css の変数（--ink, --gray, --line, --link …）とクラス
+   （site-header, faq-list, site-footer, sup.fn, text-link）をそのまま使う。
+   ダークモードは持たない（lp.css がライト固定のため、それに合わせる）。
+   ============================================================ */
+
+.learn-main {
+  padding: 32px 0 88px;
+}
+
+.learn-article {
+  max-width: 720px;
+  margin: 0 auto;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- パンくず ---------- */
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  color: var(--gray);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.breadcrumb li + li::before {
+  content: "/";
+  margin: 0 8px;
+  color: var(--gray-light);
+}
+
+.breadcrumb a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.breadcrumb a:hover {
+  color: var(--link);
+}
+
+/* ---------- 見出しとリード ---------- */
+
+.learn-article h1 {
+  margin: 0 0 20px;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: 0.005em;
+}
+
+.learn-lead {
+  margin: 0 0 16px;
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.learn-meta {
+  margin: 0 0 8px;
+  color: var(--gray);
+  font-size: 12.5px;
+}
+
+.learn-article h2 {
+  margin: 56px 0 16px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.learn-article h3 {
+  margin: 32px 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* ---------- 本文 ---------- */
+
+.learn-body p,
+.learn-body ul,
+.learn-body ol {
+  margin: 0 0 16px;
+}
+
+.learn-body ul,
+.learn-body ol {
+  padding-left: 1.4em;
+}
+
+.learn-body li + li {
+  margin-top: 6px;
+}
+
+.learn-body a,
+.learn-sources a,
+.learn-related a,
+.learn-about a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.learn-body a:hover,
+.learn-sources a:hover,
+.learn-related a:hover,
+.learn-about a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.learn-body sup.fn a {
+  color: var(--gray);
+  text-decoration: none;
+}
+
+.learn-note {
+  color: var(--gray);
+  font-size: 13.5px;
+}
+
+/* ---------- 表（スマホでは行ごとの縦積みにして、横スクロールを出さない） ---------- */
+
+.learn-table {
+  width: 100%;
+  margin: 0 0 12px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.learn-table caption {
+  margin: 0 0 8px;
+  color: var(--gray);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.learn-table th,
+.learn-table td {
+  padding: 12px 12px 12px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.learn-table thead th {
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--gray);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.learn-table tbody th {
+  width: 22%;
+  font-weight: 600;
+}
+
+.learn-table tbody td {
+  color: var(--gray);
+}
+
+/* ---------- FAQ（lp.css の .faq-list をそのまま使い、幅だけ記事に合わせる） ---------- */
+
+.learn-article .faq-list {
+  max-width: none;
+}
+
+/* ---------- 出典・関連・紹介の箱 ---------- */
+
+.learn-sources ol {
+  margin: 0;
+  padding-left: 1.6em;
+  color: var(--gray);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.learn-sources li + li {
+  margin-top: 6px;
+}
+
+.learn-related ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line-strong);
+}
+
+.learn-related li {
+  border-bottom: 1px solid var(--line);
+}
+
+.learn-related a {
+  display: block;
+  padding: 12px 0;
+  font-weight: 600;
+}
+
+.learn-about {
+  margin: 56px 0 0;
+  padding: 24px;
+  border: 1px solid var(--line-strong);
+}
+
+.learn-article .learn-about h2 {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  font-size: 17px;
+}
+
+.learn-about p {
+  margin: 0 0 8px;
+  font-size: 14.5px;
+}
+
+.learn-about p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- ハブ（/learn/）のカード ---------- */
+
+.learn-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learn-cards a {
+  display: block;
+  height: 100%;
+  padding: 20px;
+  border: 1px solid var(--line);
+  transition: border-color 150ms ease;
+}
+
+.learn-cards a:hover {
+  border-color: var(--ink);
+}
+
+.learn-cards h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.learn-cards a:hover h2 {
+  color: var(--link);
+}
+
+.learn-cards p {
+  margin: 0;
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+/* ---------- スマホ ---------- */
+
+@media (max-width: 600px) {
+  .learn-main {
+    padding: 20px 0 60px;
+  }
+
+  .learn-article h1 {
+    font-size: 24px;
+  }
+
+  .learn-lead {
+    font-size: 16px;
+  }
+
+  .learn-article h2 {
+    margin-top: 44px;
+    padding-top: 24px;
+    font-size: 19px;
+  }
+
+  .learn-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .learn-about {
+    padding: 18px;
+  }
+
+  .learn-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .learn-table,
+  .learn-table caption,
+  .learn-table tbody,
+  .learn-table tr,
+  .learn-table th,
+  .learn-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .learn-table tr {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .learn-table tbody th,
+  .learn-table td {
+    padding: 4px 0;
+    border: 0;
+  }
+
+  .learn-table tbody th {
+    width: 100%;
+    font-size: 14.5px;
+  }
+
+  .learn-table td::before {
+    content: attr(data-label) "：";
+    color: var(--ink);
+    font-weight: 600;
+  }
+}
