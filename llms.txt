@@ -22,6 +22,18 @@
 - [Sandbox](/docs/testing/sandbox/): 組み込みを試す環境の接続先と始め方
 - [よくある質問](/docs/support/faq/) / [既知の制限](/docs/support/limitations/)
 
+## 解説（/learn/）
+
+決済を検討するお店向けの一般的な解説。冒頭で答えを示し、事実には出典と確認日を添えている。
+
+- [決済の解説（一覧）](/learn/): 解説ページの一覧
+- [ステーブルコイン決済とは](/learn/stablecoin-payments/): 仕組み、カード決済・銀行振込との違い、メリットとデメリット、日本での法的な扱い（電子決済手段）
+- [JPYC 決済をお店に導入するには](/learn/jpyc-payments/): JPYC とは何か、受け取り方、導入の流れ、手数料の考え方
+- [クレジットカードの加盟店審査に通らないときの選択肢](/learn/card-merchant-screening/): 審査で見られる点、落ちる主な理由、見直す点、カード以外の選択肢
+- [決済手数料の比べ方](/learn/payment-fees/): 料率だけでなく、月額・振込手数料・入金までの日数・チャージバックの負担まで含めた総コストの見方
+- [チャージバックとは](/learn/chargeback/): 仕組み、加盟店の負担、対策、異議申し立ての流れ
+- [ステーブルコイン決済の用語集](/learn/glossary/): 電子決済手段、資金移動業、JPYC、ノンカストディアル、与信審査、チャージバックなど
+
 ## English summary
 
 STBLpay (すてぶるペイ, pronounced "stable pay") is a JPY stablecoin (JPYC) payment service under development (as of November 2026; launch date not yet set), operated by Ango-ya LLC (合同会社暗号屋, Fukuoka, Japan). Buyers pay by Japanese-yen bank transfer and approve with a passkey; merchants receive sales in JPYC without relying on card companies' credit screening. The provider is non-custodial. A Sandbox, merchant docs, and an OpenAPI 3.1 specification are public.
@@ -29,6 +41,7 @@ STBLpay (すてぶるペイ, pronounced "stable pay") is a JPY stablecoin (JPYC)
 - [English landing page](/en/): overview, how it works, and FAQ in English
 - [Merchant docs (English)](/docs/en/): integration, webhooks, payment statuses, refunds
 - [API specification (English, OpenAPI 3.1)](/docs/en/openapi.yaml)
+- [Accepting payments from customers in Japan with a yen stablecoin](/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
 
 ## 主要ページ
 

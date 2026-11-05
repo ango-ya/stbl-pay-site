@@ -49,7 +49,10 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
     expect(xml, path).toContain("<urlset");
     return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   };
-  expect(await locsOf("/sitemap.xml")).toEqual(LPS.map((lp) => lp.url));
+  // LP の日英と解説（/learn/ と /en/learn/）。解説の中身は learn.spec.mjs で見る
+  const top = await locsOf("/sitemap.xml");
+  expect(top.slice(0, 2)).toEqual(LPS.map((lp) => lp.url));
+  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/(en\/)?learn\/([a-z-]+\/)?$/);
 
   // docs は言語ごとに 1 本。URL は末尾にスラッシュ（配信先が付けて飛ばすので、飛ばした先を載せる）
   for (const [path, prefix] of [["/docs/sitemap.xml", "https://stbl-pay.com/docs/"], ["/docs/en/sitemap.xml", "https://stbl-pay.com/docs/en/"]]) {
@@ -73,10 +76,10 @@ test("デモ画面は noindex、404 ページがある", async ({ request }) => 
   expect(notFound).toContain('<meta name="robots" content="noindex" />');
 });
 
-test("llms.txt が docs の主なページと現在の状況を案内する", async ({ request }) => {
+test("llms.txt が docs と解説の主なページと現在の状況を案内する", async ({ request }) => {
   const llms = await (await request.get("/llms.txt")).text();
   expect(llms).toMatch(/提供状況: .*\d{4}年\d{1,2}月時点/);
-  for (const [, href] of llms.matchAll(/\]\((\/docs\/[^)]*)\)/g)) {
+  for (const [, href] of llms.matchAll(/\]\((\/(?:docs|learn|en\/learn)\/[^)]*)\)/g)) {
     expect((await request.get(href)).status(), href).toBe(200);
   }
 });
@@ -105,8 +108,13 @@ test("IndexNow は変わったページだけを送る（dist/ のサイトマ�
   expect(run("index.html", "README.md")).toEqual(["https://stbl-pay.com/"]);
   expect(run("en/index.html")).toEqual(["https://stbl-pay.com/en/"]);
   expect(run("README.md")).toEqual(["IndexNow: 送る URL なし"]);
+  expect(run("learn/chargeback/index.html", "en/learn/stablecoin-payments-japan/index.html")).toEqual([
+    "https://stbl-pay.com/learn/chargeback/",
+    "https://stbl-pay.com/en/learn/stablecoin-payments-japan/",
+  ]);
   const docs = run("docs-site/docs/intro.md");
   expect(docs.length).toBeGreaterThan(20);
   expect(docs.every((u) => u.startsWith("https://stbl-pay.com/docs/"))).toBe(true);
-  expect(run("--all").length).toBe(docs.length + 2);
+  const top = readFileSync(new URL("../../dist/sitemap.xml", import.meta.url), "utf8").match(/<loc>/g).length;
+  expect(run("--all").length).toBe(docs.length + top);
 });
