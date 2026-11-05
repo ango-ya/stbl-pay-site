@@ -47,7 +47,7 @@ You are responsible for authorizing the return page. Do not decide that a paymen
 
 **You must register a domain to accept payments from an e-commerce site.** If you call `POST /payment_intents` without registering one, you get 409 `merchant/domain_required`.
 
-You register, change, or remove the domain in the merchant console. From the menu, open the target online store from Store & QR code (お店と QR コード), then use the domain section on the Integration setup (組み込みの準備) tab. The domain is set per merchant, so you see the same value whichever online store you open it from.
+You register, change, or remove the domain in the merchant console. From the menu, open the target online store from Store & QR code (お店と QR コード), then use the 2. Register your site's domain (2. サイトのドメインを登録) section on the Integration setup (組み込みの準備) tab. The domain is set per merchant, so you see the same value whichever online store you open it from.
 
 **Register**
 
@@ -74,7 +74,7 @@ You cannot register an IP address or a domain shared by multiple sites (the publ
 
 ## Proof of ownership (optional) {/* #proof-of-ownership */}
 
-Proof of ownership is optional. Under Proof of ownership (optional) (所有の証明（任意）) for the registered domain, STBLpay shows a token. Place it using **any one** of the following three methods, then click Verify the placed value (設置した値を確認する).
+Proof of ownership is optional. On the same Integration setup (組み込みの準備) tab, open Place and verify the value (値の設置と確認（担当の方へ）) in the 5. Proof of domain ownership (5. ドメインの所有の証明) section to see the token. Place it using **any one** of the following three methods, then click Verify the placed value (設置した値を確認する).
 
 | Method | Where to place it | Value |
 |---|---|---|
@@ -86,7 +86,7 @@ The token differs for each merchant, so check it in the merchant console. For th
 
 **If your site is private behind Basic authentication or access restrictions, use the DNS TXT record.** The well-known file and the meta tag can only be checked if they can be read without authentication (a 401 or 403 withdraws the proof immediately). Periodic re-verification reads them the same way, so removing authentication only while you verify does not help: once you restore it, the proof is withdrawn when a re-verification gets a 401 or 403.
 
-The result appears just below the collapsible section that contains the Verify the placed value (設置した値を確認する) button. On success, "Ownership confirmed" (所有を確認しました) appears, and "Ownership proven" (所有を証明済み) appears next to the registered domain. On failure, the reason appears there.
+This section cannot be used until you register a domain. The result appears just below the collapsible section that contains the Verify the placed value (設置した値を確認する) button. On success, "Proof of ownership succeeded" (所有の証明が成立しました) appears, and "Ownership proven" (所有を証明済み) appears next to the registered domain. On failure, the reason appears there.
 
 When the proof succeeds, the checkout screen shows a verified indicator. **This indicator shows that ownership of the domain has been proven. It does not mean STBLpay has reviewed or endorsed the merchant, and it is not a guarantee of the safety of the payment.** STBLpay does not show a negative indicator for merchants that have not proven ownership.
 
