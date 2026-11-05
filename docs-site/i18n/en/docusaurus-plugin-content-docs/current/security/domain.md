@@ -8,6 +8,15 @@ sidebar_position: 4
 
 STBLpay uses the domain you register in the merchant console to validate `returnUrl`, the destination after payment.
 
+There are two domain settings, and they are treated differently.
+
+| Setting | Status | Used for |
+|---|---|---|
+| [Registering a domain](#registering-a-domain) | **Required for e-commerce payments** | Checking `returnUrl`. Without it, you cannot create payments |
+| [Proof of ownership](#proof-of-ownership) | Optional | Showing a verified indicator on the checkout screen |
+
+Registering is enough to start accepting payments. Proof of ownership is an additional setting that shows buyers that you control the registered domain, and you can set it up at any time.
+
 Pass the browser the `checkoutUrl` returned when you create the payment, and move the whole screen to the checkout page ([top-level navigation](/reference/glossary)). Do not build the destination yourself from the payment ID.
 
 ## Requirements for `returnUrl` {/* #returnurl-requirements */}
@@ -32,7 +41,9 @@ Examples when the registered domain is `shop.example.com`:
 
 The STBLpay checkout page is what sends the buyer to `returnUrl`. Without these requirements, someone could create a payment whose return destination is a fake site's URL. To the buyer, the destination is "where STBLpay's screen sent me," so they would trust even a fake site ([open redirect](/reference/glossary)). Limiting the return destination to the registered domain prevents this.
 
-## Registering a domain
+You are responsible for authorizing the return page. Do not decide that a payment succeeded just because the buyer came back to the registered domain.
+
+## Registering a domain {/* #registering-a-domain */}
 
 **You must register a domain to accept payments from an e-commerce site.** If you call `POST /payment_intents` without registering one, you get 409 `merchant/domain_required`.
 
@@ -42,6 +53,8 @@ You register, change, or remove the domain in the merchant console. From the men
 
 1. Enter only the host name in Domain (host name) (ドメイン（ホスト名）). Do not include `https://`, a path, or a port number (example: `shop.example.com`).
 2. Click Register (登録する).
+
+STBLpay does not access your site when you register a domain. You can register a test site even if it is protected by Basic authentication or other access restrictions.
 
 **Change**
 
@@ -59,7 +72,7 @@ After removal, you cannot create new payments from the e-commerce site, and the 
 
 You cannot register an IP address or a domain shared by multiple sites (the public suffix itself). Enter your own site's host name.
 
-## Proof of ownership (optional)
+## Proof of ownership (optional) {/* #proof-of-ownership */}
 
 Proof of ownership is optional. Under Proof of ownership (optional) (所有の証明（任意）) for the registered domain, STBLpay shows a token. Place it using **any one** of the following three methods, then click Verify the placed value (設置した値を確認する).
 
@@ -87,4 +100,18 @@ The proof is not finished once it succeeds. STBLpay re-verifies it periodically 
 
 Verify the placed value (設置した値を確認する) is limited to 5 times per minute (`common/rate_limited`, 429). If you exceed the limit, wait about a minute. Periodic re-verification does not count toward this limit.
 
-You are responsible for authorizing the return page. Do not decide that a payment succeeded just because the buyer came back to the registered domain.
+### When verification fails {/* #when-verification-fails */}
+
+To check the well-known file and the meta tag, STBLpay's servers connect to the registered host name over `https` from the public internet. Depending on your site's settings, these requests may be blocked. This is especially common on development and test sites.
+
+| Site condition | What to do |
+|---|---|
+| Protected by a password such as Basic authentication, or restricted by IP address | Prove ownership with a DNS TXT record (lifting the restriction only while you verify does not help, because periodic re-verification withdraws the proof) |
+| Bot protection in a WAF or CDN blocks outside access | Prove ownership with a DNS TXT record, or configure the bot protection not to block requests from STBLpay |
+| The SSL certificate fails validation (for example, it is self-signed or expired) | Use a valid certificate issued by a public certificate authority, or prove ownership with a DNS TXT record |
+| Redirects to another URL (for example, to a `www` host name or a login page) | Serve the response from the registered host name without redirecting, or prove ownership with a DNS TXT record |
+| The host name points to a non-public address, such as an internal one | Point it to a publicly reachable server, or prove ownership with a DNS TXT record |
+
+**STBLpay checks the DNS TXT record without accessing your site's server.** It works in any of the conditions above.
+
+In these conditions, the screen may show "None of them were found" (いずれも見つかりませんでした) or "Could not connect to the site or DNS" (サイトまたは DNS に接続できませんでした). If you placed the value in the right place and verification still fails, check whether one of the conditions above applies.
