@@ -71,7 +71,7 @@ function rateViolations(texts, allow) {
 const allowFor = (path) => ALLOW_PCT.filter((a) => a.pages.includes(path));
 
 // 提供開始日：自社名と開始の語が同じ文にあれば、日付の有無を問わず違反。例外は、同じ文に下の言い回しがそのままあるときだけ
-const LAUNCH_WORD = /開始|リリース|ローンチ|提供開始|サービス開始|launch|release|go live|goes live|available (?:from|in|on)/i;
+const LAUNCH_WORD = /開始|公開|始め|始ま|リリース|ローンチ|launch|release|go(?:es)? live|roll(?:s|ed|ing)? out|start(?:s|ed|ing)? (?:on|in)|available (?:from|in|on)/i;
 const UNDECIDED = ["提供開始日は未定", "提供開始日はまだ決まっていません", "launch date is not yet set", "launch date has not been set"];
 const launchDateClaims = (texts) => sentences(texts)
   .filter((s) => OWN.test(s) && LAUNCH_WORD.test(s) && !UNDECIDED.some((u) => s.includes(u)));
@@ -258,6 +258,8 @@ test("検査関数：自社名と開始の語が同じ文にあれば落とし�
     "<p>すてぶるペイは1月に提供開始します。</p>",
     "<p>STBLpay launches in 2027.</p>",
     "<p>STBLpay launches on May 5.</p>",
+    "<p>すてぶるペイは2027年1月に公開します。</p>",
+    "<p>STBLpay rolls out in January 2027.</p>",
     "<p>すてぶるペイ<br>は2027年1月に提供開始</p>",
     "<p>すてぶるペイは2027年1月に提供開始、料金は未定です。</p>",
     '<script type="application/ld+json">{"@type":"Article","description":"すてぶるペイは2027年3月にサービス開始予定です。"}</script>',
