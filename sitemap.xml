@@ -1,18 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- LP の日本語版と英語版。docs は /docs/sitemap.xml（Docusaurus が作る）。デモ画面は noindex なので載せない -->
+<!-- LP の日英と、解説（/learn/ と /en/learn/）。対訳のあるページには hreflang を付ける。docs は /docs/sitemap.xml（Docusaurus が作る）。デモ画面は noindex なので載せない -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://stbl-pay.com/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-05</lastmod>
     <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/" />
   </url>
   <url>
     <loc>https://stbl-pay.com/en/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-05</lastmod>
     <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/" />
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/learn/</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/learn/stablecoin-payments/</loc>
+    <lastmod>2026-11-05</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/stablecoin-payments/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/learn/stablecoin-payments-japan/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/stablecoin-payments/" />
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/learn/jpyc-payments/</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/learn/card-merchant-screening/</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/learn/payment-fees/</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/learn/chargeback/</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/learn/glossary/</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/en/learn/stablecoin-payments-japan/</loc>
+    <lastmod>2026-11-05</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/stablecoin-payments/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/learn/stablecoin-payments-japan/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/stablecoin-payments/" />
   </url>
 </urlset>

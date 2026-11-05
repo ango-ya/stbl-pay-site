@@ -1,5 +1,6 @@
 ---
 title: Sandbox
+description: "Describes the Sandbox environment for testing your integration. It is separate from production, and the JPYC EX part is replaced with a mock."
 sidebar_label: Sandbox
 sidebar_position: 1
 ---

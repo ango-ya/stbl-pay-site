@@ -1,5 +1,6 @@
 ---
 title: ドメイン登録
+description: "加盟店コンソールで登録するドメインの役割を説明します。決済後の戻り先 returnUrl の検証に使う登録と、もう一つの設定の違いが分かります。"
 sidebar_label: ドメイン登録
 sidebar_position: 4
 ---

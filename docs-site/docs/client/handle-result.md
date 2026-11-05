@@ -1,5 +1,6 @@
 ---
 title: 復帰と結果の受け取り
+description: "決済後に利用者が戻る returnUrl の扱いと、結果の受け取り方を説明します。復帰 URL は決済成立の根拠にならない点が分かる、加盟店開発者向けです。"
 sidebar_label: 復帰と結果の受け取り
 sidebar_position: 3
 ---

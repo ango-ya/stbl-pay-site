@@ -1,5 +1,6 @@
 ---
 title: FAQ
+description: "Frequently asked questions about STBLpay, such as whether merchants need to build a checkout screen, answered briefly with examples for JPYC payment merchants."
 sidebar_label: FAQ
 sidebar_position: 1
 ---

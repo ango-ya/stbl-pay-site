@@ -1,5 +1,6 @@
 ---
 title: FAQ
+description: "STBLpay のよくある質問です。決済画面を用意する必要があるかなど、JPYC 決済を導入する加盟店の疑問に、短い答えと例で答えます。ステーブルコイン決済の導入前に。"
 sidebar_label: FAQ
 sidebar_position: 1
 ---

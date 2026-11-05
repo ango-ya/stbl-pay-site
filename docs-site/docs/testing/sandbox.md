@@ -1,5 +1,6 @@
 ---
 title: Sandbox
+description: "組み込みを試すための Sandbox 環境を説明します。本番とは別の環境で、JPYC EX の部分がモックになっており、JPYC 決済の動作確認に使えます。"
 sidebar_label: Sandbox
 sidebar_position: 1
 ---

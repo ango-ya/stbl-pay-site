@@ -1,5 +1,6 @@
 ---
 title: 認証
+description: "決済作成 API の認証方法を説明します。加盟店サーバーから API キーをヘッダで送る方法が分かる、JPYC 決済の導入を進める開発者向けです。"
 sidebar_label: 認証
 sidebar_position: 1
 ---

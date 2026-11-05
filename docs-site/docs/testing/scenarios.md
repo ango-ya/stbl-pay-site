@@ -1,5 +1,6 @@
 ---
 title: テストシナリオ
+description: "組み込みがガイドどおりに動くかを確かめるテストシナリオです。Sandbox での起こし方と、再現できない項目を未検証として記録する方法が分かります。"
 sidebar_label: テストシナリオ
 sidebar_position: 2
 ---

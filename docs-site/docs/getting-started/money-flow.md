@@ -1,5 +1,6 @@
 ---
 title: お金の流れ
+description: "JPYC 決済のお金の流れを説明します。利用者が JPYC で支払い、加盟店が JPYC で受け取り、円に戻るまでが分かる、ステーブルコイン決済の導入検討者向けです。"
 sidebar_label: お金の流れ
 sidebar_position: 2
 ---

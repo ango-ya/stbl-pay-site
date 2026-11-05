@@ -1,5 +1,6 @@
 ---
 title: 再送ポリシー
+description: "Webhook の再送ポリシーと、同じ通知が複数回届く理由を説明します。重複への備えと状態照会での確認方法が分かる、加盟店サーバー開発者向けです。"
 sidebar_label: 再送ポリシー
 sidebar_position: 3
 ---

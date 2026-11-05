@@ -1,5 +1,6 @@
 ---
 title: Prerequisites
+description: "What to prepare before connecting to STBLpay. This guide covers environments that behave as documented, and shows where to confirm your connection details."
 sidebar_label: Prerequisites
 sidebar_position: 3
 ---

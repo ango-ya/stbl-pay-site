@@ -1,5 +1,6 @@
 ---
 title: Division of responsibilities
+description: "Explains the boundaries between the merchant browser, the merchant server, and STBLpay, such as where amounts are set and payments are created."
 sidebar_label: Division of responsibilities
 sidebar_position: 2
 ---

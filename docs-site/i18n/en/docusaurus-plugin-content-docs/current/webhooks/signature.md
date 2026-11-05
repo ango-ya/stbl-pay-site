@@ -1,5 +1,6 @@
 ---
 title: Signature verification
+description: "How to verify a Webhook signature and timestamp, with an implementation example, and a pointer to idempotent handling by event ID, for merchant servers receiving payment notifications."
 sidebar_label: Signature verification
 sidebar_position: 2
 ---

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <title>JPYC 決済をお店に導入するには？受け取り方・流れ・手数料の考え方 | すてぶるペイ</title>
+    <meta
+      name="description"
+      content="JPYC 決済の導入とは、お店が日本円ステーブルコイン JPYC で代金を受け取れるようにすることです。自分で受ける方法と決済サービスを使う方法があります。JPYC とは何か、導入の流れ、手数料の考え方、ネットショップへの組み込み、受け取った後の扱いを解説します。"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:site_name" content="すてぶるペイ / STBLpay" />
+    <meta property="og:title" content="JPYC 決済をお店に導入するには？受け取り方・流れ・手数料の考え方" />
+    <meta
+      property="og:description"
+      content="お店が JPYC で代金を受け取る方法は、自分で受ける方法と決済サービスを使う方法の 2 つ。導入の流れ、手数料の考え方、受け取った後の扱いを解説します。"
+    />
+    <meta property="og:url" content="https://stbl-pay.com/learn/jpyc-payments/" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="article:published_time" content="2026-11-05" />
+    <meta property="article:modified_time" content="2026-11-05" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="JPYC 決済をお店に導入するには？受け取り方・流れ・手数料の考え方" />
+    <meta
+      name="twitter:description"
+      content="お店が JPYC で代金を受け取る方法は、自分で受ける方法と決済サービスを使う方法の 2 つ。導入の流れ、手数料の考え方、受け取った後の扱いを解説します。"
+    />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/jpyc-payments/" />
+    <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/jpyc-payments/" />
+    <link rel="canonical" href="https://stbl-pay.com/learn/jpyc-payments/" />
+    <link rel="stylesheet" href="/assets/lp.css" />
+    <link rel="stylesheet" href="/assets/learn.css" />
+    <script src="/assets/analytics.js"></script>
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://stbl-pay.com/#org-angoya",
+      "name": "合同会社暗号屋",
+      "url": "https://www.ango-ya.org/"
+    },
+    {
+      "@type": "Article",
+      "@id": "https://stbl-pay.com/learn/jpyc-payments/#article",
+      "headline": "JPYC 決済をお店に導入するには？受け取り方・流れ・手数料の考え方",
+      "description": "JPYC 決済の導入とは、お店が日本円ステーブルコイン JPYC で代金を受け取れるようにすることです。自分で受ける方法と決済サービスを使う方法があります。JPYC とは何か、導入の流れ、手数料の考え方、ネットショップへの組み込み、受け取った後の扱いを解説します。",
+      "inLanguage": "ja",
+      "datePublished": "2026-11-05",
+      "dateModified": "2026-11-05",
+      "author": {
+        "@id": "https://stbl-pay.com/#org-angoya"
+      },
+      "publisher": {
+        "@id": "https://stbl-pay.com/#org-angoya"
+      },
+      "mainEntityOfPage": "https://stbl-pay.com/learn/jpyc-payments/",
+      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "about": {
+        "@id": "https://stbl-pay.com/#service"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "トップ",
+          "item": "https://stbl-pay.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "解説",
+          "item": "https://stbl-pay.com/learn/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "JPYC 決済をお店に導入するには",
+          "item": "https://stbl-pay.com/learn/jpyc-payments/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "inLanguage": "ja",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "JPYC を受け取るのに、ウォレットは必要ですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "自分で受ける方法では必要です。ウォレットとは、ブロックチェーン上でお金を受け取り、送るための口座のようなものです。決済サービスを使う場合は、サービスによって違います。すてぶるペイでは、受け取り用のウォレットがお店ごとに 1 つ、最初の決済のときに作られます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "JPYC で受け取るのに、特別な契約は要りますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "JPYC 株式会社は、JPYC は特定の加盟店契約や利用契約を必要とせず、事業者が自由に組み込んで使えるものだと発表しています。ただし、日本円に戻すには JPYC EX のアカウントと本人確認が要ります。決済サービスを使う場合は、そのサービスの規約もあります。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "受け取った JPYC は日本円にできますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "できます。JPYC EX で払い戻しを予約し、指定のアドレスへ JPYC を送ると、登録した出金口座に日本円で払い戻されます。JPYC EX の利用には本人確認が必要です。JPYC EX の公式サイトでは、払い戻しは 3,000 円からで、手数料は無料とされています。送るときのガス代（ブロックチェーンの送金の費用）は利用者の負担です。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "JPYC 決済の手数料はいくらですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "使う方法とサービスによって変わります。決済サービスの利用料や、ガス代（ブロックチェーンの送金の費用）がかかる場合があります。JPYC EX での発行と払い戻しは、公式サイトで手数料無料とされています。すてぶるペイの手数料は検討中で、全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "ネットショップに組み込むには何をしますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "すてぶるペイの場合は、決済ボタンを置く、お支払いの画面へ案内する、結果を受け取る、の 3 つです。手順は Quick Start にあります。提供開始日は未定ですが、Sandbox で組み込みを試せます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "会計や税金はどうなりますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "受け取った JPYC の会計処理や税務は、取引の内容や会計方針で変わります。この解説では判断できません。税理士などの専門家に確かめてください。"
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="skip-link" href="#main">本文へ移動</a>
+      <div class="shell header-inner">
+        <a class="brand-link" href="/" aria-label="すてぶるペイ トップ">
+          <img src="/assets/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" class="brand-logo" />
+        </a>
+        <nav class="site-nav" aria-label="主要ナビゲーション">
+          <a href="/learn/">解説</a>
+          <a href="/#flow">仕組み</a>
+          <a href="/#faq">FAQ</a>
+          <a href="/docs/">ドキュメント</a>
+          <a href="/en/" lang="en" hreflang="en">EN</a>
+        </nav>
+        <a class="header-cta" href="/#early-access">導入を相談する</a>
+      </div>
+    </header>
+
+    <main id="main" class="learn-main">
+      <div class="shell">
+        <article class="learn-article">
+          <nav class="breadcrumb" aria-label="パンくず">
+            <ol>
+              <li><a href="/">トップ</a></li>
+              <li><a href="/learn/">解説</a></li>
+              <li aria-current="page">JPYC 決済をお店に導入するには</li>
+            </ol>
+          </nav>
+
+          <h1>JPYC 決済をお店に導入するには？受け取り方・流れ・手数料の考え方</h1>
+          <p class="learn-lead">JPYC 決済をお店に導入するとは、日本円ステーブルコインの JPYC で、お店が代金を受け取れるようにすることです。受け取り方は、自分でウォレットを用意して受ける方法と、決済サービスを使う方法の 2 つ。受け取った JPYC は、JPYC EX で日本円に戻せます。</p>
+          <p class="learn-meta">更新日：<time datetime="2026-11-05">2026年11月5日</time>　文：合同会社暗号屋</p>
+
+          <div class="learn-body">
+            <h2 id="what">JPYC とは</h2>
+            <p>JPYC は、日本円と 1：1 で交換できる、日本円のステーブルコイン（価値が安定するように作られたデジタルのお金）です。発行するのは JPYC 株式会社で、2025年8月18日に資金移動業者として登録されました（関東財務局長 第00099号）<sup class="fn"><a href="#src-3">[3]</a></sup>。</p>
+            <p>JPYC 株式会社は、JPYC を資金決済法の「電子決済手段」として発行しています<sup class="fn"><a href="#src-3">[3]</a><a href="#src-6">[6]</a></sup>。法律では、暗号資産の定義から電子決済手段が除かれていて、ビットコインなどの暗号資産とは別の区分です<sup class="fn"><a href="#src-1">[1]</a><a href="#src-2">[2]</a></sup>。2025年10月27日に発行が始まり、発行残高の 100% 以上を預貯金と国債で保全するとされています<sup class="fn"><a href="#src-3">[3]</a></sup>。累計発行額は、2026年9月18日時点で100億円を超えたと発表されました<sup class="fn"><a href="#src-4">[4]</a></sup>。</p>
+            <p>日本円との交換は、公式の窓口「JPYC EX」で行います。利用には本人確認が必要です。個人はマイナンバーカードで行い、法人もアカウントを作れます<sup class="fn"><a href="#src-6">[6]</a></sup>。JPYC EX は、Ethereum、Polygon、Avalanche、Kaia の 4 つのブロックチェーンに対応しています<sup class="fn"><a href="#src-4">[4]</a><a href="#src-6">[6]</a></sup>。ブロックチェーンとは、取引の記録を多くのコンピューターで共有する仕組みです。</p>
+            <p>JPYC 株式会社は、JPYC は特定の加盟店契約や利用契約を必要とせず、事業者が自由に組み込んで使えるものだと発表しています<sup class="fn"><a href="#src-3">[3]</a></sup>。ただし、日本円に戻すには JPYC EX のアカウントが要ります。</p>
+
+            <h2 id="ways">お店が JPYC で受け取る 2 つの方法</h2>
+            <table class="learn-table">
+              <caption>JPYC の受け取り方の違い</caption>
+              <thead>
+                <tr><th scope="col">項目</th><th scope="col">自分で受ける</th><th scope="col">決済サービスを使う</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">やること</th>
+                  <td data-label="自分で受ける">ウォレットを用意し、受け取り用のアドレスを購入者に伝える</td>
+                  <td data-label="決済サービスを使う">サービスの申し込みと、サイトへの組み込み</td>
+                </tr>
+                <tr>
+                  <th scope="row">注文との結びつけ</th>
+                  <td data-label="自分で受ける">お店が、送金と注文を自分で突き合わせる</td>
+                  <td data-label="決済サービスを使う">サービスが決済ごとに状態を管理し、結果を知らせる</td>
+                </tr>
+                <tr>
+                  <th scope="row">購入者の手間</th>
+                  <td data-label="自分で受ける">JPYC を持ち、送金の操作を自分でする</td>
+                  <td data-label="決済サービスを使う">サービスの設計による</td>
+                </tr>
+                <tr>
+                  <th scope="row">費用</th>
+                  <td data-label="自分で受ける">ブロックチェーンの送金の費用など</td>
+                  <td data-label="決済サービスを使う">上に加えて、サービスの利用料</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>小さく試すなら、自分で受ける方法でも始められます。注文が増えると、送金と注文の突き合わせが手作業では大変になります。</p>
+
+            <h2 id="flow">導入の流れ</h2>
+            <ol>
+              <li>受け取り方を決めます。自分で受けるか、決済サービスを使うか。</li>
+              <li>JPYC EX のアカウントを作り、本人確認をします。日本円に戻すときに使います。</li>
+              <li>決済サービスを使うなら、規約と審査を確かめて申し込みます。</li>
+              <li>サイトに組み込み、テスト環境で試します。</li>
+              <li>返金のルールを決めて、購入者に先に案内します。</li>
+              <li>少額の注文で、受け取りから日本円への換金まで一度通します。</li>
+            </ol>
+
+            <h2 id="fees">JPYC 決済の手数料の考え方</h2>
+            <p>JPYC 決済でお店にかかる費用は、主に 2 つです。決済サービスを使うならその利用料と、ガス代（ブロックチェーンで送金するときの費用）です。誰が負担するかも確かめましょう。</p>
+            <p>JPYC 株式会社の公式サイトの「よくある質問」では、JPYC EX での JPYC の発行と償還（日本円への払い戻し）は手数料無料とされています。ただし、入金のときの振込手数料やガス代などは利用者の負担です。発行・償還は 3,000円から使えます（2026年11月5日確認）<sup class="fn"><a href="#src-6">[6]</a></sup>。</p>
+            <p>比べる目安として、カード決済の例を挙げます。Stripe の日本の標準の料金体系では、カードでの決済が成功するごとに 3.6% です（通貨の換算が要る場合は 2% を加算）<sup class="fn"><a href="#src-5">[5]</a></sup>。取引額が多い場合などには、個別の料金体系も用意されています<sup class="fn"><a href="#src-5">[5]</a></sup>。</p>
+
+            <h2 id="ec">ネットショップ（EC サイト）に JPYC 決済を組み込むには</h2>
+            <p>決済サービスを使うと、サイトでやることは少なくなります。すてぶるペイの場合は、決済ボタンを置く、お支払いの画面へ案内する、結果を受け取る、の 3 つです。</p>
+            <p>最小の手順は <a href="/docs/getting-started/quickstart/">Quick Start</a> にあります。準備は<a href="/docs/getting-started/prerequisites/">導入前の準備</a>、お金の流れは<a href="/docs/getting-started/money-flow/">お金の流れ</a>、試す環境は <a href="/docs/testing/sandbox/">Sandbox</a> を見てください。</p>
+
+            <h2 id="after">受け取った後：日本円への換金と会計</h2>
+            <ul>
+              <li><strong>日本円にする。</strong>JPYC EX で払い戻しを予約し、指定のアドレスへ JPYC を送ると、登録した出金口座に日本円が払い戻されます<sup class="fn"><a href="#src-3">[3]</a></sup>。払い戻しは 3,000 円からで、手数料は無料とされています<sup class="fn"><a href="#src-6">[6]</a></sup>。すてぶるペイでは、お店ご自身の JPYC EX アカウントで行います。</li>
+              <li><strong>そのまま持つ。</strong>JPYC のまま持つこともできます。管理は自分で行います。</li>
+              <li><strong>会計・税務。</strong>処理は取引の内容や会計方針で変わります。税理士などの専門家に確かめてください。</li>
+            </ul>
+
+            <h2 id="stblpay">すてぶるペイの場合</h2>
+            <p>すてぶるペイは、購入者が日本円で払い、お店が JPYC で受け取る決済です。開発中で、提供開始日は未定です（2026年11月時点）。</p>
+            <ul>
+              <li>提供元の暗号屋は、購入者やお店の資金・秘密鍵を預かりません（ノンカストディアル）。</li>
+              <li>受け取り用のウォレットは、お店ごとに 1 つ、最初の決済のときに作られます。お店のパスキー（顔や指紋で使う鍵）にひも付いていて、すてぶるペイが単独で動かすことはできません（<a href="/docs/getting-started/money-flow/">お金の流れ</a>）。</li>
+              <li>手数料は検討中です。全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。</li>
+              <li>利用には、利用規約への同意と、法令上の要件を満たすことが前提です。</li>
+            </ul>
+            <p>仕組みの全体は <a href="/learn/stablecoin-payments/">ステーブルコイン決済とは</a> で説明しています。</p>
+          </div>
+
+          <section aria-labelledby="faq-title">
+            <h2 id="faq-title">よくある質問</h2>
+            <div class="faq-list">
+              <details>
+                <summary>JPYC を受け取るのに、ウォレットは必要ですか？</summary>
+                <p>自分で受ける方法では必要です。ウォレットとは、ブロックチェーン上でお金を受け取り、送るための口座のようなものです。決済サービスを使う場合は、サービスによって違います。すてぶるペイでは、受け取り用のウォレットがお店ごとに 1 つ、最初の決済のときに作られます。</p>
+              </details>
+              <details>
+                <summary>JPYC で受け取るのに、特別な契約は要りますか？</summary>
+                <p>JPYC 株式会社は、JPYC は特定の加盟店契約や利用契約を必要とせず、事業者が自由に組み込んで使えるものだと発表しています。ただし、日本円に戻すには JPYC EX のアカウントと本人確認が要ります。決済サービスを使う場合は、そのサービスの規約もあります。</p>
+              </details>
+              <details>
+                <summary>受け取った JPYC は日本円にできますか？</summary>
+                <p>できます。JPYC EX で払い戻しを予約し、指定のアドレスへ JPYC を送ると、登録した出金口座に日本円で払い戻されます。JPYC EX の利用には本人確認が必要です。JPYC EX の公式サイトでは、払い戻しは 3,000 円からで、手数料は無料とされています。送るときのガス代（ブロックチェーンの送金の費用）は利用者の負担です。</p>
+              </details>
+              <details>
+                <summary>JPYC 決済の手数料はいくらですか？</summary>
+                <p>使う方法とサービスによって変わります。決済サービスの利用料や、ガス代（ブロックチェーンの送金の費用）がかかる場合があります。JPYC EX での発行と払い戻しは、公式サイトで手数料無料とされています。すてぶるペイの手数料は検討中で、全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。</p>
+              </details>
+              <details>
+                <summary>ネットショップに組み込むには何をしますか？</summary>
+                <p>すてぶるペイの場合は、決済ボタンを置く、お支払いの画面へ案内する、結果を受け取る、の 3 つです。手順は Quick Start にあります。提供開始日は未定ですが、Sandbox で組み込みを試せます。</p>
+              </details>
+              <details>
+                <summary>会計や税金はどうなりますか？</summary>
+                <p>受け取った JPYC の会計処理や税務は、取引の内容や会計方針で変わります。この解説では判断できません。税理士などの専門家に確かめてください。</p>
+              </details>
+            </div>
+          </section>
+
+          <section class="learn-sources" aria-labelledby="sources-title">
+            <h2 id="sources-title">出典</h2>
+            <p class="learn-note">いずれも 2026年11月5日に内容を確認しました。</p>
+            <ol>
+              <li id="src-1">e-Gov 法令検索「<a href="https://laws.e-gov.go.jp/law/421AC0000000059">資金決済に関する法律</a>」（平成21年法律第59号）第2条第5項・第14項。2026年11月5日確認。</li>
+              <li id="src-2">高松志直「<a href="https://www.businesslawyers.jp/articles/1181">令和4年資金決済法等改正の影響と実務対応のポイント</a>」BUSINESS LAWYERS（2023年6月8日更新）。2026年11月5日確認。</li>
+              <li id="src-3">JPYC 株式会社「<a href="https://ascii.jp/elem/000/004/336/4336809/">【国内初】日本円ステーブルコイン「JPYC」および発行・償還プラットフォーム「JPYC EX」を正式リリース</a>」（2025年10月24日。ASCII.jp 掲載）。2026年11月5日確認。</li>
+              <li id="src-4">JPYC 株式会社「<a href="https://prtimes.jp/main/html/rd/p/000000331.000054018.html">日本円ステーブルコイン「JPYC」、累計発行額100億円を突破</a>」PR TIMES（2026年9月18日）。2026年11月5日確認。</li>
+              <li id="src-5">Stripe「<a href="https://stripe.com/jp/pricing">料金体系</a>」。2026年11月5日確認。</li>
+              <li id="src-6">JPYC 株式会社「<a href="https://jpyc.co.jp/">JPYC EX</a>」公式サイト（よくある質問、法人アカウント開設の案内）。2026年11月5日確認。</li>
+            </ol>
+          </section>
+
+          <section class="learn-related" aria-labelledby="related-title">
+            <h2 id="related-title">関連する解説</h2>
+            <ul>
+              <li><a href="/learn/stablecoin-payments/">ステーブルコイン決済とは</a></li>
+              <li><a href="/learn/payment-fees/">決済手数料の比べ方</a></li>
+              <li><a href="/learn/card-merchant-screening/">クレジットカード決済の加盟店審査</a></li>
+              <li><a href="/learn/chargeback/">チャージバックとは</a></li>
+              <li><a href="/learn/glossary/">決済の用語集</a></li>
+            </ul>
+          </section>
+
+          <aside class="learn-about" aria-labelledby="about-title">
+            <h2 id="about-title">すてぶるペイについて</h2>
+            <p>すてぶるペイは、円で払い、ステーブルコイン（JPYC）で受け取る決済です（開発中）。購入者は日本円の銀行振込とパスキーで支払い、お店はカード会社の与信審査に頼らずに売上を受け取ります。</p>
+            <p><a href="/">サービスの紹介を見る</a>　<a href="/docs/">加盟店向けドキュメント</a></p>
+          </aside>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div>
+          <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
+          <p>運営会社：<a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">合同会社暗号屋</a></p>
+          <p><a href="/docs/">加盟店向けドキュメント</a>　<a href="/learn/">決済の解説</a></p>
+          <ul class="footer-facts">
+            <li>2019年2月設立。本社は福岡市です。</li>
+            <li>アステリア株式会社と共同で、JPYC の会計監査支援ツール「JPYC Explorer」を開発（2026年3月13日 アステリア発表）。</li>
+            <li>株式会社QTnetと、バリデータノードの運用を含む Web3 インフラ事業の共同実証実験を開始（2024年2月19日 発表）。</li>
+            <li>IoT データ取引基盤「PTPF」を活用した実証プロジェクトが、「福岡市実証実験フルサポート事業」に採択（2022年1月31日 福岡市発表）。</li>
+          </ul>
+        </div>
+        <p class="footer-note">© 2026 STBLpay. 運営: 暗号屋</p>
+      </div>
+    </footer>
+  </body>
+</html>

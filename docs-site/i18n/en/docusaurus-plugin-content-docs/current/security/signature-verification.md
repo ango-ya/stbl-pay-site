@@ -1,5 +1,6 @@
 ---
 title: Webhook verification requirements
+description: "Requirements for using a Webhook as the basis for confirming an order: verify the signature and time, and process idempotently by the verified event ID."
 sidebar_label: Webhook verification requirements
 sidebar_position: 3
 ---

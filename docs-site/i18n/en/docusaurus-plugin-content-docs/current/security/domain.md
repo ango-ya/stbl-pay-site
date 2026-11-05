@@ -1,5 +1,6 @@
 ---
 title: Domain registration
+description: "Explains the role of the domains registered in the merchant console, which are used to validate the returnUrl, and how the two domain settings differ."
 sidebar_label: Domain registration
 sidebar_position: 4
 ---

@@ -1,5 +1,6 @@
 ---
 title: Glossary
+description: "A glossary of terms used in the STBLpay guide, grouped by theme, covering words such as idempotency, at-least-once delivery, and payment intent."
 sidebar_label: Glossary
 sidebar_position: 4
 ---

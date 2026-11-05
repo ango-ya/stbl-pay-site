@@ -1,5 +1,6 @@
 ---
 title: Refund procedure
+description: "Step-by-step instructions for issuing a refund in the merchant console, which requires a logged-in session and passkey approval by the owner."
 sidebar_label: Refund procedure
 sidebar_position: 2
 ---

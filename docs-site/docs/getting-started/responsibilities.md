@@ -1,5 +1,6 @@
 ---
 title: Client と Server の責務
+description: "Client と Server の責務を説明します。金額、注文の認可、商品提供の判断は加盟店サーバーが担う点が分かる、JPYC 決済の導入担当者向けです。"
 sidebar_label: Client と Server の責務
 sidebar_position: 2
 ---

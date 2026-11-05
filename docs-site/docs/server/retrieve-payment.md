@@ -1,5 +1,6 @@
 ---
 title: 決済状態を照会する
+description: "保存済みの決済 ID で、決済の現在の状態を照会する方法を説明します。API 認証は不要です。Webhook を補う状態確認に使える、加盟店サーバー向けです。"
 sidebar_label: 決済状態を照会する
 sidebar_position: 3
 ---

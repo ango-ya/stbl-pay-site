@@ -1,5 +1,6 @@
 ---
 title: 既知の制限
+description: "STBLpay の既知の制限をまとめています。返金の経路など、仕様と実装と本番提供の状態を区別して確認できる、導入を検討する加盟店向けです。"
 sidebar_label: 既知の制限
 sidebar_position: 3
 ---

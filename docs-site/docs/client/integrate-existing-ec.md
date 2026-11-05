@@ -1,5 +1,6 @@
 ---
 title: 既存 EC への結合
+description: "既存の EC サイトに JPYC 決済を結合する方法を説明します。注文と決済を別の状態として管理し、注文 ID との対応を保存する考え方が分かります。"
 sidebar_label: 既存 EC への結合
 sidebar_position: 4
 ---

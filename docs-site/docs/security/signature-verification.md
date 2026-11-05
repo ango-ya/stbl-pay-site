@@ -1,5 +1,6 @@
 ---
 title: Webhook 検証の要件
+description: "Webhook を注文確定の根拠にするときの検証の要件を説明します。署名と時刻の検証、検証済みボディの ID による冪等処理が分かる、加盟店サーバー向けです。"
 sidebar_label: Webhook 検証の要件
 sidebar_position: 3
 ---

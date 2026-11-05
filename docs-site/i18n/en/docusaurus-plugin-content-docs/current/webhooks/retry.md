@@ -1,5 +1,6 @@
 ---
 title: Retry policy
+description: "Explains the Webhook retry policy, why the same notification can arrive more than once, and how to handle duplicates and check status when delivery fails."
 sidebar_label: Retry policy
 sidebar_position: 3
 ---

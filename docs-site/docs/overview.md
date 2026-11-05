@@ -1,6 +1,7 @@
 ---
 id: overview
 title: STBLpay とは
+description: "円で払いステーブルコイン（JPYC）で受け取る決済を、EC サイトに組み込む加盟店向けのガイドです。JPYC 決済の仕組みと導入の流れが分かります。"
 sidebar_label: 概要
 sidebar_position: 1
 slug: /

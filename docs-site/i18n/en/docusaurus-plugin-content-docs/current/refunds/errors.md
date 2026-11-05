@@ -1,5 +1,6 @@
 ---
 title: When a refund is not possible
+description: "Lists the reasons shown on the refund screen when a refund cannot start, and what to do about each one, for merchants stuck on a JPYC payment refund."
 sidebar_label: When a refund is not possible
 sidebar_position: 4
 ---

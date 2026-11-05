@@ -1,5 +1,6 @@
 ---
 title: イベントと受信
+description: "決済の終端結果を加盟店サーバーへ知らせる Webhook のイベントと受信の考え方を説明します。決済成立の通知を注文に反映したい開発者向けです。"
 sidebar_label: イベントと受信
 sidebar_position: 1
 ---

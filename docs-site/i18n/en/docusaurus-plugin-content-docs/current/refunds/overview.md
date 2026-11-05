@@ -1,5 +1,6 @@
 ---
 title: Scope of refunds
+description: "Explains that STBLpay refunds are approved by the merchant owner with a passkey in the merchant console only, and that no refund API is available to servers."
 sidebar_label: Scope of refunds
 sidebar_position: 1
 ---

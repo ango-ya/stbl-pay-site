@@ -1,5 +1,6 @@
 ---
 title: 責務の境界
+description: "加盟店のブラウザとサーバー、STBLpay それぞれの責務の境界を説明します。金額の確定や決済作成をどこで行うかが分かる、導入担当者向けです。"
 sidebar_label: 責務の境界
 sidebar_position: 2
 ---

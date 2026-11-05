@@ -1,5 +1,6 @@
 ---
 title: Retrieve payment status
+description: "How a merchant server checks the current state of a payment by its saved payment intent ID. No API authentication is needed, so it can back up Webhooks."
 sidebar_label: Retrieve payment status
 sidebar_position: 3
 ---

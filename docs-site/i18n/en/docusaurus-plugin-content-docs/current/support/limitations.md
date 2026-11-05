@@ -1,5 +1,6 @@
 ---
 title: Known limitations
+description: "Lists known limitations of STBLpay, such as the refund route, and keeps specification, implementation, and production availability separate for merchants."
 sidebar_label: Known limitations
 sidebar_position: 3
 ---

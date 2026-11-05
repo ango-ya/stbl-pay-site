@@ -1,5 +1,6 @@
 ---
 title: Create a payment
+description: "How to create a payment by registering an amount and orderId to get a payment intent, and what the merchant server must verify first."
 sidebar_label: Create a payment
 sidebar_position: 2
 ---

@@ -20,6 +20,7 @@ rsync -a \
   --exclude 'scripts' \
   --exclude 'dist' \
   --exclude 'docs-site' \
+  --exclude 'marketing' \
   --exclude 'test-results' \
   --exclude 'playwright-report' \
   --exclude 'playwright.config.mjs' \

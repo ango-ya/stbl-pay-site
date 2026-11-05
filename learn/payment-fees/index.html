@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <title>決済手数料の比べ方：料率だけでなく総コストで比べる | すてぶるペイ</title>
+    <meta
+      name="description"
+      content="決済手数料は、料率だけでは比べられません。月額・初期費用、振込手数料、入金までの日数、チャージバックの負担、購入者への上乗せまで合わせた「総コスト」で比べましょう。比べる項目と見るポイントを、表で整理します。"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:site_name" content="すてぶるペイ / STBLpay" />
+    <meta property="og:title" content="決済手数料の比べ方：料率だけでなく総コストで比べる" />
+    <meta
+      property="og:description"
+      content="料率・月額費用・振込手数料・入金日数・チャージバックの負担・購入者への上乗せを合わせた総コストで、決済手数料を比べる方法を解説します。"
+    />
+    <meta property="og:url" content="https://stbl-pay.com/learn/payment-fees/" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="article:published_time" content="2026-11-05" />
+    <meta property="article:modified_time" content="2026-11-05" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="決済手数料の比べ方：料率だけでなく総コストで比べる" />
+    <meta
+      name="twitter:description"
+      content="料率・月額費用・振込手数料・入金日数・チャージバックの負担・購入者への上乗せを合わせた総コストで、決済手数料を比べる方法を解説します。"
+    />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/payment-fees/" />
+    <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/payment-fees/" />
+    <link rel="canonical" href="https://stbl-pay.com/learn/payment-fees/" />
+    <link rel="stylesheet" href="/assets/lp.css" />
+    <link rel="stylesheet" href="/assets/learn.css" />
+    <script src="/assets/analytics.js"></script>
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://stbl-pay.com/#org-angoya",
+      "name": "合同会社暗号屋",
+      "url": "https://www.ango-ya.org/"
+    },
+    {
+      "@type": "Article",
+      "@id": "https://stbl-pay.com/learn/payment-fees/#article",
+      "headline": "決済手数料の比べ方：料率だけでなく総コストで比べる",
+      "description": "決済手数料は、料率だけでは比べられません。月額・初期費用、振込手数料、入金までの日数、チャージバックの負担、購入者への上乗せまで合わせた「総コスト」で比べましょう。比べる項目と見るポイントを、表で整理します。",
+      "inLanguage": "ja",
+      "datePublished": "2026-11-05",
+      "dateModified": "2026-11-05",
+      "author": {
+        "@id": "https://stbl-pay.com/#org-angoya"
+      },
+      "publisher": {
+        "@id": "https://stbl-pay.com/#org-angoya"
+      },
+      "mainEntityOfPage": "https://stbl-pay.com/learn/payment-fees/",
+      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "about": {
+        "@id": "https://stbl-pay.com/#service"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "トップ",
+          "item": "https://stbl-pay.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "解説",
+          "item": "https://stbl-pay.com/learn/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "決済手数料の比べ方",
+          "item": "https://stbl-pay.com/learn/payment-fees/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "inLanguage": "ja",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "決済手数料の相場はいくらですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "事業者、業種、取引の規模、契約によって違うため、一つの相場は言えません。料率の例として、Stripe の日本の標準料金は、カード決済 1 件ごとに 3.6% です。見積もりは、公式の料金ページか問い合わせで確かめましょう。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "料率が低いサービスを選べばいいですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "料率だけでは決められません。月額費用、振込手数料、入金までの日数、チャージバックの負担も合わせた総コストで比べましょう。売上が少ないうちは、月額費用の影響が大きくなります。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "購入者に手数料を上乗せしてもいいですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "上乗せできるかは、契約する決済サービスやカード会社の規約で決まります。上乗せすると、購入者が高く感じて離れることもあります。契約前に規約を読んで確かめてください。すてぶるペイでは、購入者への上乗せはありません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "ステーブルコイン決済に手数料はかかりますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "サービスによって違います。サービスの利用料のほか、ブロックチェーンの送金にかかる費用や、日本円に戻す費用がかかることがあります。誰が負担するかも確かめましょう。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "すてぶるペイの手数料はいくらですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "検討中です。全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。提供開始日は未定です。"
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="skip-link" href="#main">本文へ移動</a>
+      <div class="shell header-inner">
+        <a class="brand-link" href="/" aria-label="すてぶるペイ トップ">
+          <img src="/assets/logo-wordmark-suteburu-black.png" alt="すてぶるペイ" class="brand-logo" />
+        </a>
+        <nav class="site-nav" aria-label="主要ナビゲーション">
+          <a href="/learn/">解説</a>
+          <a href="/#flow">仕組み</a>
+          <a href="/#faq">FAQ</a>
+          <a href="/docs/">ドキュメント</a>
+          <a href="/en/" lang="en" hreflang="en">EN</a>
+        </nav>
+        <a class="header-cta" href="/#early-access">導入を相談する</a>
+      </div>
+    </header>
+
+    <main id="main" class="learn-main">
+      <div class="shell">
+        <article class="learn-article">
+          <nav class="breadcrumb" aria-label="パンくず">
+            <ol>
+              <li><a href="/">トップ</a></li>
+              <li><a href="/learn/">解説</a></li>
+              <li aria-current="page">決済手数料の比べ方</li>
+            </ol>
+          </nav>
+
+          <h1>決済手数料の比べ方：料率だけでなく総コストで比べる</h1>
+          <p class="learn-lead">決済手数料は、料率だけで比べず、お店に残るお金で比べます。月額・初期費用、振込手数料、入金までの日数、チャージバックの負担、購入者への上乗せまで足した「総コスト」が、本当の費用です。ここでは、比べる項目と見るポイントを表にまとめます。</p>
+          <p class="learn-meta">更新日：<time datetime="2026-11-05">2026年11月5日</time>　文：合同会社暗号屋</p>
+
+          <div class="learn-body">
+            <h2 id="why">決済手数料は、料率だけで比べない</h2>
+            <p>決済手数料とは、お客さんの支払いを受け取るために、お店が決済サービスへ払う費用です。料率（何 % か）が目立ちますが、費用はそれだけではありません。</p>
+            <p>たとえば、料率が低くても月額費用が高ければ、売上が少ない月は割高です。入金が遅ければ、仕入れの支払いに困ることもあります。料率は、比べる項目の一つと考えましょう。</p>
+
+            <h2 id="items">比べる項目と見るポイント</h2>
+            <p>次の表の項目を、候補のサービスごとに調べて並べると、総コストが見えます。</p>
+            <table class="learn-table">
+              <caption>決済手数料を比べる項目</caption>
+              <thead>
+                <tr>
+                  <th scope="col">項目</th>
+                  <th scope="col">見るポイント</th>
+                  <th scope="col">確かめ方</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">料率</th>
+                  <td data-label="見るポイント">決済額に何%かかるか。カードの種類や通貨換算で変わるか。</td>
+                  <td data-label="確かめ方">公式の料金ページで、標準の料率と加算の条件を読む。</td>
+                </tr>
+                <tr>
+                  <th scope="row">月額・初期費用</th>
+                  <td data-label="見るポイント">売上がなくても払う費用があるか。</td>
+                  <td data-label="確かめ方">月の売上が少ない場合の総額を計算する。</td>
+                </tr>
+                <tr>
+                  <th scope="row">振込手数料</th>
+                  <td data-label="見るポイント">売上を口座に受け取るときの手数料。誰が払うか。</td>
+                  <td data-label="確かめ方">1回あたりの金額と、受け取りの頻度を確かめる。</td>
+                </tr>
+                <tr>
+                  <th scope="row">入金までの日数</th>
+                  <td data-label="見るポイント">売上が決まってから、手元に届くまでの日数。</td>
+                  <td data-label="確かめ方">締め日と支払日を確かめる。資金繰りに響く。</td>
+                </tr>
+                <tr>
+                  <th scope="row">チャージバックの負担</th>
+                  <td data-label="見るポイント">売上が取り消されたとき、誰がいくら負担するか。</td>
+                  <td data-label="確かめ方">取り消し時に手数料が戻るか、別の手数料がかかるかを確かめる。</td>
+                </tr>
+                <tr>
+                  <th scope="row">購入者への上乗せ</th>
+                  <td data-label="見るポイント">購入者に手数料を負担させる形か。</td>
+                  <td data-label="確かめ方">規約で認められているかと、購入者の見え方を確かめる。</td>
+                </tr>
+                <tr>
+                  <th scope="row">そのほかの費用</th>
+                  <td data-label="見るポイント">通貨換算、返金時の費用、円に戻す費用など。</td>
+                  <td data-label="確かめ方">返金や換算が多い事業では、ここが効く。</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2 id="example">料率の例：Stripe の場合</h2>
+            <p>料率の例として、Stripe の日本の標準料金を挙げます。カード決済は、成功した決済 1 件ごとに 3.6% です。通貨の換算が要る場合は、2% が加わります。初期費用と月額料金はありません<sup class="fn"><a href="#src-1">[1]</a></sup>。</p>
+            <p>これは一つの例です。料率は、事業者、業種、規模、契約で変わります。Square など、ほかのサービスも公式の料金ページで同じ項目を確かめて、並べてみてください。</p>
+
+            <h2 id="howto">総コストの見積もり方</h2>
+            <ol>
+              <li>1 か月の売上と、1 件あたりの金額を決めます。</li>
+              <li>料率の分を計算します。売上に料率を掛けます。</li>
+              <li>月額費用、振込手数料の合計を足します。</li>
+              <li>チャージバックや返金が起きる見込みの分を、別に見ておきます。</li>
+              <li>入金までの日数で、手元の資金が足りるかを確かめます。</li>
+            </ol>
+            <p>売上が少ない場合と多い場合の両方で計算すると、どのサービスが合うかがわかります。</p>
+
+            <h2 id="chargeback">チャージバックの負担も費用になる</h2>
+            <p>チャージバックとは、購入者がカード会社に申し立てて、売上が取り消される仕組みです。取り消された代金は、原則としてお店が負担します<sup class="fn"><a href="#src-3">[3]</a></sup>。</p>
+            <p>申し立てごとに手数料がかかるサービスもあります。たとえば Stripe では、申し立て 1 件ごとに 1,500 円です<sup class="fn"><a href="#src-1">[1]</a></sup>。取り消しの件数が増えたら、費用として見込んでおきましょう。すてぶるペイはカード決済ではないため、カード起因のチャージバックの仕組みそのものがありません。返金は、お店から購入者へ行います。詳しくは <a href="/learn/chargeback/">チャージバックとは</a>で説明します。</p>
+
+            <h2 id="stablecoin">ステーブルコイン決済の費用で見ること</h2>
+            <p>ステーブルコイン決済では、サービスの利用料のほか、ブロックチェーンの送金にかかる費用や、日本円に戻す費用がかかることがあります。日本円と 1：1 で交換できる JPYC の場合は、発行体の窓口「JPYC EX」で日本円に戻せます。JPYC EX で償還（日本円に戻すこと）を予約して JPYC を送ると、登録した口座に日本円で払い戻されます<sup class="fn"><a href="#src-2">[2]</a></sup>。誰がどの費用を負担するかを、先に確かめましょう。仕組みは <a href="/learn/stablecoin-payments/">ステーブルコイン決済とは</a>、導入の流れは <a href="/learn/jpyc-payments/">JPYC 決済をお店に導入するには</a>にまとめています。</p>
+
+            <h2 id="stblpay">すてぶるペイの場合</h2>
+            <p>すてぶるペイは、円で払い、ステーブルコイン（JPYC）で受け取る決済です。開発中で、提供開始日は未定です（2026年11月時点）。</p>
+            <ul>
+              <li>手数料は検討中です。全加盟店一律の固定料率を予定しています。</li>
+              <li>購入者への上乗せはありません。</li>
+              <li>売上は、決済と同時に JPYC で受け取ります。手数料は、同じ取引の中で差し引かれます。</li>
+              <li>日本円への引き出しは、お店ご自身の JPYC EX アカウントで行います。</li>
+              <li>返金しても、決済手数料は戻りません。</li>
+              <li>提供元の暗号屋は、購入者やお店の資金・秘密鍵を保持しません（ノンカストディアル）。</li>
+              <li>利用には、利用規約への同意と、法令上の要件を満たすことが前提です。</li>
+            </ul>
+            <p>お金の流れは <a href="/docs/getting-started/money-flow/">お金の流れ</a>、返金は <a href="/docs/refunds/overview/">返金の提供範囲</a>で読めます。</p>
+          </div>
+
+          <section aria-labelledby="faq-title">
+            <h2 id="faq-title">よくある質問</h2>
+            <div class="faq-list">
+              <details>
+                <summary>決済手数料の相場はいくらですか？</summary>
+                <p>事業者、業種、取引の規模、契約によって違うため、一つの相場は言えません。料率の例として、Stripe の日本の標準料金は、カード決済 1 件ごとに 3.6% です。見積もりは、公式の料金ページか問い合わせで確かめましょう。</p>
+              </details>
+              <details>
+                <summary>料率が低いサービスを選べばいいですか？</summary>
+                <p>料率だけでは決められません。月額費用、振込手数料、入金までの日数、チャージバックの負担も合わせた総コストで比べましょう。売上が少ないうちは、月額費用の影響が大きくなります。</p>
+              </details>
+              <details>
+                <summary>購入者に手数料を上乗せしてもいいですか？</summary>
+                <p>上乗せできるかは、契約する決済サービスやカード会社の規約で決まります。上乗せすると、購入者が高く感じて離れることもあります。契約前に規約を読んで確かめてください。すてぶるペイでは、購入者への上乗せはありません。</p>
+              </details>
+              <details>
+                <summary>ステーブルコイン決済に手数料はかかりますか？</summary>
+                <p>サービスによって違います。サービスの利用料のほか、ブロックチェーンの送金にかかる費用や、日本円に戻す費用がかかることがあります。誰が負担するかも確かめましょう。</p>
+              </details>
+              <details>
+                <summary>すてぶるペイの手数料はいくらですか？</summary>
+                <p>検討中です。全加盟店一律の固定料率を予定しています。購入者への上乗せはありません。提供開始日は未定です。</p>
+              </details>
+            </div>
+          </section>
+
+          <section class="learn-sources" aria-labelledby="sources-title">
+            <h2 id="sources-title">出典</h2>
+            <p class="learn-note">いずれも 2026年11月5日に内容を確認しました。</p>
+            <ol>
+              <li id="src-1">Stripe「<a href="https://stripe.com/jp/pricing">料金体系</a>」。2026年11月5日確認。</li>
+              <li id="src-2">JPYC 株式会社「<a href="https://ascii.jp/elem/000/004/336/4336809/">【国内初】日本円ステーブルコイン「JPYC」および発行・償還プラットフォーム「JPYC EX」を正式リリース</a>」（2025年10月24日。ASCII.jp 掲載）。2026年11月5日確認。</li>
+              <li id="src-3">Square「<a href="https://squareup.com/jp/ja/townsquare/chargeback">チャージバックで売り上げをゼロにしないセキュリティー対策</a>」（2025年2月4日公開）。2026年11月5日確認。</li>
+            </ol>
+          </section>
+
+          <section class="learn-related" aria-labelledby="related-title">
+            <h2 id="related-title">関連する解説</h2>
+            <ul>
+              <li><a href="/learn/stablecoin-payments/">ステーブルコイン決済とは</a></li>
+              <li><a href="/learn/jpyc-payments/">JPYC 決済をお店に導入するには</a></li>
+              <li><a href="/learn/chargeback/">チャージバックとは</a></li>
+              <li><a href="/learn/card-merchant-screening/">クレジットカード決済の加盟店審査</a></li>
+              <li><a href="/learn/glossary/">決済の用語集</a></li>
+            </ul>
+          </section>
+
+          <aside class="learn-about" aria-labelledby="about-title">
+            <h2 id="about-title">すてぶるペイについて</h2>
+            <p>すてぶるペイは、円で払い、ステーブルコイン（JPYC）で受け取る決済です（開発中）。購入者は日本円の銀行振込とパスキーで支払い、お店はカード会社の与信審査に頼らずに売上を受け取ります。</p>
+            <p><a href="/">サービスの紹介を見る</a>　<a href="/docs/">加盟店向けドキュメント</a></p>
+          </aside>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div>
+          <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
+          <p>運営会社：<a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">合同会社暗号屋</a></p>
+          <p><a href="/docs/">加盟店向けドキュメント</a>　<a href="/learn/">決済の解説</a></p>
+          <ul class="footer-facts">
+            <li>2019年2月設立。本社は福岡市です。</li>
+            <li>アステリア株式会社と共同で、JPYC の会計監査支援ツール「JPYC Explorer」を開発（2026年3月13日 アステリア発表）。</li>
+            <li>株式会社QTnetと、バリデータノードの運用を含む Web3 インフラ事業の共同実証実験を開始（2024年2月19日 発表）。</li>
+            <li>IoT データ取引基盤「PTPF」を活用した実証プロジェクトが、「福岡市実証実験フルサポート事業」に採択（2022年1月31日 福岡市発表）。</li>
+          </ul>
+        </div>
+        <p class="footer-note">© 2026 STBLpay. 運営: 暗号屋</p>
+      </div>
+    </footer>
+  </body>
+</html>

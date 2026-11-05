@@ -1,5 +1,6 @@
 ---
 title: Status list
+description: "A list of the 11 payment statuses with the category and meaning of each. Whether a notification was delivered is not part of the payment status."
 sidebar_label: Status list
 sidebar_position: 1
 ---

@@ -1,5 +1,6 @@
 ---
 title: Roadmap
+description: "Features planned after the first release, such as managing multiple accounts. Timing and details will be announced on this page once they are decided."
 sidebar_label: Roadmap
 sidebar_position: 4
 ---

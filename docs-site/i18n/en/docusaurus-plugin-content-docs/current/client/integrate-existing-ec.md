@@ -1,5 +1,6 @@
 ---
 title: Integrating with an existing EC site
+description: "How to connect STBLpay to an existing EC site, keeping orders and payments as separate states and storing the mapping between order IDs and payment IDs."
 sidebar_label: Integrating with an existing EC site
 sidebar_position: 4
 ---

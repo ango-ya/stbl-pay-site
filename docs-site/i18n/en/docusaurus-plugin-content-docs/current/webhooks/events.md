@@ -1,5 +1,6 @@
 ---
 title: Events and receiving
+description: "Describes the Webhook events that notify a merchant server of final payment results, and how to receive them and reflect a settled payment in your orders."
 sidebar_label: Events and receiving
 sidebar_position: 1
 ---

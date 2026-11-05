@@ -1,5 +1,6 @@
 ---
 title: Refundable amount and funding source
+description: "Explains how much can be refunded and where the refund funds come from, and what each amount on the refund screen means, for JPYC payment merchants."
 sidebar_label: Refundable amount and funding source
 sidebar_position: 3
 ---

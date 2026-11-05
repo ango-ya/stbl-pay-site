@@ -1,5 +1,6 @@
 ---
 title: 返金の手順
+description: "加盟店コンソールでの返金の手順を説明します。加盟店コンソールへのログインと、owner のパスキー承認が必要です。JPYC 決済を返金したい加盟店向けです。"
 sidebar_label: 返金の手順
 sidebar_position: 2
 ---
