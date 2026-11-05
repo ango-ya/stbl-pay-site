@@ -15,7 +15,7 @@ There are two domain settings, and they are treated differently.
 | [Registering a domain](#registering-a-domain) | **Required for e-commerce payments** | Checking `returnUrl`. Without it, you cannot create payments |
 | [Proof of ownership](#proof-of-ownership) | Optional | Showing a verified indicator on the checkout screen |
 
-Registering is enough to start accepting payments. Proof of ownership is an additional setting that shows buyers your shop is genuine, and you can set it up at any time.
+Registering is enough to start accepting payments. Proof of ownership is an additional setting that shows buyers that you control the registered domain, and you can set it up at any time.
 
 Pass the browser the `checkoutUrl` returned when you create the payment, and move the whole screen to the checkout page ([top-level navigation](/reference/glossary)). Do not build the destination yourself from the payment ID.
 
