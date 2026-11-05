@@ -1,5 +1,6 @@
 ---
 title: Return and receiving the result
+description: "How to handle the returnUrl where customers come back after paying, and how to receive the result. The return URL is never proof that a payment succeeded."
 sidebar_label: Return and receiving the result
 sidebar_position: 3
 ---

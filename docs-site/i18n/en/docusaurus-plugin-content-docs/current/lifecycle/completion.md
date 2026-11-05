@@ -1,5 +1,6 @@
 ---
 title: What counts as a completed payment
+description: "Explains what counts as a completed payment: your server confirms the settled status, verifies it against the order, and provides the goods exactly once."
 sidebar_label: What counts as a completed payment
 sidebar_position: 3
 ---

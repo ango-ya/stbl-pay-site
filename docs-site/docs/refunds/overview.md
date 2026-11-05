@@ -1,5 +1,6 @@
 ---
 title: 返金の提供範囲
+description: "JPYC 決済の返金が、加盟店コンソールで owner がパスキーで承認する経路だけであることを説明します。返金 API の有無を確かめたい加盟店向けです。"
 sidebar_label: 返金の提供範囲
 sidebar_position: 1
 ---

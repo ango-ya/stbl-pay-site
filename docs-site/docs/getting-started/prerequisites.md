@@ -1,5 +1,6 @@
 ---
 title: 準備
+description: "JPYC 決済に接続する前の準備を説明します。ガイドの記述どおりに動く環境を対象にしており、バージョンの確認先も分かる、ステーブルコイン決済の導入担当者向けです。"
 sidebar_label: 準備
 sidebar_position: 3
 ---

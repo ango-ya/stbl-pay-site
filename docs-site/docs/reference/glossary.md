@@ -1,5 +1,6 @@
 ---
 title: 用語集
+description: "JPYC 決済やステーブルコイン決済のガイドに出てくる用語を、テーマ別に説明する用語集です。冪等、at-least-once、決済意図などの意味が分かります。"
 sidebar_label: 用語集
 sidebar_position: 4
 ---

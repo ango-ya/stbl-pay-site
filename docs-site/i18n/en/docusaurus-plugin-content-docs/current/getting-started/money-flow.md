@@ -1,5 +1,6 @@
 ---
 title: Money flow
+description: "Explains the money flow: customers pay in JPYC, merchants receive JPYC, and how it reaches the merchant and converts back to yen."
 sidebar_label: Money flow
 sidebar_position: 2
 ---

@@ -1,5 +1,6 @@
 ---
 title: 決済を開始する
+description: "決済を開始する方法を説明します。自社サーバーで決済 ID と注文の対応を保存し、API から受け取った checkoutUrl へ遷移させる手順が分かります。"
 sidebar_label: 決済を開始する
 sidebar_position: 2
 ---

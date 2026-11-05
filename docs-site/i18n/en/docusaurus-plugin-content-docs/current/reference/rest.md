@@ -1,5 +1,6 @@
 ---
 title: REST API Reference
+description: "Overview of the REST API that merchant servers call, with usage notes. Field types, errors, and request examples are in the linked OpenAPI 3.1 specification."
 sidebar_label: REST API
 sidebar_position: 2
 ---

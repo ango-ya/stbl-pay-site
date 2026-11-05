@@ -1,5 +1,6 @@
 ---
 title: 署名検証
+description: "Webhook の署名とタイムスタンプを検証する方法と、イベント ID による冪等処理の実装例です。決済通知が本物かを確かめて受け取りたい加盟店サーバー向けです。"
 sidebar_label: 署名検証
 sidebar_position: 2
 ---

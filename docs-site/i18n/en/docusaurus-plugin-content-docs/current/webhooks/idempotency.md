@@ -1,5 +1,6 @@
 ---
 title: Idempotency and ordering
+description: "Explains idempotency and event ordering for Webhooks, and how to drop duplicate notifications with a UNIQUE constraint on the event ID, for merchant servers."
 sidebar_label: Idempotency and ordering
 sidebar_position: 4
 ---

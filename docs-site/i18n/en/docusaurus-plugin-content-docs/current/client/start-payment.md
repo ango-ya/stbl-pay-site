@@ -1,5 +1,6 @@
 ---
 title: Start a payment
+description: "How to start a payment: save the payment ID and order mapping on your server, then redirect the whole page to the checkoutUrl returned by the API."
 sidebar_label: Start a payment
 sidebar_position: 2
 ---

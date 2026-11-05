@@ -1,5 +1,6 @@
 ---
 title: Managing API keys
+description: "Explains the difference between the API key for creating payments and the Webhook signing key, what each is used for, and where to store them safely."
 sidebar_label: Managing API keys
 sidebar_position: 1
 ---

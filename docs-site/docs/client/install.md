@@ -1,5 +1,6 @@
 ---
 title: EC サイトへの組み込み準備
+description: "JPYC 決済を EC サイトに組み込む前の準備を説明します。加盟店が実装する、自社サーバーへの作成要求と専用決済ページへの遷移が分かる、導入担当者向けです。"
 sidebar_label: EC サイトへの組み込み準備
 sidebar_position: 1
 ---

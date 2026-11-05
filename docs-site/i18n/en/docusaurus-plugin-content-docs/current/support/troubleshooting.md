@@ -1,5 +1,6 @@
 ---
 title: Troubleshooting
+description: "A table of common integration symptoms, what to check for each, and who to contact. The first page to open when something goes wrong with STBLpay."
 sidebar_label: Troubleshooting
 sidebar_position: 2
 ---

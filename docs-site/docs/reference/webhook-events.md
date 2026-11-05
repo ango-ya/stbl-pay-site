@@ -1,5 +1,6 @@
 ---
 title: Webhook イベントリファレンス
+description: "Webhook イベントの項目と使い方の注意をまとめたリファレンスです。payload が snake_case である点など、決済通知を受ける際の要点が分かります。"
 sidebar_label: Webhook イベント
 sidebar_position: 3
 ---

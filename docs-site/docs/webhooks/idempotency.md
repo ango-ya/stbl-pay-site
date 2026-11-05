@@ -1,5 +1,6 @@
 ---
 title: 冪等性と順序
+description: "Webhook の冪等性と通知の順序を説明します。イベント ID の UNIQUE 制約で重複を除く方法が分かる、決済通知を受ける加盟店サーバー向けです。"
 sidebar_label: 冪等性と順序
 sidebar_position: 4
 ---

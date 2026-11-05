@@ -1,5 +1,6 @@
 ---
 title: Webhook Event Reference
+description: "Reference for Webhook events and notes on using them, including that Webhook payloads use snake_case, for merchants receiving payment notifications."
 sidebar_label: Webhook events
 sidebar_position: 3
 ---

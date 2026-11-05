@@ -1,5 +1,6 @@
 ---
 title: API キーの管理
+description: "決済作成用の API キーと、Webhook 署名鍵の違いと管理方法を説明します。秘密情報の用途と保管先が分かる、JPYC 決済の導入担当者向けです。"
 sidebar_label: API キーの管理
 sidebar_position: 1
 ---

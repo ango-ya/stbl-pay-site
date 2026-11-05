@@ -1,5 +1,6 @@
 ---
 title: Understand the payment flow
+description: "Explains the payment flow: the merchant server creates a payment and the customer signs with a passkey on the dedicated checkout page. Read before integrating."
 sidebar_label: Payment flow
 sidebar_position: 1
 ---

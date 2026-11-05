@@ -1,5 +1,6 @@
 ---
 title: Authentication
+description: "How to authenticate with the payment creation API: the merchant server sends its API key in a request header. For developers integrating STBLpay."
 sidebar_label: Authentication
 sidebar_position: 1
 ---

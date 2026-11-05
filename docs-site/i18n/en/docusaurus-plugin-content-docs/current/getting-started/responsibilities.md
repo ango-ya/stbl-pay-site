@@ -1,5 +1,6 @@
 ---
 title: Client and server responsibilities
+description: "Explains the split of responsibilities between client and server. The merchant server owns amounts, order authorization, and the decision to provide goods."
 sidebar_label: Client and server responsibilities
 sidebar_position: 2
 ---

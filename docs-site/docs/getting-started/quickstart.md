@@ -1,5 +1,6 @@
 ---
 title: Quick Start
+description: "決済の作成、遷移、状態照会を確かめる最小手順です。接続情報を用意して Sandbox で試せる、JPYC 決済を最短で動かしたい開発者向けです。"
 sidebar_label: Quick Start
 sidebar_position: 4
 ---

@@ -1,5 +1,6 @@
 ---
 title: Test scenarios
+description: "A checklist of test scenarios for confirming your integration works as documented, including how to trigger them in the Sandbox and record unverified items."
 sidebar_label: Test scenarios
 sidebar_position: 2
 ---

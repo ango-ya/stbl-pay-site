@@ -1,5 +1,6 @@
 ---
 title: 返金できないとき
+description: "返金を始められないとき、「返金」の画面に出る理由の表示と対処を表にまとめています。JPYC 決済の返金でつまずいた加盟店向けのページです。"
 sidebar_label: 返金できないとき
 sidebar_position: 4
 ---

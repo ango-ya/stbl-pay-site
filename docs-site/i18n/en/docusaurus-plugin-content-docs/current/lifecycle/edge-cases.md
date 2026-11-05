@@ -1,5 +1,6 @@
 ---
 title: Handling edge cases
+description: "How to handle abnormal cases such as a closed browser or a customer who never returns, by checking payment status, user actions, and order status separately."
 sidebar_label: Handling edge cases
 sidebar_position: 4
 ---

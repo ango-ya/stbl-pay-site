@@ -1,5 +1,6 @@
 ---
 title: REST API リファレンス
+description: "加盟店サーバーが呼ぶ REST API の概要と注意点です。項目ごとの型やエラー、リクエスト例は OpenAPI の仕様書にあり、そちらへの案内も載せています。"
 sidebar_label: REST API
 sidebar_position: 2
 ---

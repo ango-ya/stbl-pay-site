@@ -1,6 +1,7 @@
 ---
 id: overview
 title: What is STBLpay
+description: "A merchant guide to adding STBLpay, a stablecoin payment service where customers pay in yen and merchants receive JPYC, to an EC site, with how it works."
 sidebar_label: Overview
 sidebar_position: 1
 slug: /

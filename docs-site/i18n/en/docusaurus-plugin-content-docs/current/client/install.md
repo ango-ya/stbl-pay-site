@@ -1,5 +1,6 @@
 ---
 title: Preparing to integrate with your EC site
+description: "What to prepare before adding STBLpay to your EC site, and what the merchant implements: a payment creation request to your own server and a redirect."
 sidebar_label: Preparing to integrate with your EC site
 sidebar_position: 1
 ---

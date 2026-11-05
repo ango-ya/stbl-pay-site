@@ -1,5 +1,6 @@
 ---
 title: 決済を作成する
+description: "決済を作成する方法を説明します。金額と orderId を登録して決済意図を作る手順と、加盟店サーバーで確かめることが分かる、開発者向けです。"
 sidebar_label: 決済を作成する
 sidebar_position: 2
 ---

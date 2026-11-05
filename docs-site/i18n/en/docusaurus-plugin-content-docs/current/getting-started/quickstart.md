@@ -1,5 +1,6 @@
 ---
 title: Quick Start
+description: "The shortest path to confirm payment creation, redirect, and status lookup. Prepare your connection details and try it in the Sandbox."
 sidebar_label: Quick Start
 sidebar_position: 4
 ---

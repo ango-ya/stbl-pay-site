@@ -1,5 +1,6 @@
 ---
 title: トラブルシューティング
+description: "STBLpay の導入で起きやすい症状と、確認すること、問い合わせ先を表にまとめています。JPYC 決済でつまずいたときに最初に見るページです。"
 sidebar_label: トラブルシューティング
 sidebar_position: 2
 ---
