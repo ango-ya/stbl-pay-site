@@ -58,7 +58,7 @@
 | 加盟店向けドキュメント | https://stbl-pay.com/docs/ |
 | API 仕様書 | https://stbl-pay.com/docs/openapi.yaml |
 
-※JPYC は、JPYC 株式会社が発行する電子決済手段です。JPYC および JPYC EX は同社のサービスです。
+※JPYC は、JPYC 株式会社が資金移動業者の登録（2025年8月）を受けて、電子決済手段として発行しています（出典：同社のプレスリリース https://prtimes.jp/main/html/rd/p/000000328.000054018.html 、2026年11月5日に確認）。JPYC および JPYC EX は同社のサービスです。
 ※利用には、利用規約への同意と、JPYC EX など外部サービスの要件を満たすことが必要です。
 
 ## 会社概要
@@ -66,15 +66,15 @@
 | 項目 | 内容 |
 |---|---|
 | 会社名 | 合同会社暗号屋（Ango-ya LLC） |
-| 設立 | 2019年2月 |
+| 設立 | 2019年2月（出典：https://www.ango-ya.org/company/about 。2026年11月5日は 403 で開けず、再確認が必要） |
 | 所在地 | 福岡市 |
 | 事業 | （記入：index.html のフッターにある実績の範囲で） |
 | URL | https://www.ango-ya.org/ |
 
-主な実績（いずれも各社・自治体の発表に基づく）
-- アステリア株式会社と共同で、JPYC の会計監査支援ツール「JPYC Explorer」を開発（2026年3月13日 アステリア発表）
-- 株式会社QTnetと、バリデータノードの運用を含む Web3 インフラ事業の共同実証実験を開始（2024年2月19日 発表）
-- IoT データ取引基盤「PTPF」を活用した実証プロジェクトが、「福岡市実証実験フルサポート事業」に採択（2022年1月31日 福岡市発表）
+主な実績（いずれも各社・自治体の発表に基づく。出典の URL は括弧内、2026年11月5日に確認）
+- アステリア株式会社と共同で、JPYC の会計監査支援ツール「JPYC Explorer」を開発（2026年3月13日 アステリア発表 https://jp.asteria.com/news/2026031328233/ ）
+- 株式会社QTnetと、バリデータノードの運用を含む Web3 インフラ事業の共同実証実験を開始（2024年2月19日 発表 https://prtimes.jp/main/html/rd/p/000000030.000062107.html ）
+- IoT データ取引基盤「PTPF」を活用した実証プロジェクトが、「福岡市実証実験フルサポート事業」に採択（2022年1月31日 福岡市発表 https://www.city.fukuoka.lg.jp/keizai/kigyo-renkei/mirai/fullsup/saitaitiran/documents/fullsupport_angoya.pdf ）
 
 ## 本件に関するお問い合わせ
 
