@@ -23,65 +23,58 @@ const BANNED = [
 const BANNED_EN = /\bSDK\b|early access|top[ -]?up|recharge|just make a bank transfer/i;
 
 
-// --- 自社の料率と提供開始日の検査（HTML 文字列を受ける純関数。下のユニット test で、わざと違反を入れて確かめる） ---
-// 対象は、表示テキスト（title を含む）・すべての meta の content・JSON-LD のすべての文字列値。ブロック要素の境目は改行にする
-const decode = (s) => s
-  .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
-  .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
-  .replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, "&");
-const BLOCK = /<\/?(?:p|li|ul|ol|h[1-6]|tr|table|div|section|article|header|footer|nav|main|details|summary|dt|dd|dl|blockquote|figcaption|title|br|hr)\b[^>]*>/gi;
-const jsonStrings = (v) => typeof v === "string" ? [v] : v && typeof v === "object" ? Object.values(v).flatMap(jsonStrings) : [];
-function pageText(html) {
-  const ld = [...html.matchAll(/<script\b[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].flatMap((m) => jsonStrings(JSON.parse(m[1])));
-  const metas = [...html.matchAll(/<meta\b[^>]*\scontent=(?:"([^"]*)"|'([^']*)')/gi)].map((m) => decode(m[1] ?? m[2]));
-  const shown = decode(html.replace(/<(script|style|template)\b[\s\S]*?<\/\1>/gi, " ").replace(/<!--[\s\S]*?-->/g, " ").replace(/\s+/g, " ").replace(BLOCK, "\n").replace(/<[^>]+>/g, " "));
-  return [shown, ...metas, ...ld].join("\n").replace(/[ \t\u00a0\u3000]+/g, " ");
-}
+// --- 自社の料率と提供開始日の検査（推測はせず、単純で厳しい決まりにする。下のユニット test で、わざと違反を入れて確かめる） ---
+// 文字の取り出しはブラウザに任せる（文字参照や属性の空白はブラウザが解決する）。page.evaluate(TEXTS) で呼ぶ。
+// 対象は title・すべての meta の content・JSON-LD のすべての文字列値・body の textContent（script と style の中身は除く）
+const TEXTS = () => {
+  const strings = (v) => typeof v === "string" ? [v] : v && typeof v === "object" ? Object.values(v).flatMap(strings) : [];
+  const body = document.body.cloneNode(true);
+  body.querySelectorAll("script, style").forEach((e) => e.remove());
+  return [
+    document.title,
+    ...[...document.querySelectorAll("meta[content]")].map((m) => m.getAttribute("content")),
+    ...[...document.querySelectorAll('script[type="application/ld+json"]')].flatMap((s) => strings(JSON.parse(s.textContent))),
+    body.textContent,
+  ];
+};
+// 空白（改行・<br> 由来を含む）は 1 つにまとめ、文は「。．！？!?」と英語の「. 」だけで区切る
+const sentences = (texts) => texts.flatMap((t) => t.replace(/\s+/g, " ").split(/[。．！？!?]|\. /)).map((s) => s.trim()).filter(Boolean);
+const OWN = /すてぶるペイ|STBLpay|当サービス|本サービス|当社/i;
 
-// 料率：数字の % はすべて、ページごとの許可リストのどれかに一致したときだけ許す（帰属の推測はしない）。
-// 一致は「% の前後 CONTEXT 文字の中で、パターンの一致がその % を含む」こと
-const CONTEXT = 50;
+// 料率：自社名を含む文に数字の % があれば、例外なく違反。自社名の無い文の % は、許可リストに一致するときだけ許す。
+// 一致は、その % の数値（m[0]）が value と完全に同じで、その直前が prefix で終わること（% ごとに、その位置で照合する）
 const PCT = /[0-9０-９][0-9０-９,.．]*\s*(?:[%％]|パーセント|percent\b)/gi;
 const ALLOW_PCT = [
-  // JPYC の発行体が示す保全の割合（JPYC 株式会社の公表。自社の料率ではない）
-  { pages: ["/learn/stablecoin-payments/", "/learn/jpyc-payments/", "/learn/glossary/"], pattern: /発行残高の\s*100%\s*以上を預貯金と国債で保全/ },
-  { pages: ["/en/learn/stablecoin-payments-japan/"], pattern: /reserves of at least 100% of the outstanding/ },
-  // Stripe の日本の標準料金（Stripe 公式の料金ページを出典に付けている）
-  { pages: ["/learn/stablecoin-payments/", "/learn/jpyc-payments/", "/learn/payment-fees/"], pattern: /Stripe[^。]{0,40}3\.6%/ },
-  { pages: ["/en/learn/stablecoin-payments-japan/"], pattern: /Stripe's standard rate in Japan is 3\.6%/ },
-  // Stripe の通貨換算の加算（直前の Stripe 3.6% の続き）
-  { pages: ["/learn/stablecoin-payments/", "/learn/jpyc-payments/"], pattern: /3\.6%\s*です（通貨の換算が要る場合は\s*2%\s*を加算）/ },
-  { pages: ["/learn/payment-fees/"], pattern: /3\.6%\s*です。通貨の換算が要る場合は、\s*2%\s*が加わります/ },
-  { pages: ["/en/learn/stablecoin-payments-japan/"], pattern: /3\.6% per domestic card payment, with an extra 2%/ },
-  // 料率が目立つことの例示（下の段落で出典付きで示す Stripe の値と同じ。自社の料率ではない）
-  { pages: ["/learn/payment-fees/"], pattern: /「3\.6%」のような料率が目立ちますが/ },
+  // JPYC の発行体が示す保全の割合（JPYC 株式会社の公表。出典付き。自社の料率ではない）
+  { pages: ["/learn/stablecoin-payments/", "/learn/glossary/"], prefix: "日本円と 1：1 で交換でき、発行残高の ", value: "100%" },
+  { pages: ["/learn/jpyc-payments/"], prefix: "2025年10月27日に発行が始まり、発行残高の ", value: "100%" },
+  { pages: ["/en/learn/stablecoin-payments-japan/"], prefix: "states that reserves of at least ", value: "100%" },
+  // Stripe の日本の標準料金と、通貨換算の加算（Stripe 公式の料金ページを出典に付けている。自社の料率ではない）
+  { pages: ["/learn/stablecoin-payments/"], prefix: "Stripe の日本の標準料金は、成功したカード決済 1 件ごとに ", value: "3.6%" },
+  { pages: ["/learn/stablecoin-payments/"], prefix: "成功したカード決済 1 件ごとに 3.6% です（通貨の換算が要る場合は ", value: "2%" },
+  { pages: ["/learn/jpyc-payments/"], prefix: "Stripe の日本の標準の料金体系では、カードでの決済が成功するごとに ", value: "3.6%" },
+  { pages: ["/learn/jpyc-payments/"], prefix: "カードでの決済が成功するごとに 3.6% です（通貨の換算が要る場合は ", value: "2%" },
+  // payment-fees：meta・JSON-LD の要約と、「料率の例：Stripe の場合」の節（直前の文で Stripe の標準料金と明示し、出典 [1] を付けている）
+  { pages: ["/learn/payment-fees/"], prefix: "Stripe の日本の標準料金は、カード決済 1 件ごとに ", value: "3.6%" },
+  { pages: ["/learn/payment-fees/"], prefix: "カード決済は、成功した決済 1 件ごとに ", value: "3.6%" },
+  { pages: ["/learn/payment-fees/"], prefix: "通貨の換算が要る場合は、", value: "2%" },
+  { pages: ["/en/learn/stablecoin-payments-japan/"], prefix: "Stripe's standard rate in Japan is ", value: "3.6%" },
+  { pages: ["/en/learn/stablecoin-payments-japan/"], prefix: "3.6% per domestic card payment, with an extra ", value: "2%" },
 ];
-function rateViolations(html, allow) {
-  const text = pageText(html);
-  return [...text.matchAll(PCT)].flatMap((m) => {
-    const from = Math.max(0, m.index - CONTEXT);
-    const ctx = text.slice(from, m.index + m[0].length + CONTEXT);
-    const at = m.index - from;
-    const ok = allow.some((re) => [...ctx.matchAll(new RegExp(re.source, re.flags.replace("g", "") + "g"))].some((a) => a.index <= at && at < a.index + a[0].length));
-    return ok ? [] : [`「${m[0]}」… ${ctx.replace(/\n/g, " ")}`];
-  });
+function rateViolations(texts, allow) {
+  return sentences(texts).flatMap((s) => [...s.matchAll(PCT)].flatMap((m) => {
+    if (OWN.test(s)) return [`自社名と同じ文の「${m[0]}」… ${s}`];
+    const ok = allow.some((a) => a.prefix && a.value === m[0] && s.slice(0, m.index).endsWith(a.prefix));
+    return ok ? [] : [`許可リストに無い「${m[0]}」… ${s}`];
+  }));
 }
-const allowFor = (path) => ALLOW_PCT.filter((a) => a.pages.includes(path)).map((a) => a.pattern);
+const allowFor = (path) => ALLOW_PCT.filter((a) => a.pages.includes(path));
 
-// 提供開始日：自社名・開始の語・日付が同じ文にあれば違反。同じ文に「未定」などがあれば許す。主語が他社だけの文は自社名が無いので対象外
-const OWN = /すてぶるペイ|STBLpay|当サービス|本サービス|当社/i;
-const LAUNCH_WORD = /提供|開始|リリース|ローンチ|公開|launch|available|release|go(?:es)? live|roll(?:s|ing)? ?out/i;
-const MONTH = "(?:jan(?:uary)?|feb(?:ruary)?|march|mar|april|apr|june|jun|july|jul|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
-const DATE = new RegExp([
-  "[0-9０-９]{4}\\s*年", "[0-9０-９]{1,2}\\s*月\\s*(?:[0-9０-９]{1,2}\\s*日|上旬|中旬|下旬|中|末)", "\\d{4}\\s*[/.\\-]\\s*\\d{1,2}", "令和",
-  `\\b${MONTH}\\b\\.?`, "\\bmay\\s+(?:\\d{1,2},?\\s+)?\\d{4}", "\\bQ[1-4]\\b", "\\b[1-4]Q\\b", "第\\s*[1-4一二三四]\\s*四半期",
-  "\\b(?:early|mid|late|spring|summer|fall|autumn|winter)[\\s-]+(?:of\\s+)?\\d{4}", "\\b(?:this|next)\\s+(?:year|quarter|month|spring|summer|fall|autumn|winter)",
-  "上半期|下半期|上期|下期|年内|年度内|今年|来年|(?:今|来)(?:春|夏|秋|冬|期)",
-].join("|"), "i");
-const UNDECIDED = /未定|決まっていません|決まっていない|not yet (?:set|decided)|not been (?:set|decided)|\bTBD\b/i;
-const launchDateClaims = (html) => pageText(html).split(/[。．.!?！？\n]/)
-  .filter((s) => OWN.test(s) && LAUNCH_WORD.test(s) && DATE.test(s) && !UNDECIDED.test(s))
-  .map((s) => s.trim());
+// 提供開始日：自社名と開始の語が同じ文にあれば、日付の有無を問わず違反。例外は、同じ文に下の言い回しがそのままあるときだけ
+const LAUNCH_WORD = /開始|リリース|ローンチ|提供開始|サービス開始|launch|release|go live|goes live|available (?:from|in|on)/i;
+const UNDECIDED = ["提供開始日は未定", "提供開始日はまだ決まっていません", "launch date is not yet set", "launch date has not been set"];
+const launchDateClaims = (texts) => sentences(texts)
+  .filter((s) => OWN.test(s) && LAUNCH_WORD.test(s) && !UNDECIDED.some((u) => s.includes(u)));
 
 // 全ページ共通の CSP（_headers の最初の Content-Security-Policy の行。/* に掛かる）
 const CSP = readFileSync(new URL("../../_headers", import.meta.url), "utf8")
@@ -177,8 +170,9 @@ for (const { path, main } of PAGES) {
       expect(text).not.toMatch(BANNED_EN);
     }
     // 自社の料率と提供開始日を書かない（表示・meta・JSON-LD のすべて。検査の中身は上の関数）
-    expect(rateViolations(source, allowFor(path)), "許可リストに無い %。自社の料率は書かない。他社の出典付きの値なら ALLOW_PCT に理由付きで足す").toEqual([]);
-    expect(launchDateClaims(source), "提供開始日の断定").toEqual([]);
+    const texts = await page.evaluate(TEXTS);
+    expect(rateViolations(texts, allowFor(path)), "自社名と同じ文の %、または許可リストに無い %。他社の出典付きの値なら、自社名と別の文にして ALLOW_PCT に理由付きで足す").toEqual([]);
+    expect(launchDateClaims(texts), "自社名と開始の語が同じ文にある（提供開始日は書かない）").toEqual([]);
 
     // ページ内の参照（出典の [n] など）は、行き先がある
     const fragments = await page.locator('a[href^="#"]').evaluateAll((as) => as.map((a) => a.getAttribute("href").slice(1)));
@@ -229,45 +223,54 @@ test("hreflang は相互に参照し合い、対は日英のステーブルコ�
   }
 });
 
-test("検査関数：料率は許可リストに無い % を落とす", () => {
-  const stripe = [/Stripe[^。]{0,40}3\.6%/];
+// ユニット：HTML 文字列を page.setContent で読み込み、本番と同じ TEXTS で取り出して検査する
+const textsOf = async (page, html) => { await page.setContent(html); return page.evaluate(TEXTS); };
+
+test("検査関数：自社名と同じ文の % と、許可リストに無い % を落とす", async ({ page }) => {
+  const stripe = [{ pages: [], prefix: "Stripe の日本の標準料金は、カードでの決済が成功するごと ", value: "3.6%" }];
   const bad = [
-    "<p>すてぶるペイの手数料について。料率は1%です[1]。</p>",
-    '<head><meta name="description" content="すてぶるペイの手数料は1%です。"></head><p>手数料は検討中です。</p>',
+    "<p>Stripe と比較して、すてぶるペイは1%、Stripe は3.6%です。</p>",
+    "<p>Stripe と同じく、すてぶるペイは3.6%です。</p>",
+    "<p>Stripe の日本の標準料金は、カードでの決済が成功するごと 3.6% で、すてぶるペイも同じです。</p>",
+    '<head><meta name="description" content = "すてぶるペイの手数料は1%です。"></head><p>手数料は検討中です。</p>',
+    "<p>本文の すてぶるペイの手数料は 1&percnt;</p>",
+    "<p>すてぶるペイの手数料は<br>1&#37;</p>",
     '<script type="application/ld+json">{"@type":"Article","description":"STBLpay の手数料は 1.5％"}</script>',
-    "<p>Stripe は 3.6% です。すてぶるペイは 1.0% です。</p>",
     "<p>STBLpay charges 2 percent.</p>",
-    "<p>手数料は 1&#37; です。</p>",
+    // 許可リストに無い他社の %（値が違う・直前の文字列が違う・許可された値の隣の別の数値）
+    "<p>Stripe の日本の標準料金は、カードでの決済が成功するごと 3.5% です。</p>",
+    "<p>PayPal の料率は 3.6% です。</p>",
+    "<p>Stripe の日本の標準料金は、カードでの決済が成功するごと 3.6% で、別の会社は 1% です。</p>",
   ];
-  for (const h of bad) expect(rateViolations(h, stripe), h).not.toEqual([]);
-  // 許可リストが空なら、他社の値でも落とす
-  expect(rateViolations("<p>Stripe は 3.6% です。</p>", [])).not.toEqual([]);
+  for (const h of bad) expect(rateViolations(await textsOf(page, h), stripe), h).not.toEqual([]);
+  // 許可リストが空なら、許可リストどおりの文でも落とす
+  expect(rateViolations(await textsOf(page, "<p>Stripe の日本の標準料金は、カードでの決済が成功するごと 3.6% です。</p>"), [])).not.toEqual([]);
   const ok = [
-    "<table><tr><td>Stripe：3.6%／すてぶるペイ：未定</td></tr></table>",
-    "<p>Stripe の日本の標準料金は 3.6% です。すてぶるペイは開発中です。</p>",
+    "<p>Stripe の日本の標準料金は、カードでの決済が成功するごと 3.6% です。すてぶるペイは開発中です。</p>",
+    "<p>Stripe の日本の標準料金は、カードでの決済が成功するごと\n  3.6&#37; です。</p>",
     "<p>手数料は検討中です。</p>",
   ];
-  for (const h of ok) expect(rateViolations(h, stripe), h).toEqual([]);
+  for (const h of ok) expect(rateViolations(await textsOf(page, h), stripe), h).toEqual([]);
 });
 
-test("検査関数：提供開始日の断定を落とし、未定や他社の日付は通す", () => {
+test("検査関数：自社名と開始の語が同じ文にあれば落とし、決まった「未定」の言い回しと他社の開始は通す", async ({ page }) => {
   const bad = [
-    "<p>すてぶるペイは2027年1月に正式に提供開始します。</p>",
+    "<p>すてぶるペイは1月に提供開始します。</p>",
+    "<p>STBLpay launches in 2027.</p>",
+    "<p>STBLpay launches on May 5.</p>",
+    "<p>すてぶるペイ<br>は2027年1月に提供開始</p>",
+    "<p>すてぶるペイは2027年1月に提供開始、料金は未定です。</p>",
     '<script type="application/ld+json">{"@type":"Article","description":"すてぶるペイは2027年3月にサービス開始予定です。"}</script>',
-    '<meta name="description" content="STBLpay は 2027 年春に提供を始めます。">',
-    "<p>STBLpay will launch in March 2027.</p>",
     "<p>STBLpay will be available in Q2 2027.</p>",
     "<p>当サービスは<strong>2027年上半期</strong>にリリース予定です。</p>",
-    "<p>STBLpay launches early 2027!</p>",
   ];
-  for (const h of bad) expect(launchDateClaims(h), h).not.toEqual([]);
+  for (const h of bad) expect(launchDateClaims(await textsOf(page, h)), h).not.toEqual([]);
   const ok = [
-    "<p>JPYC は2025年10月27日にサービス開始しました。</p>",
-    "<p>すてぶるペイの提供開始日は未定です（2026年11月時点）。</p>",
-    "<p>提供開始日は未定です（2026年11月時点）。</p>",
-    "<p>STBLpay is under development; the launch date is not yet set.</p>",
+    "<p>JPYC は2025年10月27日にサービス開始</p>",
+    "<p>すてぶるペイは開発中で、提供開始日は未定です（2026年11月時点）。</p>",
     "<p>STBLpay is under development, and the launch date has not been set (as of November 2026).</p>",
+    "<p>STBLpay is under development; the launch date is not yet set.</p>",
     "<p>The Block「Circle to launch USDC stablecoin in Japan through SBI VC Trade」（2025年3月25日）。</p>",
   ];
-  for (const h of ok) expect(launchDateClaims(h), h).toEqual([]);
+  for (const h of ok) expect(launchDateClaims(await textsOf(page, h)), h).toEqual([]);
 });
