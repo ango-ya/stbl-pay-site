@@ -22,7 +22,7 @@ STBLpay（すてぶるペイ）は、銀行振込による日本円の支払い�
 
 1. **サーバーで決済を作る。** 注文を確定して金額をサーバーで計算し、API で決済を作成します。例：注文 `ord_0001`、4,980 円の決済を作る。詳しくは[決済を作成する](/server/create-payment)。
 2. **返ってきた `checkoutUrl` へ利用者を移動させる。** 例：「支払う」ボタンを押した利用者のブラウザを、`checkoutUrl` へ遷移させる。詳しくは[決済を開始する](/client/start-payment)。
-3. **サーバーで結果を受け取る。** Webhook（署名を検証する）か[状態照会](/server/retrieve-payment)で結果を確かめ、注文を更新します。Webhook の設定は任意です。例：成立を確かめたら、注文を「支払い済み」にして商品を一度だけ提供する。詳しくは[完了判定](/lifecycle/completion)と[Webhook](/webhooks/events)。
+3. **サーバーで結果を受け取る。** Webhook（署名を検証する）で結果を受け取り、注文を更新します。EC サイトでは通常 Webhook を使います。理由があって使わない場合は、[状態照会](/server/retrieve-payment)で確かめます。例：成立を確かめたら、注文を「支払い済み」にして商品を一度だけ提供する。詳しくは[完了判定](/lifecycle/completion)と[Webhook](/webhooks/events)。
 
 それ以外は、次のとおり STBLpay と利用者が行います。
 
@@ -43,10 +43,21 @@ STBLpay（すてぶるペイ）は、銀行振込による日本円の支払い�
 
 提供状況と既知の制約は[既知の制限](/support/limitations)にまとめています。
 
+## 環境と URL
+
+開発は Sandbox で始めます。Sandbox の加盟店コンソールで登録すれば、すぐに API キーを発行して試せます。
+
+| 環境 | 加盟店コンソール | API のベース URL |
+|---|---|---|
+| Sandbox（開発・検証用。JPYC EX はモック） | https://merchant.sandbox.stbl-pay.com/ （[登録](https://merchant.sandbox.stbl-pay.com/register)） | `https://api.sandbox.stbl-pay.com` |
+| 本番 | 公開後にここで案内します | 公開後にここで案内します |
+
+API キー・ドメイン・Webhook は環境ごとに別に設定し、URL とキーをセットで管理します。決済ページの URL は作成応答の `checkoutUrl` を使います。
+
 ## 最初に読むもの
 
-1. [決済フロー](/getting-started/payment-flow)、[お金の流れ](/getting-started/money-flow)、[Client と Server の責務](/getting-started/responsibilities)
-2. [準備](/getting-started/prerequisites)と[Quick Start](/getting-started/quickstart)
+1. [Quick Start](/getting-started/quickstart)：Sandbox での登録から API キーの発行、最初の決済まで
+2. [決済フロー](/getting-started/payment-flow)、[お金の流れ](/getting-started/money-flow)、[Client と Server の責務](/getting-started/responsibilities)
 3. [完了判定](/lifecycle/completion)と[Webhook](/webhooks/events)
 
 返金は[返金の提供範囲](/refunds/overview)を参照してください。
