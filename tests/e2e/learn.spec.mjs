@@ -229,3 +229,8 @@ test("検査関数：自社名と開始の語が同じ文にあれば落とし�
   ];
   for (const h of ok) expect(launchDateClaims(await textsOf(page, h)), h).toEqual([]);
 });
+
+test("英語の使わない語に August 2026 が入っている（回帰）", () => {
+  expect("Launching in August 2026.").toMatch(BANNED_EN);
+  expect("launching in august 2026").toMatch(BANNED_EN);
+});

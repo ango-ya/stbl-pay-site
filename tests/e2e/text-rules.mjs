@@ -7,7 +7,7 @@ export const BANNED = [
   "先行導入", "2026年8月", "2026.08", "SDK", "経由せず", "経由しない", "銀行振込するだけ", "同額を銀行振込",
   "JPYC建て", "誰でも受け取れる", "導入費用0円", "安全", "元本保証", "必ず", "誰でも",
 ];
-export const BANNED_EN = /\bSDK\b|early access|top[ -]?up|recharge|just make a bank transfer/i;
+export const BANNED_EN = /\bSDK\b|early access|August 2026|top[ -]?up|recharge|just make a bank transfer/i;
 
 
 // --- 自社の料率と提供開始日の検査（推測はせず、単純で厳しい決まりにする。learn.spec.mjs のユニット test で、わざと違反を入れて確かめる） ---

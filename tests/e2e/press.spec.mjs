@@ -122,6 +122,8 @@ test("ダウンロードの素材は、すべて正しい Content-Type で配信
     expect(res.headers()["content-type"], href).toContain(TYPES[href.slice(href.lastIndexOf("."))]);
     if (!href.endsWith(".svg")) continue;
     const svg = await res.text();
+    // 素材を直接開くと本番の CSP がかかるので、インラインの style と script を持たない
+    expect(svg, href).not.toMatch(/\sstyle\s*=|<style|<script|\son[a-z]+\s*=/i);
     const parsed = await page.evaluate((s) => {
       const doc = new DOMParser().parseFromString(s, "image/svg+xml");
       return { error: !!doc.querySelector("parsererror"), root: doc.documentElement.localName, viewBox: doc.documentElement.getAttribute("viewBox") };
