@@ -55,7 +55,7 @@
       service_name_en: STBLpay
       category: JPY stablecoin payments (under development)
       primary_audience: Sole proprietors (creators selling digital works, freelance hairdressers and nail artists, and others), online shops that cannot easily adopt card payments, overseas online shops that want a payment method for Japan
-      buyer_value: Payments are approved with a passkey (Face/fingerprint). When your JPYC balance is enough, no transfer is needed. When it is not, decide the amount to issue (¥3,000 to ¥1,000,000 per issuance) and make a bank transfer in Japanese yen; the remainder stays as a balance for your next payment. From transfer to reflection takes about 5 to 10 minutes as a guide. At a shop's register, scan a QR code and pay from your balance. No fees added to the buyer.
+      buyer_value: Payments are approved with a passkey (Face/fingerprint). When your JPYC balance is enough, no transfer is needed. When it is not, decide the amount to issue (¥3,000 to ¥1,000,000 per issuance) and make a bank transfer in Japanese yen; the remainder stays as a balance for your next payment. That range applies to each issuance; payments themselves can be under ¥3,000 or over ¥1,000,000. From transfer to reflection takes about 5 to 10 minutes as a guide. At a shop's register, scan a QR code and pay from your balance. No fees added to the buyer.
       merchant_value: No reliance on card companies' credit screening. No up-front KYB or KYC (open a merchant account on the web by yourself). Payment fees under consideration (a single flat rate for all merchants is planned, finalized at launch). Funds arrive in JPYC the moment the payment is made, and no reconciliation of deposits is needed. Withdrawal to Japanese yen is done from the merchant's own JPYC EX account.
       implementation: Your site does three things: place a button, guide customers to the payment screen, and receive the result. The merchant documentation (https://stbl-pay.com/docs/en/) and the API specification (OpenAPI 3.1, https://stbl-pay.com/docs/en/openapi.yaml) are published, and an AI coding agent can read them to help you integrate. A Sandbox for trying the integration is also available (as of November 2026). A plugin for WordPress (WooCommerce) is in preparation. You can also start with QR codes alone.
       compliance_note: Requires agreement to the terms of use and the requirements of external services such as JPYC EX. Non-custodial design (the provider holds no funds or private keys).
@@ -217,7 +217,7 @@
           "name": "What is the minimum amount?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "JPYC is issued in amounts of ¥3,000 to ¥1,000,000 per issuance. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as a balance for your next payment. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen)."
+            "text": "Payments can be smaller than ¥3,000 or larger than ¥1,000,000. The range of ¥3,000 to ¥1,000,000 applies to each issuance of JPYC (turning a yen bank transfer into JPYC), not to the payment amount. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as a balance for your next payment. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen)."
           }
         },
         {
@@ -435,7 +435,7 @@
             <li><strong>Settlement</strong><p>The payment goes through exactly as the buyer approved it, the JPYC reaches the merchant, and the payment is complete</p></li>
           </ol>
           <p class="flow-note">Funds never pass through Ango-ya. The buyer's JPYC balance belongs to the buyer. What Ango-ya provides is the payment screens and the system. It does not hold the customer's funds, private keys, or information needed to move money (non-custodial). Every payment is executed with the buyer's own approval (a passkey signature).</p>
-          <p class="flow-note">When your JPYC balance is enough, you can pay with just a passkey (Face/fingerprint), with no transfer. When it is not, decide the amount to issue and make a bank transfer. Each issuance is ¥3,000 to ¥1,000,000, and the remainder stays as a balance you can use for your next payment. At a shop's register, you can scan a QR code and pay from your balance (for regular customers; add to your balance from My Page).</p>
+          <p class="flow-note">When your JPYC balance is enough, you can pay with just a passkey (Face/fingerprint), with no transfer. When it is not, decide the amount to issue and make a bank transfer. Each issuance is ¥3,000 to ¥1,000,000 (this is not a limit on the payment amount), and the remainder stays as a balance you can use for your next payment. At a shop's register, you can scan a QR code and pay from your balance (for regular customers; add to your balance from My Page).</p>
         </div>
       </section>
 
@@ -574,7 +574,7 @@
             </details>
             <details>
               <summary>What is the minimum amount?</summary>
-              <p>JPYC is issued in amounts of ¥3,000 to ¥1,000,000 per issuance. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as a balance for your next payment. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen).<sup class="fn"><a href="#fn-6" id="fnref-q7">*6</a></sup></p>
+              <p>Payments can be smaller than ¥3,000 or larger than ¥1,000,000. The range of ¥3,000 to ¥1,000,000 applies to each issuance of JPYC (turning a yen bank transfer into JPYC), not to the payment amount. For purchases under ¥3,000, you pay by issuing ¥3,000 or more, and the remainder stays as a balance for your next payment. If you already have a balance, you can pay straight from it (the minimum payment is expected to be around a few hundred yen).<sup class="fn"><a href="#fn-6" id="fnref-q7">*6</a></sup></p>
             </details>
             <details>
               <summary>Is there a sales dashboard?</summary>
@@ -703,7 +703,7 @@
             <li>A proof-of-concept project using the IoT data trading platform "PTPF" was selected for the Fukuoka City Demonstration Experiment Full Support Program (announced by Fukuoka City on January 31, 2022).</li>
           </ul>
         </div>
-        <p class="footer-note">© 2026 STBLpay. Operated by Ango-ya</p>
+        <p class="footer-note">© 2026 STBLpay. Operated by Ango-ya LLC</p>
       </div>
     </footer>
 
