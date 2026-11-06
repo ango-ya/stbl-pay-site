@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- LP の日英と、解説（/learn/ と /en/learn/）、プレスキット（/press/ と /en/press/）。対訳のあるページには hreflang を付ける。docs は /docs/sitemap.xml（Docusaurus が作る）。デモ画面は noindex なので載せない -->
+<!-- LP の日英と、解説（/learn/ と /en/learn/）、プレスキット（/press/ と /en/press/）、開示等の請求の手続（日本語のみ）。対訳のあるページには hreflang を付ける。docs は /docs/sitemap.xml（Docusaurus が作る）。デモ画面は noindex なので載せない -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://stbl-pay.com/</loc>
@@ -66,5 +66,9 @@
     <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/press/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://stbl-pay.com/en/press/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/press/" />
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/privacy/requests/</loc>
+    <lastmod>2026-11-05</lastmod>
   </url>
 </urlset>

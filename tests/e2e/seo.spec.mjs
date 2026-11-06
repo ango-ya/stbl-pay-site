@@ -49,10 +49,12 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
     expect(xml, path).toContain("<urlset");
     return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   };
-  // LP の日英と解説（/learn/ と /en/learn/）とプレスキット（/press/ と /en/press/）。中身は learn.spec.mjs と press.spec.mjs で見る
+  // LP の日英と解説（/learn/ と /en/learn/）とプレスキット（/press/ と /en/press/）、開示等の請求の手続。中身は learn.spec.mjs と press.spec.mjs で見る
   const top = await locsOf("/sitemap.xml");
   expect(top.slice(0, 2)).toEqual(LPS.map((lp) => lp.url));
-  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/(en\/)?(learn\/([a-z-]+\/)?|press\/)$/);
+  expect(top).toContain("https://stbl-pay.com/privacy/requests/");
+  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/((en\/)?(learn\/([a-z-]+\/)?|press\/)|privacy\/requests\/)$/);
+  for (const loc of top) expect((await request.get(new URL(loc).pathname)).status(), loc).toBe(200);
 
   // docs は言語ごとに 1 本。URL は末尾にスラッシュ（配信先が付けて飛ばすので、飛ばした先を載せる）
   for (const [path, prefix] of [["/docs/sitemap.xml", "https://stbl-pay.com/docs/"], ["/docs/en/sitemap.xml", "https://stbl-pay.com/docs/en/"]]) {
@@ -65,6 +67,15 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
       expect(loc).toMatch(/\/$/);
     }
   }
+});
+
+test("開示等の請求のページは LP のフッターから辿れ、canonical と窓口を持つ", async ({ page }) => {
+  await page.goto("/");
+  await page.locator(".site-footer").getByRole("link", { name: "個人情報の開示等のご請求" }).click();
+  await expect(page).toHaveURL(/\/privacy\/requests\/$/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://stbl-pay.com/privacy/requests/");
+  await expect(page.locator("h1")).toHaveText("個人情報の開示等のご請求");
+  await expect(page.locator('main a[href^="mailto:support.stbl-pay@ango-ya.org"]').first()).toBeVisible();
 });
 
 test("デモ画面は noindex、404 ページがある", async ({ request }) => {
@@ -107,6 +118,7 @@ test("IndexNow は変わったページだけを送る（dist/ のサイトマ�
     execFileSync("node", ["scripts/indexnow.mjs", "--dry-run", ...args], { encoding: "utf8" }).trim().split("\n");
   expect(run("index.html", "README.md")).toEqual(["https://stbl-pay.com/"]);
   expect(run("en/index.html")).toEqual(["https://stbl-pay.com/en/"]);
+  expect(run("privacy/requests/index.html")).toEqual(["https://stbl-pay.com/privacy/requests/"]);
   expect(run("README.md")).toEqual(["IndexNow: 送る URL なし"]);
   expect(run("learn/chargeback/index.html", "en/learn/stablecoin-payments-japan/index.html")).toEqual([
     "https://stbl-pay.com/learn/chargeback/",

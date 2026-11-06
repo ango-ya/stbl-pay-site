@@ -2539,3 +2539,68 @@ sup.fn a:hover {
     white-space: normal;
   }
 }
+
+/* ---------- 法務のページ（/privacy/requests/） ----------
+   本文は LP の行長にそろえ、ヘッダーのロゴと左端を合わせる */
+
+.legal {
+  padding: 56px 0 88px;
+}
+
+.legal .shell > * {
+  max-width: var(--measure);
+}
+
+/* 見出しは区切り線を LP のセクションと同じく全幅に引く（--measure は em なので、文字の大きい見出しでは本文より広くなる） */
+.legal .shell > h2 {
+  max-width: none;
+}
+
+.legal h1 {
+  margin: 0 0 20px;
+  font-size: 28px;
+  line-height: 1.45;
+}
+
+.legal h2 {
+  margin: 48px 0 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.legal h3 {
+  margin: 28px 0 8px;
+  font-size: 16px;
+}
+
+.legal p,
+.legal ul,
+.legal ol,
+.legal dl {
+  margin: 0 0 14px;
+}
+
+.legal ul,
+.legal ol {
+  padding-left: 1.4em;
+}
+
+.legal li > ul {
+  margin: 4px 0 0;
+}
+
+.legal dt {
+  font-weight: 700;
+}
+
+.legal dd {
+  margin: 0 0 12px;
+}
+
+.legal a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
