@@ -9,7 +9,7 @@ const PAGES = [
   { path: "/en/press/", lang: "en", title: /Press Kit.*STBLpay/ },
 ];
 const ALTERNATES = [["ja", "/press/"], ["en", "/en/press/"], ["x-default", "/press/"]];
-const TYPES = { ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".css": "text/css" };
+const TYPES = { ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".css": "text/css", ".zip": "application/zip" };
 const ANALYTICS = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
 
 test.beforeEach(async ({ context }) => {
