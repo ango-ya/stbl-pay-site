@@ -52,7 +52,7 @@ The payment to the merchant succeeds at `settled`, after the required wallet is 
 
 The result reaches the merchant through two flows. Flow 1 finalizes the order. Flow 2 sends the buyer back to the original store.
 
-In flow 1, finalize the order based on the `payment.settled` Webhook, or on `settled` returned by a [status lookup](/reference/rest#retrieve-payment) from your server. Setting up a Webhook is optional. If you don't set one up, confirm `settled` with a status lookup before you finalize.
+In flow 1, finalize the order based on the `payment.settled` Webhook, or on `settled` returned by a [status lookup](/reference/rest#retrieve-payment) from your server. E-commerce sites normally set up a Webhook. If you have a reason not to, confirm `settled` with a status lookup before you finalize.
 
 Webhooks notify success, failure, cancellation, and expiry. If the outcome of the transfer could not be determined (`nonce_conflict`), no Webhook is delivered, so you must check unfinalized orders with a [status lookup](/reference/rest#retrieve-payment). Do not deliver goods just because the buyer's browser returned.
 

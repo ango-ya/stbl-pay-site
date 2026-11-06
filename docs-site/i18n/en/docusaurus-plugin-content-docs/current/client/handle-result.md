@@ -29,6 +29,6 @@ For a payment that did not succeed, no JPYC was sent to the merchant. The JPYC t
 
 ## If the browser does not return
 
-Deposit detection, balance checks, and transfer execution proceed independently of the browser. However, when a bank transfer is needed, the checkout page is required until the buyer goes from the checkout page to the JPYC EX procedure (until the status becomes `issue_pending`). If the buyer closes the tab before that, the payment does not progress unless the buyer returns and continues the procedure, and it becomes `expired` at the operation deadline. Signing alone also does not guarantee success. Get the result through Webhooks (if you use them) and periodic lookups of unfinalized orders.
+Deposit detection, balance checks, and transfer execution proceed independently of the browser. However, when a bank transfer is needed, the checkout page is required until the buyer goes from the checkout page to the JPYC EX procedure (until the status becomes `issue_pending`). If the buyer closes the tab before that, the payment does not progress unless the buyer returns and continues the procedure, and it becomes `expired` at the operation deadline. Signing alone also does not guarantee success. Get the result through Webhooks and periodic lookups of unfinalized orders.
 
 Make the [decision to deliver goods](/lifecycle/completion) on the server.

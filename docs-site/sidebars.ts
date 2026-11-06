@@ -12,11 +12,11 @@ const sidebars: SidebarsConfig = {
       label: en ? 'Getting started' : 'はじめに',
       collapsed: false,
       items: [
+        'getting-started/quickstart',
         'getting-started/payment-flow',
         'getting-started/money-flow',
         'getting-started/responsibilities',
         'getting-started/prerequisites',
-        'getting-started/quickstart',
       ],
     },
     {
