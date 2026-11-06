@@ -49,10 +49,10 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
     expect(xml, path).toContain("<urlset");
     return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   };
-  // LP の日英と解説（/learn/ と /en/learn/）。解説の中身は learn.spec.mjs で見る
+  // LP の日英と解説（/learn/ と /en/learn/）とプレスキット（/press/ と /en/press/）。中身は learn.spec.mjs と press.spec.mjs で見る
   const top = await locsOf("/sitemap.xml");
   expect(top.slice(0, 2)).toEqual(LPS.map((lp) => lp.url));
-  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/(en\/)?learn\/([a-z-]+\/)?$/);
+  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/(en\/)?(learn\/([a-z-]+\/)?|press\/)$/);
 
   // docs は言語ごとに 1 本。URL は末尾にスラッシュ（配信先が付けて飛ばすので、飛ばした先を載せる）
   for (const [path, prefix] of [["/docs/sitemap.xml", "https://stbl-pay.com/docs/"], ["/docs/en/sitemap.xml", "https://stbl-pay.com/docs/en/"]]) {
@@ -76,10 +76,10 @@ test("デモ画面は noindex、404 ページがある", async ({ request }) => 
   expect(notFound).toContain('<meta name="robots" content="noindex" />');
 });
 
-test("llms.txt が docs と解説の主なページと現在の状況を案内する", async ({ request }) => {
+test("llms.txt が docs と解説とプレスキットの主なページと現在の状況を案内する", async ({ request }) => {
   const llms = await (await request.get("/llms.txt")).text();
   expect(llms).toMatch(/提供状況: .*\d{4}年\d{1,2}月時点/);
-  for (const [, href] of llms.matchAll(/\]\((\/(?:docs|learn|en\/learn)\/[^)]*)\)/g)) {
+  for (const [, href] of llms.matchAll(/\]\((\/(?:docs|learn|en\/learn|press|en\/press)\/[^)]*)\)/g)) {
     expect((await request.get(href)).status(), href).toBe(200);
   }
 });
@@ -111,6 +111,10 @@ test("IndexNow は変わったページだけを送る（dist/ のサイトマ�
   expect(run("learn/chargeback/index.html", "en/learn/stablecoin-payments-japan/index.html")).toEqual([
     "https://stbl-pay.com/learn/chargeback/",
     "https://stbl-pay.com/en/learn/stablecoin-payments-japan/",
+  ]);
+  expect(run("press/index.html", "en/press/index.html", "assets/press.css")).toEqual([
+    "https://stbl-pay.com/press/",
+    "https://stbl-pay.com/en/press/",
   ]);
   const docs = run("docs-site/docs/intro.md");
   expect(docs.length).toBeGreaterThan(20);
