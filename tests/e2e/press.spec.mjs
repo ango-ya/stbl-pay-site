@@ -9,7 +9,7 @@ const PAGES = [
   { path: "/en/press/", lang: "en", title: /Press Kit.*STBLpay/ },
 ];
 const ALTERNATES = [["ja", "/press/"], ["en", "/en/press/"], ["x-default", "/press/"]];
-const TYPES = { ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp" };
+const TYPES = { ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".css": "text/css" };
 const ANALYTICS = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
 
 test.beforeEach(async ({ context }) => {
@@ -111,9 +111,13 @@ test("ダウンロードの素材は、すべて正しい Content-Type で配信
     await page.goto(path);
     for (const h of await page.locator("a[download]").evaluateAll((as) => as.map((a) => a.getAttribute("href")))) hrefs.add(h);
   }
-  // ロゴは日英 × 黒白 × SVG・PNG の 8 本がそろう
+  // ロゴは日英 × 黒白 × SVG・PNG の 8 本、加盟店向けはボタンの CSS とマーク（日英 × 2 色 × SVG・PNG）がそろう
   expect([...hrefs].filter((h) => h.startsWith("/assets/brand/")).sort()).toEqual(
-    ["en", "ja"].flatMap((l) => ["black", "white"].flatMap((c) => ["png", "svg"].map((x) => `/assets/brand/stblpay-logo-${l}-${c}.${x}`)))
+    [
+      ...["en", "ja"].flatMap((l) => ["black", "white"].flatMap((c) => ["png", "svg"].map((x) => `/assets/brand/stblpay-logo-${l}-${c}.${x}`))),
+      ...["en", "ja"].flatMap((l) => ["blue", "blueline"].flatMap((c) => ["png", "svg"].map((x) => `/assets/brand/kit/stblpay-badge-${l}-${c}.${x}`))),
+      "/assets/brand/kit/stblpay-button.css",
+    ].sort()
   );
   await page.goto("about:blank"); // プレスキットの CSP（Trusted Types）の外で SVG を解析する
   for (const href of hrefs) {
