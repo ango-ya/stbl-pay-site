@@ -81,4 +81,4 @@ Do not use the query on the return URL to decide that an order is paid.
 
 ## 10. Switch to production
 
-Repeat steps 1–4 (and 8) in the production merchant console, then set `STBL_PAY_BACKEND` and `STBL_PAY_API_KEY` to the production values. Keys, domains, and Webhooks are set up separately for each environment. The production URLs are in [Environments and URLs](/#environments-and-urls).
+Repeat steps 1–4 (and 8) in the production merchant console, then set `STBL_PAY_BACKEND` and `STBL_PAY_API_KEY` to the production values. Keys, domains, and Webhooks are set up separately for each environment. The production URLs will be announced in [Environments and URLs](/#environments-and-urls) after launch.

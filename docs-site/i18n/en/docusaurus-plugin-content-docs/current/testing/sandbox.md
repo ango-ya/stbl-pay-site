@@ -17,7 +17,7 @@ An environment for trying out your integration. It is separate from production, 
 
 ## Getting started
 
-Register on the merchant console's [registration page](https://merchant.sandbox.stbl-pay.com/register), then follow the [Quick Start](/getting-started/quickstart) to issue an API key, register your domain, and create a payment. The production URLs are in [Environments and URLs](/#environments-and-urls).
+Register on the merchant console's [registration page](https://merchant.sandbox.stbl-pay.com/register), then follow the [Quick Start](/getting-started/quickstart) to issue an API key, register your domain, and create a payment. The production URLs will be announced in [Environments and URLs](/#environments-and-urls) after launch.
 
 Manage values such as API keys separately for production and the sandbox (see [API keys](/security/api-keys)). The items to check are in [Test scenarios](/testing/scenarios).
 

@@ -17,7 +17,7 @@ sidebar_position: 1
 
 ## 始め方
 
-加盟店コンソールの[登録ページ](https://merchant.sandbox.stbl-pay.com/register)で登録してから、API キーの発行、ドメインの登録、決済の作成までを [Quick Start](/getting-started/quickstart) の順に進めます。本番の URL は[環境と URL](/#環境と-url)にあります。
+加盟店コンソールの[登録ページ](https://merchant.sandbox.stbl-pay.com/register)で登録してから、API キーの発行、ドメインの登録、決済の作成までを [Quick Start](/getting-started/quickstart) の順に進めます。本番の URL は、公開後に[環境と URL](/#環境と-url)で案内します。
 
 API キーなどの値は、本番と Sandbox で別々に管理してください（[API キー](/security/api-keys)）。動作の確認項目は[テストシナリオ](/testing/scenarios)にあります。
 

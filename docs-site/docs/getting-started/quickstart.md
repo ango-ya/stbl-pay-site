@@ -81,4 +81,4 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payment_status/$PAYMENT_INTENT_ID"
 
 ## 10. 本番へ切り替える
 
-本番の加盟店コンソールで手順 1〜4（と 8）をやり直し、`STBL_PAY_BACKEND` と `STBL_PAY_API_KEY` を本番の値に替えます。キー・ドメイン・Webhook は環境ごとに別に設定します。本番の URL は[環境と URL](/#環境と-url)にあります。
+本番の加盟店コンソールで手順 1〜4（と 8）をやり直し、`STBL_PAY_BACKEND` と `STBL_PAY_API_KEY` を本番の値に替えます。キー・ドメイン・Webhook は環境ごとに別に設定します。本番の URL は、公開後に[環境と URL](/#環境と-url)で案内します。
