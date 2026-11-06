@@ -30,4 +30,8 @@ Disable the button while the request is in flight. On the server, use the same `
 
 Persist the order details before navigating, and specify the return destination as `returnUrl` when you create the payment. Do not mark an order as paid merely because the buyer navigated or returned.
 
+## Button design
+
+We recommend the official "Pay with STBLpay" button. The CSS, the logo, and a mark for your list of payment methods are in the <a href="/en/press/#merchant-kit">press kit</a>. They help buyers tell STBLpay apart from other payment methods, so please use them.
+
 Next, see [Return and receiving the result](/client/handle-result).

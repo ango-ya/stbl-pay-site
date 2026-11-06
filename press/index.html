@@ -41,6 +41,7 @@
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
     <link rel="stylesheet" href="/assets/press.css" />
+    <link rel="stylesheet" href="/assets/brand/kit/stblpay-button.css" />
     <script src="/assets/analytics.js"></script>
 
     <script type="application/ld+json">
@@ -146,7 +147,7 @@
           </nav>
 
           <h1>プレスキット</h1>
-          <p class="learn-lead">報道・ブログ・パートナーの方に向けて、すてぶるペイを紹介するときに使える文章・ロゴ・画像をまとめました。記事でサービスを紹介するときは、このページの素材をそのままお使いください。</p>
+          <p class="learn-lead">報道・ブログ・パートナーの方に向けて、すてぶるペイを紹介するときに使える文章・ロゴ・画像をまとめました。加盟店のサイトに置く<a href="#merchant-kit">公式ボタンとマーク</a>もあります。記事でサービスを紹介するときは、このページの素材をそのままお使いください。</p>
           <p class="learn-meta">更新日：<time datetime="2026-11-06">2026年11月6日</time>　文：合同会社暗号屋</p>
 
           <h2 id="about">紹介文</h2>
@@ -270,6 +271,77 @@
             </li>
           </ul>
           <p>このほか、ロゴの一部だけを切り出す、文字の間隔を変える、ほかのロゴや文字とつなげて1つのマークにする、といった加工もしないでください。</p>
+
+          <h2 id="merchant-kit">加盟店向け：公式ボタンとマーク</h2>
+          <p>すてぶるペイを導入するお店のために、公式の「すてぶるペイで支払う」ボタンと、「お支払い方法」の並びに置くマークを用意しました。購入者がほかの決済と見分けやすくなるので、ぜひお使いください。ファイルは自社のサーバーに置いて使います（このサイトから直接は読み込めません）。</p>
+
+          <h3>公式ボタン</h3>
+          <figure class="press-figure">
+            <div class="press-kit-demo">
+              <span class="stblpay-btn" role="img" aria-label="見本：すてぶるペイで支払うボタン"><img class="stblpay-btn__logo" src="/assets/brand/stblpay-logo-ja-white.svg" alt="" width="1211" height="193" /><span>で支払う</span></span>
+              <span class="stblpay-btn stblpay-btn--en" role="img" aria-label="見本：Pay with STBLpay ボタン"><span>Pay with</span><img class="stblpay-btn__logo" src="/assets/brand/stblpay-logo-en-white.svg" alt="" width="1211" height="243" /></span>
+              <span class="stblpay-btn stblpay-btn--sm" role="img" aria-label="見本：小さいボタン"><img class="stblpay-btn__logo" src="/assets/brand/stblpay-logo-ja-white.svg" alt="" width="1211" height="193" /><span>で支払う</span></span>
+            </div>
+            <figcaption>青（#2775ca）の地に白のロゴ。日本語と英語、大きさは標準・大（--lg）・小（--sm）と、横幅いっぱい（--block）があります。</figcaption>
+          </figure>
+          <p>CSS と白いロゴ（<a href="#logo">ロゴのダウンロード</a>の SVG）を自社のサーバーに置き、次のように書きます。パスは置いた場所に合わせてください。</p>
+          <pre class="press-code"><code>&lt;link rel=&quot;stylesheet&quot; href=&quot;/stblpay/stblpay-button.css&quot;&gt;
+
+&lt;!-- 日本語 --&gt;
+&lt;button type=&quot;button&quot; class=&quot;stblpay-btn&quot;&gt;
+  &lt;img class=&quot;stblpay-btn__logo&quot; src=&quot;/stblpay/stblpay-logo-ja-white.svg&quot; alt=&quot;すてぶるペイ&quot; width=&quot;1211&quot; height=&quot;193&quot;&gt;
+  &lt;span&gt;で支払う&lt;/span&gt;
+&lt;/button&gt;
+
+&lt;!-- 英語 --&gt;
+&lt;button type=&quot;button&quot; class=&quot;stblpay-btn stblpay-btn--en&quot;&gt;
+  &lt;span&gt;Pay with&lt;/span&gt;
+  &lt;img class=&quot;stblpay-btn__logo&quot; src=&quot;/stblpay/stblpay-logo-en-white.svg&quot; alt=&quot;STBLpay&quot; width=&quot;1211&quot; height=&quot;243&quot;&gt;
+&lt;/button&gt;</code></pre>
+          <ul class="press-dl">
+            <li><a href="/assets/brand/kit/stblpay-button.css" download="stblpay-button.css">ボタンの CSS</a></li>
+            <li><a href="/assets/brand/stblpay-logo-ja-white.svg" download="stblpay-logo-ja-white.svg">白いロゴ・日本語（SVG）</a></li>
+            <li><a href="/assets/brand/stblpay-logo-en-white.svg" download="stblpay-logo-en-white.svg">白いロゴ・英語（SVG）</a></li>
+          </ul>
+          <p>ボタンを押したあとに決済を作り、決済ページへ移る処理は、<a href="/docs/client/start-payment">加盟店向けドキュメント</a>で説明しています。</p>
+
+          <h3>「お支払い方法」に置くマーク</h3>
+          <ul class="press-logos">
+            <li class="press-logo">
+              <div class="press-logo-stage"><img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-ja-blue.svg" alt="すてぶるペイのマーク（青地・日本語）" width="98" height="28" /> <img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-en-blue.svg" alt="STBLpay のマーク（青地・英語）" width="85" height="28" /></div>
+              <div class="press-logo-meta">
+                <p>青地</p>
+                <ul class="press-dl">
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blue.svg" download="stblpay-badge-ja-blue.svg">日本語 SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blue.png" download="stblpay-badge-ja-blue.png">日本語 PNG（392×112）</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blue.svg" download="stblpay-badge-en-blue.svg">英語 SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blue.png" download="stblpay-badge-en-blue.png">英語 PNG（340×112）</a></li>
+                </ul>
+              </div>
+            </li>
+            <li class="press-logo">
+              <div class="press-logo-stage"><img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-ja-blueline.svg" alt="すてぶるペイのマーク（白地に青い枠・日本語）" width="98" height="28" /> <img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-en-blueline.svg" alt="STBLpay のマーク（白地に青い枠・英語）" width="85" height="28" /></div>
+              <div class="press-logo-meta">
+                <p>白地に青い枠</p>
+                <ul class="press-dl">
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blueline.svg" download="stblpay-badge-ja-blueline.svg">日本語 SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blueline.png" download="stblpay-badge-ja-blueline.png">日本語 PNG（392×112）</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blueline.svg" download="stblpay-badge-en-blueline.svg">英語 SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blueline.png" download="stblpay-badge-en-blueline.png">英語 PNG（340×112）</a></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+          <p>カードのロゴなどと同じ高さ（28px 前後）で並べてください。青地は目立たせたいとき、白地に青い枠はほかのロゴの白いタイルになじませたいときに使います。PNG は SVG を使えないサービス向けで、4倍の大きさです。</p>
+          <pre class="press-code"><code>&lt;img src=&quot;/stblpay/stblpay-badge-ja-blue.svg&quot; alt=&quot;すてぶるペイ&quot; width=&quot;98&quot; height=&quot;28&quot;&gt;</code></pre>
+
+          <h3>使うときのお願い</h3>
+          <ul>
+            <li>すてぶるペイでの支払いを受け付けているページで使ってください。</li>
+            <li>ボタンの文言（「すてぶるペイで支払う」「Pay with STBLpay」）、色、角の丸み、ロゴとマークの縦横比を変えないでください。</li>
+            <li>マークは高さ 20px 以上で表示してください。</li>
+            <li>加盟店の規約に反する使い方が分かったときは、使うのをやめていただくことがあります。</li>
+          </ul>
 
           <h2 id="colors">ブランドの色と書体</h2>
           <ul class="press-colors">

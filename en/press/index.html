@@ -41,6 +41,7 @@
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
     <link rel="stylesheet" href="/assets/press.css" />
+    <link rel="stylesheet" href="/assets/brand/kit/stblpay-button.css" />
     <script src="/assets/analytics.js"></script>
 
     <script type="application/ld+json">
@@ -147,7 +148,7 @@
           </nav>
 
           <h1>Press kit</h1>
-          <p class="learn-lead">Text, logos and images you can use when you write about STBLpay, for media, bloggers and partners. When you introduce the service in an article, please use the materials on this page as they are.</p>
+          <p class="learn-lead">Text, logos and images you can use when you write about STBLpay, for media, bloggers and partners. There is also an <a href="#merchant-kit">official button and mark</a> for merchant sites. When you introduce the service in an article, please use the materials on this page as they are.</p>
           <p class="learn-meta">Updated: <time datetime="2026-11-06">November 6, 2026</time> · By Ango-ya LLC</p>
 
           <h2 id="about">Boilerplate</h2>
@@ -271,6 +272,77 @@
             </li>
           </ul>
           <p>Also, do not crop part of the logo, change the letter spacing, or combine it with other logos or text into a single mark.</p>
+
+          <h2 id="merchant-kit">For merchants: official button and mark</h2>
+          <p>For shops that accept STBLpay, we provide an official "Pay with STBLpay" button and a mark for your list of payment methods. They help buyers tell STBLpay apart from other payment methods, so please use them. Host the files on your own server (they cannot be loaded directly from this site).</p>
+
+          <h3>Official button</h3>
+          <figure class="press-figure">
+            <div class="press-kit-demo">
+              <span class="stblpay-btn stblpay-btn--en" role="img" aria-label="Sample: Pay with STBLpay button"><span>Pay with</span><img class="stblpay-btn__logo" src="/assets/brand/stblpay-logo-en-white.svg" alt="" width="1211" height="243" /></span>
+              <span class="stblpay-btn" role="img" aria-label="Sample: Japanese button"><img class="stblpay-btn__logo" src="/assets/brand/stblpay-logo-ja-white.svg" alt="" width="1211" height="193" /><span>で支払う</span></span>
+              <span class="stblpay-btn stblpay-btn--en stblpay-btn--sm" role="img" aria-label="Sample: small button"><span>Pay with</span><img class="stblpay-btn__logo" src="/assets/brand/stblpay-logo-en-white.svg" alt="" width="1211" height="243" /></span>
+            </div>
+            <figcaption>A white logo on blue (#2775ca). Available in English and Japanese, in standard, large (--lg) and small (--sm) sizes, and full width (--block).</figcaption>
+          </figure>
+          <p>Put the CSS and the white logo (the SVG under <a href="#logo">Logo downloads</a>) on your own server, then write the following. Adjust the paths to where you put the files.</p>
+          <pre class="press-code"><code>&lt;link rel=&quot;stylesheet&quot; href=&quot;/stblpay/stblpay-button.css&quot;&gt;
+
+&lt;!-- English --&gt;
+&lt;button type=&quot;button&quot; class=&quot;stblpay-btn stblpay-btn--en&quot;&gt;
+  &lt;span&gt;Pay with&lt;/span&gt;
+  &lt;img class=&quot;stblpay-btn__logo&quot; src=&quot;/stblpay/stblpay-logo-en-white.svg&quot; alt=&quot;STBLpay&quot; width=&quot;1211&quot; height=&quot;243&quot;&gt;
+&lt;/button&gt;
+
+&lt;!-- Japanese --&gt;
+&lt;button type=&quot;button&quot; class=&quot;stblpay-btn&quot;&gt;
+  &lt;img class=&quot;stblpay-btn__logo&quot; src=&quot;/stblpay/stblpay-logo-ja-white.svg&quot; alt=&quot;すてぶるペイ&quot; width=&quot;1211&quot; height=&quot;193&quot;&gt;
+  &lt;span&gt;で支払う&lt;/span&gt;
+&lt;/button&gt;</code></pre>
+          <ul class="press-dl">
+            <li><a href="/assets/brand/kit/stblpay-button.css" download="stblpay-button.css">Button CSS</a></li>
+            <li><a href="/assets/brand/stblpay-logo-en-white.svg" download="stblpay-logo-en-white.svg">White logo, English (SVG)</a></li>
+            <li><a href="/assets/brand/stblpay-logo-ja-white.svg" download="stblpay-logo-ja-white.svg">White logo, Japanese (SVG)</a></li>
+          </ul>
+          <p>For what happens after the button is pressed (create a payment and move to the payment page), see <a href="/docs/en/client/start-payment">Start a payment in the merchant docs</a>.</p>
+
+          <h3>Mark for your list of payment methods</h3>
+          <ul class="press-logos">
+            <li class="press-logo">
+              <div class="press-logo-stage"><img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-en-blue.svg" alt="STBLpay mark (blue, English)" width="85" height="28" /> <img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-ja-blue.svg" alt="STBLpay mark (blue, Japanese)" width="98" height="28" /></div>
+              <div class="press-logo-meta">
+                <p>Blue</p>
+                <ul class="press-dl">
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blue.svg" download="stblpay-badge-en-blue.svg">English SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blue.png" download="stblpay-badge-en-blue.png">English PNG (340×112)</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blue.svg" download="stblpay-badge-ja-blue.svg">Japanese SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blue.png" download="stblpay-badge-ja-blue.png">Japanese PNG (392×112)</a></li>
+                </ul>
+              </div>
+            </li>
+            <li class="press-logo">
+              <div class="press-logo-stage"><img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-en-blueline.svg" alt="STBLpay mark (white with a blue border, English)" width="85" height="28" /> <img class="press-kit-badge" src="/assets/brand/kit/stblpay-badge-ja-blueline.svg" alt="STBLpay mark (white with a blue border, Japanese)" width="98" height="28" /></div>
+              <div class="press-logo-meta">
+                <p>White with a blue border</p>
+                <ul class="press-dl">
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blueline.svg" download="stblpay-badge-en-blueline.svg">English SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-en-blueline.png" download="stblpay-badge-en-blueline.png">English PNG (340×112)</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blueline.svg" download="stblpay-badge-ja-blueline.svg">Japanese SVG</a></li>
+                  <li><a href="/assets/brand/kit/stblpay-badge-ja-blueline.png" download="stblpay-badge-ja-blueline.png">Japanese PNG (392×112)</a></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+          <p>Show the mark at the same height as the card logos next to it (around 28px). Use blue when you want it to stand out, and white with a blue border to match the white tiles of other logos. The PNG files are for services that do not accept SVG, at four times the size.</p>
+          <pre class="press-code"><code>&lt;img src=&quot;/stblpay/stblpay-badge-en-blue.svg&quot; alt=&quot;STBLpay&quot; width=&quot;85&quot; height=&quot;28&quot;&gt;</code></pre>
+
+          <h3>When you use them</h3>
+          <ul>
+            <li>Use them only on pages where you accept payment with STBLpay.</li>
+            <li>Do not change the button text ("Pay with STBLpay", 「すてぶるペイで支払う」), the colors, the rounded corners, or the aspect ratio of the logo and the mark.</li>
+            <li>Show the mark at least 20px tall.</li>
+            <li>If we find a use that breaks the merchant terms, we may ask you to stop using them.</li>
+          </ul>
 
           <h2 id="colors">Brand colors and typefaces</h2>
           <ul class="press-colors">
