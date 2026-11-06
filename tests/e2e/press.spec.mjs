@@ -54,15 +54,15 @@ for (const { path, lang, title } of PAGES) {
     const alts = await page.locator('link[rel="alternate"][hreflang]').evaluateAll((ls) => ls.map((l) => [l.hreflang, l.href]));
     expect(alts).toEqual(ALTERNATES.map(([l, p]) => [l, `${ORIGIN}${p}`]));
 
-    // 構造化データ：解析でき、型がそろい、Organization.logo の PNG が配信されている
+    // 構造化データ：解析でき、型がそろい、サービス（#service）の logo の PNG が配信されている
     const nodes = (await page.locator('script[type="application/ld+json"]').allTextContents())
       .map((t) => JSON.parse(t))
       .flatMap((d) => d["@graph"] ?? [d]);
-    expect(nodes.map((n) => n["@type"]).sort()).toEqual(["AboutPage", "BreadcrumbList", "Organization"]);
+    expect(nodes.map((n) => n["@type"]).sort()).toEqual(["AboutPage", "BreadcrumbList", "Service"]);
     const local = (u) => new URL(u).pathname;
-    const org = nodes.find((n) => n["@type"] === "Organization");
+    const org = nodes.find((n) => n["@type"] === "Service");
     const logos = [org.logo].flat();
-    expect(logos.some((l) => l["@type"] === "ImageObject" && l.url.endsWith(".png")), "Organization.logo に PNG").toBe(true);
+    expect(logos.some((l) => l["@type"] === "ImageObject" && l.url.endsWith(".png")), "Service.logo に PNG").toBe(true);
     for (const l of logos) {
       expect(l.url.startsWith(`${ORIGIN}/assets/brand/`), l.url).toBe(true);
       expect((await request.get(local(l.url))).status(), l.url).toBe(200);
