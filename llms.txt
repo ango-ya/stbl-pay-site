@@ -43,6 +43,7 @@ STBLpay (すてぶるペイ, pronounced "stable pay") is a JPY stablecoin (JPYC)
 - [Merchant docs (English)](/docs/en/): integration, webhooks, payment statuses, refunds
 - [API specification (English, OpenAPI 3.1)](/docs/en/openapi.yaml)
 - [Accepting payments from customers in Japan with a yen stablecoin](/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
+- [Press kit](/en/press/): boilerplate text, fact sheet, logo downloads (SVG/PNG) and usage rules, brand colors, how to write the name, characters, and videos
 
 ## 主要ページ
 
@@ -52,3 +53,4 @@ STBLpay (すてぶるペイ, pronounced "stable pay") is a JPY stablecoin (JPYC)
 - [加盟店向けドキュメント](/docs/): EC サイトへの組み込み・Webhook・決済の状態・返金・セキュリティ
 - [API 仕様書（OpenAPI 3.1）](/docs/openapi.yaml): 加盟店サーバーが呼ぶ API（決済作成・状態照会）と Webhook の本文・ヘッダー
 - [API 仕様書の英語版](/docs/en/openapi.yaml): 上の仕様書の英訳（構造は同じ。正本は日本語版）
+- [プレスキット](/press/): 報道・パートナー向けの紹介文・ファクトシート・ロゴ（SVG・PNG）とその使い方・ブランドの色・名前の書き方・キャラクター・動画
