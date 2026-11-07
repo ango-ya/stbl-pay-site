@@ -59,7 +59,7 @@
       "description": "JPYC 決済の導入とは、お店が日本円ステーブルコイン JPYC で代金を受け取れるようにすることです。自分で受ける方法と決済サービスを使う方法があります。JPYC とは何か、導入の流れ、手数料の考え方、ネットショップへの組み込み、受け取った後の扱いを解説します。",
       "inLanguage": "ja",
       "datePublished": "2026-11-05",
-      "dateModified": "2026-11-05",
+      "dateModified": "2026-11-07",
       "author": {
         "@id": "https://stbl-pay.com/#org-angoya"
       },
@@ -141,6 +141,22 @@
         },
         {
           "@type": "Question",
+          "name": "JPYC 決済を導入できるサービスはありますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "あります。2025〜2026年に、ネットショップ向けと店頭向けのサービスが各社から発表されています。提供中か実証実験か、購入者が何で払うか、お店が何で受け取るかは、サービスで違います。本文の比較表と、各社の公式の案内で確かめてください。すてぶるペイは、購入者が日本円で払い、お店が JPYC で受け取る形です。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "JPYC 決済を店舗に導入できますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "できます。自分で受ける方法なら、受け取り用のアドレスを QR コードなどで示し、購入者に JPYC を送ってもらいます。送金と会計の突き合わせは、お店が行います。店頭の QR コード決済で JPYC に対応するサービスも発表されています。"
+          }
+        },
+        {
+          "@type": "Question",
           "name": "会計や税金はどうなりますか？",
           "acceptedAnswer": {
             "@type": "Answer",
@@ -184,7 +200,7 @@
 
           <h1>JPYC 決済をお店に導入するには？受け取り方・流れ・手数料の考え方</h1>
           <p class="learn-lead">JPYC 決済をお店に導入するとは、日本円ステーブルコインの JPYC で、お店が代金を受け取れるようにすることです。受け取り方は、自分でウォレットを用意して受ける方法と、決済サービスを使う方法の 2 つ。受け取った JPYC は、JPYC EX で日本円に戻せます。</p>
-          <p class="learn-meta">更新日：<time datetime="2026-11-05">2026年11月5日</time>　文：合同会社暗号屋</p>
+          <p class="learn-meta">更新日：<time datetime="2026-11-07">2026年11月7日</time>　文：合同会社暗号屋</p>
 
           <div class="learn-body">
             <h2 id="what">JPYC とは</h2>
@@ -223,6 +239,60 @@
               </tbody>
             </table>
             <p>小さく試すなら、自分で受ける方法でも始められます。注文が増えると、送金と注文の突き合わせが手作業では大変になります。</p>
+
+            <h2 id="services">JPYC 決済に対応するサービスの比較</h2>
+            <p>2025〜2026年に、JPYC 決済に対応するサービスが、各社から発表されています。各社の発表をもとに、事実だけを並べます（2026年11月7日確認）。</p>
+            <table class="learn-table">
+              <caption>JPYC に対応する決済サービス（各社の発表による）</caption>
+              <thead>
+                <tr><th scope="col">サービス（提供会社）</th><th scope="col">状態</th><th scope="col">場面</th><th scope="col">購入者の払い方</th><th scope="col">お店が受け取るもの</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Stablecoin Pay（株式会社ネットスターズ）<sup class="fn"><a href="#src-7">[7]</a></sup></th>
+                  <td data-label="状態">提供中（2026年7月13日に開始と発表）</td>
+                  <td data-label="場面">店頭（QR コード）</td>
+                  <td data-label="購入者の払い方">USDC・USDT・JPYC で払う</td>
+                  <td data-label="お店が受け取るもの">記載なし。金額の表示・売上の管理・精算は日本円ベースで行えるとされています</td>
+                </tr>
+                <tr>
+                  <th scope="row">uniple checkout（株式会社uniple）<sup class="fn"><a href="#src-8">[8]</a></sup></th>
+                  <td data-label="状態">提供中（2026年7月21日に開始と発表）</td>
+                  <td data-label="場面">ネットショップ（WooCommerce・EC-CUBE・Shopify のプラグイン）</td>
+                  <td data-label="購入者の払い方">JPYC を送る</td>
+                  <td data-label="お店が受け取るもの">JPYC</td>
+                </tr>
+                <tr>
+                  <th scope="row">ステーブルコイン決済導入支援サービス（株式会社ガイアックス）<sup class="fn"><a href="#src-9">[9]</a></sup></th>
+                  <td data-label="状態">提供中（2026年5月11日に開始と発表）。事業者ごとに作る受託型</td>
+                  <td data-label="場面">ネットショップ</td>
+                  <td data-label="購入者の払い方">JPYC を販売者へ直接送る</td>
+                  <td data-label="お店が受け取るもの">JPYC（購入と同時に事業者のウォレットへ）</td>
+                </tr>
+                <tr>
+                  <th scope="row">JPYC 決済ソリューション（株式会社CAICAテクノロジーズ）<sup class="fn"><a href="#src-10">[10]</a></sup></th>
+                  <td data-label="状態">提供中（2025年11月20日に開始と発表）</td>
+                  <td data-label="場面">ネットショップ・オンラインサービス</td>
+                  <td data-label="購入者の払い方">JPYC で払う</td>
+                  <td data-label="お店が受け取るもの">記載なし</td>
+                </tr>
+                <tr>
+                  <th scope="row">MisePay（株式会社Sowaka Japan）<sup class="fn"><a href="#src-11">[11]</a></sup></th>
+                  <td data-label="状態">実証実験（2026年7月から 3 店舗でトライアル）</td>
+                  <td data-label="場面">店頭（QR コード）</td>
+                  <td data-label="購入者の払い方">自分のウォレットから、お店のウォレットへ JPYC を送る</td>
+                  <td data-label="お店が受け取るもの">JPYC</td>
+                </tr>
+                <tr>
+                  <th scope="row">ステーブルコイン決済支援サービス（TIS株式会社）<sup class="fn"><a href="#src-12">[12]</a></sup></th>
+                  <td data-label="状態">発表のみ（2025年11月14日発表。正式な提供は2026年中の予定とされています）</td>
+                  <td data-label="場面">店頭（スマートフォン・タブレット）</td>
+                  <td data-label="購入者の払い方">ステーブルコインで払う</td>
+                  <td data-label="お店が受け取るもの">ステーブルコインのまま</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>料金は、公開しているサービスと、個別の見積もりのサービスがあります。表は発表の時点の内容で、その後の変更を反映していないことがあります。料金や条件は、各社の公式の案内で確かめてください。すてぶるペイは、購入者が日本円で払い、お店が JPYC で受け取る形です（<a href="#stblpay">すてぶるペイの場合</a>）。</p>
 
             <h2 id="flow">導入の流れ</h2>
             <ol>
@@ -285,6 +355,14 @@
                 <p>すてぶるペイの場合は、決済ボタンを置く、お支払いの画面へ案内する、結果を受け取る、の 3 つです。手順は Quick Start にあります。提供開始日は未定ですが、Sandbox で組み込みを試せます。</p>
               </details>
               <details>
+                <summary>JPYC 決済を導入できるサービスはありますか？</summary>
+                <p>あります。2025〜2026年に、ネットショップ向けと店頭向けのサービスが各社から発表されています。提供中か実証実験か、購入者が何で払うか、お店が何で受け取るかは、サービスで違います。本文の比較表と、各社の公式の案内で確かめてください。すてぶるペイは、購入者が日本円で払い、お店が JPYC で受け取る形です。</p>
+              </details>
+              <details>
+                <summary>JPYC 決済を店舗に導入できますか？</summary>
+                <p>できます。自分で受ける方法なら、受け取り用のアドレスを QR コードなどで示し、購入者に JPYC を送ってもらいます。送金と会計の突き合わせは、お店が行います。店頭の QR コード決済で JPYC に対応するサービスも発表されています。</p>
+              </details>
+              <details>
                 <summary>会計や税金はどうなりますか？</summary>
                 <p>受け取った JPYC の会計処理や税務は、取引の内容や会計方針で変わります。この解説では判断できません。税理士などの専門家に確かめてください。</p>
               </details>
@@ -293,7 +371,7 @@
 
           <section class="learn-sources" aria-labelledby="sources-title">
             <h2 id="sources-title">出典</h2>
-            <p class="learn-note">いずれも 2026年11月5日に内容を確認しました。</p>
+            <p class="learn-note">1〜6 は 2026年11月5日、7〜12 は 2026年11月7日に内容を確認しました。</p>
             <ol>
               <li id="src-1">e-Gov 法令検索「<a href="https://laws.e-gov.go.jp/law/421AC0000000059">資金決済に関する法律</a>」（平成21年法律第59号）第2条第5項・第14項。2026年11月5日確認。</li>
               <li id="src-2">高松志直「<a href="https://www.businesslawyers.jp/articles/1181">令和4年資金決済法等改正の影響と実務対応のポイント</a>」BUSINESS LAWYERS（2023年6月8日更新）。2026年11月5日確認。</li>
@@ -301,6 +379,12 @@
               <li id="src-4">JPYC 株式会社「<a href="https://prtimes.jp/main/html/rd/p/000000331.000054018.html">日本円ステーブルコイン「JPYC」、累計発行額100億円を突破</a>」PR TIMES（2026年9月18日）。2026年11月5日確認。</li>
               <li id="src-5">Stripe「<a href="https://stripe.com/jp/pricing">料金体系</a>」。2026年11月5日確認。</li>
               <li id="src-6">JPYC 株式会社「<a href="https://jpyc.co.jp/">JPYC EX</a>」公式サイト（よくある質問、法人アカウント開設の案内）。2026年11月5日確認。</li>
+              <li id="src-7">株式会社ネットスターズ「<a href="https://prtimes.jp/main/html/rd/p/000000185.000019526.html">日本初※、ステーブルコイン決済に対応する「Stablecoin Pay」本格始動</a>」PR TIMES（2026年7月13日）。2026年11月7日確認。</li>
+              <li id="src-8">株式会社uniple「<a href="https://prtimes.jp/main/html/rd/p/000000002.000178265.html">AIエージェントが購入できるEC決済基盤「uniple checkout」提供開始 — JPYC決済をプラグインで導入</a>」PR TIMES（2026年7月21日）。2026年11月7日確認。</li>
+              <li id="src-9">株式会社ガイアックス「<a href="https://prtimes.jp/main/html/rd/p/000000810.000003955.html">ガイアックス、事業者向け「ステーブルコイン決済導入支援サービス」を提供開始</a>」PR TIMES（2026年5月11日）。2026年11月7日確認。</li>
+              <li id="src-10">株式会社CAICA DIGITAL「<a href="https://prtimes.jp/main/html/rd/p/000000323.000097511.html">ステーブルコインJPYC決済ソリューション提供開始！</a>」PR TIMES（2025年11月20日）。2026年11月7日確認。</li>
+              <li id="src-11">株式会社Sowaka Japan「<a href="https://prtimes.jp/main/html/rd/p/000000001.000186655.html">JPYC対応の店舗向けQR決済「MisePay (ミセペイ)」、店頭決済のトライアルを開始</a>」PR TIMES（2026年7月7日）。2026年11月7日確認。</li>
+              <li id="src-12">TIS株式会社「<a href="https://www.tisi.jp/news/2025/tis_news/20251114_1.html">TIS、JPYCと日本円建ステーブルコイン決済の社会実装に向けた基本合意書を締結</a>」（2025年11月14日）。2026年11月7日確認。</li>
             </ol>
           </section>
 
