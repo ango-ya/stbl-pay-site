@@ -10,6 +10,7 @@ const PAGES = [
   { path: "/learn/stablecoin-payments/", main: "Article" },
   { path: "/learn/jpyc-payments/", main: "Article" },
   { path: "/learn/card-merchant-screening/", main: "Article" },
+  { path: "/learn/no-screening-payments/", main: "Article" },
   { path: "/learn/payment-fees/", main: "Article" },
   { path: "/learn/chargeback/", main: "Article" },
   { path: "/learn/glossary/", main: "DefinedTermSet" },
