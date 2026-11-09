@@ -9,7 +9,7 @@
 - 金額: 3,000円未満のお支払いも、100万円を超えるお支払いもできる。購入者が JPYC を発行する（日本円を振り込んで JPYC にする）ときは1回3,000円〜100万円で、これは発行1回の金額であり、お支払いの金額の範囲ではない
 - 提供状況: 開発中（2026年11月時点。提供開始日は未定）。組み込みを試せる Sandbox と、加盟店向けドキュメント・API 仕様書は公開済み。組み込みは API と決済ページへの遷移で行う
 - 設計: ノンカストディアル（提供元は購入者・加盟店の資金や秘密鍵を保持しない）
-- 加盟店の事前審査: なし。お店と購入者のウォレットをつなぐ仕組みで、お店ごとに利用を認める手続きのない設計（パーミッションレス）のため
+- 加盟店の事前審査: なし。お店と購入者のウォレットをつなぐ仕組みで、お店ごとに利用を認める手続きのない設計（パーミッションレス）のため。ただし無条件ではなく、利用規約への同意（日本の法律で違法な事業者ではないことの表明を含む）と法令上の要件が前提。購入者は JPYC EX のアカウント（個人は日本在住、マイナンバーカードで本人確認）が必要
 - 対象: 個人事業主（デジタルの作品を売るクリエイター、フリーの美容師・ネイリストなど）、クレジットカード決済の導入が難しいネットショップ、日本向け決済を持ちたい海外のネットショップ
 - 組み込み: サイトでやることは3つ（ボタンを置く、お支払いの画面へ案内する、結果を受け取る）。QR だけで始めることもできる
 
@@ -39,7 +39,7 @@
 
 ## English summary
 
-STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu pei") is a JPY stablecoin (JPYC) payment service under development (as of November 2026; launch date not yet set), operated by Ango-ya LLC (合同会社暗号屋, Fukuoka, Japan). Buyers pay by Japanese-yen bank transfer and approve with a passkey; merchants receive sales in JPYC without relying on card companies' credit screening. There is no prior merchant screening, because STBLpay connects merchants' and buyers' wallets in a permissionless design with no step where the provider approves each merchant. The provider is non-custodial. A Sandbox, merchant docs, and an OpenAPI 3.1 specification are public.
+STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu pei") is a JPY stablecoin (JPYC) payment service under development (as of November 2026; launch date not yet set), operated by Ango-ya LLC (合同会社暗号屋, Fukuoka, Japan). Buyers pay by Japanese-yen bank transfer and approve with a passkey; merchants receive sales in JPYC without relying on card companies' credit screening. There is no prior merchant screening, because STBLpay connects merchants' and buyers' wallets in a permissionless design with no step where the provider approves each merchant. This is not unconditional: merchants agree to the terms of service, represent that their business is not illegal under Japanese law, and must meet legal requirements. Buyers need a JPYC EX account (individuals residing in Japan). The provider is non-custodial. A Sandbox, merchant docs, and an OpenAPI 3.1 specification are public.
 
 - [English landing page](/en/): overview, how it works, and FAQ in English
 - [Merchant docs (English)](/docs/en/): integration, webhooks, payment statuses, refunds
