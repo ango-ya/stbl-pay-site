@@ -122,7 +122,7 @@ paths:
         '403':
           description: |
             - `merchant/suspended`: The merchant is suspended. A payment cannot be created. Wait for the suspension to be lifted
-            - `merchant/origin_mismatch`: `returnUrl` does not meet the registered-domain conditions. The conditions are `https`, no port number, no userinfo, and a hostname that exactly matches a registered domain (a subdomain is a different domain and is not accepted). `returnUrl` can be omitted
+            - `merchant/origin_mismatch`: `returnUrl` does not meet the registered-domain conditions. The conditions are `https`, no port number (`:443` is allowed), no userinfo, and a hostname that exactly matches a registered domain (a subdomain is a different domain and is not accepted). `returnUrl` can be omitted
           content:
             application/json:
               schema:

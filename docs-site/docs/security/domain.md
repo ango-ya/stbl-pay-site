@@ -22,7 +22,7 @@ sidebar_position: 4
 
 ## `returnUrl` の条件
 
-`returnUrl` は、決済後に利用者が戻るページの URL です。`https://` で始まり、ポート番号と [userinfo](/reference/glossary)（`user:pass@`）を付けず、ホスト名が加盟店コンソールで登録したドメインと完全に一致する（大文字小文字は区別しない。サブドメインは不可）ページを指定します。`localhost` は使えません。
+`returnUrl` は、決済後に利用者が戻るページの URL です。`https://` で始まり、ポート番号（`:443` は付けても可）と [userinfo](/reference/glossary)（`user:pass@`）を付けず、ホスト名が加盟店コンソールで登録したドメインと完全に一致する（大文字小文字は区別しない。サブドメインは不可）ページを指定します。`localhost` は使えません。
 
 登録ドメインが `shop.example.com` の場合の例です。
 

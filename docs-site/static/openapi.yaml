@@ -123,7 +123,7 @@ paths:
         '403':
           description: |
             - `merchant/suspended`：加盟店が利用停止中。決済を作成できない。再開を待つ
-            - `merchant/origin_mismatch`：`returnUrl` が登録ドメインの条件に合わない。条件は、`https`・ポート番号なし・userinfo なしで、ホスト名が登録ドメインと完全に一致すること（サブドメインは別のドメインなので不可）。`returnUrl` は省略できる
+            - `merchant/origin_mismatch`：`returnUrl` が登録ドメインの条件に合わない。条件は、`https`・ポート番号なし（`:443` は可）・userinfo なしで、ホスト名が登録ドメインと完全に一致すること（サブドメインは別のドメインなので不可）。`returnUrl` は省略できる
           content:
             application/json:
               schema:
