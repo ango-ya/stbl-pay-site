@@ -1,7 +1,7 @@
 # 狙う言葉と受け持つページ
 
 週次の点検は、この表の言葉で Search Console を絞り、WebSearch で stbl-pay.com が出るかを見る。
-言葉は 2026-11-05 に Google・Bing の検索候補で、実在を確かめたもの（英語の 4 群は 2026-11-09 に Google の検索候補で確認）。
+言葉は 2026-11-05 に Google・Bing の検索候補で、実在を確かめたもの（英語の 4 群は 2026-11-09 に Google の検索候補で確認。表現規制の群は 2026-11-09 に Google・Bing の検索候補で確認し、取得結果は research/suggest-expression-2026-11-09.txt）。
 
 | 群 | 言葉 | 受け持つページ |
 |---|---|---|
@@ -14,6 +14,7 @@
 | 審査なし・ハイリスク | 決済代行 審査なし / 決済サービス 審査なし / オンライン決済 審査なし / 決済代行 審査 通りやすい / 決済代行 審査落ち /（候補外）ハイリスク 決済代行 | /learn/no-screening-payments/ |
 | 手数料 | 決済手数料 比較 / 決済手数料 比較 ネットショップ / クレジットカード決済 導入 個人事業主 比較 / キャッシュレス 手数料 高い / クレジットカード 手数料 計算 / キャッシュレス手数料 計算方法 | /learn/payment-fees/（計算ツール） |
 | 決済方法の選び方 | おすすめ 決済方法 クレジット コンビニ / 銀行振込以外の決済方法 / フリーランス 決済方法 /（候補外）ネットショップ 決済方法 | /learn/online-payment-methods/ |
+| 表現規制 | カード会社 表現規制 なぜ / クレカ 表現規制 なぜ / クレジットカード会社 表現規制 / クレジットカード 表現規制 理由 / visa 表現規制 / 決済代行会社 表現規制 / 同人 クレカ 決済 | /learn/card-expression-restrictions/（方針は /policy/expression/） |
 | チャージバック | チャージバックとは / チャージバック 泣き寝入り / ecサイト チャージバック | /learn/chargeback/ |
 | 用語 | 電子決済手段とは / 日本円ステーブルコインとは / ノンカストディアルとは | /learn/glossary/ |
 | 英語 | stablecoin payments Japan / japan online payment methods / what are stablecoin payments | /en/learn/stablecoin-payments-japan/ |
@@ -29,6 +30,8 @@
 - 日本でステーブルコイン決済を導入できるサービスを教えて
 - JPYC 決済をネットショップに導入するには？
 - クレジットカード決済の審査に落ちた個人事業主が使える決済手段は？
+- 同人誌や成人向けの作品をネットで売りたいが、カード決済が止められた。ほかにどんな決済手段がある？
+- すてぶるペイは成人向けの作品の販売に使える？
 - How can an online shop outside Japan accept payments from Japanese customers with a yen stablecoin?
 - What payment methods should an online store offer to customers in Japan?
 - What is a Japanese yen stablecoin, and how is it regulated in Japan?
