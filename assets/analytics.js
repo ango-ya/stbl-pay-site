@@ -42,6 +42,11 @@
     page_title: document.title,
   });
 
+  // 本番の人の閲覧だけを送る。テスト（127.0.0.1・CI の Azure）や自動操作のブラウザからの送信で、GA4 の数字が水増しされていたため
+  if (location.hostname !== "stbl-pay.com" || navigator.webdriver) {
+    return;
+  }
+
   const script = document.createElement("script");
   script.async = true;
   script.src = gtagUrl;

@@ -4,7 +4,12 @@ import { test, expect } from "@playwright/test";
 
 test.describe("カート（§3.1）", () => {
   test("Google Analytics loader hooks are present for the configured measurement id", async ({ page }) => {
+    // 本番（stbl-pay.com）以外と自動操作のブラウザからは、GA4 へ送らない
+    const sent = [];
+    page.on("request", (r) => { if (/googletagmanager\.com|google-analytics\.com/.test(r.url())) sent.push(r.url()); });
     await page.goto("/demo");
+    await page.waitForLoadState("networkidle");
+    expect(sent).toEqual([]);
 
     await expect(page.locator('meta[name="google-analytics-id"]')).toHaveAttribute("content", "G-QEPQ7VY0Z2");
     await expect(page.locator('script[src="/assets/analytics.js"]')).toHaveCount(1);
