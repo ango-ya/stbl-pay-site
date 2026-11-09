@@ -94,11 +94,44 @@ for (const { path, main } of PAGES) {
     expect(types).toContain(main);
     expect(types).toContain("BreadcrumbList");
     const isEn = path.startsWith("/en/");
-    const ogImage = `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
     const local = (u) => { const x = new URL(u); return x.pathname + x.search; };
+    // OGP の画像は、記事ごとのサムネイル（scripts/learn-thumbs/ が書き出す /assets/learn/<slug>/og.png）か、言語に合う共通の画像
+    const own = `${ORIGIN}/assets/learn/${path.split("/").filter(Boolean).pop()}/og.png`;
+    const declared = (await page.locator('meta[property="og:image"]').getAttribute("content")).split("?")[0];
+    const ogImage = path.startsWith("/learn/") && declared === own ? own : `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
     const sameImage = (u) => u.split("?")[0] === ogImage;
     for (const sel of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
-      expect(sameImage(await page.locator(sel).getAttribute("content")), `${sel} は言語に合う画像`).toBe(true);
+      expect(sameImage(await page.locator(sel).getAttribute("content")), `${sel} は記事のサムネイルか、言語に合う共通の画像`).toBe(true);
+    }
+    if (ogImage === own) {
+      // 記事ごとの画像：200 で返り、PNG の実寸（IHDR）が 1200×630 で、meta の寸法とも合う
+      const res = await request.get(local(own));
+      expect(res.status(), own).toBe(200);
+      const png = await res.body();
+      expect(png.subarray(1, 4).toString(), "PNG である").toBe("PNG");
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)], "1200×630").toEqual([1200, 630]);
+      await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
+      await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute("content", "630");
+      await expect(page.locator('meta[property="og:image:type"]')).toHaveAttribute("content", "image/png");
+    }
+
+    // 図（scripts/figures/ が書き出す GIF・WebP）：文字の代わりの alt と figcaption、場所を先に取る width/height、遅延読み込み。各形式が 200
+    for (const fig of await page.locator("figure.learn-fig").all()) {
+      const img = fig.locator("img");
+      expect((await img.getAttribute("alt"))?.length ?? 0, "図の alt は図の内容を文で").toBeGreaterThan(30);
+      expect([await img.getAttribute("width"), await img.getAttribute("height")]).toEqual(["720", "405"]);
+      expect(await img.getAttribute("loading")).toBe("lazy");
+      expect((await fig.locator("figcaption").textContent()).trim().length, "figcaption がある").toBeGreaterThan(10);
+      const srcs = [await img.getAttribute("src"), ...(await fig.locator("source").evaluateAll((ss) => ss.map((s) => s.getAttribute("srcset"))))];
+      for (const src of srcs) expect((await request.get(src)).status(), src).toBe(200);
+    }
+    // 冒頭のサムネイル：最初に見える絵なので遅延読み込みにしない
+    for (const hero of await page.locator("img.learn-hero").all()) {
+      expect(await hero.getAttribute("loading")).toBeNull();
+      expect(await hero.getAttribute("fetchpriority")).toBe("high");
+      expect([await hero.getAttribute("width"), await hero.getAttribute("height")]).toEqual(["1200", "630"]);
+      expect((await hero.getAttribute("alt"))?.length ?? 0).toBeGreaterThan(10);
+      expect((await request.get(await hero.getAttribute("src"))).status()).toBe(200);
     }
     for (const n of nodes.filter((n) => n["@type"] === "BreadcrumbList")) {
       for (const it of n.itemListElement) expect((await request.get(local(it.item))).status(), it.item).toBe(200);
