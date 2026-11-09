@@ -334,3 +334,32 @@
     font-weight: 600;
   }
 }
+
+/* ---------- ハブ（/learn/）の群の見出し ---------- */
+
+.learn-group {
+  margin-top: 40px;
+}
+
+.learn-group h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.learn-group .learn-cards {
+  margin-top: 16px;
+}
+
+.learn-cards h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.learn-cards a:hover h3 {
+  color: var(--link);
+}
