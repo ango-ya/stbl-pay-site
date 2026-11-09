@@ -26,7 +26,7 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
     <meta property="article:published_time" content="2026-11-05" />
-    <meta property="article:modified_time" content="2026-11-07" />
+    <meta property="article:modified_time" content="2026-11-09" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="決済手数料の比べ方：料率だけでなく総コストで比べる" />
     <meta
@@ -41,6 +41,7 @@
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
     <script src="/assets/analytics.js"></script>
+    <script src="/assets/fee-calculator.js" defer></script>
 
     <script type="application/ld+json">
 {
@@ -59,7 +60,7 @@
       "description": "決済手数料は、料率だけでは比べられません。月額・初期費用、振込手数料、入金までの日数、チャージバックの負担、購入者への上乗せまで合わせた「総コスト」で比べましょう。比べる項目と見るポイントを、表で整理します。",
       "inLanguage": "ja",
       "datePublished": "2026-11-05",
-      "dateModified": "2026-11-07",
+      "dateModified": "2026-11-09",
       "author": {
         "@id": "https://stbl-pay.com/#org-angoya"
       },
@@ -192,7 +193,7 @@
 
           <h1>決済手数料の比べ方：料率だけでなく総コストで比べる</h1>
           <p class="learn-lead">決済手数料は、料率だけで比べず、お店に残るお金で比べます。月額・初期費用、振込手数料、入金までの日数、チャージバックの負担、購入者への上乗せまで足した「総コスト」が、本当の費用です。ここでは、比べる項目と見るポイントを表にまとめます。</p>
-          <p class="learn-meta">更新日：<time datetime="2026-11-07">2026年11月7日</time>　文：合同会社暗号屋</p>
+          <p class="learn-meta">更新日：<time datetime="2026-11-09">2026年11月9日</time>　文：合同会社暗号屋</p>
 
           <div class="learn-body">
             <h2 id="why">決済手数料は、料率だけで比べない</h2>
@@ -263,6 +264,51 @@
             </ol>
             <p>売上が少ない場合と多い場合の両方で計算すると、どのサービスが合うかがわかります。</p>
 
+            <section id="calc" aria-labelledby="calc-title">
+              <h2 id="calc-title">総コストを計算する</h2>
+              <p>候補のサービスの公式の料金ページで調べた値を入れると、1 か月の手数料の合計と、売上に対する実質の割合がわかります。未入力の欄は 0 として計算します。目安として使ってください。</p>
+              <p>
+                <label for="fc-sales">月の売上（円）</label><br />
+                <input type="number" id="fc-sales" inputmode="decimal" step="any" autocomplete="off" />
+              </p>
+              <p>
+                <label for="fc-count">月の決済件数（件）</label><br />
+                <input type="number" id="fc-count" inputmode="decimal" step="any" autocomplete="off" />
+              </p>
+              <p>
+                <label for="fc-rate">決済手数料の料率（%）</label><br />
+                <input type="number" id="fc-rate" inputmode="decimal" step="any" autocomplete="off" />
+              </p>
+              <p>
+                <label for="fc-fixed">1 件ごとの固定の手数料（円）</label><br />
+                <input type="number" id="fc-fixed" inputmode="decimal" step="any" autocomplete="off" />
+              </p>
+              <p>
+                <label for="fc-monthly">月額の基本料金（円）</label><br />
+                <input type="number" id="fc-monthly" inputmode="decimal" step="any" autocomplete="off" />
+              </p>
+              <p>
+                <label for="fc-payouts">月の入金回数（回）</label><br />
+                <input type="number" id="fc-payouts" inputmode="decimal" step="any" autocomplete="off" />
+              </p>
+              <p>
+                <label for="fc-transfer">1 回の振込手数料（円）</label><br />
+                <input type="number" id="fc-transfer" inputmode="decimal" step="any" autocomplete="off" />
+              </p>
+              <p class="learn-note" id="fc-warn" hidden></p>
+              <output id="fc-result" aria-live="polite">
+                <p>月の手数料の合計：<strong id="fc-total">0 円</strong></p>
+                <p>売上に対する実質の割合：<strong id="fc-ratio">—</strong></p>
+                <ul>
+                  <li>料率の分：<span id="fc-b-rate">0 円</span></li>
+                  <li>1 件ごとの固定の手数料の分：<span id="fc-b-fixed">0 円</span></li>
+                  <li>月額の基本料金：<span id="fc-b-monthly">0 円</span></li>
+                  <li>振込手数料の分：<span id="fc-b-transfer">0 円</span></li>
+                </ul>
+              </output>
+              <p class="learn-note">1 円未満は四捨五入しています。チャージバックや返金の費用は含みません。</p>
+            </section>
+
             <h2 id="chargeback">チャージバックの負担も費用になる</h2>
             <p>チャージバックとは、購入者がカード会社に申し立てて、売上が取り消される仕組みです。取り消された代金は、原則としてお店が負担します<sup class="fn"><a href="#src-3">[3]</a></sup>。</p>
             <p>申し立てごとに手数料がかかるサービスもあります。たとえば Stripe では、申し立て 1 件ごとに 1,500 円です<sup class="fn"><a href="#src-1">[1]</a></sup>。取り消しの件数が増えたら、費用として見込んでおきましょう。すてぶるペイはカード決済ではないため、カード起因のチャージバックの仕組みそのものがありません。返金は、お店から購入者へ行います。詳しくは <a href="/learn/chargeback/">チャージバックとは</a>で説明します。</p>
@@ -331,11 +377,9 @@
           <section class="learn-related" aria-labelledby="related-title">
             <h2 id="related-title">関連する解説</h2>
             <ul>
+              <li><a href="/learn/online-payment-methods/">ネットショップの決済方法の選び方</a></li>
+              <li><a href="/learn/payment-gateway/">決済代行とは</a></li>
               <li><a href="/learn/stablecoin-payments/">ステーブルコイン決済とは</a></li>
-              <li><a href="/learn/jpyc-payments/">JPYC 決済をお店に導入するには</a></li>
-              <li><a href="/learn/chargeback/">チャージバックとは</a></li>
-              <li><a href="/learn/card-merchant-screening/">クレジットカード決済の加盟店審査</a></li>
-              <li><a href="/learn/glossary/">決済の用語集</a></li>
             </ul>
           </section>
 
