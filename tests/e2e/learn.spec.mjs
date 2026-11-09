@@ -10,10 +10,17 @@ const PAGES = [
   { path: "/learn/stablecoin-payments/", main: "Article" },
   { path: "/learn/jpyc-payments/", main: "Article" },
   { path: "/learn/card-merchant-screening/", main: "Article" },
+  { path: "/learn/no-screening-payments/", main: "Article" },
   { path: "/learn/payment-fees/", main: "Article" },
   { path: "/learn/chargeback/", main: "Article" },
   { path: "/learn/glossary/", main: "DefinedTermSet" },
   { path: "/en/learn/stablecoin-payments-japan/", main: "Article" },
+  { path: "/en/learn/", main: "CollectionPage" },
+  { path: "/en/learn/japan-payment-methods/", main: "Article" },
+  { path: "/en/learn/konbini-payment/", main: "Article" },
+  { path: "/en/learn/jpy-stablecoin/", main: "Article" },
+  { path: "/en/learn/accept-stablecoin-payments/", main: "Article" },
+  { path: "/en/learn/high-risk-merchant-account/", main: "Article" },
 ];
 
 const ALLOW_PCT = [

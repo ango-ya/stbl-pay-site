@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <title>Payment Methods in Japan: How Customers Pay Online | STBLpay</title>
+    <meta
+      name="description"
+      content="Payment methods in Japan: cards, konbini, bank transfer, cash on delivery, carrier billing, QR code and pay-later, and what an overseas shop should know."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="STBLpay" />
+    <meta property="og:title" content="Payment Methods in Japan: How Customers in Japan Pay Online" />
+    <meta
+      property="og:description"
+      content="A guide to how customers in Japan pay online, with a comparison table, what an overseas shop needs from a payment gateway, and where a yen stablecoin fits."
+    />
+    <meta property="og:url" content="https://stbl-pay.com/en/learn/japan-payment-methods/" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
+    <meta property="article:published_time" content="2026-11-09" />
+    <meta property="article:modified_time" content="2026-11-09" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Payment Methods in Japan: How Customers in Japan Pay Online" />
+    <meta
+      name="twitter:description"
+      content="A guide to how customers in Japan pay online, with a comparison table, what an overseas shop needs from a payment gateway, and where a yen stablecoin fits."
+    />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png" />
+    <meta name="twitter:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
+    <link rel="canonical" href="https://stbl-pay.com/en/learn/japan-payment-methods/" />
+    <link rel="stylesheet" href="/assets/lp.css" />
+    <link rel="stylesheet" href="/assets/learn.css" />
+    <script src="/assets/analytics.js"></script>
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://stbl-pay.com/#org-angoya",
+      "name": "合同会社暗号屋",
+      "alternateName": "Ango-ya LLC",
+      "url": "https://www.ango-ya.org/"
+    },
+    {
+      "@type": "Article",
+      "@id": "https://stbl-pay.com/en/learn/japan-payment-methods/#article",
+      "headline": "Payment Methods in Japan: How Customers in Japan Pay Online",
+      "description": "Payment methods in Japan: cards, konbini, bank transfer, cash on delivery, carrier billing, QR code and pay-later, and what an overseas shop should know.",
+      "inLanguage": "en",
+      "datePublished": "2026-11-09",
+      "dateModified": "2026-11-09",
+      "author": { "@id": "https://stbl-pay.com/#org-angoya" },
+      "publisher": { "@id": "https://stbl-pay.com/#org-angoya" },
+      "mainEntityOfPage": "https://stbl-pay.com/en/learn/japan-payment-methods/",
+      "image": "https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png",
+      "about": { "@id": "https://stbl-pay.com/#service" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://stbl-pay.com/en/" },
+        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://stbl-pay.com/en/learn/" },
+        { "@type": "ListItem", "position": 3, "name": "Payment methods in Japan", "item": "https://stbl-pay.com/en/learn/japan-payment-methods/" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "inLanguage": "en",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What are the most common payment methods in Japan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Credit cards make up most cashless spending. For 2025, Japan's Ministry of Economy, Trade and Industry (METI) counted 162.7 trillion yen of cashless payments, of which credit cards were 134.6 trillion yen and code payments (QR codes and similar) were 16.6 trillion yen. Other methods used online include convenience-store (konbini) payment, bank transfer, cash on delivery, carrier billing and pay-later services."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can an overseas online shop offer Japanese payment methods without a Japanese company?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on the provider and the method. KOMOJU says konbini payment at five chains, Pay-easy, bank transfer, Paidy and WebMoney (for digital content) are available without a local entity, while 7-Eleven konbini, carrier billing and card processing through a Japanese bank need one. Stripe's documentation lists a business location in Japan for Konbini, PayPay and yen bank transfers. Check your provider's current terms."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does konbini payment work for an online order?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The buyer receives a payment code and a confirmation number at checkout, takes them to a convenience store and pays in cash. The shop is told of the payment afterward, not at the moment of checkout. Our konbini guide covers the details."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is atobarai (pay later) in Japan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Atobarai means paying after the purchase. With a service such as Paidy, the buyer completes the order with a smartphone and pays by the 27th of the following month. KOMOJU describes Paidy as a buy now, pay later service that lets customers pay later without a credit card."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use cash on delivery when shipping to Japan from overseas?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Japan Post says it does not provide cash on delivery for international mail. Its domestic cash-on-delivery service collects the amount from the recipient at delivery and sends it to an account at a financial institution in Japan. Check other carriers separately."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can customers in Japan pay with a yen stablecoin instead?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "STBLpay is a payment service in which buyers pay in yen and merchants receive JPYC. It is under development, and the launch date has not been set (as of November 2026). The buyer pays by Japanese-yen bank transfer and approves the payment with a passkey. If the buyer's JPYC balance is enough, no bank transfer is needed."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="skip-link" href="#main">Skip to main content</a>
+      <div class="shell header-inner">
+        <a class="brand-link" href="/en/" aria-label="STBLpay home">
+          <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="brand-logo" />
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="/en/#comparison">Fees</a>
+          <a href="/en/#flow">How it works</a>
+          <a href="/en/#videos">Video</a>
+          <a href="/en/#faq">FAQ</a>
+          <a href="/docs/en/">Docs</a>
+          <a href="/learn/" lang="ja" hreflang="ja">日本語</a>
+        </nav>
+        <a class="header-cta" href="/en/#early-access">Talk to us about integrating</a>
+      </div>
+    </header>
+
+    <main id="main" class="learn-main">
+      <div class="shell">
+        <article class="learn-article">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li><a href="/en/">Home</a></li>
+              <li><a href="/en/learn/">Guides</a></li>
+              <li aria-current="page">Payment methods in Japan</li>
+            </ol>
+          </nav>
+
+          <h1>Payment Methods in Japan: How Customers in Japan Pay Online</h1>
+          <p class="learn-lead">The main payment methods in Japan online are credit cards, convenience-store (konbini) payment, bank transfer, cash on delivery, carrier billing, QR code and smartphone payments, and pay-later ("atobarai") services. Credit cards carry most of the cashless spending: for 2025, Japan's Ministry of Economy, Trade and Industry (METI) counted 134.6 trillion yen of credit card payments out of 162.7 trillion yen of cashless payments<sup class="fn"><a href="#src-1">[1]</a></sup>. Which methods an overseas shop can offer depends on its payment gateway or processor, and some methods need a business located in Japan.</p>
+          <p class="learn-meta">Updated: <time datetime="2026-11-09">November 9, 2026</time>　By Ango-ya LLC</p>
+
+          <div class="learn-body">
+            <h2 id="landscape">What are the main payment methods in Japan?</h2>
+            <p>METI calculates how much consumers pay by cashless means each year. For 2025 it reports 162.7 trillion yen in total, split into credit cards (134.6 trillion yen), code payments (16.6 trillion yen), electronic money (6.0 trillion yen) and debit cards (5.5 trillion yen)<sup class="fn"><a href="#src-1">[1]</a></sup>. These figures are for consumer payments overall, not for online shopping alone.</p>
+            <p>This guide does not give a market share for each method. Instead, the next section describes each method as its operator or a payment provider describes it.</p>
+
+            <h2 id="compare">What are the Japan payment options, and what should a merchant know about each?</h2>
+            <p>Terms differ by provider and contract, so treat the right-hand column as points to check, not as rules.</p>
+            <table class="learn-table">
+              <caption>Japanese payment methods online compared</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Method</th>
+                  <th scope="col">How it works</th>
+                  <th scope="col">What the merchant should know</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Credit and debit cards</th>
+                  <td data-label="How it works">The buyer enters card details at checkout<sup class="fn"><a href="#src-2">[2]</a></sup>.</td>
+                  <td data-label="What the merchant should know">Stripe lists Visa and Mastercard for accounts in all countries, and Japan Credit Bureau (JCB) for a set of countries that includes the United States<sup class="fn"><a href="#src-2">[2]</a></sup>. KOMOJU's local card acquiring in Japan covers Visa, Mastercard, American Express and JCB, and the merchant must be registered in Japan to use it<sup class="fn"><a href="#src-4">[4]</a></sup>.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Convenience-store (konbini) payment</th>
+                  <td data-label="How it works">The buyer gets payment codes and a confirmation number at checkout and pays cash at a store<sup class="fn"><a href="#src-3">[3]</a></sup>.</td>
+                  <td data-label="What the merchant should know">Confirmation arrives after the buyer pays, not at checkout<sup class="fn"><a href="#src-3">[3]</a></sup>. KOMOJU lists a maximum of 300,000 yen per payment and six store chains, including 7-Eleven<sup class="fn"><a href="#src-4">[4]</a></sup>. See our <a href="/en/learn/konbini-payment/">konbini payment guide</a>.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Bank transfer</th>
+                  <td data-label="How it works">The buyer sends money from an ATM or online banking<sup class="fn"><a href="#src-4">[4]</a></sup>.</td>
+                  <td data-label="What the merchant should know">KOMOJU lists no upper limit for domestic bank transfer<sup class="fn"><a href="#src-4">[4]</a></sup>. In Stripe's documentation, yen bank transfers are for Stripe accounts with a business location in Japan, and cross-border payments are not supported<sup class="fn"><a href="#src-5">[5]</a></sup>.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Cash on delivery</th>
+                  <td data-label="How it works">At delivery, the carrier collects the amount the sender specified from the recipient<sup class="fn"><a href="#src-6">[6]</a></sup>.</td>
+                  <td data-label="What the merchant should know">Japan Post's domestic service sends the collected amount to an account at a financial institution in Japan<sup class="fn"><a href="#src-6">[6]</a></sup>. Japan Post says it does not provide cash on delivery for international mail<sup class="fn"><a href="#src-7">[7]</a></sup>.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Carrier billing</th>
+                  <td data-label="How it works">Docomo describes a service in which purchases made on a smartphone or PC are paid together with the monthly mobile charges<sup class="fn"><a href="#src-8">[8]</a></sup>.</td>
+                  <td data-label="What the merchant should know">The bill goes to the person who holds the contract with the carrier, who must agree to the use<sup class="fn"><a href="#src-8">[8]</a></sup>. KOMOJU lists a maximum of 100,000 yen per payment<sup class="fn"><a href="#src-4">[4]</a></sup>, and says carrier billing is available after a local entity is set up<sup class="fn"><a href="#src-11">[11]</a></sup>.</td>
+                </tr>
+                <tr>
+                  <th scope="row">QR code and smartphone wallets</th>
+                  <td data-label="How it works">KOMOJU describes PayPay as a service in which customers keep money from a bank account in a wallet and pay by smartphone QR code<sup class="fn"><a href="#src-4">[4]</a></sup>.</td>
+                  <td data-label="What the merchant should know">Code payments were 16.6 trillion yen of cashless payments in 2025<sup class="fn"><a href="#src-1">[1]</a></sup>. Stripe's PayPay documentation lists a business location in Japan, customers in Japan and yen pricing, with payments from 50 yen to 1,000,000 yen<sup class="fn"><a href="#src-9">[9]</a></sup>.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Pay later (atobarai)</th>
+                  <td data-label="How it works">With Paidy, the buyer completes the purchase with a smartphone and pays by the 27th of the following month<sup class="fn"><a href="#src-10">[10]</a></sup>.</td>
+                  <td data-label="What the merchant should know">KOMOJU describes Paidy as a "buy now, pay later" service that lets customers pay later without a credit card<sup class="fn"><a href="#src-4">[4]</a></sup>, and says Paidy is available without a local entity<sup class="fn"><a href="#src-11">[11]</a></sup>.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2 id="gateway">Which payment gateway or payment processor in Japan can an overseas shop use?</h2>
+            <p>A payment gateway or payment processor is the service that connects your checkout to card networks, banks and other payment methods. For Japan, the question is which methods a provider can switch on for a business like yours. The two providers we checked answer it differently by method.</p>
+            <ul>
+              <li>Stripe's documentation lists a business location in Japan for Konbini<sup class="fn"><a href="#src-3">[3]</a></sup>, PayPay<sup class="fn"><a href="#src-9">[9]</a></sup> and yen bank transfers<sup class="fn"><a href="#src-5">[5]</a></sup>.</li>
+              <li>KOMOJU says konbini payment at five chains, Pay-easy, bank transfer, Paidy and WebMoney (for digital content) are available without a local entity, and that 7-Eleven konbini, Rakuten Pay, carrier billing and card processing through a Japanese bank need one. It adds that exemptions may apply depending on the business model and size<sup class="fn"><a href="#src-11">[11]</a></sup>.</li>
+            </ul>
+            <p>Provider terms change, so confirm the current list with the provider before you plan a checkout around a method. The conditions can also depend on what you sell, because providers keep lists of prohibited and restricted business categories<sup class="fn"><a href="#src-3">[3]</a></sup>. We have not compared providers on price or service, and this page does not recommend one.</p>
+
+            <h2 id="stablecoin">Where does a yen stablecoin fit among Japan payment options?</h2>
+            <p>A yen stablecoin is a digital token tied to the Japanese yen. It is another way to be paid by buyers in Japan, not a replacement for cards, konbini payment or the other methods above. It works only for buyers who can get the token, and it is not credit, so the buyer cannot pay later or in installments. Because a final blockchain transfer cannot be undone, refunds are sent back by the merchant. This guide gives no figures on how many buyers hold yen stablecoins. For the legal background and the issuer, read <a href="/en/learn/stablecoin-payments-japan/">Accepting payments from customers in Japan with a yen stablecoin</a>, <a href="/en/learn/jpy-stablecoin/">the yen stablecoin guide</a> and <a href="/en/learn/accept-stablecoin-payments/">how to accept stablecoin payments</a>.</p>
+
+            <h2 id="stblpay">How does STBLpay fit?</h2>
+            <p>STBLpay (すてぶるペイ) is a payment service in which buyers pay in yen and merchants receive JPYC. It is under development, and the launch date has not been set (as of November 2026).</p>
+            <ul>
+              <li>The buyer pays by Japanese-yen bank transfer and approves the payment with a passkey (face or fingerprint). If the buyer's JPYC balance is enough, no bank transfer is needed. Buyers need a JPYC EX account, which is available to individuals residing in Japan, so STBLpay is for selling to buyers in Japan.</li>
+              <li>The merchant receives sales in JPYC. The service does not rely on card companies' credit screening. STBLpay connects the merchant's and the buyer's wallets. It is a permissionless design with no step where the provider approves each merchant, so there is no card-style prior merchant screening.</li>
+              <li>The merchant withdraws to yen from its own JPYC EX account, which is available to individuals residing in Japan and Japanese corporations.</li>
+              <li>The provider, Ango-ya LLC, does not hold buyers' or merchants' funds or private keys (non-custodial).</li>
+              <li>The fee is under consideration. A single flat rate for all merchants is planned, and nothing is added on top for the buyer.</li>
+              <li>Use is subject to the terms of service, in which the merchant represents that its business is not illegal under Japanese law, and to legal requirements.</li>
+            </ul>
+            <p>A Sandbox for trying the integration and the merchant docs are public. Start with the <a href="/docs/en/">merchant docs</a>, the <a href="/docs/en/getting-started/quickstart/">Quick Start</a> and the <a href="/docs/en/testing/sandbox/">Sandbox</a>.</p>
+          </div>
+
+          <section aria-labelledby="faq-title">
+            <h2 id="faq-title">Frequently asked questions</h2>
+            <div class="faq-list">
+              <details>
+                <summary>What are the most common payment methods in Japan?</summary>
+                <p>Credit cards make up most cashless spending. For 2025, Japan's Ministry of Economy, Trade and Industry (METI) counted 162.7 trillion yen of cashless payments, of which credit cards were 134.6 trillion yen and code payments (QR codes and similar) were 16.6 trillion yen. Other methods used online include convenience-store (konbini) payment, bank transfer, cash on delivery, carrier billing and pay-later services.</p>
+              </details>
+              <details>
+                <summary>Can an overseas online shop offer Japanese payment methods without a Japanese company?</summary>
+                <p>It depends on the provider and the method. KOMOJU says konbini payment at five chains, Pay-easy, bank transfer, Paidy and WebMoney (for digital content) are available without a local entity, while 7-Eleven konbini, carrier billing and card processing through a Japanese bank need one. Stripe's documentation lists a business location in Japan for Konbini, PayPay and yen bank transfers. Check your provider's current terms.</p>
+              </details>
+              <details>
+                <summary>How does konbini payment work for an online order?</summary>
+                <p>The buyer receives a payment code and a confirmation number at checkout, takes them to a convenience store and pays in cash. The shop is told of the payment afterward, not at the moment of checkout. Our konbini guide covers the details.</p>
+              </details>
+              <details>
+                <summary>What is atobarai (pay later) in Japan?</summary>
+                <p>Atobarai means paying after the purchase. With a service such as Paidy, the buyer completes the order with a smartphone and pays by the 27th of the following month. KOMOJU describes Paidy as a buy now, pay later service that lets customers pay later without a credit card.</p>
+              </details>
+              <details>
+                <summary>Can I use cash on delivery when shipping to Japan from overseas?</summary>
+                <p>Japan Post says it does not provide cash on delivery for international mail. Its domestic cash-on-delivery service collects the amount from the recipient at delivery and sends it to an account at a financial institution in Japan. Check other carriers separately.</p>
+              </details>
+              <details>
+                <summary>Can customers in Japan pay with a yen stablecoin instead?</summary>
+                <p>STBLpay is a payment service in which buyers pay in yen and merchants receive JPYC. It is under development, and the launch date has not been set (as of November 2026). The buyer pays by Japanese-yen bank transfer and approves the payment with a passkey. If the buyer's JPYC balance is enough, no bank transfer is needed.</p>
+              </details>
+            </div>
+          </section>
+
+          <section class="learn-sources" aria-labelledby="sources-title">
+            <h2 id="sources-title">Sources</h2>
+            <p class="learn-note">Sources 6, 8 and 10 are in Japanese. Provider documentation changes over time, so the details below are as of the check date.</p>
+            <ol>
+              <li id="src-1">Ministry of Economy, Trade and Industry (METI), "<a href="https://www.meti.go.jp/english/press/2026/0331_005.html">2025 Ratio of Cashless Payment Among the Total Amount Paid by Consumers Calculated</a>" (March 31, 2026). Cashless payments of 162.7 trillion yen; credit cards 134.6, code payments 16.6, electronic money 6.0 and debit cards 5.5 trillion yen. Checked on November 9, 2026.</li>
+              <li id="src-2">Stripe Documentation, "<a href="https://docs.stripe.com/payments/cards/supported-card-brands">Cards</a>" (supported card brands). Checked on November 9, 2026.</li>
+              <li id="src-3">Stripe Documentation, "<a href="https://docs.stripe.com/payments/konbini">Konbini payments</a>". Checked on November 9, 2026.</li>
+              <li id="src-4">KOMOJU Docs, "<a href="https://docs.komoju.com/en/docs/introduction/core-concepts/supported-payment-types">Supported Payment Types</a>" (updated September 14, 2026). Checked on November 9, 2026.</li>
+              <li id="src-5">Stripe Documentation, "<a href="https://docs.stripe.com/payments/bank-transfers">Bank transfer payments</a>". Checked on November 9, 2026.</li>
+              <li id="src-6">Japan Post Co., Ltd., "<a href="https://www.post.japanpost.jp/service/fuka_service/daibiki/index.html" lang="ja">代金引換</a>" (cash on delivery). Checked on November 9, 2026.</li>
+              <li id="src-7">Japan Post Co., Ltd., "<a href="https://post.japanpost.jp/int/question/1_en.html">Do you have services like postage paid by addressee or cash on delivery?</a>" (International Mail FAQ). Checked on November 9, 2026.</li>
+              <li id="src-8">NTT DOCOMO, "<a href="https://www.docomo.ne.jp/service/spmode/function/payment/index.html" lang="ja">docomoコンテンツ決済</a>". Checked on November 9, 2026.</li>
+              <li id="src-9">Stripe Documentation, "<a href="https://docs.stripe.com/payments/paypay">PayPay payments</a>". Checked on November 9, 2026.</li>
+              <li id="src-10">Paidy Inc., "<a href="https://paidy.com/" lang="ja">あと払いペイディ</a>" (consumer site). Checked on November 9, 2026.</li>
+              <li id="src-11">KOMOJU, "<a href="https://en.komoju.com/blog/general-advice/best-way-to-enter-japans-ecommerce-market/">The Best Way to Enter Japan's eCommerce Market</a>" (published July 10, 2026; modified November 5, 2026). Checked on November 9, 2026.</li>
+            </ol>
+          </section>
+
+          <section class="learn-related" aria-labelledby="related-title">
+            <h2 id="related-title">Related guides</h2>
+            <ul>
+              <li><a href="/en/learn/stablecoin-payments-japan/">Accepting payments from customers in Japan with a yen stablecoin</a></li>
+              <li><a href="/en/learn/konbini-payment/">Konbini payment: how convenience-store payment works</a></li>
+              <li><a href="/en/learn/jpy-stablecoin/">Yen stablecoins: what they are and how they work</a></li>
+              <li><a href="/en/learn/accept-stablecoin-payments/">How to accept stablecoin payments</a></li>
+              <li><a href="/en/learn/high-risk-merchant-account/">What is a high-risk merchant account?</a></li>
+            </ul>
+          </section>
+
+          <aside class="learn-about" aria-labelledby="about-title">
+            <h2 id="about-title">About STBLpay</h2>
+            <p>STBLpay is a payment service in which buyers pay in yen and merchants receive JPYC (under development). Buyers pay by Japanese-yen bank transfer and approve with a passkey. Merchants receive sales without relying on card companies' credit screening.</p>
+            <p><a href="/en/">See the service overview</a>　<a href="/docs/en/">Merchant docs</a></p>
+          </aside>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div>
+          <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
+          <p>Operated by <a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">Ango-ya LLC</a></p>
+          <p><a href="/docs/en/">Merchant docs</a>　<a href="/learn/" lang="ja" hreflang="ja">Guides (Japanese)</a>　<a href="/en/press/">Press kit</a></p>
+          <ul class="footer-facts">
+            <li>Founded in February 2019, headquartered in Fukuoka City.</li>
+            <li>Co-developed "JPYC Explorer," an accounting audit support tool for JPYC, with Asteria Corporation (announced by Asteria on March 13, 2026).</li>
+            <li>Began a joint proof-of-concept of Web3 infrastructure, including validator node operation, with QTnet, Inc. (announced February 19, 2024).</li>
+            <li>A proof-of-concept project using the IoT data trading platform "PTPF" was selected for the Fukuoka City Demonstration Experiment Full Support Program (announced by Fukuoka City on January 31, 2022).</li>
+          </ul>
+        </div>
+        <p class="footer-note">© 2026 STBLpay. Operated by Ango-ya LLC</p>
+      </div>
+    </footer>
+  </body>
+</html>
