@@ -34,11 +34,23 @@ test.describe("GA4 の送信先の制限", () => {
   test("?ga=off で開いたブラウザは、以後も送らない。?ga=on で戻る", async ({ page }) => {
     expect((await run(page, { prod: true, webdriver: false, path: "/demo?ga=off" })).sent).toEqual([]);
     const sent = [];
-    page.on("request", (r) => { if (/googletagmanager\.com/.test(r.url())) sent.push(r.url()); });
+    page.on("request", (r) => { if (GA.test(r.url())) sent.push(r.url()); });
     await page.goto("https://stbl-pay.com/demo"); await page.waitForLoadState("networkidle");
     expect(sent).toEqual([]);
     await page.goto("https://stbl-pay.com/demo?ga=on"); await page.waitForLoadState("networkidle");
     expect(sent.length).toBeGreaterThan(0);
+  });
+  test("localStorage が使えなくても、?ga=off を付けた閲覧は送らない", async ({ page }) => {
+    await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new Error("blocked"); }; Storage.prototype.getItem = () => { throw new Error("blocked"); }; });
+    expect((await run(page, { prod: true, webdriver: false, path: "/demo?ga=off" })).sent).toEqual([]);
+  });
+  test("?ga に off・on 以外の値や空の値を付けても、計測は止まらない", async ({ page }) => {
+    for (const q of ["?ga=", "?ga=OFF", "?ga=1"]) {
+      const sent = [];
+      page.on("request", (r) => { if (GA.test(r.url())) sent.push(r.url()); });
+      if (q === "?ga=") expect((await run(page, { prod: true, webdriver: false, path: "/demo" + q })).sent.length).toBeGreaterThan(0);
+      else { await page.goto("https://stbl-pay.com/demo" + q); await page.waitForLoadState("networkidle"); expect(sent.length, q).toBeGreaterThan(0); }
+    }
   });
 });
 

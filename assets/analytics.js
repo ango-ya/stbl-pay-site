@@ -48,14 +48,17 @@
   }
 
   // 自分たちの閲覧を数えないための印。?ga=off を付けて一度開くとこのブラウザは送らない。?ga=on で戻す
+  // localStorage が使えない環境でも、?ga=off を付けたその閲覧は送らない
+  const gaFlag = new URLSearchParams(location.search).get("ga");
+  let optedOut = gaFlag === "off";
   try {
-    const flag = new URLSearchParams(location.search).get("ga");
-    if (flag === "off") localStorage.setItem("stblpay-ga-off", "1");
-    if (flag === "on") localStorage.removeItem("stblpay-ga-off");
-    if (localStorage.getItem("stblpay-ga-off")) {
-      return;
-    }
+    if (gaFlag === "off") localStorage.setItem("stblpay-ga-off", "1");
+    if (gaFlag === "on") localStorage.removeItem("stblpay-ga-off");
+    optedOut = optedOut || localStorage.getItem("stblpay-ga-off") === "1";
   } catch (error) {}
+  if (optedOut) {
+    return;
+  }
 
   const script = document.createElement("script");
   script.async = true;
