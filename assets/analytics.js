@@ -42,7 +42,7 @@
     page_title: document.title,
   });
 
-  // 本番の人の閲覧だけを送る。テスト（127.0.0.1・CI の Azure）や自動操作のブラウザからの送信で、GA4 の数字が水増しされていたため
+  // 本番の人の閲覧だけを送る。E2E（手元の 127.0.0.1、CI の GitHub Actions）や自動操作のブラウザも本物の測定 ID で送っていたため
   if (location.hostname !== "stbl-pay.com" || navigator.webdriver) {
     return;
   }

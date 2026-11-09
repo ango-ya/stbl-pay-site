@@ -2,14 +2,40 @@
 // カート起点フロー・決済1画面化・振込先案内・旧ブラウザ警告・ツールチップを検証する。
 import { test, expect } from "@playwright/test";
 
+// GA4 へは、本番（stbl-pay.com）の、自動操作でないブラウザからだけ送る。ホストと navigator.webdriver を別々に切り替えて確かめる
+test.describe("GA4 の送信先の制限", () => {
+  const GA = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
+  const run = async (page, { prod, webdriver }) => {
+    const sent = [];
+    await page.route(GA, (route) => { sent.push(route.request().url()); route.fulfill({ status: 200, contentType: "text/javascript", body: "" }); });
+    // 本番のホスト名で開くため、stbl-pay.com への通信を手元のサーバーに向ける
+    if (prod) await page.route("https://stbl-pay.com/**", async (route) => {
+      const u = new URL(route.request().url());
+      const r = await page.request.get(`http://127.0.0.1:4173${u.pathname}${u.search}`);
+      route.fulfill({ status: r.status(), headers: r.headers(), body: await r.body() });
+    });
+    if (!webdriver) await page.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
+    await page.goto(prod ? "https://stbl-pay.com/demo" : "/demo");
+    await page.waitForLoadState("networkidle");
+    const config = await page.evaluate(() => (window.dataLayer || []).some((a) => a[0] === "config"));
+    return { sent, config };
+  };
+  test("手元のホストでは、自動操作でなくても送らない", async ({ page }) => {
+    expect((await run(page, { prod: false, webdriver: false })).sent).toEqual([]);
+  });
+  test("本番のホストでも、自動操作のブラウザからは送らない", async ({ page }) => {
+    expect((await run(page, { prod: true, webdriver: true })).sent).toEqual([]);
+  });
+  test("本番のホストの、自動操作でないブラウザからは gtag.js を読み込み、config を積む", async ({ page }) => {
+    const { sent, config } = await run(page, { prod: true, webdriver: false });
+    expect(sent.some((u) => u.startsWith("https://www.googletagmanager.com/gtag/js?id=G-QEPQ7VY0Z2"))).toBe(true);
+    expect(config).toBe(true);
+  });
+});
+
 test.describe("カート（§3.1）", () => {
   test("Google Analytics loader hooks are present for the configured measurement id", async ({ page }) => {
-    // 本番（stbl-pay.com）以外と自動操作のブラウザからは、GA4 へ送らない
-    const sent = [];
-    page.on("request", (r) => { if (/googletagmanager\.com|google-analytics\.com/.test(r.url())) sent.push(r.url()); });
     await page.goto("/demo");
-    await page.waitForLoadState("networkidle");
-    expect(sent).toEqual([]);
 
     await expect(page.locator('meta[name="google-analytics-id"]')).toHaveAttribute("content", "G-QEPQ7VY0Z2");
     await expect(page.locator('script[src="/assets/analytics.js"]')).toHaveCount(1);
