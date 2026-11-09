@@ -266,14 +266,14 @@
 
             <section id="calc" aria-labelledby="calc-title">
               <h2 id="calc-title">総コストを計算する</h2>
-              <p>候補のサービスの公式の料金ページで調べた値を入れると、1 か月の手数料の合計と、売上に対する実質の割合がわかります。未入力の欄は 0 として計算します。目安として使ってください。</p>
+              <p>候補のサービスの公式の料金ページで調べた値を入れると、1 か月の手数料の合計と、売上に対する実質の割合がわかります。未入力の欄は 0 として計算します。料率と金額は小数第 2 位まで、件数と回数は整数で入れてください。目安として使ってください。</p>
               <p>
                 <label for="fc-sales">月の売上（円）</label><br />
                 <input type="number" id="fc-sales" inputmode="decimal" step="any" autocomplete="off" />
               </p>
               <p>
                 <label for="fc-count">月の決済件数（件）</label><br />
-                <input type="number" id="fc-count" inputmode="decimal" step="any" autocomplete="off" />
+                <input type="number" id="fc-count" inputmode="numeric" step="any" autocomplete="off" />
               </p>
               <p>
                 <label for="fc-rate">決済手数料の料率（%）</label><br />
@@ -289,14 +289,14 @@
               </p>
               <p>
                 <label for="fc-payouts">月の入金回数（回）</label><br />
-                <input type="number" id="fc-payouts" inputmode="decimal" step="any" autocomplete="off" />
+                <input type="number" id="fc-payouts" inputmode="numeric" step="any" autocomplete="off" />
               </p>
               <p>
                 <label for="fc-transfer">1 回の振込手数料（円）</label><br />
                 <input type="number" id="fc-transfer" inputmode="decimal" step="any" autocomplete="off" />
               </p>
-              <p class="learn-note" id="fc-warn" hidden></p>
-              <output id="fc-result" aria-live="polite">
+              <div id="fc-result" role="status" aria-live="polite">
+                <p class="learn-note" id="fc-warn" hidden></p>
                 <p>月の手数料の合計：<strong id="fc-total">0 円</strong></p>
                 <p>売上に対する実質の割合：<strong id="fc-ratio">—</strong></p>
                 <ul>
@@ -305,7 +305,7 @@
                   <li>月額の基本料金：<span id="fc-b-monthly">0 円</span></li>
                   <li>振込手数料の分：<span id="fc-b-transfer">0 円</span></li>
                 </ul>
-              </output>
+              </div>
               <p class="learn-note">1 円未満は四捨五入しています。チャージバックや返金の費用は含みません。</p>
             </section>
 

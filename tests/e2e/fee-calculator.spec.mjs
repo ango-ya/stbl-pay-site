@@ -60,3 +60,43 @@ test("負の値は 0 として計算し、注意を出す", async ({ page }) => 
   await expect(page.locator("#fc-warn")).toBeHidden();
   await expect(page.locator("#fc-total")).toHaveText("4,000 円");
 });
+
+test("固定の手数料と振込手数料も足す（200 件×40.5 円・入金 3 回×275 円）", async ({ page }) => {
+  await fill(page, { sales: "500000", count: "200", rate: "3.6", fixed: "40.5", payouts: "3", transfer: "275" });
+  // 18,000 + 8,100 + 0 + 825 = 26,925 円
+  await expect(page.locator("#fc-b-rate")).toHaveText("18,000 円");
+  await expect(page.locator("#fc-b-fixed")).toHaveText("8,100 円");
+  await expect(page.locator("#fc-b-transfer")).toHaveText("825 円");
+  await expect(page.locator("#fc-total")).toHaveText("26,925 円");
+});
+
+test("1 円未満の四捨五入は十進でずれない（1,500 円×2.3% = 34.5 → 35 円、1,250 円×2.28% = 28.5 → 29 円）", async ({ page }) => {
+  await fill(page, { sales: "1500", rate: "2.3" });
+  await expect(page.locator("#fc-b-rate")).toHaveText("35 円");
+  await fill(page, { sales: "1250", rate: "2.28" });
+  await expect(page.locator("#fc-b-rate")).toHaveText("29 円");
+});
+
+test("正しくない入力は注意を出し、その欄に aria-invalid と aria-describedby を付ける", async ({ page }) => {
+  await expect(page.locator("#fc-result")).toHaveAttribute("role", "status");
+  // 数値でない（数値欄に「1e」を打つとブラウザは値を読めない）
+  await page.locator("#fc-sales").pressSequentially("1e");
+  await expect(page.locator("#fc-warn")).toContainText("月の売上（数値でない）");
+  await expect(page.locator("#fc-sales")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#fc-sales")).toHaveAttribute("aria-describedby", "fc-warn");
+  await page.locator("#fc-sales").fill("");
+  // 件数が小数・料率が負
+  await fill(page, { count: "1.5", rate: "-3" });
+  await expect(page.locator("#fc-warn")).toContainText("月の決済件数（整数でない）");
+  await expect(page.locator("#fc-warn")).toContainText("決済手数料の料率（負の値）");
+  for (const k of ["count", "rate"]) await expect(page.locator(`#fc-${k}`)).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#fc-sales")).not.toHaveAttribute("aria-invalid", /.*/);
+  // 直すと外れる
+  await fill(page, { count: "2", rate: "3" });
+  await expect(page.locator("#fc-warn")).toBeHidden();
+  for (const k of ["count", "rate"]) {
+    await expect(page.locator(`#fc-${k}`)).not.toHaveAttribute("aria-invalid", /.*/);
+    await expect(page.locator(`#fc-${k}`)).not.toHaveAttribute("aria-describedby", /.*/);
+  }
+  expect(await page.evaluate(() => window.__csp)).toEqual([]);
+});
