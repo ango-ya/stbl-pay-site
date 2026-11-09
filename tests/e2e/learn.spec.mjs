@@ -19,6 +19,7 @@ const PAGES = [
   { path: "/en/learn/konbini-payment/", main: "Article" },
   { path: "/en/learn/jpy-stablecoin/", main: "Article" },
   { path: "/en/learn/accept-stablecoin-payments/", main: "Article" },
+  { path: "/en/learn/high-risk-merchant-account/", main: "Article" },
 ];
 
 const ALLOW_PCT = [

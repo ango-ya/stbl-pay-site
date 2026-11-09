@@ -16,6 +16,7 @@
 | 英語：コンビニ払い | konbini payment / konbini payment method japan / konbini payment online | /en/learn/konbini-payment/ |
 | 英語：円ステーブルコイン | jpy stablecoin / japanese yen stablecoin / yen pegged stablecoin / jpyc stablecoin / stablecoin regulation japan | /en/learn/jpy-stablecoin/ |
 | 英語：ステーブルコイン決済の受け取り | accept stablecoin payments / stablecoin payment gateway / stablecoin payment processor / stablecoin checkout | /en/learn/accept-stablecoin-payments/ |
+| 英語：ハイリスク加盟店 | high risk merchant account / high risk merchant account usa / high risk merchant account instant approval | /en/learn/high-risk-merchant-account/ |
 | 名前（基準） | すてぶるペイ / STBLpay / stable pay JPYC | / と /en/ |
 
 ## AI への質問（週次の点検で、検索付きで答えて stbl-pay.com が出るかを見る）
