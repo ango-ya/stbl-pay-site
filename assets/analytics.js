@@ -47,6 +47,16 @@
     return;
   }
 
+  // 自分たちの閲覧を数えないための印。?ga=off を付けて一度開くとこのブラウザは送らない。?ga=on で戻す
+  try {
+    const flag = new URLSearchParams(location.search).get("ga");
+    if (flag === "off") localStorage.setItem("stblpay-ga-off", "1");
+    if (flag === "on") localStorage.removeItem("stblpay-ga-off");
+    if (localStorage.getItem("stblpay-ga-off")) {
+      return;
+    }
+  } catch (error) {}
+
   const script = document.createElement("script");
   script.async = true;
   script.src = gtagUrl;
