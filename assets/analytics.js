@@ -42,6 +42,11 @@
     page_title: document.title,
   });
 
+  // 本番の人の閲覧だけを送る。E2E（手元の 127.0.0.1、CI の GitHub Actions）や自動操作のブラウザも本物の測定 ID で送っていたため
+  if (location.hostname !== "stbl-pay.com" || navigator.webdriver) {
+    return;
+  }
+
   const script = document.createElement("script");
   script.async = true;
   script.src = gtagUrl;
