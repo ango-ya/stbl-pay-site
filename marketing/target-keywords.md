@@ -5,11 +5,15 @@
 
 | 群 | 言葉 | 受け持つページ |
 |---|---|---|
+| ステーブルコインとは | ステーブルコインとは / ステーブルコインとは わかりやすく / ステーブルコイン 仕組み / ステーブルコイン 種類 / ステーブルコイン ビットコイン 違い | /learn/what-is-stablecoin/ |
 | ステーブルコイン決済 | ステーブルコイン決済とは / ステーブルコイン 決済 仕組み / ステーブルコイン 決済 メリット / ステーブルコイン 決済 手数料 / ステーブルコイン決済 日本 | /learn/stablecoin-payments/ |
 | JPYC 決済 | jpyc 決済 導入 / jpyc 決済 導入 方法 / jpyc ecサイト / jpyc 決済 手数料 / jpyc 店舗 導入 | /learn/jpyc-payments/ |
+| 決済代行 | 決済代行とは / 決済代行会社とは / 決済代行 仕組み / 決済代行 収納代行 違い / 決済代行 選び方 | /learn/payment-gateway/ |
+| カード決済の導入 | クレジットカード決済 導入 / クレジットカード決済 導入 ネットショップ / ネットショップにクレカ決済を導入 / クレジットカード決済 導入 費用 | /learn/accept-credit-cards/ |
 | 加盟店審査 | クレジットカード決済 導入 審査 / クレジットカード決済導入 個人事業主 審査 / stripe 審査 落ちた / stripe 審査通らない | /learn/card-merchant-screening/ |
 | 審査なし・ハイリスク | 決済代行 審査なし / 決済サービス 審査なし / オンライン決済 審査なし / 決済代行 審査 通りやすい / 決済代行 審査落ち /（候補外）ハイリスク 決済代行 | /learn/no-screening-payments/ |
-| 手数料 | 決済手数料 比較 / 決済手数料 比較 ネットショップ / クレジットカード決済 導入 個人事業主 比較 / キャッシュレス 手数料 高い | /learn/payment-fees/ |
+| 手数料 | 決済手数料 比較 / 決済手数料 比較 ネットショップ / クレジットカード決済 導入 個人事業主 比較 / キャッシュレス 手数料 高い / クレジットカード 手数料 計算 / キャッシュレス手数料 計算方法 | /learn/payment-fees/（計算ツール） |
+| 決済方法の選び方 | おすすめ 決済方法 クレジット コンビニ / 銀行振込以外の決済方法 / フリーランス 決済方法 /（候補外）ネットショップ 決済方法 | /learn/online-payment-methods/ |
 | チャージバック | チャージバックとは / チャージバック 泣き寝入り / ecサイト チャージバック | /learn/chargeback/ |
 | 用語 | 電子決済手段とは / 日本円ステーブルコインとは / ノンカストディアルとは | /learn/glossary/ |
 | 英語 | stablecoin payments Japan / japan online payment methods / what are stablecoin payments | /en/learn/stablecoin-payments-japan/ |
