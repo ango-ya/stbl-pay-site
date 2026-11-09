@@ -15,7 +15,7 @@ sidebar_position: 2
 | 決済作成が 409 `merchant/domain_required` になる | 加盟店コンソールでドメインを登録しているか（[ドメイン登録](/security/domain)） |
 | 決済作成が 403 `merchant/suspended` になる | 加盟店が利用停止中。再開されるまで作成できない。API キーは失効していない |
 | 同じ `orderId` で 409 `payment/order_terminated` になる | 停止で中止済み、または停止前に作られてまだ送信していない決済。新しい `orderId` で作り直す（[利用停止](/lifecycle/edge-cases#加盟店の利用停止)） |
-| 復帰先を拒否される | HTTPS、userinfo なし、`returnUrl` のホスト名が登録ドメインと一致するか |
+| 復帰先を拒否される（403 `merchant/origin_mismatch`） | `returnUrl` が、`https`・ポートなし・userinfo なしで、ホスト名が登録ドメインと完全に一致しているか（サブドメインは別のドメインなので不可）。`returnUrl` は省略できる（[`returnUrl` の条件](/security/domain#returnurl-の条件)） |
 | 指定期限を拒否される | `merchantExpiresAt` が作成時点から3日より先か（近すぎると 400 `payment/expires_at_too_soon`）。UTC の `Z` で終わる形式か（`+09:00` などのオフセット付きは 400 `common/invalid_request`） |
 | 決済ページへ進めない | API の `checkoutUrl` をそのまま使用しているか |
 | 状態を取得できない | 作成時の決済 ID・環境が一致するか。通信エラーを `failed` にしていないか |

@@ -123,7 +123,7 @@ paths:
         '403':
           description: |
             - `merchant/suspended`：加盟店が利用停止中。決済を作成できない。再開を待つ
-            - `merchant/origin_mismatch`：`returnUrl` が登録ドメインの条件に合わない
+            - `merchant/origin_mismatch`：`returnUrl` が登録ドメインの条件に合わない。条件は、`https`・ポート番号なし・userinfo なしで、ホスト名が登録ドメインと完全に一致すること（サブドメインは別のドメインなので不可）。`returnUrl` は省略できる
           content:
             application/json:
               schema:
@@ -468,7 +468,7 @@ components:
           type: string
           pattern: '^https://'
           description: |
-            決済の後に利用者が戻る URL。次の条件をすべて満たさないと、決済は作成されません。
+            決済の後に利用者が戻る URL。利用者のブラウザを戻すページであり、サーバー間の通知先ではありません。決済結果は Webhook で受け取ります。次の条件をすべて満たさないと、決済は作成されません。
 
             - スキームは `https`（`http` は `http://localhost` のような開発用の URL も不可）
             - ポート番号を付けない（`:443` は付けても通る）

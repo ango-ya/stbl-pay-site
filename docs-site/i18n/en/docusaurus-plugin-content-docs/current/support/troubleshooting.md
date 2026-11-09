@@ -15,7 +15,7 @@ sidebar_position: 2
 | Payment creation returns 409 `merchant/domain_required` | Check that you registered a domain in the merchant console ([Domain registration](/security/domain)) |
 | Payment creation returns 403 `merchant/suspended` | The merchant is suspended. You cannot create payments until it is resumed. API keys are not revoked |
 | 409 `payment/order_terminated` for the same `orderId` | The suspension aborted this payment, or it was created before the suspension and has not been sent yet. Create it again with a new `orderId` ([Suspension](/lifecycle/edge-cases#merchant-suspension)) |
-| The return destination is rejected | Check for HTTPS, no userinfo, and that the host name of `returnUrl` matches the registered domain |
+| The return destination is rejected (403 `merchant/origin_mismatch`) | Check that `returnUrl` uses `https`, has no port and no userinfo, and that its host name exactly matches the registered domain (a subdomain is a different domain and is not accepted). `returnUrl` can be omitted ([Requirements for `returnUrl`](/security/domain#returnurl-requirements)) |
 | The specified deadline is rejected | Check that `merchantExpiresAt` is more than 3 days after the creation time. A value that expires within 3 days of creation is rejected with 400 `payment/expires_at_too_soon`. Also check that it ends in UTC `Z`. A value with an offset such as `+09:00` is rejected with 400 `common/invalid_request` |
 | Cannot proceed to the checkout page | Check that you use the API's `checkoutUrl` as is |
 | Cannot retrieve the status | Check that the payment ID and environment match those from creation, and that you do not treat a communication error as `failed` |
