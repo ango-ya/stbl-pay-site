@@ -363,3 +363,148 @@
 .learn-cards a:hover h3 {
   color: var(--link);
 }
+
+/* ---------- 冒頭のサムネイル・3 行でわかる・図・会話（scripts/learn-thumbs/ と scripts/figures/ が書き出す絵を使う） ---------- */
+
+.learn-hero {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 0 24px;
+  border-radius: 6px;
+  background: #f6f7fb;
+}
+
+.learn-summary {
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  border-left: 4px solid var(--accent);
+  background: #f6f7fb;
+}
+
+.learn-summary-title {
+  margin: 0 0 6px;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.learn-summary ul {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.learn-summary li + li {
+  margin-top: 4px;
+}
+
+/* 図：width/height の属性で場所を先に取る（ずれを出さない）。読み込むまでは淡い地 */
+.learn-fig {
+  margin: 24px 0 28px;
+}
+
+.learn-fig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: #f6f7fb;
+}
+
+.learn-fig figcaption {
+  margin: 8px 0 0;
+  color: var(--gray);
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+/* 会話：すてぶるくんが聞き（左）、すてぶるちゃんが答える（右。絵が左を向いているので右に置く） */
+.learn-talk {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+.learn-talk-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-areas:
+    "face name"
+    "face text";
+  column-gap: 12px;
+  align-items: start;
+  margin: 0;
+}
+
+.learn-talk-line.is-chan {
+  grid-template-columns: minmax(0, 1fr) 52px;
+  grid-template-areas:
+    "name face"
+    "text face";
+}
+
+.learn-talk-line img {
+  grid-area: face;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ebeef7;
+}
+
+.learn-talk-name {
+  grid-area: name;
+  color: var(--gray);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.learn-talk-text {
+  grid-area: text;
+  justify-self: start;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px 14px 14px 14px;
+  background: #f6f7fb;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.is-chan .learn-talk-name {
+  color: var(--accent-dark);
+  text-align: right;
+}
+
+.is-chan .learn-talk-text {
+  justify-self: end;
+  border-color: #cfe0f5;
+  border-radius: 14px 4px 14px 14px;
+  background: #eaf2ff;
+}
+
+@media (max-width: 600px) {
+  .learn-summary {
+    padding: 14px 16px;
+  }
+
+  .learn-talk-line {
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 10px;
+  }
+
+  .learn-talk-line.is-chan {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .learn-talk-line img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .learn-talk-text {
+    font-size: 14.5px;
+  }
+}
