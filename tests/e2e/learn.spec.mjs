@@ -1,4 +1,4 @@
-// 解説ページ（/learn/ と /en/learn/）が、検索と AI に読まれる形を保ち、書いてはいけないことを書いていないこと。
+// 解説ページ（/learn/ と /en/learn/）と表現に関する方針（/policy/expression/）が、検索と AI に読まれる形を保ち、書いてはいけないことを書いていないこと。
 // 書くときの決まりは marketing/seo-strategy.md。本番ヘッダ（CSP）はローカルの静的サーバーが付けないので、_headers の値を付け直して見る。
 import { test, expect } from "@playwright/test";
 import { existsSync } from "node:fs";
@@ -18,6 +18,8 @@ const PAGES = [
   { path: "/learn/payment-gateway/", main: "Article" },
   { path: "/learn/accept-credit-cards/", main: "Article" },
   { path: "/learn/online-payment-methods/", main: "Article" },
+  { path: "/learn/card-expression-restrictions/", main: "Article" },
+  { path: "/policy/expression/", main: "WebPage" },
   { path: "/en/learn/stablecoin-payments-japan/", main: "Article" },
   { path: "/en/learn/", main: "CollectionPage" },
   { path: "/en/learn/japan-payment-methods/", main: "Article" },

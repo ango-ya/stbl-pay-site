@@ -451,7 +451,7 @@ test.describe("日本語LP JSON-LD 構造化データ", () => {
     expect(structured).toEqual(visible.map((s) => s.trim()));
   });
 
-  test("FAQPage JSON-LD の答えは表示の答え（脚注の参照を除く）と同じで、16問そろっている", async ({
+  test("FAQPage JSON-LD の答えは表示の答え（脚注の参照を除く）と同じで、17問そろっている", async ({
     page,
   }) => {
     await page.goto("/");
@@ -473,8 +473,8 @@ test.describe("日本語LP JSON-LD 構造化データ", () => {
       .find((node) => node["@type"] === "FAQPage");
 
     expect(faqPage).toBeTruthy();
-    expect(faqPage.mainEntity).toHaveLength(16);
-    expect(visible).toHaveLength(16);
+    expect(faqPage.mainEntity).toHaveLength(17);
+    expect(visible).toHaveLength(17);
     const structured = faqPage.mainEntity.map((q) =>
       q.acceptedAnswer.text.replace(/\s+/g, " ").trim()
     );
