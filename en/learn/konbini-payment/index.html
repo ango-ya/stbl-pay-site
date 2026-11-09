@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="google-analytics-id" content="G-QEPQ7VY0Z2" />
+    <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+    <title>Konbini Payment in Japan: How It Works | STBLpay</title>
+    <meta
+      name="description"
+      content="Konbini payment lets buyers in Japan pay cash at a convenience store for online orders. See how it works, limits, expiry, refunds and alternatives."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="STBLpay" />
+    <meta property="og:title" content="What Is Konbini Payment? Convenience-Store Payments in Japan Explained" />
+    <meta
+      property="og:description"
+      content="How konbini payment works for online orders in Japan: the buyer's steps, what the merchant gets, limits, refunds, pros and cons, and alternatives."
+    />
+    <meta property="og:url" content="https://stbl-pay.com/en/learn/konbini-payment/" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
+    <meta property="article:published_time" content="2026-11-09" />
+    <meta property="article:modified_time" content="2026-11-09" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="What Is Konbini Payment? Convenience-Store Payments in Japan Explained" />
+    <meta
+      name="twitter:description"
+      content="How konbini payment works for online orders in Japan: the buyer's steps, what the merchant gets, limits, refunds, pros and cons, and alternatives."
+    />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png" />
+    <meta name="twitter:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
+    <link rel="canonical" href="https://stbl-pay.com/en/learn/konbini-payment/" />
+    <link rel="stylesheet" href="/assets/lp.css" />
+    <link rel="stylesheet" href="/assets/learn.css" />
+    <script src="/assets/analytics.js"></script>
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://stbl-pay.com/#org-angoya",
+      "name": "合同会社暗号屋",
+      "alternateName": "Ango-ya LLC",
+      "url": "https://www.ango-ya.org/"
+    },
+    {
+      "@type": "Article",
+      "@id": "https://stbl-pay.com/en/learn/konbini-payment/#article",
+      "headline": "What Is Konbini Payment? Convenience-Store Payments in Japan Explained",
+      "description": "Konbini payment lets buyers in Japan pay cash at a convenience store for online orders. See how it works, limits, expiry, refunds and alternatives.",
+      "inLanguage": "en",
+      "datePublished": "2026-11-09",
+      "dateModified": "2026-11-09",
+      "author": { "@id": "https://stbl-pay.com/#org-angoya" },
+      "publisher": { "@id": "https://stbl-pay.com/#org-angoya" },
+      "mainEntityOfPage": "https://stbl-pay.com/en/learn/konbini-payment/",
+      "image": "https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png",
+      "about": { "@id": "https://stbl-pay.com/#service" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://stbl-pay.com/en/" },
+        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://stbl-pay.com/en/learn/" },
+        { "@type": "ListItem", "position": 3, "name": "Konbini payment in Japan", "item": "https://stbl-pay.com/en/learn/konbini-payment/" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "inLanguage": "en",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Can a customer outside Japan use konbini payment?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Konbini payment is built for customers in Japan who pay at a store in Japan. Stripe's Konbini page lists Japan as the customer location, Japanese yen as the currency, and domestic coverage rather than cross-border. A buyer who is not in Japan cannot walk into one of those stores."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does a konbini payment stay open?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on the setting you choose. In Stripe, the default is 3 days, ending at 23:59 Japan time, and the merchant can set 1 to 60 days. After the deadline the buyer can no longer start the payment at a store kiosk."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the maximum amount for a konbini payment?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Stripe lists 120 yen as the minimum and 300,000 yen as the maximum for a Konbini payment. KOMOJU lists 1 yen and 300,000 yen. Limits differ by provider, so check the one you use."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you refund a konbini payment?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, but not to the original payment source, because the buyer paid in cash. In Stripe, the buyer is emailed to provide bank account details and the refund is sent as a bank transfer. If the buyer does not do so within 45 days, the refund fails and the merchant must refund by another method."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a chargeback on konbini payments?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Stripe says Konbini does not support the standard dispute process, so customers cannot file chargebacks. In rare cases a store may report an irregularity, such as payment mishandling, and Stripe then contacts the merchant with next steps."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a yen stablecoin alternative to konbini payment?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "STBLpay is one option under development. The buyer pays by Japanese-yen bank transfer and approves with a passkey, and the merchant receives JPYC. The launch date has not been set (as of November 2026)."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="skip-link" href="#main">Skip to main content</a>
+      <div class="shell header-inner">
+        <a class="brand-link" href="/en/" aria-label="STBLpay home">
+          <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="brand-logo" />
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="/en/#comparison">Fees</a>
+          <a href="/en/#flow">How it works</a>
+          <a href="/en/#videos">Video</a>
+          <a href="/en/#faq">FAQ</a>
+          <a href="/docs/en/">Docs</a>
+          <a href="/learn/" lang="ja" hreflang="ja">日本語</a>
+        </nav>
+        <a class="header-cta" href="/en/#early-access">Talk to us about integrating</a>
+      </div>
+    </header>
+
+    <main id="main" class="learn-main">
+      <div class="shell">
+        <article class="learn-article">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li><a href="/en/">Home</a></li>
+              <li><a href="/en/learn/">Guides</a></li>
+              <li aria-current="page">Konbini payment in Japan</li>
+            </ol>
+          </nav>
+
+          <h1>What Is Konbini Payment? Convenience-Store Payments in Japan Explained</h1>
+          <p class="learn-lead">Konbini payment is a way for customers in Japan to pay for an online order in cash at a convenience store ("konbini" is the Japanese word for convenience store)<sup class="fn"><a href="#src-1">[1]</a></sup>. The buyer gets a payment code at checkout, takes it to a store such as FamilyMart or Lawson, and pays there. The merchant is told once the cash is paid, so the order stays pending until then. This guide covers how a konbini payment works online, what the merchant gets, and the alternatives, including a yen stablecoin.</p>
+          <p class="learn-meta">Updated: <time datetime="2026-11-09">November 9, 2026</time>　By Ango-ya LLC</p>
+
+          <div class="learn-body">
+            <h2 id="what">What is konbini payment?</h2>
+            <p>Konbini payment, also called the konbini payment method, lets customers in Japan pay for bills and online purchases at a convenience store with cash<sup class="fn"><a href="#src-1">[1]</a></sup>. The buyer receives payment codes for specific store chains and a confirmation number, then brings them to a store to pay<sup class="fn"><a href="#src-1">[1]</a></sup>. Because the buyer pays in cash, the payment does not create an entry on the buyer's bank or card statement<sup class="fn"><a href="#src-2">[2]</a></sup>.</p>
+            <p>Payment providers such as Stripe and KOMOJU offer it<sup class="fn"><a href="#src-1">[1]</a><a href="#src-3">[3]</a></sup>. Details below come from those two providers' public documentation, and other providers may differ.</p>
+
+            <h2 id="steps">How does a konbini payment work online, step by step?</h2>
+            <p>This is the buyer's path in Stripe's flow, with KOMOJU's differences noted.</p>
+            <ol>
+              <li>At checkout, the buyer selects konbini and enters a name and email address<sup class="fn"><a href="#src-1">[1]</a></sup>. With KOMOJU, the buyer also picks the store chain where they plan to pay<sup class="fn"><a href="#src-4">[4]</a></sup>.</li>
+              <li>The buyer receives payment instructions: payment codes, a confirmation number and an expiration time for each supported chain. They can view the instructions on desktop or mobile, or print them<sup class="fn"><a href="#src-1">[1]</a></sup>.</li>
+              <li>Before the instructions expire, the buyer shows the code and confirmation number at a supported store in Japan and pays in cash<sup class="fn"><a href="#src-1">[1]</a></sup>.</li>
+              <li>The store gives the buyer a receipt. The provider then confirms the payment and notifies the merchant, who can fulfill the order<sup class="fn"><a href="#src-1">[1]</a></sup>.</li>
+            </ol>
+
+            <h2 id="merchant">What does the merchant get from a konbini payment online?</h2>
+            <p>The merchant gets a delayed confirmation. Stripe describes Konbini as a delayed notification method, because customers might not pay at the store right after checkout<sup class="fn"><a href="#src-2">[2]</a></sup>. KOMOJU's payments stay in an "authorized" status while the system waits for the buyer to pay in cash, and a "captured" event arrives once they do<sup class="fn"><a href="#src-4">[4]</a></sup>. In practice, hold shipping until the confirmation arrives.</p>
+            <p>Stripe's documentation lists these terms for Konbini. They are Stripe's terms as of November 2026, not a market standard.</p>
+            <table class="learn-table">
+              <caption>Konbini terms in Stripe's documentation</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Item</th>
+                  <th scope="col">What Stripe's documentation says</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Stores</th>
+                  <td data-label="What Stripe's documentation says">FamilyMart, Lawson, Ministop and Seicomart stores across Japan<sup class="fn"><a href="#src-1">[1]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Payment confirmation</th>
+                  <td data-label="What Stripe's documentation says">Delayed. The merchant is notified after the buyer pays at the store<sup class="fn"><a href="#src-1">[1]</a><a href="#src-2">[2]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Payout</th>
+                  <td data-label="What Stripe's documentation says">Funds are available for payout after 4 business days<sup class="fn"><a href="#src-1">[1]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Expiry</th>
+                  <td data-label="What Stripe's documentation says">Default is 3 days, ending at 23:59 Japan time. The merchant can set 1 to 60 days<sup class="fn"><a href="#src-2">[2]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Amount</th>
+                  <td data-label="What Stripe's documentation says">120 to 300,000 yen per payment<sup class="fn"><a href="#src-1">[1]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Refunds</th>
+                  <td data-label="What Stripe's documentation says">Full and partial refunds are supported, sent by bank transfer after the buyer provides bank details<sup class="fn"><a href="#src-1">[1]</a><a href="#src-2">[2]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Chargebacks</th>
+                  <td data-label="What Stripe's documentation says">Not supported<sup class="fn"><a href="#src-1">[1]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Recurring payments</th>
+                  <td data-label="What Stripe's documentation says">Not supported<sup class="fn"><a href="#src-1">[1]</a></sup></td>
+                </tr>
+              </tbody>
+            </table>
+            <p>Two details matter for expiry. After the deadline the buyer can no longer start the payment at a store kiosk, but a buyer who printed a valid payment slip before the deadline might still pay at the register afterward<sup class="fn"><a href="#src-2">[2]</a></sup>. When a payment clearly did not complete, typically about an hour after the deadline, Stripe sends a failure event<sup class="fn"><a href="#src-2">[2]</a></sup>.</p>
+            <p>Providers differ. KOMOJU supports 7-Eleven, Family Mart, Lawson, Ministop, Seicomart and Daily Yamazaki, with a 1 yen minimum and 300,000 yen maximum<sup class="fn"><a href="#src-3">[3]</a></sup>. KOMOJU also says the buyer pays a fixed processing fee at the store<sup class="fn"><a href="#src-3">[3]</a></sup>.</p>
+
+            <h2 id="refunds">Can you refund a konbini payment?</h2>
+            <p>Yes, but not to the original payment source. Stripe explains that konbini payments are made in cash, so it emails the buyer to collect bank account details and then sends the refund as a bank transfer<sup class="fn"><a href="#src-1">[1]</a></sup>. If the buyer does not provide the details within 45 days, the refund fails and the merchant must refund the buyer outside Stripe<sup class="fn"><a href="#src-2">[2]</a></sup>. Since there is no chargeback, a refund depends on the buyer replying to that email<sup class="fn"><a href="#src-1">[1]</a></sup>.</p>
+
+            <h2 id="overseas">Can an overseas merchant use konbini payment?</h2>
+            <p>It depends on the provider. Stripe's Konbini page lists Japan as the required business location, Japan as the customer location, Japanese yen as the currency, and domestic rather than cross-border coverage<sup class="fn"><a href="#src-1">[1]</a></sup>. It also names business categories that cannot use Konbini, and says its financial partner and the store chains might decline a business at their discretion<sup class="fn"><a href="#src-1">[1]</a></sup>. We did not confirm the rules of other providers for overseas merchants, so ask yours before you plan around it.</p>
+
+            <h2 id="pros-cons">What are the pros and cons of konbini payment for merchants?</h2>
+            <p>These points come from the provider documentation above.</p>
+            <h3>Pros</h3>
+            <ul>
+              <li>The buyer does not need a card, because they pay in cash<sup class="fn"><a href="#src-1">[1]</a></sup>.</li>
+              <li>Customers cannot file chargebacks<sup class="fn"><a href="#src-1">[1]</a></sup>.</li>
+              <li>Several store chains across Japan accept the payment<sup class="fn"><a href="#src-1">[1]</a><a href="#src-3">[3]</a></sup>.</li>
+            </ul>
+            <h3>Cons</h3>
+            <ul>
+              <li>The payment is delayed. The order stays pending until the buyer pays, and the payment lapses if the buyer misses the deadline<sup class="fn"><a href="#src-2">[2]</a></sup>.</li>
+              <li>There is a cap of 300,000 yen per payment<sup class="fn"><a href="#src-1">[1]</a><a href="#src-3">[3]</a></sup>.</li>
+              <li>Refunds need the buyer to supply bank details, and they fail after 45 days without them<sup class="fn"><a href="#src-2">[2]</a></sup>.</li>
+              <li>It does not support recurring payments, and Stripe's version is limited to Japan and yen<sup class="fn"><a href="#src-1">[1]</a></sup>.</li>
+              <li>The buyer pays a fixed fee at the store, according to KOMOJU<sup class="fn"><a href="#src-3">[3]</a></sup>.</li>
+            </ul>
+
+            <h2 id="alternatives">What are the alternatives to konbini payment, including a yen stablecoin?</h2>
+            <p>Other ways to get paid by buyers in Japan include a domestic bank transfer and a yen stablecoin. Each fits different orders.</p>
+            <table class="learn-table">
+              <caption>Konbini payment and two alternatives compared</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Option</th>
+                  <th scope="col">How the buyer pays</th>
+                  <th scope="col">What the merchant gets</th>
+                  <th scope="col">Worth knowing</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Konbini payment</th>
+                  <td data-label="How the buyer pays">Cash at a store, using a payment code and a confirmation number<sup class="fn"><a href="#src-1">[1]</a></sup></td>
+                  <td data-label="What the merchant gets">A notice once the buyer has paid at the store<sup class="fn"><a href="#src-2">[2]</a></sup></td>
+                  <td data-label="Worth knowing">Maximum of 300,000 yen at both providers checked<sup class="fn"><a href="#src-1">[1]</a><a href="#src-3">[3]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Domestic bank transfer (KOMOJU)</th>
+                  <td data-label="How the buyer pays">Through online banking or an ATM, the buyer transfers the full amount to an account number generated for that transaction<sup class="fn"><a href="#src-3">[3]</a><a href="#src-4">[4]</a></sup></td>
+                  <td data-label="What the merchant gets">KOMOJU says it detects the money arriving and captures the payment<sup class="fn"><a href="#src-4">[4]</a></sup></td>
+                  <td data-label="Worth knowing">KOMOJU lists no upper limit<sup class="fn"><a href="#src-3">[3]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Yen stablecoin (STBLpay)</th>
+                  <td data-label="How the buyer pays">Japanese-yen bank transfer, approved with a passkey. No transfer is needed if the buyer's JPYC balance is enough</td>
+                  <td data-label="What the merchant gets">JPYC, a yen stablecoin</td>
+                  <td data-label="Worth knowing">Under development. The launch date has not been set (as of November 2026)</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2 id="stblpay">How does STBLpay fit?</h2>
+            <p>STBLpay (すてぶるペイ) is a payment service in which buyers pay in yen and merchants receive JPYC. It is under development, and the launch date has not been set (as of November 2026).</p>
+            <ul>
+              <li>The buyer pays by Japanese-yen bank transfer and approves the payment with a passkey (face or fingerprint). If the buyer's JPYC balance is enough, no bank transfer is needed.</li>
+              <li>The merchant receives sales in JPYC. The service does not rely on card companies' credit screening.</li>
+              <li>The merchant withdraws to yen from its own JPYC EX account, which is available to individuals residing in Japan and Japanese corporations.</li>
+              <li>The provider, Ango-ya LLC, does not hold buyers' or merchants' funds or private keys (non-custodial).</li>
+              <li>The fee is under consideration. A single flat rate for all merchants is planned, and nothing is added on top for the buyer.</li>
+              <li>Use is subject to the terms of service and to legal requirements.</li>
+            </ul>
+            <p>Start with the <a href="/docs/en/">merchant docs</a>, the <a href="/docs/en/getting-started/quickstart/">Quick Start</a> and the <a href="/docs/en/testing/sandbox/">Sandbox</a>.</p>
+          </div>
+
+          <section aria-labelledby="faq-title">
+            <h2 id="faq-title">Frequently asked questions</h2>
+            <div class="faq-list">
+              <details>
+                <summary>Can a customer outside Japan use konbini payment?</summary>
+                <p>Konbini payment is built for customers in Japan who pay at a store in Japan. Stripe's Konbini page lists Japan as the customer location, Japanese yen as the currency, and domestic coverage rather than cross-border. A buyer who is not in Japan cannot walk into one of those stores.</p>
+              </details>
+              <details>
+                <summary>How long does a konbini payment stay open?</summary>
+                <p>It depends on the setting you choose. In Stripe, the default is 3 days, ending at 23:59 Japan time, and the merchant can set 1 to 60 days. After the deadline the buyer can no longer start the payment at a store kiosk.</p>
+              </details>
+              <details>
+                <summary>What is the maximum amount for a konbini payment?</summary>
+                <p>Stripe lists 120 yen as the minimum and 300,000 yen as the maximum for a Konbini payment. KOMOJU lists 1 yen and 300,000 yen. Limits differ by provider, so check the one you use.</p>
+              </details>
+              <details>
+                <summary>Can you refund a konbini payment?</summary>
+                <p>Yes, but not to the original payment source, because the buyer paid in cash. In Stripe, the buyer is emailed to provide bank account details and the refund is sent as a bank transfer. If the buyer does not do so within 45 days, the refund fails and the merchant must refund by another method.</p>
+              </details>
+              <details>
+                <summary>Is there a chargeback on konbini payments?</summary>
+                <p>Stripe says Konbini does not support the standard dispute process, so customers cannot file chargebacks. In rare cases a store may report an irregularity, such as payment mishandling, and Stripe then contacts the merchant with next steps.</p>
+              </details>
+              <details>
+                <summary>Is there a yen stablecoin alternative to konbini payment?</summary>
+                <p>STBLpay is one option under development. The buyer pays by Japanese-yen bank transfer and approves with a passkey, and the merchant receives JPYC. The launch date has not been set (as of November 2026).</p>
+              </details>
+            </div>
+          </section>
+
+          <section class="learn-sources" aria-labelledby="sources-title">
+            <h2 id="sources-title">Sources</h2>
+            <p class="learn-note">All sources are in English. Provider documentation can change, so check the current page before you build on it.</p>
+            <ol>
+              <li id="src-1">Stripe, "<a href="https://docs.stripe.com/payments/konbini">Konbini payments</a>", Stripe Documentation (overview, eligibility, transaction limits, refunds and disputes). Checked on November 9, 2026.</li>
+              <li id="src-2">Stripe, "<a href="https://docs.stripe.com/payments/konbini/accept-a-payment">Accept a Konbini payment</a>", Stripe Documentation (payment instructions, expiration, delayed notification, refund status). Checked on November 9, 2026.</li>
+              <li id="src-3">KOMOJU, "<a href="https://docs.komoju.com/en/docs/introduction/core-concepts/supported-payment-types">Supported Payment Types</a>", KOMOJU Docs (konbini stores, limits, bank transfer, processing fee). Checked on November 9, 2026.</li>
+              <li id="src-4">KOMOJU, "<a href="https://docs.komoju.com/en/docs/integration-guides/direct-integrations/payments-api/payment-details">Payments API | Payment Details</a>", KOMOJU Docs (konbini and bank transfer flows). Checked on November 9, 2026.</li>
+            </ol>
+          </section>
+
+          <section class="learn-related" aria-labelledby="related-title">
+            <h2 id="related-title">Related guides</h2>
+            <ul>
+              <li><a href="/en/learn/stablecoin-payments-japan/">Accepting payments from customers in Japan with a yen stablecoin</a></li>
+              <li><a href="/en/learn/japan-payment-methods/">Payment methods in Japan</a></li>
+              <li><a href="/en/learn/jpy-stablecoin/">What is a yen stablecoin?</a></li>
+              <li><a href="/en/learn/accept-stablecoin-payments/">How to accept stablecoin payments</a></li>
+            </ul>
+          </section>
+
+          <aside class="learn-about" aria-labelledby="about-title">
+            <h2 id="about-title">About STBLpay</h2>
+            <p>STBLpay is a payment service in which buyers pay in yen and merchants receive JPYC (under development). Buyers pay by Japanese-yen bank transfer and approve with a passkey. Merchants receive sales without relying on card companies' credit screening.</p>
+            <p><a href="/en/">See the service overview</a>　<a href="/docs/en/">Merchant docs</a></p>
+          </aside>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div>
+          <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
+          <p>Operated by <a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">Ango-ya LLC</a></p>
+          <p><a href="/docs/en/">Merchant docs</a>　<a href="/learn/" lang="ja" hreflang="ja">Guides (Japanese)</a>　<a href="/en/press/">Press kit</a></p>
+          <ul class="footer-facts">
+            <li>Founded in February 2019, headquartered in Fukuoka City.</li>
+            <li>Co-developed "JPYC Explorer," an accounting audit support tool for JPYC, with Asteria Corporation (announced by Asteria on March 13, 2026).</li>
+            <li>Began a joint proof-of-concept of Web3 infrastructure, including validator node operation, with QTnet, Inc. (announced February 19, 2024).</li>
+            <li>A proof-of-concept project using the IoT data trading platform "PTPF" was selected for the Fukuoka City Demonstration Experiment Full Support Program (announced by Fukuoka City on January 31, 2022).</li>
+          </ul>
+        </div>
+        <p class="footer-note">© 2026 STBLpay. Operated by Ango-ya LLC</p>
+      </div>
+    </footer>
+  </body>
+</html>

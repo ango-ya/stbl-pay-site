@@ -14,6 +14,11 @@ const PAGES = [
   { path: "/learn/chargeback/", main: "Article" },
   { path: "/learn/glossary/", main: "DefinedTermSet" },
   { path: "/en/learn/stablecoin-payments-japan/", main: "Article" },
+  { path: "/en/learn/", main: "CollectionPage" },
+  { path: "/en/learn/japan-payment-methods/", main: "Article" },
+  { path: "/en/learn/konbini-payment/", main: "Article" },
+  { path: "/en/learn/jpy-stablecoin/", main: "Article" },
+  { path: "/en/learn/accept-stablecoin-payments/", main: "Article" },
 ];
 
 const ALLOW_PCT = [

@@ -60,6 +60,11 @@ body {
   line-break: strict;
 }
 
+/* 英語のページでは数字の幅そろえを切る。Schibsted Grotesk は tnum でカンマ・ピリオドも数字の幅になり、英文の句読点の後ろが空いて見えるため */
+html:lang(en) body {
+  font-feature-settings: normal;
+}
+
 /* 日本語の文節単位改行（Chromium系のみ。非対応環境は従来挙動にフォールバック） */
 h1,
 h2,

@@ -54,6 +54,26 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/stablecoin-payments/" />
   </url>
   <url>
+    <loc>https://stbl-pay.com/en/learn/</loc>
+    <lastmod>2026-11-09</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/en/learn/japan-payment-methods/</loc>
+    <lastmod>2026-11-09</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/en/learn/konbini-payment/</loc>
+    <lastmod>2026-11-09</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/en/learn/jpy-stablecoin/</loc>
+    <lastmod>2026-11-09</lastmod>
+  </url>
+  <url>
+    <loc>https://stbl-pay.com/en/learn/accept-stablecoin-payments/</loc>
+    <lastmod>2026-11-09</lastmod>
+  </url>
+  <url>
     <loc>https://stbl-pay.com/press/</loc>
     <lastmod>2026-11-06</lastmod>
     <xhtml:link rel="alternate" hreflang="ja" href="https://stbl-pay.com/press/" />

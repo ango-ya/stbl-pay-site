@@ -43,6 +43,11 @@ STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu
 - [Merchant docs (English)](/docs/en/): integration, webhooks, payment statuses, refunds
 - [API specification (English, OpenAPI 3.1)](/docs/en/openapi.yaml)
 - [Accepting payments from customers in Japan with a yen stablecoin](/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
+- [Guides (English)](/en/learn/): list of English guides for overseas shops selling to Japan
+- [Payment methods in Japan](/en/learn/japan-payment-methods/): how customers in Japan pay online (cards, konbini, bank transfer, cash on delivery, carrier billing, QR code, pay later) and what an overseas shop needs
+- [Konbini payment](/en/learn/konbini-payment/): how convenience-store payment works, limits, expiry, refunds, and alternatives
+- [What is a yen stablecoin?](/en/learn/jpy-stablecoin/): JPYC, Japan's stablecoin rules (electronic payment instruments), and how a yen stablecoin differs from USDC and USDT
+- [How to accept stablecoin payments as a business](/en/learn/accept-stablecoin-payments/): own wallet vs. payment gateway, steps, costs, and risks
 - [Press kit](/en/press/): boilerplate text, fact sheet, logo downloads (SVG/PNG) and usage rules, brand colors, how to write the name, characters, and videos
 
 ## 主要ページ
