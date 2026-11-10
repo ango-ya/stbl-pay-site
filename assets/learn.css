@@ -406,6 +406,46 @@
   margin: 24px 0 28px;
 }
 
+/* 「動きを止める」ボタン（assets/learn-fig.js が作る。JS が無ければ出ない）。図の文字を隠さないよう、図の下の右端に置く */
+.learn-fig-toggle {
+  display: block;
+  min-height: 32px;
+  margin: 8px 0 0 auto;
+  padding: 4px 12px;
+  border: 1px solid #c3cbe0;
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.learn-fig-toggle::before {
+  content: "❚❚";
+  content: "❚❚" / "";
+  margin-right: 6px;
+  font-size: 10px;
+}
+
+.learn-fig-toggle[aria-pressed="true"] {
+  border-color: var(--accent-dark);
+  background: var(--accent-dark);
+  color: #fff;
+}
+
+.learn-fig-toggle[aria-pressed="true"]::before {
+  content: "▶";
+  content: "▶" / "";
+}
+
+.learn-fig-toggle:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 2px;
+}
+
 .learn-fig img {
   display: block;
   width: 100%;
