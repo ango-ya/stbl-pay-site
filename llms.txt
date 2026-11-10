@@ -1,71 +1,72 @@
 # すてぶるペイ（STBLpay）
 
-> JPYステーブルコイン（JPYC）の決済サービス（開発中）。カード会社の与信審査に頼らない決済です。購入者は日本円の銀行振込とパスキーで支払い、加盟店は売上をJPYCで受け取ります。加盟店は、利用規約への同意と法令上の要件を満たすことが前提です。
+> すてぶるペイは、円で払い、ステーブルコイン（JPYC）で受け取る決済です（開発中）。カード会社の与信審査に頼らない決済です。購入者は日本円の銀行振込とパスキーで支払い、加盟店は売上をJPYCで受け取ります。加盟店は、利用規約への同意と法令上の要件を満たすことが前提です。
 
 ## 概要
 
+- 更新: 2026年11月10日
 - 提供: 合同会社暗号屋（https://www.ango-ya.org/）
 - 手数料: 検討中（全加盟店一律の固定料率を予定。購入者への上乗せなし）
 - 金額: 3,000円未満のお支払いも、100万円を超えるお支払いもできる。購入者が JPYC を発行する（日本円を振り込んで JPYC にする）ときは1回3,000円〜100万円で、これは発行1回の金額であり、お支払いの金額の範囲ではない
 - 提供状況: 開発中（2026年11月時点。提供開始日は未定）。組み込みを試せる Sandbox と、加盟店向けドキュメント・API 仕様書は公開済み。組み込みは API と決済ページへの遷移で行う
 - 設計: ノンカストディアル（提供元は購入者・加盟店の資金や秘密鍵を保持しない）
 - 加盟店の事前審査: なし。お店と購入者のウォレットをつなぐ仕組みで、お店ごとに利用を認める手続きのない設計（パーミッションレス）のため。ただし無条件ではなく、利用規約への同意（日本の法律で違法な事業者ではないことの表明を含む）と法令上の要件が前提。購入者は JPYC EX のアカウント（個人は日本在住、マイナンバーカードで本人確認）が必要
-- 表現に関する方針: 「日本の法律で違法でない表現は、内容を理由に断りません。表現の良し悪しを決めるのは、決済会社ではありません。」違法なもの（わいせつ物・児童ポルノ・権利侵害など）は扱わない。受け取る JPYC の利用は JPYC 株式会社の利用規約に従い、同規約により利用が停止される場合がある。/policy/expression/
+- 表現に関する方針: 「日本の法律で違法でない表現は、内容を理由に断りません。表現の良し悪しを決めるのは、決済会社ではありません。」違法なもの（わいせつ物・児童ポルノ・権利侵害など）は扱わない。受け取る JPYC の利用は JPYC 株式会社の利用規約に従い、同規約により利用が停止される場合がある。https://stbl-pay.com/policy/expression/
 - 対象: 個人事業主（デジタルの作品を売るクリエイター、フリーの美容師・ネイリストなど）、クレジットカード決済の導入が難しいネットショップ、日本向け決済を持ちたい海外のネットショップ
 - 組み込み: サイトでやることは3つ（ボタンを置く、お支払いの画面へ案内する、結果を受け取る）。QR だけで始めることもできる
 
 ## 加盟店向けドキュメントの主なページ
 
-- [STBLpay とは](/docs/): すてぶるペイの仕組みと、加盟店がやること（英語版: /docs/en/）
-- [Quick Start](/docs/getting-started/quickstart/): 決済の作成から状態照会までの最小手順
-- [決済フローを理解する](/docs/getting-started/payment-flow/): 購入者・加盟店・すてぶるペイの間のやりとり
-- [ステータス一覧](/docs/lifecycle/statuses/): 状態の一覧と、加盟店が見るべき終端
-- [Webhook のイベントと受信](/docs/webhooks/events/): 届くイベントと、署名の検証・冪等性・再送
-- [返金の提供範囲](/docs/refunds/overview/): 返金の考え方（加盟店から購入者へ行う）
-- [Sandbox](/docs/testing/sandbox/): 組み込みを試す環境の接続先と始め方
-- [よくある質問](/docs/support/faq/) / [既知の制限](/docs/support/limitations/)
+- [STBLpay とは](https://stbl-pay.com/docs/): すてぶるペイの仕組みと、加盟店がやること（英語版: https://stbl-pay.com/docs/en/）
+- [Quick Start](https://stbl-pay.com/docs/getting-started/quickstart/): 決済の作成から状態照会までの最小手順
+- [決済フローを理解する](https://stbl-pay.com/docs/getting-started/payment-flow/): 購入者・加盟店・すてぶるペイの間のやりとり
+- [ステータス一覧](https://stbl-pay.com/docs/lifecycle/statuses/): 状態の一覧と、加盟店が見るべき終端
+- [Webhook のイベントと受信](https://stbl-pay.com/docs/webhooks/events/): 届くイベントと、署名の検証・冪等性・再送
+- [返金の提供範囲](https://stbl-pay.com/docs/refunds/overview/): 返金の考え方（加盟店から購入者へ行う）
+- [Sandbox](https://stbl-pay.com/docs/testing/sandbox/): 組み込みを試す環境の接続先と始め方
+- [よくある質問](https://stbl-pay.com/docs/support/faq/) / [既知の制限](https://stbl-pay.com/docs/support/limitations/)
 
 ## 解説（/learn/）
 
 決済を検討するお店向けの一般的な解説。冒頭で答えを示し、事実には出典と確認日を添えている。
 
-- [決済を学ぶ（解説の一覧）](/learn/): 解説ページの一覧
-- [ステーブルコイン決済とは](/learn/stablecoin-payments/): 仕組み、カード決済・銀行振込との違い、メリットとデメリット、日本での法的な扱い（電子決済手段）
-- [JPYC 決済をお店に導入するには](/learn/jpyc-payments/): JPYC とは何か、受け取り方、導入の流れ、手数料の考え方
-- [クレジットカードの加盟店審査に通らないときの選択肢](/learn/card-merchant-screening/): 審査で見られる点、落ちる主な理由、見直す点、カード以外の選択肢
-- [決済代行に審査なしはある？](/learn/no-screening-payments/): カード決済に加盟店審査がある理由（割賦販売法の加盟店調査）、審査に通りやすいかの考え方、ハイリスク商材、加盟店審査のいらない受け取り方（すてぶるペイはパーミッションレスで事前審査なし）
-- [カード会社の表現規制はなぜ起きる？](/learn/card-expression-restrictions/): 同人・成人向け作品の決済が止まった事例、割賦販売法と表現、販売者が決済を確保する方法
-- [決済手数料の比べ方](/learn/payment-fees/): 料率だけでなく、月額・振込手数料・入金までの日数・チャージバックの負担まで含めた総コストの見方
-- [チャージバックとは](/learn/chargeback/): 仕組み、加盟店の負担、対策、異議申し立ての流れ
-- [ステーブルコインとは](/learn/what-is-stablecoin/): ステーブルコインの仕組みと種類（法定通貨担保型・暗号資産担保型など）、暗号資産との違い、日本での法的な扱い（電子決済手段）
-- [決済代行とは](/learn/payment-gateway/): 決済代行の仕組みとお金の流れ、アクワイアラ・収納代行との違い、手数料と入金、選び方
-- [ネットショップでクレジットカード決済を導入するには](/learn/accept-credit-cards/): 導入の方法（決済代行・カート付属の決済・アクワイアラと直接契約）、手順、費用、審査、入金までの日数
-- [ネットショップの決済方法の選び方](/learn/online-payment-methods/): クレジットカード・コンビニ払い・銀行振込・後払い・QR コード・ステーブルコインなどの比べ方と、組み合わせ方
-- [ステーブルコイン決済の用語集](/learn/glossary/): 電子決済手段、資金移動業、JPYC、ノンカストディアル、与信審査、チャージバックなど
+- [決済を学ぶ（解説の一覧）](https://stbl-pay.com/learn/): 解説ページの一覧
+- [ステーブルコイン決済とは](https://stbl-pay.com/learn/stablecoin-payments/): 仕組み、カード決済・銀行振込との違い、メリットとデメリット、日本での法的な扱い（電子決済手段）
+- [JPYC 決済をお店に導入するには](https://stbl-pay.com/learn/jpyc-payments/): JPYC とは何か、受け取り方、JPYC に対応する決済サービスの比較表（各社の発表）、導入の流れ、手数料の考え方
+- [クレジットカードの加盟店審査に通らないときの選択肢](https://stbl-pay.com/learn/card-merchant-screening/): 審査で見られる点、落ちる主な理由、見直す点、カード以外の選択肢
+- [決済代行に審査なしはある？](https://stbl-pay.com/learn/no-screening-payments/): カード決済に加盟店審査がある理由（割賦販売法の加盟店調査）、審査に通りやすいかの考え方、ハイリスク商材、加盟店審査のいらない受け取り方（すてぶるペイはパーミッションレスで事前審査なし）
+- [カード会社の表現規制はなぜ起きる？](https://stbl-pay.com/learn/card-expression-restrictions/): 同人・成人向け作品の決済が止まった事例、割賦販売法と表現、販売者が決済を確保する方法
+- [決済手数料の比べ方](https://stbl-pay.com/learn/payment-fees/): 料率だけでなく、月額・振込手数料・入金までの日数・チャージバックの負担まで含めた総コストでの比較と計算方法。月の売上・料率・固定の手数料・月額・振込手数料から、総コストと実質の割合を出す計算ツール（https://stbl-pay.com/learn/payment-fees/#calc）つき
+- [チャージバックとは](https://stbl-pay.com/learn/chargeback/): 仕組み、加盟店の負担、対策、異議申し立ての流れと期限、返品との違い、ステーブルコイン決済の場合
+- [ステーブルコインとは](https://stbl-pay.com/learn/what-is-stablecoin/): ステーブルコインの仕組みと種類（法定通貨担保型・暗号資産担保型など）、暗号資産との違い、日本での法的な扱い（電子決済手段）
+- [決済代行とは](https://stbl-pay.com/learn/payment-gateway/): 決済代行の仕組みとお金の流れ、アクワイアラ・収納代行との違い、手数料と入金、選び方
+- [ネットショップでクレジットカード決済を導入するには](https://stbl-pay.com/learn/accept-credit-cards/): 導入の方法（決済代行・カート付属の決済・アクワイアラと直接契約）、手順、費用、審査、入金までの日数
+- [ネットショップの決済方法の選び方](https://stbl-pay.com/learn/online-payment-methods/): クレジットカード・コンビニ払い・銀行振込・後払い・QR コード・ステーブルコインなどの比べ方と、組み合わせ方
+- [ステーブルコイン決済の用語集](https://stbl-pay.com/learn/glossary/): 電子決済手段、資金移動業、JPYC、ノンカストディアル、与信審査、チャージバックなど。語ごとに ID があり、直接リンクできる（https://stbl-pay.com/learn/glossary/#electronic-payment-instrument 、https://stbl-pay.com/learn/glossary/#non-custodial 、https://stbl-pay.com/learn/glossary/#jpy-stablecoin ）
 
 ## English summary
 
-STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu pei") is a JPY stablecoin (JPYC) payment service under development (as of November 2026; launch date not yet set), operated by Ango-ya LLC (合同会社暗号屋, Fukuoka, Japan). Buyers pay by Japanese-yen bank transfer and approve with a passkey; merchants receive sales in JPYC without relying on card companies' credit screening. There is no prior merchant screening, because STBLpay connects merchants' and buyers' wallets in a permissionless design with no step where the provider approves each merchant. This is not unconditional: merchants agree to the terms of service, represent that their business is not illegal under Japanese law, and must meet legal requirements. Buyers need a JPYC EX account (individuals residing in Japan). The provider is non-custodial. A Sandbox, merchant docs, and an OpenAPI 3.1 specification are public. Expression policy: STBLpay does not refuse expression that is lawful under Japanese law because of its content; illegal content (such as obscene material, child sexual abuse material, or copyright infringement) is not accepted, and use of the JPYC received is subject to JPYC Inc.'s terms of service, under which use may be suspended. /policy/expression/
+STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu pei") is a JPY stablecoin (JPYC) payment service under development (as of November 2026; launch date not yet set), operated by Ango-ya LLC (合同会社暗号屋, Fukuoka, Japan). Buyers pay by Japanese-yen bank transfer and approve with a passkey; merchants receive sales in JPYC without relying on card companies' credit screening. There is no prior merchant screening, because STBLpay connects merchants' and buyers' wallets in a permissionless design with no step where the provider approves each merchant. This is not unconditional: merchants agree to the terms of service, represent that their business is not illegal under Japanese law, and must meet legal requirements. Buyers need a JPYC EX account (individuals residing in Japan). The provider is non-custodial. A Sandbox, merchant docs, and an OpenAPI 3.1 specification are public. Expression policy: STBLpay does not refuse expression that is lawful under Japanese law because of its content; illegal content (such as obscene material, child sexual abuse material, or copyright infringement) is not accepted, and use of the JPYC received is subject to JPYC Inc.'s terms of service, under which use may be suspended. https://stbl-pay.com/policy/expression/
 
-- [English landing page](/en/): overview, how it works, and FAQ in English
-- [Merchant docs (English)](/docs/en/): integration, webhooks, payment statuses, refunds
-- [API specification (English, OpenAPI 3.1)](/docs/en/openapi.yaml)
-- [Accepting payments from customers in Japan with a yen stablecoin](/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
-- [Guides (English)](/en/learn/): list of English guides for overseas shops selling to Japan
-- [Payment methods in Japan](/en/learn/japan-payment-methods/): how customers in Japan pay online (cards, konbini, bank transfer, cash on delivery, carrier billing, QR code, pay later) and what an overseas shop needs
-- [Konbini payment](/en/learn/konbini-payment/): how convenience-store payment works, limits, expiry, refunds, and alternatives
-- [What is a yen stablecoin?](/en/learn/jpy-stablecoin/): JPYC, Japan's stablecoin rules (electronic payment instruments), and how a yen stablecoin differs from USDC and USDT
-- [How to accept stablecoin payments as a business](/en/learn/accept-stablecoin-payments/): own wallet vs. payment gateway, steps, costs, and risks
-- [What is a high-risk merchant account?](/en/learn/high-risk-merchant-account/): why card processors classify some businesses as high risk, reserves, monitoring programs and MATCH, and alternatives to card payments
-- [Press kit](/en/press/): boilerplate text, fact sheet, logo downloads (SVG/PNG) and usage rules, brand colors, how to write the name, characters, and videos
+- [English landing page](https://stbl-pay.com/en/): overview, how it works, and FAQ in English
+- [Merchant docs (English)](https://stbl-pay.com/docs/en/): integration, webhooks, payment statuses, refunds
+- [API specification (English, OpenAPI 3.1)](https://stbl-pay.com/docs/en/openapi.yaml)
+- [Accepting payments from customers in Japan with a yen stablecoin](https://stbl-pay.com/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
+- [Guides (English)](https://stbl-pay.com/en/learn/): list of English guides for overseas shops selling to Japan
+- [Payment methods in Japan](https://stbl-pay.com/en/learn/japan-payment-methods/): how customers in Japan pay online (cards, konbini, bank transfer, cash on delivery, carrier billing, QR code, pay later) and what an overseas shop needs
+- [Konbini payment](https://stbl-pay.com/en/learn/konbini-payment/): how convenience-store payment works, limits, expiry, refunds, and alternatives
+- [What is a yen stablecoin?](https://stbl-pay.com/en/learn/jpy-stablecoin/): JPYC, Japan's stablecoin rules (electronic payment instruments), and how a yen stablecoin differs from USDC and USDT
+- [How to accept stablecoin payments as a business](https://stbl-pay.com/en/learn/accept-stablecoin-payments/): own wallet vs. payment gateway, steps, costs, and risks
+- [What is a high-risk merchant account?](https://stbl-pay.com/en/learn/high-risk-merchant-account/): why card processors classify some businesses as high risk, reserves, monitoring programs and MATCH, and alternatives to card payments
+- [Press kit](https://stbl-pay.com/en/press/): boilerplate text, fact sheet, logo downloads (SVG/PNG) and usage rules, brand colors, how to write the name, characters, and videos
 
 ## 主要ページ
 
-- [トップ（LP）](/): サービス概要・仕組み・手数料の考え方・よくある質問
-- [デモ](/demo): 購入者の支払い画面デモ
-- [つかいかた動画](/#videos): お支払いの流れと、お店での始め方の解説動画（全8回・各1〜3分。第8回は[英語字幕版](/en/#videos)あり）
-- [加盟店向けドキュメント](/docs/): EC サイトへの組み込み・Webhook・決済の状態・返金・セキュリティ
-- [API 仕様書（OpenAPI 3.1）](/docs/openapi.yaml): 加盟店サーバーが呼ぶ API（決済作成・状態照会）と Webhook の本文・ヘッダー
-- [API 仕様書の英語版](/docs/en/openapi.yaml): 上の仕様書の英訳（構造は同じ。正本は日本語版）
-- [表現に関する方針](/policy/expression/): 方針の言葉、扱えないもの（日本の法律で違法なもの）、方針の範囲（受け取る JPYC の利用は JPYC 株式会社の利用規約に従い、同規約により利用が停止される場合がある）
-- [プレスキット](/press/): 報道・パートナー向けの紹介文・ファクトシート・ロゴ（SVG・PNG）とその使い方・ブランドの色・名前の書き方・キャラクター・動画
+- [トップ（LP）](https://stbl-pay.com/): サービス概要・仕組み・手数料の考え方・よくある質問
+- [デモ](https://stbl-pay.com/demo): 購入者の支払い画面デモ
+- [つかいかた動画](https://stbl-pay.com/#videos): お支払いの流れと、お店での始め方の解説動画（全8回・各1〜3分。第8回は[英語字幕版](https://stbl-pay.com/en/#videos)あり）
+- [加盟店向けドキュメント](https://stbl-pay.com/docs/): EC サイトへの組み込み・Webhook・決済の状態・返金・セキュリティ
+- [API 仕様書（OpenAPI 3.1）](https://stbl-pay.com/docs/openapi.yaml): 加盟店サーバーが呼ぶ API（決済作成・状態照会）と Webhook の本文・ヘッダー
+- [API 仕様書の英語版](https://stbl-pay.com/docs/en/openapi.yaml): 上の仕様書の英訳（構造は同じ。正本は日本語版）
+- [表現に関する方針](https://stbl-pay.com/policy/expression/): 方針の言葉、扱えないもの（日本の法律で違法なもの）、方針の範囲（受け取る JPYC の利用は JPYC 株式会社の利用規約に従い、同規約により利用が停止される場合がある）
+- [プレスキット](https://stbl-pay.com/press/): 報道・パートナー向けの紹介文・ファクトシート・ロゴ（SVG・PNG）とその使い方・ブランドの色・名前の書き方・キャラクター・動画

@@ -16,6 +16,15 @@
 # frame-src: つかいかた動画は youtube-nocookie の埋め込み。iframe に referrerpolicy を付けている
 # （ページの Referrer-Policy: no-referrer のままだと YouTube がエラーになるため）。ポスターは img-src の 'self' から出る。
 
+# OGP とサムネイルの画像だけ、ほかのサイトのページからも読めるようにする（リンクカードや画像検索の拡大表示で絵が出るように）。
+# HTML や JS のヘッダは変えない。/docs/* で CSP を付け直しているのと同じ書き方
+/assets/learn/*
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+/assets/og-*
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+
 # デモ画面（架空のお店・決済ページ・JPYC EX の画面のモック）は検索結果に出さない。
 # 特に /jpyc-ex は JPYC EX の画面をまねているので、検索から本物と間違えて来られないようにする。
 /demo

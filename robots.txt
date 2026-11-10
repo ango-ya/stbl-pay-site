@@ -6,7 +6,9 @@ Sitemap: https://stbl-pay.com/sitemap.xml
 Sitemap: https://stbl-pay.com/docs/sitemap.xml
 Sitemap: https://stbl-pay.com/docs/en/sitemap.xml
 
+# Content-Signal の書き方は contentsignals.org の説明のとおり（検索・AI の回答への入力・AI の学習のすべてを許可）
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # --- AI検索・引用系クローラー（AI回答での引用に使用） ---
