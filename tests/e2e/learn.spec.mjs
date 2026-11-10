@@ -48,6 +48,13 @@ const ALLOW_PCT = [
 ];
 const allowFor = (path) => ALLOW_PCT.filter((a) => a.pages.includes(path));
 
+// 図とサムネイルを入れたページ（移行済み）。slug → 期待する図の名前（ページの上からの順。scripts/figures/<slug>/<name>.js）。
+// 新しく移行したページは、ここに足すだけで、OGP が記事の og.png であること・図の並びと形式・motion ごとの絵・停止ボタンが検査される
+const MIGRATED = {
+  "stablecoin-payments": ["law", "flow", "compare"],
+};
+const migratedOf = (path) => (path.startsWith("/learn/") ? MIGRATED[path.split("/").filter(Boolean).pop()] : undefined);
+
 const ANALYTICS = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
 
 test.beforeEach(async ({ context }) => {
@@ -95,10 +102,11 @@ for (const { path, main } of PAGES) {
     expect(types).toContain("BreadcrumbList");
     const isEn = path.startsWith("/en/");
     const local = (u) => { const x = new URL(u); return x.pathname + x.search; };
-    // OGP の画像は、記事ごとのサムネイル（scripts/learn-thumbs/ が書き出す /assets/learn/<slug>/og.png）か、言語に合う共通の画像
+    // OGP の画像は、移行済みのページ（MIGRATED）なら記事ごとのサムネイル（scripts/learn-thumbs/ が書き出す /assets/learn/<slug>/og.png）、
+    // それ以外は言語に合う共通の画像（移行済みのページが共通の画像に戻ったら落とす）
+    const figNames = migratedOf(path);
     const own = `${ORIGIN}/assets/learn/${path.split("/").filter(Boolean).pop()}/og.png`;
-    const declared = (await page.locator('meta[property="og:image"]').getAttribute("content")).split("?")[0];
-    const ogImage = path.startsWith("/learn/") && declared === own ? own : `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
+    const ogImage = figNames ? own : `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
     const sameImage = (u) => u.split("?")[0] === ogImage;
     for (const sel of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
       expect(sameImage(await page.locator(sel).getAttribute("content")), `${sel} は記事のサムネイルか、言語に合う共通の画像`).toBe(true);
@@ -113,7 +121,11 @@ for (const { path, main } of PAGES) {
       await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
       await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute("content", "630");
       await expect(page.locator('meta[property="og:image:type"]')).toHaveAttribute("content", "image/png");
+      const alt = await page.locator('meta[property="og:image:alt"]').getAttribute("content");
+      await expect(page.locator('meta[name="twitter:image:alt"]'), "twitter:image:alt は og:image:alt と同じ").toHaveAttribute("content", alt);
     }
+    await expect(page.locator("figure.learn-fig"), "図の数は MIGRATED のとおり").toHaveCount(figNames ? figNames.length : 0);
+    await expect(page.locator("img.learn-hero"), "冒頭のサムネイルは移行済みのページだけ").toHaveCount(figNames ? 1 : 0);
 
     // 図（scripts/figures/ が書き出す GIF・WebP）：文字の代わりの alt と figcaption、場所を先に取る width/height、遅延読み込み。各形式が 200
     for (const fig of await page.locator("figure.learn-fig").all()) {
@@ -280,3 +292,64 @@ test("英語の使わない語に August 2026 が入っている（回帰）", (
   expect("Launching in August 2026.").toMatch(BANNED_EN);
   expect("launching in august 2026").toMatch(BANNED_EN);
 });
+
+test("移行済みのページ（MIGRATED）は、すべて検査の対象（PAGES）にある", () => {
+  for (const slug of Object.keys(MIGRATED)) expect(PAGES.map((p) => p.path)).toContain(`/learn/${slug}/`);
+});
+
+// 図の picture：source の順（アニメ WebP（no-preference）→ 完成図 WebP → GIF の img）、motion ごとに選ばれる絵、デコード、
+// 通常の表示で GIF を取りに行かないこと、「動きを止める」ボタン（assets/learn-fig.js）で絵と aria-pressed が替わること
+for (const [slug, names] of Object.entries(MIGRATED)) {
+  for (const motion of ["no-preference", "reduce"]) {
+    test(`/learn/${slug}/：図の絵の選び方と停止ボタン（prefers-reduced-motion: ${motion}）`, async ({ page }) => {
+      const gifs = [];
+      page.on("request", (r) => { if (/\.gif(\?|$)/i.test(r.url())) gifs.push(r.url()); });
+      await page.emulateMedia({ reducedMotion: motion });
+      await page.goto(`/learn/${slug}/`);
+      const base = `/assets/learn/${slug}/`;
+      const figs = page.locator("figure.learn-fig");
+      await expect(figs).toHaveCount(names.length);
+      expect(names.length).toBeGreaterThan(0);
+      const shown = (img) => img.evaluate((i) => (i.currentSrc ? new URL(i.currentSrc).pathname : "")); // 差し替えの途中は空
+      const decoded = (img) => img.evaluate((i) => i.complete && i.naturalWidth > 0);
+      for (const [i, name] of names.entries()) {
+        const fig = figs.nth(i);
+        const kids = await fig.locator("picture > *").evaluateAll((es) =>
+          es.map((e) => [e.tagName, e.getAttribute("type"), e.getAttribute("media"), e.getAttribute("srcset") ?? e.getAttribute("src")]));
+        expect(kids, `${name} の picture の中身と順序`).toEqual([
+          ["SOURCE", "image/webp", "(prefers-reduced-motion: no-preference)", `${base}${name}.webp`],
+          ["SOURCE", "image/webp", null, `${base}${name}-still.webp`],
+          ["IMG", null, null, `${base}${name}.gif`],
+        ]);
+        const img = fig.locator("img");
+        await img.scrollIntoViewIfNeeded();
+        const first = `${base}${name}${motion === "reduce" ? "-still" : ""}.webp`;
+        const other = `${base}${name}${motion === "reduce" ? "" : "-still"}.webp`;
+        await expect.poll(() => decoded(img), `${name} がデコードできる`).toBe(true);
+        expect(await shown(img)).toBe(first);
+        // reduce の人は初めから止まっている（押すと動く）。名前は変えず aria-pressed で状態を表す
+        const button = fig.getByRole("button", { name: "動きを止める" });
+        await expect(button).toHaveAttribute("aria-pressed", motion === "reduce" ? "true" : "false");
+        await button.click();
+        await expect(button).toHaveAttribute("aria-pressed", motion === "reduce" ? "false" : "true");
+        await expect.poll(() => shown(img), `${name}：押すと絵が替わる`).toBe(other);
+        await expect.poll(() => decoded(img)).toBe(true);
+        await button.click();
+        await expect(button).toHaveAttribute("aria-pressed", motion === "reduce" ? "true" : "false");
+        await expect.poll(() => shown(img), `${name}：もう一度押すと戻る`).toBe(first);
+      }
+      const hero = page.locator("img.learn-hero");
+      await expect(hero).toHaveAttribute("src", `${base}thumb.webp`);
+      await expect.poll(() => decoded(hero)).toBe(true);
+      expect(gifs, "WebP を表示できるブラウザは GIF を取りに行かない").toEqual([]);
+    });
+  }
+  test(`/learn/${slug}/：JS が無いときは停止ボタンを出さない`, async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.goto(`/learn/${slug}/`);
+    await expect(page.locator("figure.learn-fig")).toHaveCount(names.length);
+    await expect(page.locator(".learn-fig-toggle")).toHaveCount(0);
+    await context.close();
+  });
+}
