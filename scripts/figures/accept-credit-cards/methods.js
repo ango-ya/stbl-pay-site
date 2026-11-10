@@ -43,9 +43,13 @@ FX.figure({
       if (i < 2) {
         // 契約先は 1 つ。そこから複数のカードブランドへ
         at(ctx, MID_X, y, pop(0.15), pop(0.15), () => (i === 0 ? psp() : service()));
-        at(ctx, CARD_X, y, pop(0.3) * 0.75, pop(0.3), () => ICON.card(ctx));
         arrow(ctx, [SHOP_X + 58, y], [MID_X - 58, y], track(t, s0 + 0.7, HEAVY), { color: C.blue, width: 6 });
-        arrow(ctx, [MID_X + 58, y], [CARD_X - 48, y], track(t, s0 + 1.3, HEAVY), { color: C.gray, width: 5, dash: [2, 12] });
+        // 決済代行は 1 つの契約から 3 枚のカード（ブランド）へ枝分かれ。作成サービスは今までどおり 1 枚
+        (i === 0 ? [-1, 0, 1] : [0]).forEach((k, j) => {
+          const yy = y + k * 56, sc = i === 0 ? 0.55 : 0.75;
+          at(ctx, CARD_X, yy, pop(0.3 + j * 0.1) * sc, pop(0.3 + j * 0.1), () => ICON.card(ctx));
+          arrow(ctx, [MID_X + 58, y + k * 8], [CARD_X - (i === 0 ? 38 : 48), yy], track(t, s0 + 1.3 + j * 0.2, HEAVY), { color: C.gray, width: i === 0 ? 4 : 5, dash: [2, i === 0 ? 10 : 12] });
+        });
       } else {
         // 直接契約：ブランドごとにカード会社と契約する（3 本の線）
         [-1, 0, 1].forEach((k, j) => {
