@@ -1,9 +1,8 @@
 <!doctype html>
 <!--
   解説ページのサムネイル（OGP と記事の冒頭の画像）の元。scripts/learn-thumbs/make.mjs が 1200×630 で撮る。
-  ?slug=<記事>&t=<題名の行を | で区切る>&sub=<小さな副題>&label=<ラベル（省略時は「決済を学ぶ」）>&lang=ja|en&art=1
-  - art=1：marketing/thumbnails/in/<slug>.png（Astra の絵。左 55% は空き）を全面に敷く
-  - art なし：Astra の絵が届くまでの仮の絵（淡い模様と、キャラクターの素材）をコードで描く
+  ?slug=<記事>&t=<題名の行を | で区切る>&sub=<小さな副題>&label=<ラベル（省略時は「決済を学ぶ」）>&lang=ja|en
+  - 右側の絵：記事ごとの場面（scenes.js）を、図と同じ部品（../figures/engine.js）でキャンバスに描く
   - 左側に「決済を学ぶ」のラベル・題名・ロゴを重ねる。英語（lang=en）はラベルとロゴを英語にする
   配信しない（scripts/ はビルドの対象外）。
 -->
@@ -27,13 +26,7 @@
     color: #0F206B;
     font-family: "Schibsted Grotesk", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
   }
-  #art, #pattern { position: absolute; inset: 0; width: 100%; height: 100%; }
-  #art { object-fit: cover; }
-  /* Astra の絵の左側は淡い背景だが、文字の下だけ少し白を足して読みやすくする */
-  .veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(246, 247, 251, 0.9) 0, rgba(246, 247, 251, 0.75) 44%, rgba(246, 247, 251, 0) 58%); }
-  .chan { position: absolute; right: -20px; bottom: -30px; height: 500px; }
-  .kun { position: absolute; left: 470px; bottom: -4px; width: 200px; height: 140px; } /* すてぶるちゃんの手から離して、ロゴの右に。足を下の縁に付けて立つ（浮くのは寝ているときだけ） */
-  .kun img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #stage { position: absolute; inset: 0; width: 100%; height: 100%; }
   .text {
     position: absolute;
     left: 72px; top: 70px; bottom: 64px;
@@ -59,9 +52,8 @@
 </head>
 <body>
 <div id="thumb">
-  <canvas id="pattern" width="1200" height="630"></canvas>
-  <div class="kun" id="kun"></div>
-  <img class="chan" id="chan" src="../../assets/char/chan/palm-1.webp" alt="" />
+  <canvas id="stage" width="1200" height="630"></canvas>
+  <img id="zabuton" src="../../assets/char/chan/zabuton.webp" alt="" hidden />
   <div class="text">
     <span class="label" id="label">決済を学ぶ</span>
     <h1 id="title"></h1>
@@ -69,9 +61,10 @@
     <img class="logo" id="logo" src="../../assets/brand/stblpay-logo-ja-black.svg" alt="すてぶるペイ" />
   </div>
 </div>
+<script src="../figures/engine.js"></script>
+<script src="scenes.js"></script>
 <script>
   const q = new URLSearchParams(location.search);
-  const thumb = document.getElementById("thumb");
   for (const line of (q.get("t") || "").split("|")) {
     const s = document.createElement("span");
     s.textContent = line;
@@ -86,42 +79,13 @@
     document.getElementById("logo").alt = "STBLpay";
     document.getElementById("title").style.fontSize = "60px"; // 英文は和文より横に長い
   }
-  if (q.get("art")) {
-    // Astra の絵：仮の絵（模様・キャラクター）は出さない
-    document.getElementById("pattern").remove();
-    document.getElementById("chan").remove();
-    document.getElementById("kun").remove();
-    const art = document.createElement("img");
-    art.id = "art";
-    art.alt = "";
-    art.src = `../../marketing/thumbnails/in/${q.get("slug")}.png`;
-    const veil = document.createElement("div");
-    veil.className = "veil";
-    thumb.prepend(art, veil);
-  } else {
-    // 仮の絵：すてぶるくん（部品を重ねる）と、右側の淡い模様（LP のヒーローと同じ斜めの升目を、明るい色で）
-    const kun = document.getElementById("kun");
-    for (const p of ["foot-l", "foot-r", "arm-l", "arm-r", "body", "cheeks", "eyes-right", "mouth-rest"]) {
-      const img = document.createElement("img");
-      img.src = `../../assets/char/kun/${p}.webp`;
-      img.alt = "";
-      kun.append(img);
-    }
-    const ctx = document.getElementById("pattern").getContext("2d");
-    const GRID = 22, CW = 12, SH = 4.4;
-    const COLORS = ["#EAF2FF", "#d6e6fb", "#bcd7f7", "#7EC6FF"];
-    const hash = (c, r) => { const v = Math.sin(c * 127.1 + r * 311.7) * 43758.5453; return v - Math.floor(v); };
-    const cell = new Path2D();
-    cell.moveTo(SH, 0); cell.lineTo(CW + SH, 0); cell.lineTo(CW, CW); cell.lineTo(0, CW); cell.closePath();
-    for (let r = 0; r < 31; r++) for (let c = 0; c < 57; c++) {
-      const x = c * GRID - 11, y = r * GRID - 11;
-      const fade = Math.max(0, Math.min(1, (x - 560) / 360)); // 左（文字の側）は模様なし
-      const d = x + (630 - y) * 2.6;
-      let v = 0.30 + 0.38 * Math.sin(d * 0.006 + 3.2) + 0.16 * Math.sin(d * 0.016 + 6.1) + 0.10 * Math.sin(4 + hash(c, r) * Math.PI * 2);
-      const q4 = Math.round(Math.max(0, Math.min(1, v * fade)) * 4);
-      if (q4 > 0) { ctx.setTransform(1, 0, 0, 1, x, y); ctx.fillStyle = COLORS[q4 - 1]; ctx.fill(cell); }
-    }
-  }
+  const scene = window.SCENES[q.get("slug")];
+  if (!scene) throw new Error(`scenes.js に場面が無い記事：${q.get("slug")}`);
+  // engine.js の figure の仕組みで描く（絵は止まっているので t は使わない）。背景は全面を塗る（engine は 960×540 だけ塗るため）
+  FX.figure({ duration: 6, draw(ctx) { ctx.fillStyle = FX.C.bg; ctx.fillRect(0, 0, 1200, 630); scene.draw(ctx); } });
+  // 題名と副題が文字の欄（幅 600px）からはみ出して絵にかからないよう、フォントが読めたあとに文字を小さくする
+  const fit = (el, min) => { let size = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth && size > min) { size -= 2; el.style.fontSize = `${size}px`; } };
+  window.ready = window.ready.then(() => { fit(document.getElementById("title"), 44); fit(document.getElementById("sub"), 22); return true; });
 </script>
 </body>
 </html>

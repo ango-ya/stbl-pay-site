@@ -14,7 +14,7 @@ node scripts/learn-thumbs/make.mjs <slug>                              # サム�
 - 失敗したら終了コード 1 で止まる（図・記事の名前付き）。図のファイルが読めない・`FX.figure()` が呼ばれない・キャラクターの絵が読めないときは 20 秒以内に、ページでエラーが 1 件でも出たときはそこで止まる。コンタクトシートは差し替えの前に作る。
 - 異常系のテスト：`npm run test:figures`（`node --test scripts/figures/outputs.test.mjs`。rename・コピーの途中の失敗、検査での失敗、壊れた PNG・途中で切れた WebP と GIF、前の実行の `.bak` の残り、差し替え後の `.bak` の削除失敗で、前のファイルが変わらず `.new`・`.bak`・一時フォルダが残らないこと）。書き出しと同じツール（ffmpeg・libwebp）が要るので、`npm run check` には入れていない（ツールの無い環境でも check が通るように）。
 - 図のファイルは完成図のコマから始まる（読み込み中や最初のコマが空の図にならないように）。完成図の静止画は reduced-motion の人と「動きを止める」ボタン（`assets/learn-fig.js`）で使う。
-- サムネイルの絵は `marketing/thumbnails/in/<slug>.png`（Astra の絵）があればそれ、無ければコードで描いた仮の絵。題名は `make.mjs` の `TITLES`。
+- サムネイルの絵は記事ごとの場面を `scripts/learn-thumbs/scenes.js` にコードで描く（図と同じ部品）。題名は `make.mjs` の `TITLES`。場面の `desc` は記事の冒頭の画像の alt の後半と同じ文にする。
 
 ## 決定性（同じ環境でだけ）
 
@@ -50,5 +50,5 @@ FX.figure({
 
 - 画面は 960×540、書き出しは幅 720。図の文字は 1 画面 3 か所まで、40px 前後（スマホで約 15px）。
 - 線・矢印の灰色は `C.gray`（背景に対して 3:1 以上）。
-- キャラクターの決まり（左右反転しない、お金を持たせない、運営をお金の流れの線の外に置く など）は README.md の「キャラクターの素材と動き」と、marketing/thumbnails/astra-prompts.md の共通ルール。
+- キャラクターの決まり（左右反転しない、お金を持たせない、運営をお金の流れの線の外に置く など）は README.md の「キャラクターの素材と動き」。
 - 確かめるときは `scripts/figures/stage.html?fig=<slug>/<name>&play` をブラウザで開く。

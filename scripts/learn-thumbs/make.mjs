@@ -5,12 +5,11 @@
 //   node scripts/learn-thumbs/make.mjs stablecoin-payments    → 1 記事
 //   node scripts/learn-thumbs/make.mjs stablecoin-payments en → 英語の題名で og-en.png・thumb-en.webp（英語のページ用。今は使っていない）
 //
-// 絵は marketing/thumbnails/in/<slug>.png（Astra の絵）があればそれ、無ければコードで描いた仮の絵。
-// Astra の絵が届いたら、in/ に置いて流し直すだけで差し替わる（記事の HTML は変えなくてよい）。
+// 絵は記事ごとの場面（scenes.js）を、図と同じ部品でコードで描く。記事を足すときは TITLES と scenes.js の両方に足す。
 // 必要なツール：cwebp・webpinfo（brew install webp）、ffmpeg・ffprobe（brew install ffmpeg。絵を最後までデコードして確かめる）。
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { publish, withTemp } from "../figures/outputs.mjs";
@@ -76,14 +75,14 @@ try {
     try {
       await withTemp("learn-thumb-", async (tmp) => {
         const { t, sub, label } = TITLES[slug][lang];
-        const art = existsSync(new URL(`marketing/thumbnails/in/${slug}.png`, ROOT));
-        const q = new URLSearchParams({ slug, t, sub, lang, ...(label ? { label } : {}), ...(art ? { art: "1" } : {}) });
+        const q = new URLSearchParams({ slug, t, sub, lang, ...(label ? { label } : {}) });
         const errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
         await page.goto(`${new URL("thumb.html", import.meta.url).href}?${q}`);
         await page.evaluate(() => document.fonts.ready);
         await page.waitForFunction(() => [...document.images].every((img) => img.complete && img.naturalWidth > 0), null, { timeout: 15000 })
-          .catch(() => { throw new Error("15 秒待っても絵が読めない（Astra の絵・キャラクター・ロゴのどれか）"); });
+          .catch(() => { throw new Error("15 秒待っても絵が読めない（キャラクター・座布団・ロゴのどれか）"); });
+        await page.evaluate(() => Promise.race([window.ready, new Promise((_, rej) => setTimeout(() => rej(new Error("15 秒待っても場面を描けない")), 15000))]));
         // 一時フォルダで両方を作って確かめてから、まとめて差し替える（失敗したら前の絵が残る）
         const suffix = lang === "en" ? "-en" : "";
         const png = join(tmp, `og${suffix}.png`), webp = join(tmp, `thumb${suffix}.webp`);
@@ -96,7 +95,7 @@ try {
         mkdirSync(dir, { recursive: true });
         // サムネイルの 2 形式を 1 つの単位として、全部を検査してから差し替える
         publish([png, webp].map((f) => ({ from: f, to: join(dir, f.slice(tmp.length + 1)), w: 1200, h: 630, anim: false })));
-        console.log(`${slug}${suffix}: ${art ? "Astra の絵" : "仮の絵"} → og${suffix}.png・thumb${suffix}.webp`);
+        console.log(`${slug}${suffix} → og${suffix}.png・thumb${suffix}.webp`);
       });
     } catch (e) {
       e.message = `サムネイル ${slug} の書き出しに失敗（前の絵はそのまま）：${e.message}`;
