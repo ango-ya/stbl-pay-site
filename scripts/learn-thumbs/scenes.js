@@ -258,5 +258,104 @@
         drawKun(ctx, 0, { eyes: "right", mouth: "rest", x: 715, floor: 592, w: 150 });
       },
     },
+
+    // ---- 英語の解説（/en/learn/）。キーは en/learn/ のフォルダ名。出力は assets/learn/<slug>/og-en.png・thumb-en.webp ----
+    // /en/learn/ の一覧（出力は assets/learn/hub/ の og-en.png・thumb-en.webp）
+    "hub-en": {
+      desc: "Coins, a card, a shop, a bank and an open book float together, with Suteburu-chan showing them with an open palm and Suteburu-kun looking on",
+      draw(ctx) {
+        halo(ctx, 900, 180, 175);
+        coin(ctx, "stable", 760, 110, 1.3);
+        icon(ctx, "card", 900, 90, 1.0);
+        icon(ctx, "bank", 1060, 100, 0.95);
+        icon(ctx, "shop", 780, 300, 1.15);
+        // 開いた本（解説）
+        ctx.beginPath(); ctx.moveTo(880, 196); ctx.quadraticCurveTo(925, 174, 970, 188); ctx.lineTo(970, 266); ctx.quadraticCurveTo(925, 252, 880, 274); ctx.closePath(); shape(ctx, C.white);
+        ctx.beginPath(); ctx.moveTo(1060, 196); ctx.quadraticCurveTo(1015, 174, 970, 188); ctx.lineTo(970, 266); ctx.quadraticCurveTo(1015, 252, 1060, 274); ctx.closePath(); shape(ctx, C.white);
+        bars(ctx, 894, 208, 58, 3, 14); bars(ctx, 984, 208, 58, 3, 14);
+        chan(ctx, "palm");
+        kun(ctx, "right", "o", 640);
+      },
+    },
+    "japan-payment-methods": {
+      desc: "A shelf holds a card, a bank, a smartphone, a shop and a delivery box, with Suteburu-chan showing them with an open palm and Suteburu-kun comparing them",
+      draw(ctx) {
+        halo(ctx, 890, 180, 170);
+        rr(ctx, 700, 158, 420, 14, 6); shape(ctx, C.white);
+        rr(ctx, 700, 300, 170, 14, 6); shape(ctx, C.white);
+        icon(ctx, "card", 760, 118, 0.7);
+        icon(ctx, "bank", 890, 116, 0.68);
+        icon(ctx, "phone", 1010, 112, 0.7);
+        icon(ctx, "shop", 745, 262, 0.62);
+        rr(ctx, 800, 236, 56, 56, 4); shape(ctx, "#d9b98a");
+        ctx.beginPath(); ctx.moveTo(800, 252); ctx.lineTo(856, 252); shape(ctx, null, C.navy, 4);
+        chan(ctx, "palm");
+        kun(ctx, "right", "rest", 650);
+      },
+    },
+    "konbini-payment": {
+      desc: "A payment slip with a code floats toward a convenience store with a clock beside it, with Suteburu-chan pointing at the store and Suteburu-kun looking on",
+      draw(ctx) {
+        halo(ctx, 880, 200, 170);
+        icon(ctx, "shop", 780, 360, 1.3);
+        icon(ctx, "clock", 900, 330, 0.8);
+        at(ctx, 960, 150, 1, 1, () => { ctx.rotate(-0.1); paper(ctx, -52, -66, 104, 132, 5); });
+        arrow(ctx, [900, 200], [810, 290], 1, { ctrl: [830, 190], color: C.blue, width: 5, dash: [10, 12] });
+        chan(ctx, "point");
+        kun(ctx, "right", "rest", 640);
+      },
+    },
+    "stablecoin-payments-japan": {
+      desc: "A blue yen coin travels along a dotted line to a shop, with a bank nearby, while Suteburu-chan shows the coin with an open palm and Suteburu-kun looks on",
+      draw(ctx) {
+        halo(ctx, 900, 170, 150);
+        arrow(ctx, [860, 230], [770, 340], 1, { ctrl: [790, 250], color: C.blue, dash: [10, 12], width: 5 });
+        icon(ctx, "shop", 760, 405, 1.15);
+        icon(ctx, "bank", 1080, 90, 0.8);
+        coin(ctx, "stable", 920, 160, 2.4);
+        chan(ctx, "palm");
+        kun(ctx, "right", "o", 640);
+      },
+    },
+    "jpy-stablecoin": {
+      desc: "A blue coin and a yen banknote sit on either side of an equals sign with a check mark above, with Suteburu-chan showing them with an open palm and Suteburu-kun looking on",
+      draw(ctx) {
+        halo(ctx, 900, 170, 160);
+        coin(ctx, "stable", 790, 180, 1.6);
+        rr(ctx, 862, 164, 72, 10, 5); shape(ctx, C.navy, null);
+        rr(ctx, 862, 190, 72, 10, 5); shape(ctx, C.navy, null);
+        coin(ctx, "yen", 1010, 180, 1.6);
+        icon(ctx, "check", 898, 90, 0.7);
+        chan(ctx, "palm");
+        kun(ctx, "right");
+      },
+    },
+    "accept-stablecoin-payments": {
+      desc: "A blue coin moves through a round hub to a shop, with a lock above the hub, while Suteburu-chan points at the hub and Suteburu-kun looks on",
+      draw(ctx) {
+        halo(ctx, 900, 160, 165);
+        coin(ctx, "stable", 745, 150, 1.0);
+        arrow(ctx, [785, 156], [836, 162], 1, { color: C.blue, width: 5 });
+        ctx.beginPath(); ctx.arc(900, 165, 46, 0, Math.PI * 2); shape(ctx, C.blue);
+        ctx.beginPath(); ctx.arc(900, 165, 20, 0, Math.PI * 2); shape(ctx, C.white, null);
+        arrow(ctx, [948, 165], [1000, 160], 1, { color: C.blue, width: 5 });
+        icon(ctx, "shop", 1060, 150, 0.85);
+        icon(ctx, "lock", 900, 62, 0.7);
+        chan(ctx, "point");
+        kun(ctx, "right", "rest", 640);
+      },
+    },
+    "high-risk-merchant-account": {
+      desc: "A large card has a stop mark beside it, and a dotted path leads around it to a shop, with Suteburu-chan pointing at the path and Suteburu-kun looking on",
+      draw(ctx) {
+        halo(ctx, 890, 170, 170);
+        at(ctx, 900, 140, 1.9, 1, () => ICON.card(ctx));
+        stop(ctx, 1010, 70, 22);
+        arrow(ctx, [820, 215], [770, 340], 1, { ctrl: [730, 240], color: C.blue, width: 5, dash: [10, 12] });
+        icon(ctx, "shop", 760, 405, 1.1);
+        chan(ctx, "point");
+        kun(ctx, "right", "rest", 640);
+      },
+    },
   };
 })();
