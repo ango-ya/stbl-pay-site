@@ -2,10 +2,10 @@
   "use strict";
   // 解説ページの図（figure.learn-fig）に「動きを止める」ボタンを付ける（WCAG 2.2.2 一時停止・停止・非表示）。
   // 押すと picture の中の絵を完成図（-still.webp）に替え、もう一度押すとアニメに戻す。
-  // - CSP・Trusted Types に合わせて、要素の作成・textContent・属性（srcset・aria-pressed）の変更だけで動かす（innerHTML・style は使わない）
+  // - CSP・Trusted Types に合わせて、要素の作成・textContent・属性（srcset・data-stopped）の変更だけで動かす（innerHTML・style は使わない）
   // - JS が無いときはボタンを出さない（このスクリプトが作る）
-  // - prefers-reduced-motion: reduce の人は、初めから完成図（HTML の picture のまま）で、ボタンは押された状態。押すとアニメになる
-  // - aria-pressed="true" は「止めている」。ボタンの名前は変えない
+  // - prefers-reduced-motion: reduce の人は、初めから完成図（HTML の picture のまま）で、ボタンは「動かす」。押すとアニメになる
+  // - 状態はボタンの名前（「動きを止める」／「動かす」）で表す。名前が変わるので aria-pressed は使わない（ARIA の決まり）。見た目用に data-stopped
   const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.querySelectorAll("figure.learn-fig").forEach(function (fig) {
@@ -27,11 +27,14 @@
     const button = document.createElement("button");
     button.type = "button";
     button.className = "learn-fig-toggle";
-    button.textContent = "動きを止める";
-    button.setAttribute("aria-pressed", reduce ? "true" : "false");
+    const label = function (stopped) {
+      button.textContent = stopped ? "動かす" : "動きを止める";
+      button.setAttribute("data-stopped", stopped ? "true" : "false");
+    };
+    label(reduce);
     button.addEventListener("click", function () {
-      const stop = button.getAttribute("aria-pressed") !== "true";
-      button.setAttribute("aria-pressed", stop ? "true" : "false");
+      const stop = button.getAttribute("data-stopped") !== "true";
+      label(stop);
       if (stop) {
         show(stillUrl);
       } else if (reduce) {

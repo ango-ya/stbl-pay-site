@@ -298,7 +298,7 @@ test("移行済みのページ（MIGRATED）は、すべて検査の対象（PAG
 });
 
 // 図の picture：source の順（アニメ WebP（no-preference）→ 完成図 WebP → GIF の img）、motion ごとに選ばれる絵、デコード、
-// 通常の表示で GIF を取りに行かないこと、「動きを止める」ボタン（assets/learn-fig.js）で絵と aria-pressed が替わること
+// 通常の表示で GIF を取りに行かないこと、「動きを止める／動かす」ボタン（assets/learn-fig.js）で絵とボタンの名前が替わること
 for (const [slug, names] of Object.entries(MIGRATED)) {
   for (const motion of ["no-preference", "reduce"]) {
     test(`/learn/${slug}/：図の絵の選び方と停止ボタン（prefers-reduced-motion: ${motion}）`, async ({ page }) => {
@@ -327,15 +327,17 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
         const other = `${base}${name}${motion === "reduce" ? "" : "-still"}.webp`;
         await expect.poll(() => decoded(img), `${name} がデコードできる`).toBe(true);
         expect(await shown(img)).toBe(first);
-        // reduce の人は初めから止まっている（押すと動く）。名前は変えず aria-pressed で状態を表す
-        const button = fig.getByRole("button", { name: "動きを止める" });
-        await expect(button).toHaveAttribute("aria-pressed", motion === "reduce" ? "true" : "false");
+        // reduce の人は初めから止まっている（押すと動く）。状態はボタンの名前で表す（aria-pressed は使わない）
+        const stopName = "動きを止める", playName = "動かす";
+        const button = fig.locator("button.learn-fig-toggle");
+        await expect(button).not.toHaveAttribute("aria-pressed", /.*/);
+        await expect(button).toHaveAccessibleName(motion === "reduce" ? playName : stopName);
         await button.click();
-        await expect(button).toHaveAttribute("aria-pressed", motion === "reduce" ? "false" : "true");
+        await expect(button).toHaveAccessibleName(motion === "reduce" ? stopName : playName);
         await expect.poll(() => shown(img), `${name}：押すと絵が替わる`).toBe(other);
         await expect.poll(() => decoded(img)).toBe(true);
         await button.click();
-        await expect(button).toHaveAttribute("aria-pressed", motion === "reduce" ? "true" : "false");
+        await expect(button).toHaveAccessibleName(motion === "reduce" ? playName : stopName);
         await expect.poll(() => shown(img), `${name}：もう一度押すと戻る`).toBe(first);
       }
       const hero = page.locator("img.learn-hero");

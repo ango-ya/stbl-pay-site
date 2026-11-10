@@ -406,7 +406,7 @@
   margin: 24px 0 28px;
 }
 
-/* 「動きを止める」ボタン（assets/learn-fig.js が作る。JS が無ければ出ない）。図の文字を隠さないよう、図の下の右端に置く */
+/* 「動きを止める／動かす」ボタン（assets/learn-fig.js が作る。JS が無ければ出ない）。図の文字を隠さないよう、図の下の右端に置く */
 .learn-fig-toggle {
   display: block;
   min-height: 32px;
@@ -430,13 +430,13 @@
   font-size: 10px;
 }
 
-.learn-fig-toggle[aria-pressed="true"] {
+.learn-fig-toggle[data-stopped="true"] {
   border-color: var(--accent-dark);
   background: var(--accent-dark);
   color: #fff;
 }
 
-.learn-fig-toggle[aria-pressed="true"]::before {
+.learn-fig-toggle[data-stopped="true"]::before {
   content: "▶";
   content: "▶" / "";
 }
