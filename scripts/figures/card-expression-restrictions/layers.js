@@ -32,33 +32,38 @@ FX.figure({
       ctx.beginPath(); ctx.moveTo(-17, 17); ctx.lineTo(17, -17); shape(ctx, null, C.navy, 8);
     };
 
-    // 法律の門は、合法な作品が通る間（1.7〜5.6）だけ開く。違法な作品が来る前に閉まる
-    const lawArm = ramp(t, 1.5, 1.9) * (1 - ramp(t, 5.3, 5.7));
+    // 法律の門は、合法な作品 2 つが通る間（1.5〜6.2）だけ開く。違法な作品が来る前に閉まる。
+    // 各社の規則の門は、1 つ目の作品（3.0〜4.8）だけ開き、2 つ目の作品の前では閉まっている
+    const lawArm = ramp(t, 1.5, 1.9) * (1 - ramp(t, 6.0, 6.4));
+    const ruleArm = ramp(t, 3.0, 3.4) * (1 - ramp(t, 4.6, 5.0));
     const gl = track(t, 0.0, SNAP), gr = track(t, 0.25, SNAP);
     at(ctx, LAW, Y, gl * S, gl, () => gate(lawArm, C.white));
-    at(ctx, RULE, Y, gr * S, gr, () => gate(0, C.silver));
+    at(ctx, RULE, Y, gr * S, gr, () => gate(ruleArm, C.silver));
     at(ctx, LAW, Y + 148, 1, ramp(t, 0.1, 0.4), () => text(ctx, "法律", 0, 0, { size: 40 }));
     at(ctx, RULE, Y + 148, 1, ramp(t, 0.35, 0.65), () => text(ctx, "各社の規則", 0, 0, { size: 40 }));
 
-    // 合法な作品：法律の門を通り（確認の印）、各社の規則の門の前で止まる
+    // 合法な作品 1：法律の門を通り（確認の印は法律の門の上）、各社の規則の門も通る
     const s1 = track(t, 0.9, PLAY);
-    const u1 = track(t, 1.6, HEAVY);
-    const x1 = lerp(60, 402, u1);
-    at(ctx, x1, Y + 6, s1 * 1.3, s1, () => book(C.white));
-    const ok = track(t, 3.0, PLAY);
-    at(ctx, x1 + 48, Y - 46, ok * 1.1, ok, () => ICON.check(ctx));
+    const x1 = lerp(60, 402, track(t, 1.6, HEAVY)) + 283 * track(t, 3.4, HEAVY);
+    at(ctx, x1, Y + 6, s1 * 1.1, s1, () => book(C.white));
+    const ok = track(t, 2.4, PLAY);
+    at(ctx, LAW, Y - 146, ok * 1.1, ok, () => ICON.check(ctx));
+
+    // 合法な作品 2：法律の門は通るが、各社の規則の門の前で止まる
+    const s3 = track(t, 4.4, PLAY);
+    const x3 = lerp(60, 402, track(t, 4.9, HEAVY));
+    at(ctx, x3, Y + 6, s3 * 1.1, s3, () => book(C.white));
 
     // 違法な作品：法律の門で止まる。どの決済手段でも通らない
-    const s2 = track(t, 6.0, PLAY);
-    const u2 = track(t, 6.4, HEAVY);
-    const x2 = lerp(50, 98, u2);
-    at(ctx, x2, Y + 6, s2 * 1.3, s2, () => book(C.navy));
-    const bn = track(t, 7.6, PLAY);
+    const s2 = track(t, 6.8, PLAY);
+    const x2 = lerp(50, 98, track(t, 7.2, HEAVY));
+    at(ctx, x2, Y + 6, s2 * 1.1, s2, () => book(C.navy));
+    const bn = track(t, 8.4, PLAY);
     at(ctx, x2 + 48, Y - 46, bn * 1.1, bn, ban);
 
     drawChan(ctx, t, { pose: t < 0.6 ? "normal" : "point", x: 872, h: 330, blinkAt: [0.3] });
-    const watch = t < 5.0 ? x1 : x2;
+    const watch = t < 4.6 ? x1 : t < 6.8 ? x3 : x2;
     const dx = watch - 120;
-    drawKun(ctx, t, { x: 120, floor: 532, w: 120, eyes: dx > 60 ? "right" : "open", mouth: t > 3.0 && t < 3.6 ? "o" : "rest", blinkAt: [2.0, 9.0] });
+    drawKun(ctx, t, { x: 120, floor: 532, w: 120, eyes: dx > 60 ? "right" : "open", mouth: t > 2.4 && t < 3.0 ? "o" : "rest", blinkAt: [2.0, 9.0] });
   },
 });

@@ -27,11 +27,9 @@ FX.figure({
     arrow(ctx, A2.a, A2.b, u2, { color: C.gray, width: 6, dash: [2, 12] });
     let pp = null;
     const pop = track(t, 1.7, PLAY);
-    if (t < 5.4) {
-      pp = u2 > 0 ? along(A2.a, A2.b, u2) : along(A1.a, A1.b, u1);
-      const gone = 1 - ramp(t, 5.1, 5.4);
-      at(ctx, pp[0], pp[1] - 62 * ramp(t, 1.9, 2.2), pop * 1.0, gone * pop, paper);
-    }
+    // 紙は、お店の手前で止まって残る（完成図にも紙が残る）
+    pp = u2 > 0 ? along(A2.a, A2.b, u2 * 0.78) : along(A1.a, A1.b, u1);
+    at(ctx, pp[0], pp[1] - 62 * ramp(t, 1.9, 2.2), pop * 1.0, pop, paper);
 
     // 3. お店が受け入れると、お金がお店から購入者へ戻る（上を回る）
     const R = { a: [SHOP[0] - 20, Y - 100], b: [BUY[0] + 20, Y - 100], ctrl: [355, Y - 262] };
@@ -42,7 +40,7 @@ FX.figure({
     at(ctx, cp[0], cp[1], c * 1.15, c, () => COIN.yen(ctx));
 
     drawChan(ctx, t, { pose: t < 1.0 ? "normal" : "palm", x: 872, h: 340, blinkAt: [0.6] });
-    const watch = t < 5.4 && pp ? pp[0] : t > 5.6 ? cp[0] : 372;
+    const watch = t < 5.4 ? pp[0] : t > 5.6 ? cp[0] : 372;
     const dx = watch - 372;
     drawKun(ctx, t, { x: 372, floor: 532, w: 112, eyes: dx > 70 ? "right" : dx < -70 ? "left" : "open", mouth: t > 6.0 && t < 7.0 ? "o" : "rest", blinkAt: [1.0, 9.6] });
   },
