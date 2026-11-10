@@ -10,11 +10,10 @@
 // 必要なツール：cwebp・webpinfo（brew install webp）。
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { check, replace } from "../figures/outputs.mjs";
+import { publish, withTemp } from "../figures/outputs.mjs";
 
 // 題名は記事の h1 を短くしたもの（2〜3 行。行は | で区切る）と、小さな副題
 const TITLES = {
@@ -34,36 +33,34 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
   for (const slug of slugs.length ? slugs : Object.keys(TITLES)) {
-    const tmp = mkdtempSync(join(tmpdir(), "learn-thumb-"));
     try {
-      const { t, sub } = TITLES[slug][lang];
-      const art = existsSync(new URL(`marketing/thumbnails/in/${slug}.png`, ROOT));
-      const q = new URLSearchParams({ slug, t, sub, lang, ...(art ? { art: "1" } : {}) });
-      const errors = [];
-      page.on("pageerror", (e) => errors.push(e.message));
-      await page.goto(`${new URL("thumb.html", import.meta.url).href}?${q}`);
-      await page.evaluate(() => document.fonts.ready);
-      await page.waitForFunction(() => [...document.images].every((img) => img.complete && img.naturalWidth > 0), null, { timeout: 15000 })
-        .catch(() => { throw new Error("15 秒待っても絵が読めない（Astra の絵・キャラクター・ロゴのどれか）"); });
-      if (errors.length) throw new Error(`ページのエラー：${errors.join("／")}`);
-      page.removeAllListeners("pageerror");
-      // 一時フォルダで両方を作って確かめてから、まとめて差し替える（失敗したら前の絵が残る）
-      const suffix = lang === "en" ? "-en" : "";
-      const png = join(tmp, `og${suffix}.png`), webp = join(tmp, `thumb${suffix}.webp`);
-      await page.locator("#thumb").screenshot({ path: png });
-      execFileSync("cwebp", ["-quiet", "-q", "80", "-m", "6", "-metadata", "none", png, "-o", webp], { stdio: "pipe" });
-      check(png, { w: 1200, h: 630, anim: false });
-      check(webp, { w: 1200, h: 630, anim: false });
-      const dir = fileURLToPath(new URL(`assets/learn/${slug}/`, ROOT));
-      mkdirSync(dir, { recursive: true });
-      replace([png, webp].map((f) => [f, join(dir, f.slice(tmp.length + 1))]));
-      console.log(`${slug}${suffix}: ${art ? "Astra の絵" : "仮の絵"} → og${suffix}.png・thumb${suffix}.webp`);
+      await withTemp("learn-thumb-", async (tmp) => {
+        const { t, sub } = TITLES[slug][lang];
+        const art = existsSync(new URL(`marketing/thumbnails/in/${slug}.png`, ROOT));
+        const q = new URLSearchParams({ slug, t, sub, lang, ...(art ? { art: "1" } : {}) });
+        const errors = [];
+        page.on("pageerror", (e) => errors.push(e.message));
+        await page.goto(`${new URL("thumb.html", import.meta.url).href}?${q}`);
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForFunction(() => [...document.images].every((img) => img.complete && img.naturalWidth > 0), null, { timeout: 15000 })
+          .catch(() => { throw new Error("15 秒待っても絵が読めない（Astra の絵・キャラクター・ロゴのどれか）"); });
+        // 一時フォルダで両方を作って確かめてから、まとめて差し替える（失敗したら前の絵が残る）
+        const suffix = lang === "en" ? "-en" : "";
+        const png = join(tmp, `og${suffix}.png`), webp = join(tmp, `thumb${suffix}.webp`);
+        await page.locator("#thumb").screenshot({ path: png });
+        if (errors.length) throw new Error(`ページのエラー：${errors.join("／")}`);
+        execFileSync("cwebp", ["-quiet", "-q", "80", "-m", "6", "-metadata", "none", png, "-o", webp], { stdio: "pipe" });
+        const dir = fileURLToPath(new URL(`assets/learn/${slug}/`, ROOT));
+        mkdirSync(dir, { recursive: true });
+        // サムネイルの 2 形式を 1 つの単位として、全部を検査してから差し替える
+        publish([png, webp].map((f) => ({ from: f, to: join(dir, f.slice(tmp.length + 1)), w: 1200, h: 630, anim: false })));
+        console.log(`${slug}${suffix}: ${art ? "Astra の絵" : "仮の絵"} → og${suffix}.png・thumb${suffix}.webp`);
+      });
     } catch (e) {
       e.message = `サムネイル ${slug} の書き出しに失敗（前の絵はそのまま）：${e.message}`;
       throw e;
     } finally {
       page.removeAllListeners("pageerror");
-      rmSync(tmp, { recursive: true, force: true });
     }
   }
 } finally {

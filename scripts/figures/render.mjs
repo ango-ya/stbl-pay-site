@@ -6,17 +6,17 @@
 //   node scripts/figures/render.mjs stablecoin-payments/flow → 1 図
 //   CONTACT_DIR=<フォルダ> を付けると、採点用のコンタクトシート（1/3 秒ごとのコマを並べた PNG）もそこに出す
 //
-// 3 つの形式を一時フォルダで作り、読めること・寸法・アニメかどうかを確かめてから、まとめて差し替える（失敗したら前の絵が残る）。
-// 図の読み込みに失敗したとき・FX.figure() が呼ばれないときは、図の名前を付けて異常終了する（終了コード 1）。
+// 3 つの形式を一時フォルダで作り、最後までデコードできること・寸法・アニメかどうかを確かめてから、1 図の 3 形式を 1 つの単位として
+// 差し替える（途中で失敗したら 3 つとも前の絵に戻る。outputs.mjs）。図の読み込みに失敗したとき・FX.figure() が呼ばれないとき・
+// ページでエラーが出たときは、図の名前を付けて異常終了する（終了コード 1）。
 // 同じ環境（同じフォント・同じ版のツール）なら毎回同じバイト列になる。使った版は README.md。
 // 必要なツール：ffmpeg・ffprobe、img2webp・cwebp・webpinfo（brew install webp ffmpeg）。
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { check, replace } from "./outputs.mjs";
+import { publish, withTemp } from "./outputs.mjs";
 
 const FPS = 15, OUT_W = 720, OUT_H = 405, READY_MS = 20000;
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -30,24 +30,31 @@ const figs = want.length ? all.filter((f) => want.some((w) => f === w || f.start
 if (!figs.length) throw new Error(`図が見つからない：${want.join(" ")}（ある図：${all.join(" ")}）`);
 
 async function renderOne(page, fig, tmp) {
-  const [slug, name] = fig.split("/");
   const big = join(tmp, "big"), small = join(tmp, "small"), made = join(tmp, "out");
   for (const d of [big, small, made]) mkdirSync(d);
 
+  // ページのエラーは書き出しの終わりまで集め、1 件でもあれば（準備ができていても）止める
   const errors = [];
   const onError = (e) => errors.push(e.message);
   page.on("pageerror", onError);
   try {
-    await page.goto(`file://${HERE}stage.html?fig=${fig}`);
-    await page.evaluate((ms) => {
-      if (!window.ready) throw new Error("engine.js が読めていない");
-      return Promise.race([window.ready, new Promise((_, rej) => setTimeout(() => rej(new Error(`${ms}ms 待っても準備ができない（FX.figure() が呼ばれていない、または絵が読めない）`)), ms))]);
-    }, READY_MS);
+    await renderFrames(page, fig, big, small, made, errors);
   } catch (e) {
     throw new Error(`${e.message.split("\n")[0]}${errors.length ? `／ページのエラー：${errors.join("／")}` : ""}`);
   } finally {
     page.off("pageerror", onError);
   }
+}
+
+async function renderFrames(page, fig, big, small, made, errors) {
+  const [slug, name] = fig.split("/");
+  const pageErrors = () => { if (errors.length) throw new Error("ページでエラーが出た"); };
+  await page.goto(`file://${HERE}stage.html?fig=${fig}`);
+  await page.evaluate((ms) => {
+    if (!window.ready) throw new Error("engine.js が読めていない");
+    return Promise.race([window.ready, new Promise((_, rej) => setTimeout(() => rej(new Error(`${ms}ms 待っても準備ができない（FX.figure() が呼ばれていない、または絵が読めない）`)), ms))]);
+  }, READY_MS);
+  pageErrors();
   const { duration } = await page.evaluate(() => window.FIG);
   const n = Math.round(duration * FPS);
   // ファイルは完成図（最後の 1 秒）から始める。読み込み中・動きが始まる前・サムネイルに出る最初のコマが空の図にならないように。
@@ -57,6 +64,7 @@ async function renderOne(page, fig, tmp) {
     const url = await page.evaluate((t) => { window.seek(t); return document.getElementById("stage").toDataURL("image/png"); }, ((i + offset) % n) / FPS);
     writeFileSync(join(big, `f${String(i).padStart(4, "0")}.png`), Buffer.from(url.split(",")[1], "base64"));
   }
+  pageErrors();
 
   const frames = join(big, "f%04d.png");
   const gif = join(made, `${name}.gif`), webp = join(made, `${name}.webp`), still = join(made, `${name}-still.webp`);
@@ -72,13 +80,7 @@ async function renderOne(page, fig, tmp) {
   // 完成図（タイムラインの最後のコマ。ファイルでは FPS 枚目）
   run("cwebp", ["-quiet", "-q", "82", "-m", "6", "-metadata", "none", list[FPS - 1], "-o", still]);
 
-  check(gif, { w: OUT_W, h: OUT_H, anim: true });
-  check(webp, { w: OUT_W, h: OUT_H, anim: true });
-  check(still, { w: OUT_W, h: OUT_H, anim: false });
-  const dest = join(ROOT, "assets/learn", slug);
-  mkdirSync(dest, { recursive: true });
-  replace([gif, webp, still].map((f) => [f, join(dest, f.slice(made.length + 1))]));
-
+  // コンタクトシート（採点用）は差し替えの前に作る（作れなければ絵も差し替えない）。検査は publish() の中
   if (process.env.CONTACT_DIR) {
     mkdirSync(process.env.CONTACT_DIR, { recursive: true });
     const step = 5; // 1/3 秒ごと
@@ -86,6 +88,11 @@ async function renderOne(page, fig, tmp) {
       `select='not(mod(n\\,${step}))',scale=320:-1,tile=6x${Math.ceil(n / step / 6)}:padding=4:color=white`,
       "-frames:v", "1", join(process.env.CONTACT_DIR, `${slug}-${name}.png`)]);
   }
+  const dest = join(ROOT, "assets/learn", slug);
+  mkdirSync(dest, { recursive: true });
+  // 1 図の 3 形式を 1 つの単位として、全部を検査してから差し替える
+  publish([[gif, true], [webp, true], [still, false]].map(([f, anim]) => ({ from: f, to: join(dest, f.slice(made.length + 1)), w: OUT_W, h: OUT_H, anim })));
+
   const kb = (f) => (statSync(join(dest, f)).size / 1024).toFixed(0);
   console.log(`${fig}: ${n} コマ  gif ${kb(`${name}.gif`)}KB  webp ${kb(`${name}.webp`)}KB  still ${kb(`${name}-still.webp`)}KB`);
 }
@@ -94,14 +101,11 @@ const browser = await chromium.launch({ args: ["--allow-file-access-from-files"]
 try {
   const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
   for (const fig of figs) {
-    const tmp = mkdtempSync(join(tmpdir(), "learn-fig-"));
     try {
-      await renderOne(page, fig, tmp);
+      await withTemp("learn-fig-", (tmp) => renderOne(page, fig, tmp));
     } catch (e) {
       e.message = `図 ${fig} の書き出しに失敗（前の絵はそのまま）：${e.message}`;
       throw e;
-    } finally {
-      rmSync(tmp, { recursive: true, force: true });
     }
   }
 } finally {
