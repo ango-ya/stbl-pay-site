@@ -56,9 +56,9 @@ FX.figure({
     const ok = track(t, 6.6, PLAY);
     at(ctx, SHOP[0] + 58, SHOP[1] - 110, ok * 1.3, ok, () => ICON.check(ctx));
 
-    // すてぶるちゃん（右下。手のひらで図を示す）・すてぶるくん（左上で、お金を目で追う）
+    // すてぶるちゃん（右下。手のひらで図を示す）・すてぶるくん（下の床に立って、お金を目で追う）
     drawChan(ctx, t, { pose: t < 1.3 ? "normal" : "palm", x: 872, h: 340, blinkAt: [0.8] });
-    const dx = coin ? coin[0] - 76 : 0;
-    drawKun(ctx, t, { x: 76, y: 92, w: 140, eyes: dx > 90 ? "right" : dx < -90 ? "left" : "open", mouth: t > 3.05 && t < 3.9 ? "o" : "rest", blinkAt: [1.0, 8.2] });
+    const dx = coin ? coin[0] - 372 : 0;
+    drawKun(ctx, t, { x: 372, floor: 532, w: 112, eyes: dx > 60 ? "right" : dx < -60 ? "left" : "open", mouth: t > 3.05 && t < 3.9 ? "o" : "rest", blinkAt: [1.0, 8.2] });
   },
 });

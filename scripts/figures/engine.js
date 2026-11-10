@@ -4,8 +4,8 @@
 (function () {
   "use strict";
   const W = 960, H = 540;
-  // 青は サイトの青（#2775ca。2026-11-06 に統一）。ほかはキャラクターの配色
-  const C = { blue: "#2775ca", light: "#7EC6FF", silver: "#EBEEF7", navy: "#0F206B", white: "#FFFFFF", bg: "#F6F7FB", gray: "#8a93a8" };
+  // 青は サイトの青（#2775ca。2026-11-06 に統一）。ほかはキャラクターの配色。gray は背景 #F6F7FB に対して 3.5:1（線・矢印に使う。3:1 以上）
+  const C = { blue: "#2775ca", light: "#7EC6FF", silver: "#EBEEF7", navy: "#0F206B", white: "#FFFFFF", bg: "#F6F7FB", gray: "#7a8399" };
   const FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif';
 
   // ---------- 動き ----------
@@ -132,10 +132,9 @@
     },
     crypto(ctx) {
       ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); shape(ctx, C.navy);
-      // 実在の暗号資産の印に似ないよう、図のブロックチェーンと同じ「つながった箱」にする
-      ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(6, 0); shape(ctx, null, C.light, 4);
-      rr(ctx, -19, -7, 14, 14, 3); shape(ctx, C.light, null);
-      rr(ctx, 5, -7, 14, 14, 3); shape(ctx, C.light, null);
+      // 実在の暗号資産の印に似ないよう、図のブロックチェーンと同じ「箱」を 1 つ
+      rr(ctx, -12, -12, 24, 24, 5); shape(ctx, C.light, null);
+      rr(ctx, -5, -5, 10, 10, 2); shape(ctx, C.navy, null);
     },
   };
 
@@ -212,22 +211,25 @@
     const w = h * 400 / 388;
     ctx.drawImage(IMG[key], x - w / 2, y - h, w, h);
   }
-  // すてぶるくん（部品 374×261 を左上そろえで重ねる）。(x, y) は中心、w は幅。eyes：open / left / right / wide / half / closed
-  function drawKun(ctx, t, { eyes = "open", mouth = "rest", x = 120, y = 120, w = 150, blinkAt = [], bob = 0 } = {}) {
-    const h = w * 261 / 374;
+  // すてぶるくん（部品 374×261 を左上そろえで重ねる）。起きているときは足を床に付けて立つ（浮くのは寝ているときだけ。README「キャラクターの素材と動き」）。
+  // x は中心、floor は床の高さ（足の裏がここに来る）、w は幅。eyes：open / left / right / wide / half / closed。床の線も一緒に描く
+  const KUN_SOLE = 252 / 261; // 部品の絵の中で、足の裏がある高さ
+  function drawKun(ctx, t, { eyes = "open", mouth = "rest", x = 120, floor = 530, w = 130, blinkAt = [] } = {}) {
+    const h = w * 261 / 374, top = floor - h * KUN_SOLE;
+    ctx.save(); ctx.strokeStyle = C.gray; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x - w * 0.62, floor); ctx.lineTo(x + w * 0.62, floor); ctx.stroke(); ctx.restore();
     const b = blink(t, blinkAt);
     const e = b === "closed" ? "closed" : b === "half" ? "half" : eyes;
-    const dy = bob * Math.sin(t * Math.PI * 2 / 2.5); // 2.5 秒で 1 往復（図の長さを 2.5 の倍数にすると、つなぎ目で跳ねない）
-    for (const part of ["foot-l", "foot-r"]) ctx.drawImage(IMG[`kun/${part}`], x - w / 2, y - h / 2, w, h);
-    for (const part of ["arm-l", "arm-r", "body", "cheeks", `eyes-${e}`, `mouth-${mouth}`]) ctx.drawImage(IMG[`kun/${part}`], x - w / 2, y - h / 2 + dy, w, h);
+    for (const part of ["foot-l", "foot-r", "arm-l", "arm-r", "body", "cheeks", `eyes-${e}`, `mouth-${mouth}`]) ctx.drawImage(IMG[`kun/${part}`], x - w / 2, top, w, h);
   }
 
   // ---------- 図の登録 ----------
   const canvas = document.getElementById("stage");
   const ctx = canvas.getContext("2d");
   let fig = null;
-  let figureLoaded;
-  const figureReady = new Promise((res) => { figureLoaded = res; });
+  let figureLoaded, figureFailed;
+  const figureReady = new Promise((res, rej) => { figureLoaded = res; figureFailed = rej; });
+  window.figureFailed = (msg) => figureFailed(new Error(msg)); // stage.html が図のファイルを読めなかったときに呼ぶ
   function figure(def) {
     if (!(def.duration >= 6 && def.duration <= 12)) throw new Error("duration は 6〜12 秒");
     fig = def;
