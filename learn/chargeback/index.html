@@ -20,11 +20,11 @@
       content="カードの申し立てで売上が取り消される仕組みと、お店の負担、対策、異議申し立ての流れ。ステーブルコイン決済の場合も解説します。"
     />
     <meta property="og:url" content="https://stbl-pay.com/learn/chargeback/" />
-    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/learn/chargeback/og.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="og:image:alt" content="決済を学ぶ：チャージバックとは？ 仕組み・加盟店の負担・対策" />
     <meta property="article:published_time" content="2026-11-05" />
     <meta property="article:modified_time" content="2026-11-09" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -33,14 +33,15 @@
       name="twitter:description"
       content="カードの申し立てで売上が取り消される仕組みと、お店の負担、対策、異議申し立ての流れ。ステーブルコイン決済の場合も解説します。"
     />
-    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
-    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/learn/chargeback/og.png" />
+    <meta name="twitter:image:alt" content="決済を学ぶ：チャージバックとは？ 仕組み・加盟店の負担・対策" />
     <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/chargeback/" />
     <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/chargeback/" />
     <link rel="canonical" href="https://stbl-pay.com/learn/chargeback/" />
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
     <script src="/assets/analytics.js"></script>
+    <script src="/assets/learn-fig.js" defer></script>
 
     <script type="application/ld+json">
 {
@@ -67,7 +68,7 @@
         "@id": "https://stbl-pay.com/#org-angoya"
       },
       "mainEntityOfPage": "https://stbl-pay.com/learn/chargeback/",
-      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "image": "https://stbl-pay.com/assets/learn/chargeback/og.png",
       "about": {
         "@id": "https://stbl-pay.com/#service"
       }
@@ -191,17 +192,38 @@
           </nav>
 
           <h1>チャージバックとは？仕組み・加盟店の負担・対策</h1>
+          <img class="learn-hero" src="/assets/learn/chargeback/thumb.webp" width="1200" height="630" alt="決済を学ぶ：チャージバックとは？ 仕組み・加盟店の負担・対策。すてぶるちゃんが手のひらで題名を示し、すてぶるくんが下で見ている絵" fetchpriority="high" decoding="async" />
           <p class="learn-lead">チャージバックとは、カードの名義人がカード発行会社に請求の取り消しや返金を求め、認められたときに起きる返金です<sup class="fn"><a href="#src-1">[1]</a></sup>。返金額を支払うのは、原則としてお店（加盟店）です<sup class="fn"><a href="#src-1">[1]</a></sup>。ただし、3D セキュアで本人認証に成功した決済などでは、カード発行会社の負担に移ることがあります<sup class="fn"><a href="#src-3">[3]</a></sup>。ステーブルコイン決済には、カードのような一方的な取り消しの仕組みはありませんが、返金のトラブルがなくなるわけではありません。</p>
+          <div class="learn-summary" role="note" aria-labelledby="summary-title">
+            <p class="learn-summary-title" id="summary-title">3 行でわかる</p>
+            <ul>
+              <li>チャージバックとは、カードの名義人がカード発行会社に請求の取り消しや返金を求め、認められたときに起きる返金です。</li>
+              <li>返金額を支払うのは、原則としてお店です。ただし、3D セキュアで本人認証に成功した決済などでは、カード発行会社の負担に移ることがあります。</li>
+              <li>ステーブルコイン決済には、カードのような一方的な取り消しの仕組みはありませんが、返金のトラブルがなくなるわけではありません。</li>
+            </ul>
+          </div>
           <p class="learn-meta">更新日：<time datetime="2026-11-09">2026年11月9日</time>　文：合同会社暗号屋</p>
 
           <div class="learn-body">
             <h2 id="what">チャージバックの仕組み</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">チャージバックって何？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">カードの名義人がカード発行会社に請求の取り消しや返金を求めて、認められたときに起きる返金です。返金額を払うのは、原則としてお店です。</span></p>
+            </div>
             <p>チャージバックは、購入者の申し立てから始まります。流れは次のとおりです<sup class="fn"><a href="#src-1">[1]</a></sup>。</p>
             <ol>
               <li>購入者（カードの名義人）が、カード発行会社に、請求の取り消しや返金を求めます。</li>
               <li>カード発行会社が申し立てを受け入れると、お店に、支払いの取り消しや返金を求めます。</li>
               <li>お店は、これを受け入れるか、反証（取引が正しいと示すこと）をするかを選びます。</li>
             </ol>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/chargeback/flow.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/chargeback/flow-still.webp" />
+                <img src="/assets/learn/chargeback/flow.gif" width="720" height="405" alt="チャージバックの流れの図。購入者がカード発行会社に請求の取り消しや返金を求めると（紙の印）、カード発行会社が受け入れて、お店に伝えます。お店が受け入れると、返金額がお店から購入者へ戻ります。すてぶるちゃんが手のひらで図を示し、すてぶるくんが紙とお金の動きを目で追っています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>購入者の申し立てが、カード発行会社からお店に伝わります。お店が受け入れると、返金額はお店から購入者へ戻ります。</figcaption>
+            </figure>
             <p>売上が入金される前にも、入金されたあとにも起きることがあります<sup class="fn"><a href="#src-1">[1]</a></sup>。</p>
 
             <h2 id="burden">加盟店が負うもの</h2>
@@ -244,7 +266,19 @@
             <p>反証が認められないこともあります<sup class="fn"><a href="#src-1">[1]</a></sup>。申し立てそのものは、カードネットワークの規定で、通常、元の支払いから 120 日以内にできるとされています。規定でそれより長い場合や、イベントなどの前払いでは提供の日から数える場合もあります<sup class="fn"><a href="#src-4">[4]</a></sup>。反証できる期間は、決済サービスごとに違います。利用中のサービスの規約を確かめましょう。</p>
 
             <h2 id="stablecoin">ステーブルコイン決済の場合</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">ステーブルコインなら、取り消されない？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-proud-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">カードのように、購入者の申し立てで売上を取り消す仕組みはありません。ただ、返品や返金のトラブルがなくなるわけではありません。</span></p>
+            </div>
             <p>ステーブルコイン決済には、カードのチャージバックのように、購入者の申し立てで売上を一方的に取り消す仕組みはありません。ブロックチェーン上の送金は、確定すると取り消せないためです。仕組みの全体は、<a href="/learn/stablecoin-payments/">ステーブルコイン決済とは</a>で説明しています。</p>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/chargeback/compare.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/chargeback/compare-still.webp" />
+                <img src="/assets/learn/chargeback/compare.gif" width="720" height="405" alt="カードのチャージバックと、ステーブルコイン決済の違いの図。カードでは、購入者の申し立て（紙の印）で、売上がお店から購入者へ戻ります。ステーブルコイン決済では、確定した送金は取り消せない（錠前の印）ので、申し立てでは戻らず、返金は、お店から購入者へ送り返す形になります。すてぶるちゃんが図を指さしています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>カードでは申し立てで売上が戻りますが、ステーブルコイン決済では、確定した送金は取り消せません。返金は、お店から送り返します。</figcaption>
+            </figure>
             <p>ただし、返品や返金のトラブルがなくなるわけではありません。商品が届かない、注文と違う、といった不満は、カード以外の決済でも起きます。ステーブルコイン決済では、返金は、お店から購入者へ送り返す形になります。返金の条件を決めて、購入者に先に案内しておきましょう。通信販売では、広告に返品の特約を表示していないと、商品を受け取った日から 8 日以内なら、購入者は送料を負担して返品できます。ネットショップでは、返品の特約を注文の最終確認の画面にも表示します<sup class="fn"><a href="#src-5">[5]</a></sup>。</p>
 
             <h2 id="stblpay">すてぶるペイの場合</h2>
