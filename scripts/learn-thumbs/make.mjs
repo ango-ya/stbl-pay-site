@@ -7,7 +7,7 @@
 //
 // 絵は marketing/thumbnails/in/<slug>.png（Astra の絵）があればそれ、無ければコードで描いた仮の絵。
 // Astra の絵が届いたら、in/ に置いて流し直すだけで差し替わる（記事の HTML は変えなくてよい）。
-// 必要なツール：cwebp・webpinfo（brew install webp）。
+// 必要なツール：cwebp・webpinfo（brew install webp）、ffmpeg・ffprobe（brew install ffmpeg。絵を最後までデコードして確かめる）。
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
@@ -48,8 +48,10 @@ try {
         const suffix = lang === "en" ? "-en" : "";
         const png = join(tmp, `og${suffix}.png`), webp = join(tmp, `thumb${suffix}.webp`);
         await page.locator("#thumb").screenshot({ path: png });
-        if (errors.length) throw new Error(`ページのエラー：${errors.join("／")}`);
         execFileSync("cwebp", ["-quiet", "-q", "80", "-m", "6", "-metadata", "none", png, "-o", webp], { stdio: "pipe" });
+        // 変換のあいだに届いたページのエラーも拾う（evaluate を 1 回往復させて、たまったイベントを処理させてから確かめる）
+        await page.evaluate(() => 0);
+        if (errors.length) throw new Error(`ページのエラー：${errors.join("／")}`);
         const dir = fileURLToPath(new URL(`assets/learn/${slug}/`, ROOT));
         mkdirSync(dir, { recursive: true });
         // サムネイルの 2 形式を 1 つの単位として、全部を検査してから差し替える

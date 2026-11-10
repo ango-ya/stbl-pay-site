@@ -35,12 +35,19 @@ export function check(file, { w, h, anim }) {
 }
 
 // [[一時ファイル, 置き場所], ...] を 1 つの単位として置き換える。fs はテストで差し替えられるようにしてある。
+// 0. 前の実行の .new・.bak が残っていたら、何も触らずに止める（強制終了の跡。.bak が唯一の前のファイルのことがあるので消さない）
 // 1. 全部を置き場所の隣に .new として写す  2. 1 件ずつ、今あるファイルを .bak に移してから .new を置き場所に移す
-// 3. 全部できたら .bak を消す。途中で失敗したら、置いたものを消して .bak から戻し、.new・.bak を消してから例外を投げ直す
+// 3. 全部できたら .bak を消す。途中で失敗したら、置いたものを消して .bak から戻し、今回作った .new・.bak だけを消してから例外を投げ直す
 export function replace(pairs, fs = nodeFs) {
+  const left = pairs.flatMap(([, to]) => [`${to}.new`, `${to}.bak`]).filter((f) => fs.existsSync(f));
+  if (left.length) throw new Error(`前の書き出しの跡が残っている（中身を確かめて、手で戻すか消してから流し直す）：${left.join("、")}`);
+  const copied = []; // 今回作った .new
   const moved = []; // { to, hadOld, placed }
   try {
-    for (const [from, to] of pairs) fs.copyFileSync(from, `${to}.new`);
+    for (const [from, to] of pairs) {
+      fs.copyFileSync(from, `${to}.new`);
+      copied.push(`${to}.new`);
+    }
     for (const [, to] of pairs) {
       const step = { to, hadOld: fs.existsSync(to), placed: false };
       moved.push(step);
@@ -50,20 +57,21 @@ export function replace(pairs, fs = nodeFs) {
     }
   } catch (e) {
     const undo = [];
-    for (const { to, hadOld, placed } of moved.reverse()) {
+    for (const { to, hadOld, placed } of [...moved].reverse()) {
       try {
         if (placed) fs.rmSync(to, { force: true });
-        if (hadOld) fs.renameSync(`${to}.bak`, to);
+        if (hadOld && fs.existsSync(`${to}.bak`)) fs.renameSync(`${to}.bak`, to);
       } catch (u) { undo.push(`${to}：${u.message}`); }
     }
-    for (const [, to] of pairs) {
-      fs.rmSync(`${to}.new`, { force: true });
-      if (!undo.some((m) => m.startsWith(`${to}：`))) fs.rmSync(`${to}.bak`, { force: true }); // 戻せなかったものは .bak を残す（手で戻せるように）
-    }
-    if (undo.length) e.message += `／元に戻せなかった：${undo.join("／")}`;
+    for (const f of copied) fs.rmSync(f, { force: true });
+    if (undo.length) e.message += `／元に戻せなかった（.bak を残した）：${undo.join("／")}`;
     throw e;
   }
-  for (const { to, hadOld } of moved) if (hadOld) fs.rmSync(`${to}.bak`, { force: true });
+  // ここまで来たら新しい絵は置けている。.bak を消せなくても失敗にはせず、知らせるだけ
+  for (const { to, hadOld } of moved) {
+    if (!hadOld) continue;
+    try { fs.rmSync(`${to}.bak`, { force: true }); } catch (e) { console.warn(`新しい絵に差し替えたが、${to}.bak を消せなかった：${e.message}`); }
+  }
 }
 
 // 1 つの単位（items：[{ from, to, w, h, anim }]）を、全部 check() してから replace() する。1 件でも検査に通らなければ何も差し替えない

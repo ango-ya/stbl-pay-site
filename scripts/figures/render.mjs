@@ -88,6 +88,9 @@ async function renderFrames(page, fig, big, small, made, errors) {
       `select='not(mod(n\\,${step}))',scale=320:-1,tile=6x${Math.ceil(n / step / 6)}:padding=4:color=white`,
       "-frames:v", "1", join(process.env.CONTACT_DIR, `${slug}-${name}.png`)]);
   }
+  // 変換のあいだに届いたページのエラーも拾う（evaluate を 1 回往復させて、たまったイベントを処理させてから確かめる）
+  await page.evaluate(() => 0);
+  pageErrors();
   const dest = join(ROOT, "assets/learn", slug);
   mkdirSync(dest, { recursive: true });
   // 1 図の 3 形式を 1 つの単位として、全部を検査してから差し替える

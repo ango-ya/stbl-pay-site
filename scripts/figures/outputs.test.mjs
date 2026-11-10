@@ -120,3 +120,29 @@ test("途中で切れたアニメ WebP・GIF もデコードの検査で落ち�
     }, /デコードできない|webpinfo|寸法/);
   }
 });
+
+test("前の実行の .bak が残っていたら（強制終了の跡）、何も触らずに止まり、.bak も消さない", async () => {
+  await failsAndCleansUp((dir) => {
+    const { dest, names, items } = setup(dir);
+    fs.rmSync(join(dest, names[0]));
+    fs.writeFileSync(join(dest, `${names[0]}.bak`), "唯一の前のファイル");
+    const broken = { ...fs, copyFileSync: () => { throw new Error("呼ばれないはず"); } };
+    try { publish(items, broken); } finally {
+      assert.equal(fs.readFileSync(join(dest, `${names[0]}.bak`), "utf8"), "唯一の前のファイル");
+      for (const n of names.slice(1)) assert.equal(fs.readFileSync(join(dest, n), "utf8"), `前の ${n}`);
+      assert.equal(fs.existsSync(join(dest, names[0])), false);
+    }
+  }, /前の書き出しの跡が残っている/);
+});
+
+test("差し替えたあとに .bak を消せなくても失敗にはしない（新しい絵は置けている）", async () => {
+  await withTemp("outputs-test-", (dir) => {
+    const { items } = setup(dir);
+    const broken = { ...fs, rmSync: (f, o) => { if (String(f).endsWith(".bak")) throw new Error("わざと失敗（rm）"); return fs.rmSync(f, o); } };
+    const warn = console.warn; const warned = [];
+    console.warn = (m) => warned.push(m);
+    try { publish(items, broken); } finally { console.warn = warn; }
+    for (const it of items) assert.deepEqual(fs.readFileSync(it.to), fs.readFileSync(it.from));
+    assert.equal(warned.length, 3);
+  });
+});
