@@ -20,11 +20,11 @@
       content="価値が連動するよう設計されたデジタルの通貨、ステーブルコインの仕組み・種類・暗号資産との違い・日本での扱いを解説します。"
     />
     <meta property="og:url" content="https://stbl-pay.com/learn/what-is-stablecoin/" />
-    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/learn/what-is-stablecoin/og.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="og:image:alt" content="決済を学ぶ：ステーブルコインとは？ 仕組み・種類・暗号資産との違い" />
     <meta property="article:published_time" content="2026-11-09" />
     <meta property="article:modified_time" content="2026-11-09" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -33,14 +33,15 @@
       name="twitter:description"
       content="価値が連動するよう設計されたデジタルの通貨、ステーブルコインの仕組み・種類・暗号資産との違い・日本での扱いを解説します。"
     />
-    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
-    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/learn/what-is-stablecoin/og.png" />
+    <meta name="twitter:image:alt" content="決済を学ぶ：ステーブルコインとは？ 仕組み・種類・暗号資産との違い" />
     <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/what-is-stablecoin/" />
     <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/what-is-stablecoin/" />
     <link rel="canonical" href="https://stbl-pay.com/learn/what-is-stablecoin/" />
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
     <script src="/assets/analytics.js"></script>
+    <script src="/assets/learn-fig.js" defer></script>
 
         <script type="application/ld+json">
 {
@@ -67,7 +68,7 @@
         "@id": "https://stbl-pay.com/#org-angoya"
       },
       "mainEntityOfPage": "https://stbl-pay.com/learn/what-is-stablecoin/",
-      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "image": "https://stbl-pay.com/assets/learn/what-is-stablecoin/og.png",
       "about": {
         "@id": "https://stbl-pay.com/#service"
       }
@@ -183,22 +184,47 @@
           </nav>
 
           <h1>ステーブルコインとは？わかりやすく、仕組み・種類・暗号資産との違い</h1>
+          <img class="learn-hero" src="/assets/learn/what-is-stablecoin/thumb.webp" width="1200" height="630" alt="決済を学ぶ：ステーブルコインとは？ 仕組み・種類・暗号資産との違い。すてぶるちゃんが手のひらで題名を示し、すてぶるくんが下で見ている絵" fetchpriority="high" decoding="async" />
           <p class="learn-lead">ステーブルコインとは、法定通貨などの価値と連動するよう設計されたデジタルの通貨です<sup class="fn"><a href="#src-1">[1]</a><a href="#src-2">[2]</a></sup>。日本円や米ドルと 1：1 で交換できるとされるものが代表的で、ブロックチェーン上で送ります。ただし、連動は設計であって保証ではありません。日本では、条件を満たすものが資金決済法の「電子決済手段」にあたり、ビットコインなどの暗号資産とは別の区分です<sup class="fn"><a href="#src-1">[1]</a></sup>。</p>
+          <div class="learn-summary" role="note" aria-labelledby="summary-title">
+            <p class="learn-summary-title" id="summary-title">3 行でわかる</p>
+            <ul>
+              <li>ステーブルコインは、円やドルなどの法定通貨と価値が連動するよう設計された、デジタルの通貨です。</li>
+              <li>連動は設計であって保証ではありません。価値は、発行体や裏付け資産への信頼に左右されます。</li>
+              <li>日本では、条件を満たすものが「電子決済手段」として、ビットコインなどの暗号資産とは別に扱われます。</li>
+            </ul>
+          </div>
           <p class="learn-meta">更新日：<time datetime="2026-11-09">2026年11月9日</time>　文：合同会社暗号屋</p>
 
           <div class="learn-body">
             <h2 id="what">ステーブルコインとは</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">ステーブルコインって、どんなお金？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">価格が安定するように作られた、デジタルのお金。多くは、円やドルと価値が連動するように設計されています。</span></p>
+            </div>
             <p>ステーブルコイン（stablecoin）は、価格が安定するように作られたデジタルの通貨です。多くは、日本円や米ドルなどの法定通貨（国が発行するお金）に、1 単位＝1 円、1 単位＝1 ドルのように連動させる設計です。</p>
             <p>ブロックチェーンの上で送ります。ブロックチェーンとは、取引の記録を多くのコンピューターで共有し、あとから書き換えにくくした仕組みです。ビットコインのように価格が大きく動く通貨とは違い、「ふだんのお金の単位で数えられる」ことを狙っています。</p>
             <p>この解説は、ステーブルコインそのものの入門です。お店が決済で受け取るときの話は、<a href="/learn/stablecoin-payments/">ステーブルコイン決済とは</a>で説明しています。</p>
 
             <h2 id="how">ステーブルコインの仕組み：価格を保つ方法</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">価格は、どうやって保つの？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-2.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">発行体が、円などを受け取って、裏付けの資産を持ちます。持ち主が求めたら、額面どおりに払い戻します。</span></p>
+            </div>
             <p>価格が連動するのは、自然にそうなるからではありません。連動を保つ仕組みが、発行体（ステーブルコインを発行する会社）や設計ごとに用意されています。代表的なのは、裏付けと払い戻しです。</p>
             <ol>
               <li>発行体が、ステーブルコインと引き換えに、日本円や米ドルなどを受け取ります。</li>
               <li>発行体は、その額に見合う資産を、裏付けとして持ちます。</li>
               <li>持ち主が求めたら、発行体は額面どおりの金額で払い戻します。</li>
             </ol>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/what-is-stablecoin/backing.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/what-is-stablecoin/backing-still.webp" />
+                <img src="/assets/learn/what-is-stablecoin/backing.gif" width="720" height="405" alt="ステーブルコインの価値を保つ仕組みの図。持ち主が日本円を発行体に渡すと、発行体はその分を裏付けの箱に入れ、ステーブルコインを持ち主に渡します。持ち主が払い戻しを求めると、ステーブルコインが発行体に戻り、裏付けの箱から日本円が持ち主に払い戻されます。すてぶるちゃんが手のひらで図を示し、すてぶるくんがお金の動きを目で追っています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>発行体は、受け取った円に見合う資産を裏付けとして持ちます。持ち主が求めたら、額面どおりに払い戻します。</figcaption>
+            </figure>
             <p>一般に、「額面で払い戻してもらえる」と市場が受け止めるほど、市場での価格は額面に近づきます。反対に、裏付けや払い戻しに疑いが出ると、価格は額面から離れます。このため、ステーブルコインの価値は、発行体や裏付け資産への信頼に左右されます。</p>
 
             <h2 id="types">ステーブルコインの種類</h2>
@@ -235,7 +261,19 @@
             <p>いずれも、発行体の説明です。裏付けの中身や払い戻しの条件は、発行体ごとに違います。</p>
 
             <h2 id="vs-crypto">暗号資産（ビットコイン）との違い</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">ビットコインとは、何がちがう？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-proud-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">価値の決まり方です。ステーブルコインは法定通貨などに連動するよう設計されていて、暗号資産は市場での売買で決まり、大きく動きます。</span></p>
+            </div>
             <p>どちらもブロックチェーンの上で送れますが、価値の決まり方が違います。</p>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/what-is-stablecoin/vs-crypto.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/what-is-stablecoin/vs-crypto-still.webp" />
+                <img src="/assets/learn/what-is-stablecoin/vs-crypto.gif" width="720" height="405" alt="ステーブルコインと暗号資産の価値の動きを比べた図。ステーブルコインの線は、点線（額面）のそばをほぼ平らに進みます。暗号資産の線は、点線から大きく上下に動きます。すてぶるちゃんが図を指さしています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>ステーブルコインは、法定通貨などに連動するよう設計されています。暗号資産は、市場での売買で価値が決まり、大きく動きます。</figcaption>
+            </figure>
             <table class="learn-table">
               <caption>ステーブルコインと暗号資産（ビットコインなど）の違い</caption>
               <thead>

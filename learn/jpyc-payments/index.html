@@ -20,11 +20,11 @@
       content="お店が JPYC で代金を受け取る方法は、自分で受ける方法と決済サービスを使う方法の 2 つ。導入の流れ、手数料の考え方、受け取った後の扱いを解説します。"
     />
     <meta property="og:url" content="https://stbl-pay.com/learn/jpyc-payments/" />
-    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/learn/jpyc-payments/og.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="og:image:alt" content="決済を学ぶ：JPYC 決済をお店に導入するには？ 受け取り方・流れ・手数料の考え方" />
     <meta property="article:published_time" content="2026-11-05" />
     <meta property="article:modified_time" content="2026-11-09" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -33,14 +33,15 @@
       name="twitter:description"
       content="お店が JPYC で代金を受け取る方法は、自分で受ける方法と決済サービスを使う方法の 2 つ。導入の流れ、手数料の考え方、受け取った後の扱いを解説します。"
     />
-    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
-    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/learn/jpyc-payments/og.png" />
+    <meta name="twitter:image:alt" content="決済を学ぶ：JPYC 決済をお店に導入するには？ 受け取り方・流れ・手数料の考え方" />
     <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/jpyc-payments/" />
     <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/jpyc-payments/" />
     <link rel="canonical" href="https://stbl-pay.com/learn/jpyc-payments/" />
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
     <script src="/assets/analytics.js"></script>
+    <script src="/assets/learn-fig.js" defer></script>
 
     <script type="application/ld+json">
 {
@@ -67,7 +68,7 @@
         "@id": "https://stbl-pay.com/#org-angoya"
       },
       "mainEntityOfPage": "https://stbl-pay.com/learn/jpyc-payments/",
-      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "image": "https://stbl-pay.com/assets/learn/jpyc-payments/og.png",
       "about": {
         "@id": "https://stbl-pay.com/#service"
       }
@@ -199,17 +200,42 @@
           </nav>
 
           <h1>JPYC 決済をお店に導入するには？受け取り方・流れ・手数料の考え方</h1>
+          <img class="learn-hero" src="/assets/learn/jpyc-payments/thumb.webp" width="1200" height="630" alt="決済を学ぶ：JPYC 決済をお店に導入するには？ 受け取り方・流れ・手数料の考え方。すてぶるちゃんが手のひらで題名を示し、すてぶるくんが下で見ている絵" fetchpriority="high" decoding="async" />
           <p class="learn-lead">JPYC 決済をお店に導入するとは、日本円ステーブルコインの JPYC で、お店が代金を受け取れるようにすることです。受け取り方は、自分でウォレットを用意して受ける方法と、決済サービスを使う方法の 2 つ。受け取った JPYC は、JPYC EX で日本円に戻せます。</p>
+          <div class="learn-summary" role="note" aria-labelledby="summary-title">
+            <p class="learn-summary-title" id="summary-title">3 行でわかる</p>
+            <ul>
+              <li>JPYC 決済の導入とは、お店が日本円ステーブルコインの JPYC で、代金を受け取れるようにすることです。</li>
+              <li>受け取り方は、自分でウォレットを用意して受ける方法と、決済サービスを使う方法の 2 つです。</li>
+              <li>受け取った JPYC は、JPYC EX で日本円に戻せます。そのまま持つこともできます。</li>
+            </ul>
+          </div>
           <p class="learn-meta">更新日：<time datetime="2026-11-09">2026年11月9日</time>　文：合同会社暗号屋</p>
 
           <div class="learn-body">
             <h2 id="what">JPYC とは</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">JPYC って何？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">JPYC 株式会社が発行する、日本円と 1：1 で交換できる、日本円のステーブルコインです。</span></p>
+            </div>
             <p>JPYC は、日本円と 1：1 で交換できる、日本円のステーブルコイン（価値が安定するように作られたデジタルのお金）です。発行するのは JPYC 株式会社で、2025年8月18日に資金移動業者として登録されました（関東財務局長 第00099号）<sup class="fn"><a href="#src-3">[3]</a></sup>。</p>
             <p>JPYC 株式会社は、JPYC を資金決済法の「電子決済手段」として発行しています<sup class="fn"><a href="#src-3">[3]</a><a href="#src-6">[6]</a></sup>。法律では、暗号資産の定義から電子決済手段が除かれていて、ビットコインなどの暗号資産とは別の区分です<sup class="fn"><a href="#src-1">[1]</a><a href="#src-2">[2]</a></sup>。2025年10月27日に発行が始まり、発行残高の 100% 以上を預貯金と国債で保全するとされています<sup class="fn"><a href="#src-3">[3]</a></sup>。累計発行額は、2026年9月18日時点で100億円を超えたと発表されました<sup class="fn"><a href="#src-4">[4]</a></sup>。</p>
             <p>日本円との交換は、公式の窓口「JPYC EX」で行います。利用には本人確認が必要です。個人はマイナンバーカードで行い、法人もアカウントを作れます<sup class="fn"><a href="#src-6">[6]</a></sup>。JPYC EX は、Ethereum、Polygon、Avalanche、Kaia の 4 つのブロックチェーンに対応しています<sup class="fn"><a href="#src-4">[4]</a><a href="#src-6">[6]</a></sup>。ブロックチェーンとは、取引の記録を多くのコンピューターで共有する仕組みです。</p>
             <p>JPYC 株式会社は、JPYC は特定の加盟店契約や利用契約を必要とせず、事業者が自由に組み込んで使えるものだと発表しています<sup class="fn"><a href="#src-3">[3]</a></sup>。ただし、日本円に戻すには JPYC EX のアカウントが要ります。</p>
 
             <h2 id="ways">お店が JPYC で受け取る 2 つの方法</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">受け取り方は、どうちがう？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-proud-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">自分でウォレットを用意して受けるか、決済サービスを使うか。送金と注文の突き合わせを、お店がするのか、サービスがするのかが変わります。</span></p>
+            </div>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/jpyc-payments/ways.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/jpyc-payments/ways-still.webp" />
+                <img src="/assets/learn/jpyc-payments/ways.gif" width="720" height="405" alt="JPYC の受け取り方 2 つの図。自分で受ける方法では、購入者がお店に JPYC を送り、お店が送金と注文を自分で突き合わせます（虫めがねの印）。決済サービスを使う方法でも、お店は JPYC で受け取ります。サービスが決済の状態を管理し、結果をお店に知らせます（点線とチェックの印）。すてぶるちゃんが図を指さしています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>自分で受ける方法では、送金と注文の突き合わせをお店がします。決済サービスを使うと、サービスが決済の状態を管理して、結果を知らせます。</figcaption>
+            </figure>
             <table class="learn-table">
               <caption>JPYC の受け取り方の違い</caption>
               <thead>
@@ -314,6 +340,18 @@
             <p>最小の手順は <a href="/docs/getting-started/quickstart/">Quick Start</a> にあります。準備は<a href="/docs/getting-started/prerequisites/">導入前の準備</a>、お金の流れは<a href="/docs/getting-started/money-flow/">お金の流れ</a>、試す環境は <a href="/docs/testing/sandbox/">Sandbox</a> を見てください。</p>
 
             <h2 id="after">受け取った後：日本円への換金と会計</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">受け取った JPYC は、そのあとどうする？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-2.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">JPYC EX で日本円に払い戻すか、そのまま持つか。そのまま持つなら、管理は自分で行います。</span></p>
+            </div>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/jpyc-payments/after.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/jpyc-payments/after-still.webp" />
+                <img src="/assets/learn/jpyc-payments/after.gif" width="720" height="405" alt="受け取った JPYC のあとの図。お店が受け取った JPYC は、そのまま持つか、JPYC EX に送って日本円に払い戻せます。JPYC EX に送ると、日本円が戻ってきます。すてぶるちゃんが手のひらで図を示し、すてぶるくんがお金の動きを目で追っています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>受け取った JPYC は、そのまま持つか、JPYC EX で日本円に払い戻します。</figcaption>
+            </figure>
             <ul>
               <li><strong>日本円にする。</strong>JPYC EX で払い戻しを予約し、指定のアドレスへ JPYC を送ると、登録した出金口座に日本円が払い戻されます<sup class="fn"><a href="#src-3">[3]</a></sup>。払い戻しは 3,000 円からで、手数料は無料とされています<sup class="fn"><a href="#src-6">[6]</a></sup>。すてぶるペイでは、お店ご自身の JPYC EX アカウントで行います。</li>
               <li><strong>そのまま持つ。</strong>JPYC のまま持つこともできます。管理は自分で行います。</li>
