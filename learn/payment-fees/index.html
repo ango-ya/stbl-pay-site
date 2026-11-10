@@ -20,11 +20,11 @@
       content="料率・月額費用・振込手数料・入金日数・チャージバックの負担・購入者への上乗せを合わせた総コストで、決済手数料を比べる方法を解説します。"
     />
     <meta property="og:url" content="https://stbl-pay.com/learn/payment-fees/" />
-    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/learn/payment-fees/og.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="og:image:alt" content="決済を学ぶ：決済手数料の比べ方 料率だけでなく総コストで比べる" />
     <meta property="article:published_time" content="2026-11-05" />
     <meta property="article:modified_time" content="2026-11-09" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -33,8 +33,8 @@
       name="twitter:description"
       content="料率・月額費用・振込手数料・入金日数・チャージバックの負担・購入者への上乗せを合わせた総コストで、決済手数料を比べる方法を解説します。"
     />
-    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
-    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/learn/payment-fees/og.png" />
+    <meta name="twitter:image:alt" content="決済を学ぶ：決済手数料の比べ方 料率だけでなく総コストで比べる" />
     <link rel="alternate" hreflang="ja" href="https://stbl-pay.com/learn/payment-fees/" />
     <link rel="alternate" hreflang="x-default" href="https://stbl-pay.com/learn/payment-fees/" />
     <link rel="canonical" href="https://stbl-pay.com/learn/payment-fees/" />
@@ -42,6 +42,7 @@
     <link rel="stylesheet" href="/assets/learn.css" />
     <script src="/assets/analytics.js"></script>
     <script src="/assets/fee-calculator.js" defer></script>
+    <script src="/assets/learn-fig.js" defer></script>
 
     <script type="application/ld+json">
 {
@@ -68,7 +69,7 @@
         "@id": "https://stbl-pay.com/#org-angoya"
       },
       "mainEntityOfPage": "https://stbl-pay.com/learn/payment-fees/",
-      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "image": "https://stbl-pay.com/assets/learn/payment-fees/og.png",
       "about": {
         "@id": "https://stbl-pay.com/#service"
       }
@@ -192,13 +193,34 @@
           </nav>
 
           <h1>決済手数料の比べ方：料率だけでなく総コストで比べる</h1>
+          <img class="learn-hero" src="/assets/learn/payment-fees/thumb.webp" width="1200" height="630" alt="決済を学ぶ：決済手数料の比べ方 料率だけでなく総コストで比べる。すてぶるちゃんが手のひらで題名を示し、すてぶるくんが下で見ている絵" fetchpriority="high" decoding="async" />
           <p class="learn-lead">決済手数料は、料率だけで比べず、お店に残るお金で比べます。月額・初期費用、振込手数料、入金までの日数、チャージバックの負担、購入者への上乗せまで足した「総コスト」が、本当の費用です。ここでは、比べる項目と見るポイントを表にまとめます。</p>
+          <div class="learn-summary" role="note" aria-labelledby="summary-title">
+            <p class="learn-summary-title" id="summary-title">3 行でわかる</p>
+            <ul>
+              <li>決済手数料は、料率だけで比べず、お店に残るお金で比べます。</li>
+              <li>月額・初期費用、振込手数料、入金までの日数、チャージバックの負担、購入者への上乗せまで足した「総コスト」が、本当の費用です。</li>
+              <li>候補のサービスごとに公式の料金ページで調べて並べ、売上が少ない月と多い月の両方で計算します。</li>
+            </ul>
+          </div>
           <p class="learn-meta">更新日：<time datetime="2026-11-09">2026年11月9日</time>　文：合同会社暗号屋</p>
 
           <div class="learn-body">
             <h2 id="why">決済手数料は、料率だけで比べない</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">料率が低いサービスなら、安いの？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">料率が低くても、月額費用が高ければ、売上が少ない月は割高です。料率は、比べる項目の一つと考えましょう。</span></p>
+            </div>
             <p>決済手数料とは、お客さんの支払いを受け取るために、お店が決済サービスへ払う費用です。料率（何 % か）が目立ちますが、費用はそれだけではありません。</p>
             <p>たとえば、料率が低くても月額費用が高ければ、売上が少ない月は割高です。入金が遅ければ、仕入れの支払いに困ることもあります。料率は、比べる項目の一つと考えましょう。</p>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/payment-fees/total.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/payment-fees/total-still.webp" />
+                <img src="/assets/learn/payment-fees/total.gif" width="720" height="405" alt="決済手数料を比べる考え方の図。料率の分だけの棒に比べて、総コストの棒は高くなります。総コストは、料率の分の上に、月額・初期費用（カレンダーの印）、振込手数料（銀行の印）、チャージバックの負担（売上が戻る矢印の印）といった、ほかの費用を積み上げたものです。すてぶるちゃんが図を指さし、すてぶるくんが見ています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>料率は、費用の一部です。月額・初期費用、振込手数料、チャージバックの負担などを足した総コストで比べましょう。</figcaption>
+            </figure>
 
             <h2 id="items">比べる項目と見るポイント</h2>
             <p>次の表の項目を、候補のサービスごとに調べて並べると、総コストが見えます。</p>
@@ -255,6 +277,10 @@
             <p>これは一つの例です。料率は、事業者、業種、規模、契約で変わります。Square など、ほかのサービスも公式の料金ページで同じ項目を確かめて、並べてみてください。</p>
 
             <h2 id="howto">総コストの見積もり方</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">総コストは、どう計算するの？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-proud-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">売上に料率を掛けて、月額費用と振込手数料を足します。チャージバックや返金の分は別に見て、入金までの日数で、手元の資金が足りるかも確かめます。</span></p>
+            </div>
             <ol>
               <li>1 か月の売上と、1 件あたりの金額を決めます。</li>
               <li>料率の分を計算します。売上に料率を掛けます。</li>
@@ -263,6 +289,14 @@
               <li>入金までの日数で、手元の資金が足りるかを確かめます。</li>
             </ol>
             <p>売上が少ない場合と多い場合の両方で計算すると、どのサービスが合うかがわかります。</p>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/payment-fees/payout.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/payment-fees/payout-still.webp" />
+                <img src="/assets/learn/payment-fees/payout.gif" width="720" height="405" alt="入金までの日数の図。お店で売上が決まってから、入金されるまでに日数があります（時計の印）。そのあいだに、仕入れの支払いの日が先に来ることがあります。入金は、そのあとに届きます。すてぶるちゃんが手のひらで図を示し、すてぶるくんが見ています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>売上が決まってから入金までの日数が長いと、仕入れの支払いに困ることがあります。締め日と支払日を確かめましょう。</figcaption>
+            </figure>
 
             <section id="calc" aria-labelledby="calc-title">
               <h2 id="calc-title">総コストを計算する</h2>
