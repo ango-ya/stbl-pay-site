@@ -346,6 +346,32 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
       expect(gifs, "WebP を表示できるブラウザは GIF を取りに行かない").toEqual([]);
     });
   }
+  test(`/learn/${slug}/：見ている途中で motion の設定が変わったら、その設定の初期状態（絵とボタンの名前）に戻る`, async ({ page }) => {
+    const base = `/assets/learn/${slug}/`;
+    const figs = page.locator("figure.learn-fig");
+    const shown = (img) => img.evaluate((i) => (i.currentSrc ? new URL(i.currentSrc).pathname : ""));
+    const expectAll = async (still, name) => {
+      for (const [i, n] of names.entries()) {
+        const fig = figs.nth(i);
+        await expect(fig.locator("button.learn-fig-toggle"), `${n} のボタン`).toHaveAccessibleName(name);
+        await expect.poll(() => shown(fig.locator("img")), `${n} の絵`).toBe(`${base}${n}${still ? "-still" : ""}.webp`);
+      }
+    };
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto(`/learn/${slug}/`);
+    for (let i = 0; i < names.length; i++) await figs.nth(i).locator("img").scrollIntoViewIfNeeded();
+    await expectAll(false, "動きを止める");
+    await figs.nth(0).locator("button.learn-fig-toggle").click(); // 1 つだけ止めてから設定を変える
+    await expect(figs.nth(0).locator("button.learn-fig-toggle")).toHaveAccessibleName("動かす");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expectAll(true, "動かす");
+    await figs.nth(0).locator("button.learn-fig-toggle").click(); // reduce で 1 つだけ動かしてから戻す
+    await expect.poll(() => shown(figs.nth(0).locator("img"))).toBe(`${base}${names[0]}.webp`);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expectAll(false, "動きを止める");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expectAll(true, "動かす");
+  });
   test(`/learn/${slug}/：JS が無いときは停止ボタンを出さない`, async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
     const page = await context.newPage();
