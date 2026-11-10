@@ -64,11 +64,15 @@ const args = process.argv.slice(2);
 const lang = args.includes("en") ? "en" : "ja";
 const slugs = args.filter((a) => a !== "en");
 for (const s of slugs) if (!TITLES[s]) throw new Error(`TITLES に無い記事：${s}`);
+// 引数に slug が無いときは、その言語の題名がある記事だけを対象にする（en なら TITLES に en がある記事だけ）
+const targets = slugs.length ? slugs : Object.keys(TITLES).filter((s) => TITLES[s][lang]);
+const noLang = targets.filter((s) => !TITLES[s][lang]);
+if (noLang.length) { console.error(`TITLES に ${lang} の題名が無い記事：${noLang.join("・")}`); process.exit(1); }
 
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
-  for (const slug of slugs.length ? slugs : Object.keys(TITLES)) {
+  for (const slug of targets) {
     try {
       await withTemp("learn-thumb-", async (tmp) => {
         const { t, sub, label } = TITLES[slug][lang];

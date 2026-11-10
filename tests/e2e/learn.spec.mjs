@@ -173,6 +173,13 @@ for (const { path, main } of PAGES) {
       expect((await request.get(local(img))).status()).toBe(200);
       expect(a.inLanguage).toBe(isEn ? "en" : "ja");
     }
+    if (figNames) {
+      // 移行済みのページは、主な JSON-LD（Article・DefinedTermSet・WebPage）の image も記事の og.png（Article 以外で image が消えても気づく）
+      const m = nodes.find((n) => n["@type"] === main);
+      const mi = typeof m.image === "string" ? m.image : m.image?.url ?? m.image?.[0];
+      expect(mi, `${main}.image は記事の og.png`).toBeTruthy();
+      expect(sameImage(mi), `${main}.image は記事の og.png`).toBe(true);
+    }
     if (main === "DefinedTermSet") {
       expect(nodes.find((n) => n["@type"] === "DefinedTermSet").inLanguage).toBeTruthy();
       for (const t of nodes.filter((n) => n["@type"] === "DefinedTerm")) expect(t, "DefinedTerm は inLanguage を持たない").not.toHaveProperty("inLanguage");
