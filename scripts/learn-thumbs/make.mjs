@@ -21,6 +21,42 @@ const TITLES = {
     ja: { t: "ステーブルコイン|決済とは？", sub: "仕組み・メリット・日本での扱い" },
     en: { t: "Stablecoin|payments in Japan", sub: "How they work, and how the law treats them" },
   },
+  "what-is-stablecoin": {
+    ja: { t: "ステーブルコイン|とは？", sub: "仕組み・種類・暗号資産との違い" },
+  },
+  "jpyc-payments": {
+    ja: { t: "JPYC 決済を|お店に導入するには", sub: "受け取り方・流れ・手数料の考え方" },
+  },
+  "glossary": {
+    ja: { t: "ステーブルコイン決済|の用語集", sub: "電子決済手段・JPYC・チャージバックほか" },
+  },
+  "payment-gateway": {
+    ja: { t: "決済代行|とは？", sub: "仕組み・収納代行との違い・選び方" },
+  },
+  "accept-credit-cards": {
+    ja: { t: "クレジットカード|決済の導入", sub: "方法・手順・費用・審査" },
+  },
+  "card-merchant-screening": {
+    ja: { t: "加盟店審査に|通らないとき", sub: "落ちる理由と見直す点" },
+  },
+  "no-screening-payments": {
+    ja: { t: "決済代行に|審査なしはある？", sub: "理由と、審査のいらない受け取り方" },
+  },
+  "chargeback": {
+    ja: { t: "チャージバック|とは？", sub: "仕組み・加盟店の負担・対策" },
+  },
+  "card-expression-restrictions": {
+    ja: { t: "カード会社の|表現規制は|なぜ起きる？", sub: "同人・成人向け作品の決済を確保するには" },
+  },
+  "online-payment-methods": {
+    ja: { t: "ネットショップの|決済方法の選び方", sub: "種類・手数料・組み合わせ方" },
+  },
+  "payment-fees": {
+    ja: { t: "決済手数料の|比べ方", sub: "料率だけでなく総コストで比べる" },
+  },
+  "policy-expression": {
+    ja: { t: "表現に関する|すてぶるペイの方針", sub: "どこまでを約束するか", label: "方針" },
+  },
 };
 
 const ROOT = new URL("../../", import.meta.url);
@@ -35,9 +71,9 @@ try {
   for (const slug of slugs.length ? slugs : Object.keys(TITLES)) {
     try {
       await withTemp("learn-thumb-", async (tmp) => {
-        const { t, sub } = TITLES[slug][lang];
+        const { t, sub, label } = TITLES[slug][lang];
         const art = existsSync(new URL(`marketing/thumbnails/in/${slug}.png`, ROOT));
-        const q = new URLSearchParams({ slug, t, sub, lang, ...(art ? { art: "1" } : {}) });
+        const q = new URLSearchParams({ slug, t, sub, lang, ...(label ? { label } : {}), ...(art ? { art: "1" } : {}) });
         const errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
         await page.goto(`${new URL("thumb.html", import.meta.url).href}?${q}`);

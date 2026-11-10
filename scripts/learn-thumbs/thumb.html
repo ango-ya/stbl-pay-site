@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   解説ページのサムネイル（OGP と記事の冒頭の画像）の元。scripts/learn-thumbs/make.mjs が 1200×630 で撮る。
-  ?slug=<記事>&t=<題名の行を | で区切る>&sub=<小さな副題>&lang=ja|en&art=1
+  ?slug=<記事>&t=<題名の行を | で区切る>&sub=<小さな副題>&label=<ラベル（省略時は「決済を学ぶ」）>&lang=ja|en&art=1
   - art=1：marketing/thumbnails/in/<slug>.png（Astra の絵。左 55% は空き）を全面に敷く
   - art なし：Astra の絵が届くまでの仮の絵（淡い模様と、キャラクターの素材）をコードで描く
   - 左側に「決済を学ぶ」のラベル・題名・ロゴを重ねる。英語（lang=en）はラベルとロゴを英語にする
@@ -53,7 +53,7 @@
   }
   h1 { margin: 30px 0 0; font-size: 70px; font-weight: 800; line-height: 1.22; letter-spacing: 0.01em; }
   h1 span { display: block; white-space: nowrap; }
-  .sub { margin: 18px 0 0; font-size: 32px; font-weight: 700; color: #1f5fa8; } /* 背景 #F6F7FB に対して 6:1（4.5:1 以上） */
+  .sub { margin: 18px 0 0; white-space: nowrap; font-size: 32px; font-weight: 700; color: #1f5fa8; } /* 背景 #F6F7FB に対して 6:1（4.5:1 以上） */
   .logo { margin-top: auto; align-self: flex-start; height: 46px; }
 </style>
 </head>
@@ -78,6 +78,7 @@
     document.getElementById("title").append(s);
   }
   document.getElementById("sub").textContent = q.get("sub") || "";
+  if (q.get("label")) document.getElementById("label").textContent = q.get("label");
   if (q.get("lang") === "en") {
     document.documentElement.lang = "en";
     document.getElementById("label").textContent = "Learn payments";

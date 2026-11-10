@@ -52,8 +52,23 @@ const allowFor = (path) => ALLOW_PCT.filter((a) => a.pages.includes(path));
 // 新しく移行したページは、ここに足すだけで、OGP が記事の og.png であること・図の並びと形式・motion ごとの絵・停止ボタンが検査される
 const MIGRATED = {
   "stablecoin-payments": ["law", "flow", "compare"],
+  "what-is-stablecoin": ["backing", "vs-crypto"],
+  "jpyc-payments": ["ways", "after"],
+  "glossary": ["relations", "card-words"],
+  "payment-gateway": ["windows", "flow"],
+  "accept-credit-cards": ["methods", "steps"],
+  "card-merchant-screening": ["scope", "retry"],
+  "no-screening-payments": ["why", "options", "stblpay"],
+  "chargeback": ["flow", "compare"],
+  "card-expression-restrictions": ["layers", "chain", "spread"],
+  "online-payment-methods": ["combine", "window"],
+  "payment-fees": ["total", "payout"],
+  "policy-expression": ["line"],
 };
-const migratedOf = (path) => (path.startsWith("/learn/") ? MIGRATED[path.split("/").filter(Boolean).pop()] : undefined);
+// 表現に関する方針は /policy/expression/ にある（slug は policy-expression）。それ以外は /learn/<slug>/
+const pathOf = (slug) => (slug === "policy-expression" ? "/policy/expression/" : `/learn/${slug}/`);
+const slugOf = (path) => (path === "/policy/expression/" ? "policy-expression" : path.startsWith("/learn/") ? path.split("/").filter(Boolean).pop() : undefined);
+const migratedOf = (path) => MIGRATED[slugOf(path)];
 
 const ANALYTICS = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
 
@@ -105,7 +120,7 @@ for (const { path, main } of PAGES) {
     // OGP の画像は、移行済みのページ（MIGRATED）なら記事ごとのサムネイル（scripts/learn-thumbs/ が書き出す /assets/learn/<slug>/og.png）、
     // それ以外は言語に合う共通の画像（移行済みのページが共通の画像に戻ったら落とす）
     const figNames = migratedOf(path);
-    const own = `${ORIGIN}/assets/learn/${path.split("/").filter(Boolean).pop()}/og.png`;
+    const own = `${ORIGIN}/assets/learn/${slugOf(path)}/og.png`;
     const ogImage = figNames ? own : `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
     const sameImage = (u) => u.split("?")[0] === ogImage;
     for (const sel of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
@@ -294,18 +309,18 @@ test("英語の使わない語に August 2026 が入っている（回帰）", (
 });
 
 test("移行済みのページ（MIGRATED）は、すべて検査の対象（PAGES）にある", () => {
-  for (const slug of Object.keys(MIGRATED)) expect(PAGES.map((p) => p.path)).toContain(`/learn/${slug}/`);
+  for (const slug of Object.keys(MIGRATED)) expect(PAGES.map((p) => p.path)).toContain(pathOf(slug));
 });
 
 // 図の picture：source の順（アニメ WebP（no-preference）→ 完成図 WebP → GIF の img）、motion ごとに選ばれる絵、デコード、
 // 通常の表示で GIF を取りに行かないこと、「動きを止める／動かす」ボタン（assets/learn-fig.js）で絵とボタンの名前が替わること
 for (const [slug, names] of Object.entries(MIGRATED)) {
   for (const motion of ["no-preference", "reduce"]) {
-    test(`/learn/${slug}/：図の絵の選び方と停止ボタン（prefers-reduced-motion: ${motion}）`, async ({ page }) => {
+    test(`${pathOf(slug)}：図の絵の選び方と停止ボタン（prefers-reduced-motion: ${motion}）`, async ({ page }) => {
       const gifs = [];
       page.on("request", (r) => { if (/\.gif(\?|$)/i.test(r.url())) gifs.push(r.url()); });
       await page.emulateMedia({ reducedMotion: motion });
-      await page.goto(`/learn/${slug}/`);
+      await page.goto(pathOf(slug));
       const base = `/assets/learn/${slug}/`;
       const figs = page.locator("figure.learn-fig");
       await expect(figs).toHaveCount(names.length);
@@ -346,7 +361,7 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
       expect(gifs, "WebP を表示できるブラウザは GIF を取りに行かない").toEqual([]);
     });
   }
-  test(`/learn/${slug}/：見ている途中で motion の設定が変わったら、その設定の初期状態（絵とボタンの名前）に戻る`, async ({ page }) => {
+  test(`${pathOf(slug)}：見ている途中で motion の設定が変わったら、その設定の初期状態（絵とボタンの名前）に戻る`, async ({ page }) => {
     const base = `/assets/learn/${slug}/`;
     const figs = page.locator("figure.learn-fig");
     const shown = (img) => img.evaluate((i) => (i.currentSrc ? new URL(i.currentSrc).pathname : ""));
@@ -358,7 +373,7 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
       }
     };
     await page.emulateMedia({ reducedMotion: "no-preference" });
-    await page.goto(`/learn/${slug}/`);
+    await page.goto(pathOf(slug));
     for (let i = 0; i < names.length; i++) await figs.nth(i).locator("img").scrollIntoViewIfNeeded();
     await expectAll(false, "動きを止める");
     await figs.nth(0).locator("button.learn-fig-toggle").click(); // 1 つだけ止めてから設定を変える
@@ -372,10 +387,10 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await expectAll(true, "動かす");
   });
-  test(`/learn/${slug}/：JS が無いときは停止ボタンを出さない`, async ({ browser, baseURL }) => {
+  test(`${pathOf(slug)}：JS が無いときは停止ボタンを出さない`, async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
     const page = await context.newPage();
-    await page.goto(`/learn/${slug}/`);
+    await page.goto(pathOf(slug));
     await expect(page.locator("figure.learn-fig")).toHaveCount(names.length);
     await expect(page.locator(".learn-fig-toggle")).toHaveCount(0);
     await context.close();
