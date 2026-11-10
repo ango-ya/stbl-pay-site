@@ -20,11 +20,11 @@
       content="決済代行の仕組みとお金の流れ、アクワイアラや収納代行との違い、割賦販売法の登録、費用の項目と手数料の消費税、選び方のチェックリストを解説します。"
     />
     <meta property="og:url" content="https://stbl-pay.com/learn/payment-gateway/" />
-    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/learn/payment-gateway/og.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta property="og:image:alt" content="決済を学ぶ：決済代行とは？ 仕組み・収納代行との違い・選び方" />
     <meta property="article:published_time" content="2026-11-09" />
     <meta property="article:modified_time" content="2026-11-09" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -33,12 +33,13 @@
       name="twitter:description"
       content="決済代行の仕組みとお金の流れ、アクワイアラや収納代行との違い、割賦販売法の登録、費用の項目と手数料の消費税、選び方のチェックリストを解説します。"
     />
-    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2" />
-    <meta name="twitter:image:alt" content="すてぶるペイ — 円を使って、ステーブルで払う。" />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/learn/payment-gateway/og.png" />
+    <meta name="twitter:image:alt" content="決済を学ぶ：決済代行とは？ 仕組み・収納代行との違い・選び方" />
     <link rel="canonical" href="https://stbl-pay.com/learn/payment-gateway/" />
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
     <script src="/assets/analytics.js"></script>
+    <script src="/assets/learn-fig.js" defer></script>
 
     <script type="application/ld+json">
 {
@@ -65,7 +66,7 @@
         "@id": "https://stbl-pay.com/#org-angoya"
       },
       "mainEntityOfPage": "https://stbl-pay.com/learn/payment-gateway/",
-      "image": "https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2",
+      "image": "https://stbl-pay.com/assets/learn/payment-gateway/og.png",
       "about": {
         "@id": "https://stbl-pay.com/#service"
       }
@@ -181,13 +182,34 @@
           </nav>
 
           <h1>決済代行とは？仕組み・アクワイアラや収納代行との違い・選び方</h1>
+          <img class="learn-hero" src="/assets/learn/payment-gateway/thumb.webp" width="1200" height="630" alt="決済を学ぶ：決済代行とは？ 仕組み・収納代行との違い・選び方。すてぶるちゃんが手のひらで題名を示し、すてぶるくんが下で見ている絵" fetchpriority="high" decoding="async" />
           <p class="learn-lead">決済代行（PSP）とは、お店と、カード会社・アクワイアラ・各決済手段との間に入り、契約・接続・入金をまとめて引き受ける事業者です。お店は、一つの契約と一つの入金窓口で、複数のカードブランドなどを受け付けられます。割賦販売法の登録と契約前の加盟店調査の義務は、加盟店契約を最終的に決める権限を持つ事業者（アクワイアラー、またはその権限を任された決済代行会社）にあります。選ぶときは、対応する決済手段、入金サイクル、総コスト、連携のしやすさを見比べます。カード以外の受け取り方として、ステーブルコイン決済もあります。</p>
+          <div class="learn-summary" role="note" aria-labelledby="summary-title">
+            <p class="learn-summary-title" id="summary-title">3 行でわかる</p>
+            <ul>
+              <li>決済代行（PSP）は、お店とカード会社・アクワイアラーの間に入り、契約・接続・入金をまとめて引き受ける事業者です。</li>
+              <li>お店は、一つの契約と一つの入金窓口で、複数のカードブランドなどを受け付けられます。</li>
+              <li>選ぶときは、対応する決済手段・入金サイクル・総コストを見比べ、契約の相手が割賦販売法の登録を受けているかも確かめます。</li>
+            </ul>
+          </div>
           <p class="learn-meta">更新日：<time datetime="2026-11-09">2026年11月9日</time>　文：合同会社暗号屋</p>
 
           <div class="learn-body">
             <h2 id="what">決済代行とは？（PSP とは）</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">決済代行って何？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">お店とカード会社の間に入って、契約と入金の窓口をまとめてくれる会社です。PSP とも呼ばれます。</span></p>
+            </div>
             <p>決済代行とは、お店に代わって、カードなどの決済手段をまとめて提供するサービスです。事業者は「決済代行会社」や「PSP」（Payment Service Provider）と呼ばれます。お店とアクワイアラーとの間に入り、加盟店の申込、決済の処理、入金までを引き受けます<sup class="fn"><a href="#src-4">[4]</a></sup>。</p>
             <p>お店が自分でカード会社と契約すると、ブランドごとに申込と審査が要り、入金の日もばらばらです。決済代行を使うと、複数のカードブランドを一括で取り扱え、売上は決済代行会社からまとめて入金されます。QR コード決済や電子マネーを合わせて導入できる場合もあります<sup class="fn"><a href="#src-4">[4]</a></sup>。</p>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/payment-gateway/windows.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/payment-gateway/windows-still.webp" />
+                <img src="/assets/learn/payment-gateway/windows.gif" width="720" height="405" alt="決済代行を使う意味の図。直接契約では、お店がカード会社ごとに契約し、入金もカード会社ごとに別の日に届きます。決済代行を使うと、お店の契約は 1 つで、決済代行が各カード会社へつなぎ、入金はまとめて届きます。すてぶるちゃんが図を指さしています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>直接契約では、カード会社ごとに契約と入金の管理が要ります。決済代行を使うと、窓口は 1 つになり、入金もまとめて届きます。</figcaption>
+            </figure>
 
             <h2 id="flow">決済代行の仕組みとお金の流れ</h2>
             <p>カード決済には、購入者とお店のほかに、イシュア（カード会社）とアクワイアラーが関わります。購入者がカードで払ったときの流れは、次のとおりです<sup class="fn"><a href="#src-4">[4]</a></sup>。</p>
@@ -198,9 +220,21 @@
               <li>イシュアが購入者に代金を請求します。</li>
               <li>購入者が、イシュアに代金を支払います。</li>
             </ol>
+            <figure class="learn-fig">
+              <picture>
+                <source type="image/webp" srcset="/assets/learn/payment-gateway/flow.webp" media="(prefers-reduced-motion: no-preference)" />
+                <source type="image/webp" srcset="/assets/learn/payment-gateway/flow-still.webp" />
+                <img src="/assets/learn/payment-gateway/flow.gif" width="720" height="405" alt="カード決済のお金の流れの図。購入者がお店でカードを使って払います。アクワイアラーが代金を立て替え、手数料を差し引いた金額をお店に入金します。取引の情報がアクワイアラーからイシュアへ送られ、イシュアが購入者に代金を請求し、購入者がイシュアに支払います。すてぶるちゃんが図を指さしています。" loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>アクワイアラーが代金を立て替えてお店に入金し、あとでイシュアが購入者に請求します。決済代行を使う場合は、決済代行会社が入金を担うことがあります。</figcaption>
+            </figure>
             <p>決済手数料の一部は、国際ブランドのライセンスフィーやネットワークの利用料などに充てられます<sup class="fn"><a href="#src-4">[4]</a><a href="#src-6">[6]</a></sup>。各社への配分は、会社や契約で違います。お店から見ると、窓口は決済代行会社の一つだけです。</p>
 
             <h2 id="roles">アクワイアラ・イシュア・国際ブランドとの違い</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">アクワイアラーとイシュアは、何がちがう？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-proud-1.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">お店と契約するのがアクワイアラー、購入者にカードを出すのがイシュアです。決済代行は、アクワイアラーの代わりに窓口になります。</span></p>
+            </div>
             <p>名前が似ていて混ざりやすいので、役割を表にまとめます。</p>
             <table class="learn-table">
               <caption>カード決済に関わる会社と役割</caption>
@@ -241,6 +275,10 @@
             <p>お店の規模や、扱う決済手段の数で向き不向きが変わります。決済手段が少なく、手続きの手間を気にしないなら、直接契約も選択肢です。複数の手段を早くそろえたいなら、決済代行が向きます。</p>
 
             <h2 id="receiving">決済代行と収納代行の違い</h2>
+            <div class="learn-talk" role="group" aria-label="すてぶるくんとすてぶるちゃんの会話">
+              <p class="learn-talk-line is-kun"><img src="/assets/char/talk/kun-open-o.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるくん</span><span class="sr-only">：</span><span class="learn-talk-text">収納代行も、決済代行と同じ？</span></p>
+              <p class="learn-talk-line is-chan"><img src="/assets/char/talk/chan-normal-2.webp" alt="" width="112" height="112" loading="lazy" decoding="async" /><span class="learn-talk-name">すてぶるちゃん</span><span class="sr-only">：</span><span class="learn-talk-text">ちがいます。収納代行は、コンビニ払いのような支払いの回収を代行するサービスです。決済代行は、契約から入金管理までを代行します。</span></p>
+            </div>
             <p>収納代行は、購入者が商品代金を払うときの、支払いの回収を代行するサービスです。ネットショップが払込票を送り、コンビニや金融機関で払ってもらう仕組みが代表です<sup class="fn"><a href="#src-5">[5]</a></sup>。決済代行は、契約から入金管理までの手続きを代行します<sup class="fn"><a href="#src-5">[5]</a></sup>。</p>
             <table class="learn-table">
               <caption>決済代行と収納代行の違い（一般的な傾向）</caption>
