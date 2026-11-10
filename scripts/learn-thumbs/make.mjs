@@ -16,6 +16,10 @@ import { publish, withTemp } from "../figures/outputs.mjs";
 
 // 題名は記事の h1 を短くしたもの（2〜3 行。行は | で区切る）と、小さな副題
 const TITLES = {
+  // /learn/ の一覧（assets/learn/hub/）
+  "hub": {
+    ja: { t: "お店のための|決済の解説", sub: "ステーブルコイン・カード決済・手数料" },
+  },
   "stablecoin-payments": {
     ja: { t: "ステーブルコイン|決済とは？", sub: "仕組み・メリット・日本での扱い" },
     en: { t: "Stablecoin|payments in Japan", sub: "How they work, and how the law treats them" },

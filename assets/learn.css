@@ -364,6 +364,17 @@
   color: var(--link);
 }
 
+/* カードの頭のサムネイル（記事の冒頭の画像と同じ thumb.webp）。題名が h3 にあるので alt は空 */
+.learn-card-thumb {
+  display: block;
+  width: calc(100% + 40px);
+  max-width: none;
+  height: auto;
+  margin: -20px -20px 14px;
+  aspect-ratio: 1200 / 630;
+  border-bottom: 1px solid var(--line);
+}
+
 /* ---------- 冒頭のサムネイル・3 行でわかる・図・会話（scripts/learn-thumbs/ と scripts/figures/ が書き出す絵を使う） ---------- */
 
 .learn-hero {

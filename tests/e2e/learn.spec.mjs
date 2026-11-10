@@ -120,8 +120,9 @@ for (const { path, main } of PAGES) {
     // OGP の画像は、移行済みのページ（MIGRATED）なら記事ごとのサムネイル（scripts/learn-thumbs/ が書き出す /assets/learn/<slug>/og.png）、
     // それ以外は言語に合う共通の画像（移行済みのページが共通の画像に戻ったら落とす）
     const figNames = migratedOf(path);
-    const own = `${ORIGIN}/assets/learn/${slugOf(path)}/og.png`;
-    const ogImage = figNames ? own : `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
+    const isHub = path === "/learn/"; // 一覧も自分のサムネイル（assets/learn/hub/og.png）を持つ
+    const own = `${ORIGIN}/assets/learn/${isHub ? "hub" : slugOf(path)}/og.png`;
+    const ogImage = figNames || isHub ? own : `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
     const sameImage = (u) => u.split("?")[0] === ogImage;
     for (const sel of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
       expect(sameImage(await page.locator(sel).getAttribute("content")), `${sel} は記事のサムネイルか、言語に合う共通の画像`).toBe(true);
@@ -319,6 +320,21 @@ test("移行済みのページ（MIGRATED）は、すべて検査の対象（PAG
   for (const slug of Object.keys(MIGRATED)) expect(PAGES.map((p) => p.path)).toContain(pathOf(slug));
 });
 
+test("/learn/ の一覧：どのカードも、リンク先の記事のサムネイル（thumb.webp）を頭に出し、絵が読める", async ({ page }) => {
+  await page.goto("/learn/");
+  const cards = page.locator(".learn-cards a");
+  expect(await cards.count()).toBeGreaterThan(0);
+  for (const a of await cards.all()) {
+    const slug = slugOf(await a.getAttribute("href"));
+    expect(MIGRATED[slug], `${slug} は移行済み`).toBeTruthy();
+    const img = a.locator("img.learn-card-thumb");
+    await expect(img).toHaveAttribute("src", `/assets/learn/${slug}/thumb.webp`);
+    await expect(img).toHaveAttribute("alt", ""); // 題名は h3 にある
+    await img.scrollIntoViewIfNeeded();
+    await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth > 0)).toBe(true);
+  }
+});
+
 // 図の picture：source の順（アニメ WebP（no-preference）→ 完成図 WebP → GIF の img）、motion ごとに選ばれる絵、デコード、
 // 通常の表示で GIF を取りに行かないこと、「動きを止める／動かす」ボタン（assets/learn-fig.js）で絵とボタンの名前が替わること
 for (const [slug, names] of Object.entries(MIGRATED)) {
@@ -403,3 +419,30 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
     await context.close();
   });
 }
+
+// 計測（assets/analytics.js）：本番のホスト・自動操作でないブラウザのときだけ、解説の記事の選び方・図の停止・AI の回答からの来訪を送る
+test("計測：AI の回答から来た閲覧、一覧のカード・関連欄から選んだ記事、図の停止ボタンを GA4 のイベントに積む", async ({ page, baseURL }) => {
+  const GA = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
+  await page.route(GA, (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: "" }));
+  await page.route("https://stbl-pay.com/**", async (route) => {
+    const u = new URL(route.request().url());
+    const r = await page.request.get(`${baseURL}${u.pathname}${u.search}`);
+    route.fulfill({ status: r.status(), headers: r.headers(), body: await r.body() });
+  });
+  await page.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
+  const events = () => page.evaluate(() => (window.dataLayer || []).filter((a) => a[0] === "event").map((a) => [a[1], a[2]]));
+  // リンクで移ると dataLayer が消えるので、押したあとの移動は止める
+  const clickStay = (sel) => page.evaluate((s) => { const a = document.querySelector(s); a.addEventListener("click", (e) => e.preventDefault()); a.click(); }, sel);
+
+  await page.goto("https://stbl-pay.com/learn/", { referer: "https://chatgpt.com/" });
+  expect(await events()).toContainEqual(["ai_referral", expect.objectContaining({ ai_source: "chatgpt", landing_page: "/learn/" })]);
+  await clickStay(".learn-cards a[href='/learn/chargeback/']");
+  expect(await events()).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_hub", item_id: "/learn/chargeback/" })]);
+
+  await page.goto("https://stbl-pay.com/learn/chargeback/");
+  expect((await events()).some(([n]) => n === "ai_referral"), "AI 以外から来たときは送らない").toBe(false);
+  await clickStay(".learn-related a");
+  expect(await events()).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_related" })]);
+  await page.locator("button.learn-fig-toggle").first().click();
+  expect(await events()).toContainEqual(["figure_toggle", expect.objectContaining({ stopped: true })]);
+});
