@@ -1,16 +1,16 @@
 // 解説ページのサムネイルの絵（記事ごとの場面）。thumb.html が engine.js（FX）のあとに読む。
 // 画面は 1200×630。左 690px は題名の場所なので何も置かない。右側に小道具とキャラクターを置く。
-// - すてぶるちゃん：右下（中心 x 1040、高さ 380、左向き。左右反転しない）。小道具はその上（y 250 より上）と左（x 690〜860）に置く
+// - すてぶるちゃん：右下（中心 x 1040、高さ 380、左向き。左右反転しない）。表情はいちばんの笑顔（口を開けた mouth 2）。ポーズは palm か point。小道具はその上（y 250 より上）と左（x 690〜860）に置く
 // - すてぶるくん：左下（中心 x 715）。起きているので足を床に付けて立つ（浮くのは寝ているときだけ）
 // - 二人ともお金・カード・スマホを持たない（小道具は宙か台の上）。画面の中に文字は描かない（題名は thumb.html が重ねる）
-// 各場面の desc は、記事の冒頭の画像・og:image:alt の後半と同じ文にする。
+// 各場面の desc は、記事の冒頭の画像（img.learn-hero）の alt の後半と同じ文にする。
 (function () {
   "use strict";
   const { C, at, rr, shape, arrow, ICON, COIN, drawChan, drawKun } = window.FX;
   const icon = (ctx, name, x, y, s = 1) => at(ctx, x, y, s, 1, () => ICON[name](ctx));
   const coin = (ctx, name, x, y, s = 1) => at(ctx, x, y, s, 1, () => COIN[name](ctx));
   const halo = (ctx, x, y, r, color = "#EAF2FF") => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); };
-  const chan = (ctx, pose) => drawChan(ctx, 0, { pose, mouth: 0, x: 1040, y: 630, h: 380 });
+  const chan = (ctx, pose) => drawChan(ctx, 0, { pose, mouth: 2, x: 1040, y: 630, h: 380 });
   const kun = (ctx, eyes = "right", mouth = "rest", x = 715) => drawKun(ctx, 0, { eyes, mouth, x, floor: 612, w: 150 });
   // 文字の代わりの帯（書類・本・画面）
   const bars = (ctx, x, y, w, n, gap = 16, color = C.light) => { for (let i = 0; i < n; i++) { rr(ctx, x, y + i * gap, w * (i % 3 === 2 ? 0.6 : 1), 7, 3); shape(ctx, color, null); } };
@@ -19,6 +19,23 @@
   const stop = (ctx, x, y, r = 16) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); shape(ctx, C.navy, C.white, 3); rr(ctx, x - r * 0.55, y - 3, r * 1.1, 6, 3); shape(ctx, C.white, null); };
 
   window.SCENES = {
+    // /learn/ の一覧（出力は assets/learn/hub/）
+    "hub": {
+      desc: "コイン・カード・お店・銀行・本の印が並んでいて、すてぶるちゃんが手のひらで示し、すてぶるくんが見ている絵",
+      draw(ctx) {
+        halo(ctx, 900, 180, 175);
+        coin(ctx, "stable", 760, 110, 1.3);
+        icon(ctx, "card", 900, 90, 1.0);
+        icon(ctx, "bank", 1060, 100, 0.95);
+        icon(ctx, "shop", 780, 300, 1.15);
+        // 開いた本（解説）
+        ctx.beginPath(); ctx.moveTo(880, 196); ctx.quadraticCurveTo(925, 174, 970, 188); ctx.lineTo(970, 266); ctx.quadraticCurveTo(925, 252, 880, 274); ctx.closePath(); shape(ctx, C.white);
+        ctx.beginPath(); ctx.moveTo(1060, 196); ctx.quadraticCurveTo(1015, 174, 970, 188); ctx.lineTo(970, 266); ctx.quadraticCurveTo(1015, 252, 1060, 274); ctx.closePath(); shape(ctx, C.white);
+        bars(ctx, 894, 208, 58, 3, 14); bars(ctx, 984, 208, 58, 3, 14);
+        chan(ctx, "palm");
+        kun(ctx, "right", "o", 640);
+      },
+    },
     "stablecoin-payments": {
       desc: "大きな青いコインからお店へ線がのびていて、すてぶるちゃんが手のひらでコインを示し、すてぶるくんが見ている絵",
       draw(ctx) {
@@ -94,7 +111,7 @@
       },
     },
     "accept-credit-cards": {
-      desc: "ノートパソコンへ向かう 3 つの飛び石の先に完了の印があり、すてぶるちゃんが胸の前で小さくこぶしを握り、すてぶるくんが見ている絵",
+      desc: "ノートパソコンへ向かう 3 つの飛び石の先に完了の印があり、すてぶるちゃんが笑顔で指さし、すてぶるくんが見ている絵",
       draw(ctx) {
         halo(ctx, 900, 170, 160);
         // ノートパソコン
@@ -106,12 +123,12 @@
         arrow(ctx, [720, 470], [930, 226], 1, { ctrl: [820, 400], color: C.gray, width: 4, dash: [6, 10], head: false });
         for (const [x, y, r] of [[735, 440, 30], [790, 360, 34], [840, 280, 36]]) { ctx.beginPath(); ctx.ellipse(x, y, r * 1.4, r * 0.7, 0, 0, Math.PI * 2); shape(ctx, C.light, C.navy, 4); }
         icon(ctx, "check", 840, 272, 0.8);
-        chan(ctx, "fist");
+        chan(ctx, "point");
         kun(ctx, "right", "rest", 630);
       },
     },
     "card-merchant-screening": {
-      desc: "大きな青いカードが門のように立ち、手前に書類が積まれていて、すてぶるちゃんが横目で見て考え、すてぶるくんが書類を見ている絵",
+      desc: "大きな青いカードが門のように立ち、手前に書類が積まれていて、すてぶるちゃんが笑顔で指さし、すてぶるくんが書類を見ている絵",
       draw(ctx) {
         halo(ctx, 890, 190, 170);
         at(ctx, 900, 150, 2.1, 1, () => ICON.card(ctx));
@@ -119,7 +136,7 @@
         icon(ctx, "magnifier", 760, 130, 0.9);
         paper(ctx, 720, 330, 120, 150, 6);
         paper(ctx, 740, 312, 120, 150, 6);
-        chan(ctx, "side-glance");
+        chan(ctx, "point");
         kun(ctx, "right", "rest", 625);
       },
     },
@@ -152,7 +169,7 @@
       },
     },
     "card-expression-restrictions": {
-      desc: "絵を描く人の机にスケッチブックと漫画のコマ割りの紙があり、そばの決済端末が止まっていて、すてぶるちゃんが横目で困り、すてぶるくんがスケッチブックを見ている絵",
+      desc: "絵を描く人の机にスケッチブックと漫画のコマ割りの紙があり、そばの決済端末が止まっていて、すてぶるちゃんが笑顔で手のひらを向け、すてぶるくんがスケッチブックを見ている絵",
       draw(ctx) {
         halo(ctx, 880, 210, 175);
         // 机
@@ -174,7 +191,7 @@
         rr(ctx, 1042, 84, 56, 40, 4); shape(ctx, C.silver, null);
         for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) { rr(ctx, 1044 + c * 18, 136 + r * 20, 14, 12, 3); shape(ctx, C.light, null); }
         stop(ctx, 1108, 74, 18);
-        chan(ctx, "side-glance");
+        chan(ctx, "palm");
         kun(ctx, "right", "rest", 625);
       },
     },
@@ -198,7 +215,7 @@
       },
     },
     "payment-fees": {
-      desc: "天びんの左右の皿に大きさの違う積み木が載って多いほうに傾き、そばに電卓があって、すてぶるちゃんが横目で見比べ、すてぶるくんが電卓を見ている絵",
+      desc: "天びんの左右の皿に大きさの違う積み木が載って多いほうに傾き、そばに電卓があって、すてぶるちゃんが笑顔で指さし、すてぶるくんが電卓を見ている絵",
       draw(ctx) {
         halo(ctx, 880, 190, 170);
         // 天びん：柱・台・傾いた棒（右の総コストの側が下がる）・皿
@@ -221,7 +238,7 @@
         rr(ctx, 730, 380, 90, 120, 10); shape(ctx, C.white);
         rr(ctx, 742, 392, 66, 26, 4); shape(ctx, C.silver, null);
         for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) { rr(ctx, 744 + c * 22, 428 + r * 22, 16, 16, 4); shape(ctx, c === 2 && r === 2 ? C.blue : C.light, null); }
-        chan(ctx, "side-glance");
+        chan(ctx, "point");
         kun(ctx, "right", "rest", 640);
       },
     },

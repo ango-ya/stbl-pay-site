@@ -203,8 +203,8 @@
     return null;
   };
   // すてぶるちゃん（上半身 400×388、左向き。左右反転しない）。(x, y) は絵の下端中央、h は高さ
-  // pose：normal / proud / palm / point / side-glance / look-camera / fist。mouth：0〜2。blinkAt：まばたきの時刻
-  function drawChan(ctx, t, { pose = "normal", mouth = 0, x = 830, y = H, h = 300, blinkAt = [] } = {}) {
+  // pose：normal / proud / palm / point / side-glance / look-camera / fist。mouth：0〜2（既定は 2＝口を開けた笑顔。なるべく笑顔にする）。blinkAt：まばたきの時刻
+  function drawChan(ctx, t, { pose = "normal", mouth = 2, x = 830, y = H, h = 300, blinkAt = [] } = {}) {
     let key = ["normal", "proud", "palm", "point"].includes(pose) ? `chan/${pose}-${mouth}` : `chan/${pose}`;
     const b = pose === "normal" ? blink(t, blinkAt) : null; // 目を閉じたコマは normal の形だけある
     if (b) key = b === "half" ? "chan/blink-half" : "chan/blink-normal";
