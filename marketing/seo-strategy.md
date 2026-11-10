@@ -148,7 +148,26 @@ AI は、検索の上位のページと、名前の通った第三者の記事�
 | AI に聞くと勧められるか | ルーチンが、`target-keywords.md` の固定の質問を、サイトの情報を渡していない新しいサブエージェントに検索付きで答えさせ、stbl-pay.com が出るかを見る。モデル名・日付・回答の原文を Issue に残す（参考値） | ルーチン |
 | 第三者の記事での言及 | ルーチンが「すてぶるペイ」「STBLpay」で検索する | ルーチン |
 | Google の AI 機能（AI による概要・AI モード）での表示 | Search Console の生成 AI のパフォーマンスのレポート（2026 年 6 月に公開。表示回数とページが分かる） | ユーザー |
-| 解説ページから先に進んだ数 | GA4 で、/learn/ から LP の相談（/#early-access）、/docs/、Sandbox へ進んだ数を、記事ごとに見る。assets/analytics.js は、相談ボタン（.header-cta）と .button・.text-link のリンクのクリックを cta_click として送る。解説ページの本文にある docs・Sandbox へのリンクのうち、これらのクラスが付いていないものは送られないので、クラスを付けるかイベントを足す（未対応）。GA4 で実際に受け取れているかも未確認 | ユーザー |
+| 解説ページから先に進んだ数 | GA4 で、cta_click のうち cta_location が learn_body・learn_about・learn_sources のものを、記事ごと（page_path）・行き先の種類（exit_type）ごとに見る。assets/analytics.js が、解説と方針のページの本文・末尾の箱のリンクを、クラスの有無でなく行き先で見分けて送る（下の「計測のイベント」） | ユーザー |
+| AI のクローラーが取りに来た回数 | Cloudflare の AI Crawl Control などで、利用者の質問で動くもの（ChatGPT-User・Perplexity-User・Claude-User）と、索引を作るもの（OAI-SearchBot・PerplexityBot・Claude-SearchBot）を、URL ごとに見る。見るだけで、設定は変えない。AI の回答の多くはクリックを生まないので、ai_referral（クリック）と別に見る。画面の項目名は変わりうる | ユーザーが週次の Issue に数字を書く |
+| 記事ごとの効き目 | Search Console の「検索パフォーマンス」で、ページを 1 本ずつ絞り（フィルタ「ページ」）、クエリを `target-keywords.md` の言葉（正規表現も可）で見る。記事の直しの前後を、同じ条件で比べる | ユーザー |
+
+### 計測のイベント（assets/analytics.js・assets/fee-calculator.js）
+
+送るのは、本番のホスト（stbl-pay.com）で、自動操作でないブラウザだけ。`?ga=off` を付けて開いたブラウザは送らない（`?ga=on` で戻す）。入力した値と個人の情報は送らない。
+
+| イベント | いつ | 主なパラメータ |
+|---|---|---|
+| cta_click | 解説・方針のページの本文・末尾の箱から、LP・相談（/#early-access）・docs・Sandbox・方針（/policy/）へ進んだとき。ヘッダーとフッターのリンクは、これまでどおりクラスで送る | cta_location（learn_body・learn_about・learn_sources）、exit_type（lp・consult・docs・sandbox・policy）、cta_destination、cta_label |
+| select_content | 一覧のカード（learn_hub）、関連欄（learn_related）、本文から別の解説へ（learn_body） | content_type、item_id |
+| faq_open | FAQ の問いが開かれたとき（1 回の閲覧に同じ問いは 1 回） | question（summary の先頭 80 字） |
+| fee_calc_use | 決済手数料の計算ツールに、最初に入力したとき（1 回の表示で 1 回） | なし |
+| ai_referral | 参照元が AI（サブドメインも）、または utm_source が AI の名前・ホストのとき | ai_source、landing_page |
+| figure_toggle | 図の「動きを止める／動かす」 | figure、stopped |
+
+GA4 で、次のイベントスコープのカスタムディメンションを登録する（登録しないとレポートに出ない。登録以前の分は遡れない）：cta_location、exit_type、cta_destination、content_type、item_id、question、ai_source、landing_page。あわせて、/#early-access に進んだ cta_click（exit_type が consult）と form_start をキーイベントにすると、記事から相談への流れを追える。
+
+Google の AI による概要・AI モードからの来訪は、参照元が google.com なので ai_referral では分けられない。Search Console の生成 AI のレポートで見る。
 
 限界もある。Google の正確な順位と、ChatGPT・Perplexity の実際の回答は、ルーチンからは取れない。前者は Search Console の数字で、後者は人の手で月に 1 回確かめる。
 

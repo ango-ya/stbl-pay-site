@@ -80,6 +80,14 @@
     });
   }
 
-  Object.keys(els).forEach(function (k) { els[k].addEventListener("input", render); });
+  // 使われたことだけを 1 回の表示で 1 回送る（入力した値は送らない）
+  var used = false;
+  function onInput() {
+    render();
+    if (used) return;
+    used = true;
+    document.dispatchEvent(new CustomEvent("stblpay:analytics", { detail: { name: "fee_calc_use" } }));
+  }
+  Object.keys(els).forEach(function (k) { els[k].addEventListener("input", onInput); });
   render();
 })();

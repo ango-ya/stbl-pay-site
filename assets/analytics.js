@@ -89,6 +89,32 @@
         event("select_content", { content_type: learnFrom, item_id: href });
         return;
       }
+      // 解説・方針の本文と末尾の箱から、LP・相談・docs・Sandbox・方針へ進んだこと（ヘッダー・フッターは対象外）。クラスの有無でなく行き先で見分ける
+      const article = link.closest(".learn-article");
+      if (article) {
+        const u = new URL(href, location.href);
+        const where = link.closest(".learn-about") ? "learn_about" : link.closest(".learn-sources") ? "learn_sources" : link.closest(".learn-body") ? "learn_body" : "learn_other";
+        let exitType = "";
+        if (u.origin === location.origin) {
+          if (/^\/(en\/)?$/.test(u.pathname)) exitType = u.hash === "#early-access" ? "consult" : "lp";
+          else if (/^\/docs\/(en\/)?testing\/sandbox\//.test(u.pathname)) exitType = "sandbox";
+          else if (u.pathname.startsWith("/docs/")) exitType = "docs";
+          else if (u.pathname.startsWith("/policy/")) exitType = "policy";
+          else if (where === "learn_body" && /^\/(en\/)?learn\//.test(u.pathname) && u.pathname !== location.pathname) {
+            event("select_content", { content_type: "learn_body", item_id: href });
+            return;
+          }
+        }
+        if (exitType) {
+          event("cta_click", {
+            cta_label: (link.textContent || "").trim().slice(0, 80),
+            cta_destination: href,
+            cta_location: where,
+            exit_type: exitType,
+          });
+          return;
+        }
+      }
       if (link.matches(".header-cta, .button, .text-link, .header-lp-link, .shop-nav-lp")) {
         event("cta_click", {
           cta_label: (link.textContent || "").trim().slice(0, 80),
@@ -135,11 +161,29 @@
     bindFormStart();
   }
 
+  // FAQ の開閉：どの問いが読まれたか（summary の文の先頭 80 字）。1 回の閲覧で同じ問いは 1 回だけ送る
+  const faqOpened = new Set();
+  document.addEventListener("toggle", (toggleEvent) => {
+    const d = toggleEvent.target;
+    const summary = d instanceof HTMLDetailsElement && d.open && d.closest(".faq-list") ? d.querySelector("summary") : null;
+    const question = summary ? (summary.textContent || "").trim().slice(0, 80) : "";
+    if (question && !faqOpened.has(question)) {
+      faqOpened.add(question);
+      event("faq_open", { question: question });
+    }
+  }, true); // toggle は泡立たないので、捕捉の段で受ける
+
   // LLMO の計測：AI の回答（ChatGPT・Perplexity・Claude・Gemini・Copilot）のリンクから来た閲覧を、来た元の名前つきで数える
-  const AI_REFERRERS = { "chatgpt.com": "chatgpt", "chat.openai.com": "chatgpt", "perplexity.ai": "perplexity", "www.perplexity.ai": "perplexity", "claude.ai": "claude", "gemini.google.com": "gemini", "copilot.microsoft.com": "copilot" };
+  // 参照元のホスト（サブドメインも）を先に見て、無ければ utm_source（chatgpt.com など。アプリから開くと参照元が空になる）で判定する
+  const AI_SOURCES = { "chatgpt.com": "chatgpt", "chat.openai.com": "chatgpt", "perplexity.ai": "perplexity", "claude.ai": "claude", "gemini.google.com": "gemini", "copilot.microsoft.com": "copilot", "grok.com": "grok", "felo.ai": "felo", "genspark.ai": "genspark", "mistral.ai": "mistral", "deepseek.com": "deepseek", "you.com": "you", "meta.ai": "meta" };
+  const aiName = (value) => {
+    const v = String(value || "").trim().toLowerCase();
+    const domain = Object.keys(AI_SOURCES).find((d) => v === d || v.endsWith("." + d));
+    return domain ? AI_SOURCES[domain] : Object.values(AI_SOURCES).includes(v) ? v : "";
+  };
   try {
-    const refHost = document.referrer ? new URL(document.referrer).hostname : "";
-    if (AI_REFERRERS[refHost]) event("ai_referral", { ai_source: AI_REFERRERS[refHost], landing_page: location.pathname });
+    const aiSource = aiName(document.referrer ? new URL(document.referrer).hostname : "") || aiName(new URLSearchParams(location.search).get("utm_source"));
+    if (aiSource) event("ai_referral", { ai_source: aiSource, landing_page: location.pathname });
   } catch (error) {}
 
   document.addEventListener("stblpay:analytics", (customEvent) => {
