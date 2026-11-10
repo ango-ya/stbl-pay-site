@@ -2,7 +2,7 @@
 // 1 段目：日本の法律で違法でない表現は、内容を理由に断らない（すてぶるペイの約束。青い段）。図の文字は方針の言葉に寄せ、「合法なら」とは書かない。
 // 2 段目：違法なものは扱えない（法律に反するものは、どの決済手段でも違法）。
 // 3 段目：受け取る JPYC の利用は、JPYC 株式会社の利用規約に従う（同規約により利用が停止される場合がある）。
-// 作品は本・額縁の絵で表し、内容（成人向け・暴力・政治など）は描かない。文字は 3 か所（各段）。すてぶるくんは右下の床に立つ。
+// 作品は本・額縁の絵で表し、内容（成人向け・暴力・政治など）は描かない。文字は 3 か所（各段。30px 以上、2 行にする段がある）。すてぶるくんは右下の床に立つ。
 FX.figure({
   duration: 9,
   draw(ctx, t) {
@@ -37,14 +37,14 @@ FX.figure({
       for (const y of [-20, -8, 4]) { ctx.beginPath(); ctx.moveTo(-16, y); ctx.lineTo(16, y); shape(ctx, null, C.light, 5); }
     };
 
-    const CW = 690, CH = 120, X0 = 36;
+    const CW = 710, CH = 130, X0 = 36, TX = 262;
     const ROWS = [
-      { y: 84, start: 0.2, fill: "#eaf2ff", label: "違法でない表現は断らない",
-        icons: [{ x: 96, f: book, s: 1.0 }, { x: 166, f: frame, s: 1.0 }, { x: 226, f: () => ICON.check(ctx), s: 1.1 }] },
-      { y: 232, start: 2.7, fill: C.white, label: "違法なものは扱えない",
+      { y: 80, start: 0.2, fill: "#eaf2ff", size: 30, label: ["日本の法律で違法でない表現は、", "内容を理由に断りません。"],
+        icons: [{ x: 88, f: book, s: 1.0 }, { x: 152, f: frame, s: 1.0 }, { x: 222, f: () => ICON.check(ctx), s: 1.0 }] },
+      { y: 230, start: 2.7, fill: C.white, size: 34, label: ["違法なものは扱えない"],
         icons: [{ x: 104, f: scale, s: 1.0 }, { x: 188, f: stop, s: 1.0 }] },
-      { y: 380, start: 5.0, fill: C.white, label: "JPYC の規約に従う",
-        icons: [{ x: 104, f: doc, s: 1.0 }, { x: 190, f: () => COIN.stable(ctx), s: 1.3 }] },
+      { y: 380, start: 5.0, fill: C.white, size: 30, label: ["JPYC の利用は同社の規約に従う", "（停止される場合がある）"],
+        icons: [{ x: 104, f: doc, s: 1.0 }, { x: 186, f: () => COIN.stable(ctx), s: 1.3 }] },
     ];
     const END = 6.8;
     ROWS.forEach((r, i) => {
@@ -58,7 +58,7 @@ FX.figure({
         const s = track(t, r.start + 0.2 + 0.18 * k, PLAY);
         at(ctx, ic.x, r.y, s * ic.s, s, ic.f);
       });
-      at(ctx, 276, r.y, 1, ramp(t, r.start + 0.3, r.start + 0.6), () => text(ctx, r.label, 0, 0, { size: 36, align: "left" }));
+      at(ctx, TX, r.y, 1, ramp(t, r.start + 0.3, r.start + 0.6), () => r.label.forEach((l, k) => text(ctx, l, 0, (k - (r.label.length - 1) / 2) * 40, { size: r.size, align: "left" })));
       ctx.restore();
     });
 
