@@ -10,6 +10,9 @@ ok() { echo "OK  $*"; }
 ng() { echo "NG  $*"; fail=1; }
 
 status() { curl -s -o /dev/null -w '%{http_code}' -A "${2:-Mozilla/5.0}" "$BASE$1"; }
+# Cross-Origin-Resource-Policy の値。名前だけ大文字・小文字を無視し、値はそのまま（ヘッダが 2 つあれば 2 行になり、完全一致で落ちる）
+corp_of() { tr -d '\r' | grep -i '^cross-origin-resource-policy:' | sed 's/^[^:]*:[[:space:]]*//; s/[[:space:]]*$//'; }
+corp() { curl -sI "$BASE$1" | corp_of; }
 expect_status() { # パス 期待するコード [User-Agent]
   local got bot
   got="$(status "$1" "${3:-}")"
@@ -43,10 +46,10 @@ for u in $(curl -s "$BASE/sitemap.xml" | grep -o '<loc>[^<]*</loc>' | sed 's/<[^
   if [ -z "$og" ]; then ng "$p に og:image が無い"; continue; fi
   got="$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "$BASE$og")"
   [ "$got" = "200 image/png" ] && ok "$p の og:image → $og" || ng "$p の og:image $og → ${got}（200 image/png のはず）"
-  curl -sI "$BASE$og" | grep -qi '^cross-origin-resource-policy: *cross-origin' && ok "$og は CORP cross-origin" || ng "$og に Cross-Origin-Resource-Policy: cross-origin が無い（_headers の例外が効いていない）"
+  [ "$(corp "$og")" = "cross-origin" ] && ok "$og は CORP cross-origin" || ng "$og の Cross-Origin-Resource-Policy が cross-origin 1 つでない（_headers の例外が効いていない）"
 done
 [ "$n" -ge 20 ] && ok "sitemap.xml の URL ${n} 件" || ng "sitemap.xml から URL を ${n} 件しか拾えない"
-curl -sI "$BASE/" | grep -qi '^cross-origin-resource-policy: *same-origin' && ok "HTML の CORP は same-origin のまま" || ng "/ の Cross-Origin-Resource-Policy が same-origin でない"
+[ "$(corp /)" = "same-origin" ] && ok "HTML の CORP は same-origin のまま" || ng "/ の Cross-Origin-Resource-Policy が same-origin 1 つでない"
 key="$(grep -o 'const KEY = "[0-9a-f]*"' "$(dirname "$0")/indexnow.mjs" | cut -d'"' -f2)"
 [ "$(curl -s "$BASE/$key.txt")" = "$key" ] && ok "IndexNow の鍵ファイル" || ng "/$key.txt が鍵を返さない"
 
