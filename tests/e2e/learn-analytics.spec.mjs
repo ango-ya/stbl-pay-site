@@ -9,8 +9,8 @@ test.beforeEach(async ({ page, baseURL }) => {
   await page.route(GA, (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: "" }));
   await page.route("https://stbl-pay.com/**", async (route) => {
     const u = new URL(route.request().url());
-    const r = await page.request.get(`${baseURL}${u.pathname}${u.search}`);
-    route.fulfill({ status: r.status(), headers: r.headers(), body: await r.body() });
+    // route.fetch の応答は route に結びつく。page.request.get だと、ページを移ったあとに body が disposed で読めず落ちることがあった
+    await route.fulfill({ response: await route.fetch({ url: `${baseURL}${u.pathname}${u.search}` }) });
   });
   await page.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
 });

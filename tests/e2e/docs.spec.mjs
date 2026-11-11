@@ -141,7 +141,7 @@ test.describe("加盟店向けドキュメント", () => {
     expect(viewer).toContain('<link rel="alternate" type="application/yaml" href="../openapi.yaml">');
     // llms.txt が案内する場所
     expect((await request.get("/docs/openapi.yaml")).ok()).toBe(true);
-    expect(await (await request.get("/llms.txt")).text()).toContain("(/docs/openapi.yaml)");
+    expect(await (await request.get("/llms.txt")).text()).toContain("(https://stbl-pay.com/docs/openapi.yaml)");
   });
 
   test("docs から開く OpenAPI の仕様書（Redoc）で、リンク先の節が表示される（日英とも）", async ({ page }) => {
