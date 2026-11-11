@@ -10,8 +10,8 @@ ok() { echo "OK  $*"; }
 ng() { echo "NG  $*"; fail=1; }
 
 status() { curl -s -o /dev/null -w '%{http_code}' -A "${2:-Mozilla/5.0}" "$BASE$1"; }
-# Cross-Origin-Resource-Policy の値。名前だけ大文字・小文字を無視し、値はそのまま（ヘッダが 2 つあれば 2 行になり、完全一致で落ちる）
-corp_of() { tr -d '\r' | grep -i '^cross-origin-resource-policy:' | sed 's/^[^:]*:[[:space:]]*//; s/[[:space:]]*$//'; }
+# Cross-Origin-Resource-Policy の値。名前だけ大文字・小文字を無視し、値はそのまま。ヘッダがちょうど 1 つのときだけ値を出す（重複・欠落は空）
+corp_of() { tr -d '\r' | awk 'tolower($0) ~ /^cross-origin-resource-policy:/ { n++; v = $0; sub(/^[^:]*:[ \t]*/, "", v); sub(/[ \t]+$/, "", v) } END { if (n == 1) print v }'; }
 corp() { curl -sI "$BASE$1" | corp_of; }
 expect_status() { # パス 期待するコード [User-Agent]
   local got bot
