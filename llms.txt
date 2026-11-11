@@ -31,17 +31,17 @@
 決済を検討するお店向けの一般的な解説。冒頭で答えを示し、事実には出典と確認日を添えている。
 
 - [決済を学ぶ（解説の一覧）](https://stbl-pay.com/learn/): 解説ページの一覧
-- [ステーブルコイン決済とは](https://stbl-pay.com/learn/stablecoin-payments/): 仕組み、カード決済・銀行振込との違い、メリットとデメリット、日本での法的な扱い（電子決済手段）
-- [JPYC 決済をお店に導入するには](https://stbl-pay.com/learn/jpyc-payments/): JPYC とは何か、受け取り方、JPYC に対応する決済サービスの比較表（各社の発表）、導入の流れ、手数料の考え方
-- [クレジットカードの加盟店審査に通らないときの選択肢](https://stbl-pay.com/learn/card-merchant-screening/): 審査で見られる点、落ちる主な理由、見直す点、カード以外の選択肢
-- [決済代行に審査なしはある？](https://stbl-pay.com/learn/no-screening-payments/): カード決済に加盟店審査がある理由（割賦販売法の加盟店調査）、審査に通りやすいかの考え方、ハイリスク商材、加盟店審査のいらない受け取り方（すてぶるペイはパーミッションレスで事前審査なし）
-- [カード会社の表現規制はなぜ起きる？](https://stbl-pay.com/learn/card-expression-restrictions/): 同人・成人向け作品の決済が止まった事例、割賦販売法と表現、販売者が決済を確保する方法
-- [決済手数料の比べ方](https://stbl-pay.com/learn/payment-fees/): 料率だけでなく、月額・振込手数料・入金までの日数・チャージバックの負担まで含めた総コストでの比較と計算方法。月の売上・料率・固定の手数料・月額・振込手数料から、総コストと実質の割合を出す計算ツール（https://stbl-pay.com/learn/payment-fees/#calc）つき
-- [チャージバックとは](https://stbl-pay.com/learn/chargeback/): 仕組み、加盟店の負担、対策、異議申し立ての流れと期限、返品との違い、ステーブルコイン決済の場合
-- [ステーブルコインとは](https://stbl-pay.com/learn/what-is-stablecoin/): ステーブルコインの仕組みと種類（法定通貨担保型・暗号資産担保型など）、暗号資産との違い、日本での法的な扱い（電子決済手段）
-- [決済代行とは](https://stbl-pay.com/learn/payment-gateway/): 決済代行の仕組みとお金の流れ、アクワイアラ・収納代行との違い、手数料と入金、選び方
-- [ネットショップでクレジットカード決済を導入するには](https://stbl-pay.com/learn/accept-credit-cards/): 導入の方法（決済代行・カート付属の決済・アクワイアラと直接契約）、手順、費用、審査、入金までの日数
-- [ネットショップの決済方法の選び方](https://stbl-pay.com/learn/online-payment-methods/): クレジットカード・コンビニ払い・銀行振込・後払い・QR コード・ステーブルコインなどの比べ方と、組み合わせ方
+- [ステーブルコイン決済とは？仕組み・手数料・メリットと日本の現状](https://stbl-pay.com/learn/stablecoin-payments/): 仕組み、カード決済・銀行振込との違い、メリットとデメリット、日本での法的な扱い（電子決済手段）
+- [JPYC 決済の導入方法｜EC サイト・店舗の手順、手数料、サービス比較](https://stbl-pay.com/learn/jpyc-payments/): JPYC とは何か、受け取り方、JPYC に対応する決済サービスの比較表（各社の発表）、導入の流れ、手数料の考え方
+- [クレジットカード決済の加盟店審査に落ちた・通らない理由と対処法](https://stbl-pay.com/learn/card-merchant-screening/): 審査で見られる点、落ちる主な理由、見直す点、カード以外の選択肢
+- [決済代行に審査なしはある？理由と、審査のいらない受け取り方](https://stbl-pay.com/learn/no-screening-payments/): カード決済に加盟店審査がある理由（割賦販売法の加盟店調査）、審査に通りやすいかの考え方、ハイリスク商材、加盟店審査のいらない受け取り方（すてぶるペイはパーミッションレスで事前審査なし）
+- [クレカ・カード会社の表現規制はなぜ？理由と同人・成人向け作品の決済の備え](https://stbl-pay.com/learn/card-expression-restrictions/): 同人・成人向け作品の決済が止まった事例、割賦販売法と表現、販売者が決済を確保する方法
+- [決済手数料の比較と計算方法：総コストの計算ツール付き](https://stbl-pay.com/learn/payment-fees/): 料率だけでなく、月額・振込手数料・入金までの日数・チャージバックの負担まで含めた総コストでの比較と計算方法。月の売上・料率・固定の手数料・月額・振込手数料から、総コストと実質の割合を出す計算ツール（https://stbl-pay.com/learn/payment-fees/#calc）つき
+- [チャージバックとは？EC サイトの負担と、泣き寝入りを避ける対策](https://stbl-pay.com/learn/chargeback/): 仕組み、加盟店の負担、対策、異議申し立ての流れと期限、返品との違い、ステーブルコイン決済の場合
+- [ステーブルコインとは？仕組み・種類・ビットコインとの違いをわかりやすく解説](https://stbl-pay.com/learn/what-is-stablecoin/): ステーブルコインの仕組みと種類（法定通貨担保型・暗号資産担保型など）、暗号資産との違い、日本での法的な扱い（電子決済手段）
+- [決済代行とは？仕組み・アクワイアラや収納代行との違い・選び方](https://stbl-pay.com/learn/payment-gateway/): 決済代行の仕組みとお金の流れ、アクワイアラ・収納代行との違い、手数料と入金、選び方
+- [クレジットカード決済を導入するには？ネットショップの方法・費用・審査](https://stbl-pay.com/learn/accept-credit-cards/): 導入の方法（決済代行・カート付属の決済・アクワイアラと直接契約）、手順、費用、審査、入金までの日数
+- [ネットショップの決済方法 9 種類を比較：選び方とおすすめの組み合わせ](https://stbl-pay.com/learn/online-payment-methods/): クレジットカード・コンビニ払い・銀行振込・後払い・QR コード・ステーブルコインなどの比べ方と、組み合わせ方
 - [ステーブルコイン決済の用語集](https://stbl-pay.com/learn/glossary/): 電子決済手段、資金移動業、JPYC、ノンカストディアル、与信審査、チャージバックなど。語ごとに ID があり、直接リンクできる（https://stbl-pay.com/learn/glossary/#electronic-payment-instrument 、https://stbl-pay.com/learn/glossary/#non-custodial 、https://stbl-pay.com/learn/glossary/#jpy-stablecoin ）
 
 ## English summary
@@ -51,13 +51,13 @@ STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu
 - [English landing page](https://stbl-pay.com/en/): overview, how it works, and FAQ in English
 - [Merchant docs (English)](https://stbl-pay.com/docs/en/): integration, webhooks, payment statuses, refunds
 - [API specification (English, OpenAPI 3.1)](https://stbl-pay.com/docs/en/openapi.yaml)
-- [Accepting payments from customers in Japan with a yen stablecoin](https://stbl-pay.com/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
+- [Stablecoin Payments in Japan: Accepting a Yen Stablecoin (JPYC) from Customers in Japan](https://stbl-pay.com/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
 - [Guides (English)](https://stbl-pay.com/en/learn/): list of English guides for overseas shops selling to Japan
-- [Payment methods in Japan](https://stbl-pay.com/en/learn/japan-payment-methods/): how customers in Japan pay online (cards, konbini, bank transfer, cash on delivery, carrier billing, QR code, pay later) and what an overseas shop needs
-- [Konbini payment](https://stbl-pay.com/en/learn/konbini-payment/): how convenience-store payment works, limits, expiry, refunds, and alternatives
-- [What is a yen stablecoin?](https://stbl-pay.com/en/learn/jpy-stablecoin/): JPYC, Japan's stablecoin rules (electronic payment instruments), and how a yen stablecoin differs from USDC and USDT
-- [How to accept stablecoin payments as a business](https://stbl-pay.com/en/learn/accept-stablecoin-payments/): own wallet vs. payment gateway, steps, costs, and risks
-- [What is a high-risk merchant account?](https://stbl-pay.com/en/learn/high-risk-merchant-account/): why card processors classify some businesses as high risk, reserves, monitoring programs and MATCH, and alternatives to card payments
+- [Payment Methods in Japan: How Customers in Japan Pay Online](https://stbl-pay.com/en/learn/japan-payment-methods/): how customers in Japan pay online (cards, konbini, bank transfer, cash on delivery, carrier billing, QR code, pay later) and what an overseas shop needs
+- [What Is Konbini Payment? Convenience-Store Payments in Japan Explained](https://stbl-pay.com/en/learn/konbini-payment/): how convenience-store payment works, limits, expiry, refunds, and alternatives
+- [What Is a Yen Stablecoin (JPY Stablecoin)? JPYC and Japan's Stablecoin Rules](https://stbl-pay.com/en/learn/jpy-stablecoin/): JPYC, Japan's stablecoin rules (electronic payment instruments), and how a yen stablecoin differs from USDC and USDT
+- [How to Accept Stablecoin Payments as a Business](https://stbl-pay.com/en/learn/accept-stablecoin-payments/): own wallet vs. payment gateway, steps, costs, and risks
+- [What Is a High-Risk Merchant Account? A Plain-English Guide](https://stbl-pay.com/en/learn/high-risk-merchant-account/): why card processors classify some businesses as high risk, reserves, monitoring programs and MATCH, and alternatives to card payments
 - [Press kit](https://stbl-pay.com/en/press/): boilerplate text, fact sheet, logo downloads (SVG/PNG) and usage rules, brand colors, how to write the name, characters, and videos
 
 ## 主要ページ

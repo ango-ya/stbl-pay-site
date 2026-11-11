@@ -45,6 +45,21 @@ const ALLOW_PCT = [
   { pages: ["/learn/payment-fees/"], prefix: "通貨の換算が要る場合は、", value: "2%" },
   { pages: ["/en/learn/stablecoin-payments-japan/"], prefix: "Stripe's standard rate in Japan is ", value: "3.6%" },
   { pages: ["/en/learn/stablecoin-payments-japan/"], prefix: "3.6% per domestic card payment, with an extra ", value: "2%" },
+  // 他社の JPYC 決済の料金（各社の PR TIMES の発表。2026年11月10日に本文で確認。自社の料率ではない）。
+  // jpyc-payments は本文・FAQ・JSON-LD の 3 か所、stablecoin-payments は h2#fees と FAQ の手数料の答え（JSON-LD も同じ）に同じ文
+  // ネットスターズ（2026年7月13日、stablecoin-payments の出典 [14]）
+  { pages: ["/learn/jpyc-payments/", "/learn/stablecoin-payments/"], prefix: "ネットスターズは、Stablecoin Pay の決済手数料を ", value: "0.98%" },
+  // uniple（2026年7月21日、2026年7月時点・税込。stablecoin-payments の出典 [15]）
+  { pages: ["/learn/jpyc-payments/", "/learn/stablecoin-payments/"], prefix: "uniple は、uniple checkout のシステム利用料を、2026年7月時点で受取金額の ", value: "1.0%" },
+  // Stripe の日本の標準料金（https://stripe.com/jp/pricing を 2026年11月10日に確認。出典 [7]）。#cost と FAQ 費用の答え（JSON-LD も同文）
+  { pages: ["/learn/accept-credit-cards/"], prefix: "料率の例として、Stripe の日本の標準料金は、カード決済 1 件ごとに ", value: "3.6%" },
+  // payment-fees の公表料金の表（各社の公式の料金ページを 2026年11月10日に確認）。Square はオンライン決済、STORES は「から」の値
+  { pages: ["/learn/payment-fees/"], prefix: "Square（オンライン決済） オンライン決済は、決済ごとに ", value: "3.6%" },
+  { pages: ["/learn/payment-fees/"], prefix: "BASE（スタンダードプラン） 1 注文ごとに、決済手数料 ", value: "3.6%" },
+  { pages: ["/learn/payment-fees/"], prefix: "BASE（スタンダードプラン） 1 注文ごとに、決済手数料 3.6% ＋ 40 円と、サービス手数料 ", value: "3%" },
+  { pages: ["/learn/payment-fees/"], prefix: "BASE（グロースプラン） 1 注文ごとに、決済手数料 ", value: "2.9%" },
+  { pages: ["/learn/payment-fees/"], prefix: "STORES（フリープラン） 決済手数料は ", value: "5.5%" },
+  { pages: ["/learn/payment-fees/"], prefix: "STORES（スタンダードプラン） 決済手数料は ", value: "3.6%" },
 ];
 const allowFor = (path) => ALLOW_PCT.filter((a) => a.pages.includes(path));
 
@@ -69,6 +84,20 @@ const MIGRATED = {
 const pathOf = (slug) => (slug === "policy-expression" ? "/policy/expression/" : `/learn/${slug}/`);
 const slugOf = (path) => (path === "/policy/expression/" ? "policy-expression" : path.startsWith("/learn/") ? path.split("/").filter(Boolean).pop() : undefined);
 const migratedOf = (path) => MIGRATED[slugOf(path)];
+// 記事ごとのサムネイル（scripts/learn-thumbs/make.mjs が書き出す）を持つページ。図を持つ MIGRATED とは別に判定する。
+// 日本語は一覧と MIGRATED（og.png・thumb.webp）、英語はここに並べたページ（og-en.png・thumb-en.webp）。一覧はどちらも assets/learn/hub/
+const EN_THUMBS = [
+  "/en/learn/", "/en/learn/stablecoin-payments-japan/", "/en/learn/japan-payment-methods/", "/en/learn/konbini-payment/",
+  "/en/learn/jpy-stablecoin/", "/en/learn/accept-stablecoin-payments/", "/en/learn/high-risk-merchant-account/",
+];
+const isHubPath = (path) => path === "/learn/" || path === "/en/learn/";
+const thumbOf = (path) => {
+  const en = path.startsWith("/en/");
+  if (!(en ? EN_THUMBS.includes(path) : path === "/learn/" || migratedOf(path))) return undefined;
+  const dir = isHubPath(path) ? "hub" : en ? path.split("/").filter(Boolean).pop() : slugOf(path);
+  const s = en ? "-en" : "";
+  return { og: `/assets/learn/${dir}/og${s}.png`, thumb: `/assets/learn/${dir}/thumb${s}.webp` };
+};
 
 const ANALYTICS = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;
 
@@ -117,12 +146,12 @@ for (const { path, main } of PAGES) {
     expect(types).toContain("BreadcrumbList");
     const isEn = path.startsWith("/en/");
     const local = (u) => { const x = new URL(u); return x.pathname + x.search; };
-    // OGP の画像は、移行済みのページ（MIGRATED）なら記事ごとのサムネイル（scripts/learn-thumbs/ が書き出す /assets/learn/<slug>/og.png）、
-    // それ以外は言語に合う共通の画像（移行済みのページが共通の画像に戻ったら落とす）
+    // OGP の画像は、サムネイルを持つページ（thumbOf）なら記事ごとのサムネイル（og.png、英語は og-en.png）、
+    // それ以外は言語に合う共通の画像（サムネイルを持つページが共通の画像に戻ったら落とす）
     const figNames = migratedOf(path);
-    const isHub = path === "/learn/"; // 一覧も自分のサムネイル（assets/learn/hub/og.png）を持つ
-    const own = `${ORIGIN}/assets/learn/${isHub ? "hub" : slugOf(path)}/og.png`;
-    const ogImage = figNames || isHub ? own : `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
+    const thumb = thumbOf(path);
+    const own = thumb && `${ORIGIN}${thumb.og}`;
+    const ogImage = own || `${ORIGIN}/assets/og-stblpay-generative${isEn ? "-en" : ""}-1200x630.png`;
     const sameImage = (u) => u.split("?")[0] === ogImage;
     for (const sel of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
       expect(sameImage(await page.locator(sel).getAttribute("content")), `${sel} は記事のサムネイルか、言語に合う共通の画像`).toBe(true);
@@ -141,7 +170,10 @@ for (const { path, main } of PAGES) {
       await expect(page.locator('meta[name="twitter:image:alt"]'), "twitter:image:alt は og:image:alt と同じ").toHaveAttribute("content", alt);
     }
     await expect(page.locator("figure.learn-fig"), "図の数は MIGRATED のとおり").toHaveCount(figNames ? figNames.length : 0);
-    await expect(page.locator("img.learn-hero"), "冒頭のサムネイルは移行済みのページだけ").toHaveCount(figNames ? 1 : 0);
+    // 冒頭のサムネイルは、サムネイルを持つ記事だけ（一覧はカードに出すので冒頭には置かない）
+    const hasHero = thumb && !isHubPath(path);
+    await expect(page.locator("img.learn-hero"), "冒頭のサムネイルは、サムネイルを持つ記事だけ").toHaveCount(hasHero ? 1 : 0);
+    if (hasHero) await expect(page.locator("img.learn-hero")).toHaveAttribute("src", thumb.thumb);
 
     // 図（scripts/figures/ が書き出す GIF・WebP）：文字の代わりの alt と figcaption、場所を先に取る width/height、遅延読み込み。各形式が 200
     for (const fig of await page.locator("figure.learn-fig").all()) {
@@ -174,8 +206,8 @@ for (const { path, main } of PAGES) {
       expect((await request.get(local(img))).status()).toBe(200);
       expect(a.inLanguage).toBe(isEn ? "en" : "ja");
     }
-    if (figNames) {
-      // 移行済みのページは、主な JSON-LD（Article・DefinedTermSet・WebPage）の image も記事の og.png（Article 以外で image が消えても気づく）
+    if (thumb) {
+      // サムネイルを持つページは、主な JSON-LD（Article・DefinedTermSet・WebPage・CollectionPage）の image も記事の og.png（Article 以外で image が消えても気づく）
       const m = nodes.find((n) => n["@type"] === main);
       const mi = typeof m.image === "string" ? m.image : m.image?.url ?? m.image?.[0];
       expect(mi, `${main}.image は記事の og.png`).toBeTruthy();
@@ -320,20 +352,27 @@ test("移行済みのページ（MIGRATED）は、すべて検査の対象（PAG
   for (const slug of Object.keys(MIGRATED)) expect(PAGES.map((p) => p.path)).toContain(pathOf(slug));
 });
 
-test("/learn/ の一覧：どのカードも、リンク先の記事のサムネイル（thumb.webp）を頭に出し、絵が読める", async ({ page }) => {
-  await page.goto("/learn/");
-  const cards = page.locator(".learn-cards a");
-  expect(await cards.count()).toBeGreaterThan(0);
-  for (const a of await cards.all()) {
-    const slug = slugOf(await a.getAttribute("href"));
-    expect(MIGRATED[slug], `${slug} は移行済み`).toBeTruthy();
-    const img = a.locator("img.learn-card-thumb");
-    await expect(img).toHaveAttribute("src", `/assets/learn/${slug}/thumb.webp`);
-    await expect(img).toHaveAttribute("alt", ""); // 題名は h3 にある
-    await img.scrollIntoViewIfNeeded();
-    await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth > 0)).toBe(true);
-  }
+test("サムネイルを持つ英語のページ（EN_THUMBS）は、すべて検査の対象（PAGES）にある", () => {
+  for (const path of EN_THUMBS) expect(PAGES.map((p) => p.path)).toContain(path);
 });
+
+for (const [hub, ext] of [["/learn/", "thumb.webp"], ["/en/learn/", "thumb-en.webp"]]) {
+  test(`${hub} の一覧：どのカードも、リンク先の記事のサムネイル（${ext}）を頭に出し、絵が読める`, async ({ page }) => {
+    await page.goto(hub);
+    const cards = page.locator(".learn-cards a");
+    expect(await cards.count()).toBeGreaterThan(0);
+    for (const a of await cards.all()) {
+      const href = await a.getAttribute("href");
+      const thumb = thumbOf(href);
+      expect(thumb, `${href} はサムネイルを持つ`).toBeTruthy();
+      const img = a.locator("img.learn-card-thumb");
+      await expect(img).toHaveAttribute("src", thumb.thumb);
+      await expect(img).toHaveAttribute("alt", ""); // 題名は h3 にある
+      await img.scrollIntoViewIfNeeded();
+      await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth > 0)).toBe(true);
+    }
+  });
+}
 
 // 図の picture：source の順（アニメ WebP（no-preference）→ 完成図 WebP → GIF の img）、motion ごとに選ばれる絵、デコード、
 // 通常の表示で GIF を取りに行かないこと、「動きを止める／動かす」ボタン（assets/learn-fig.js）で絵とボタンの名前が替わること

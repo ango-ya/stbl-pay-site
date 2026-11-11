@@ -53,6 +53,13 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
   const top = await locsOf("/sitemap.xml");
   expect(top.slice(0, 2)).toEqual(LPS.map((lp) => lp.url));
   for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/(en\/)?(learn\/([a-z-]+\/)?|press\/|policy\/expression\/)$/);
+  // lastmod は、そのページの JSON-LD の dateModified と同じ（dateModified の無いページは見ない）
+  const xml = await (await request.get("/sitemap.xml")).text();
+  for (const [, loc, lastmod] of xml.matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)) {
+    const html = await (await request.get(new URL(loc).pathname)).text();
+    const mods = [...html.matchAll(/"dateModified":\s*"([^"]+)"/g)].map((m) => m[1]);
+    for (const d of new Set(mods)) expect(d, `${loc} の lastmod と dateModified`).toBe(lastmod);
+  }
 
   // docs は言語ごとに 1 本。URL は末尾にスラッシュ（配信先が付けて飛ばすので、飛ばした先を載せる）
   for (const [path, prefix] of [["/docs/sitemap.xml", "https://stbl-pay.com/docs/"], ["/docs/en/sitemap.xml", "https://stbl-pay.com/docs/en/"]]) {
