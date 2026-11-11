@@ -506,7 +506,7 @@
       "@type": "DefinedTerm",
       "@id": "https://stbl-pay.com/learn/glossary/#zedi",
       "name": "全銀 EDI システム（ZEDI）",
-      "description": "全銀 EDI システム（ZEDI）とは、振込に添える情報（EDI 情報）を増やす仕組みです。2018年12月25日に稼動を開始しました。支払通知番号や請求書番号などを添えられます。企業間の振込のための仕組みで、総合振込の際に使うフォーマットが対象です。ネットショップの購入者の振込に注文番号が付いて届く仕組みではありません。",
+      "description": "全銀 EDI システム（ZEDI）とは、振込に添える情報（EDI 情報）を増やす仕組みです。2018年12月25日に稼動を開始しました。支払通知番号や請求書番号などを添えられます。企業間の振込のための仕組みで、総合振込の際に使うフォーマットが対象です。ネットショップの購入者の振込に注文番号が付いて届く仕組みではありません。個人の振込で使えるかは確かめていません。",
       "alternateName": [
         "全銀 EDI",
         "全銀EDI",
@@ -711,7 +711,7 @@
             <h2 id="virtual-account">バーチャル口座（仮想口座・振込入金専用口座）とは</h2>
             <p>バーチャル口座とは、1 つの代表口座の下に、請求書や取引先、顧客ごとの専用の口座番号を作る仕組みです。仮想口座、振込入金専用口座とも呼ばれます<sup class="fn"><a href="#src-14">[14]</a><a href="#src-16">[16]</a></sup>。どの口座番号に振り込まれたかで請求書や取引先が分かるため、振込人名が請求と違うことによる照合のずれを減らせます<sup class="fn"><a href="#src-14">[14]</a></sup>。口座を分けても、振り込む額は購入者が決めるため、額が足りない入金や多い入金は起こりえます。Stripe は、こうした過払いや不足払いを顧客の残高に保持して照合します<sup class="fn"><a href="#src-16">[16]</a></sup>。詳しくは<a class="text-link" href="/learn/reconciliation-automation/#virtual">入金消込は自動化できる？</a>で解説しています。</p>
             <h2 id="zedi">全銀 EDI システム（ZEDI）とは</h2>
-            <p>全銀 EDI システム（ZEDI）とは、振込に添える情報（EDI 情報）を増やす仕組みです。2018年12月25日に稼動を開始しました<sup class="fn"><a href="#src-15">[15]</a></sup>。支払通知番号や請求書番号などを添えられます<sup class="fn"><a href="#src-15">[15]</a></sup>。企業間の振込のための仕組みで、総合振込の際に使うフォーマットが対象です<sup class="fn"><a href="#src-15">[15]</a></sup>。ネットショップの購入者の振込に注文番号が付いて届く仕組みではありません。詳しくは<a class="text-link" href="/learn/reconciliation-automation/#zedi">入金消込は自動化できる？</a>で解説しています。</p>
+            <p>全銀 EDI システム（ZEDI）とは、振込に添える情報（EDI 情報）を増やす仕組みです。2018年12月25日に稼動を開始しました<sup class="fn"><a href="#src-15">[15]</a></sup>。支払通知番号や請求書番号などを添えられます<sup class="fn"><a href="#src-15">[15]</a></sup>。企業間の振込のための仕組みで、総合振込の際に使うフォーマットが対象です<sup class="fn"><a href="#src-15">[15]</a></sup>。ネットショップの購入者の振込に注文番号が付いて届く仕組みではありません。個人の振込で使えるかは確かめていません。詳しくは<a class="text-link" href="/learn/reconciliation-automation/#zedi">入金消込は自動化できる？</a>で解説しています。</p>
             <h2 id="webhook">Webhook</h2>
             <p>Webhook とは、決済の結果など、できごとが起きたときに、サービスからお店のサーバーへ自動で届く通知です。お店は、通知を受け取って注文を支払い済みにします。同じ通知が 2 回以上届くことがあるため、重複を除く工夫が要ります。詳しくは<a class="text-link" href="/docs/webhooks/events/">イベントと受信（docs）</a>と<a class="text-link" href="/docs/webhooks/idempotency/">冪等性（docs）</a>にあります。</p>
             <h2 id="sandbox">Sandbox</h2>

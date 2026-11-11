@@ -18,7 +18,7 @@ import { publish, withTemp } from "../figures/outputs.mjs";
 const TITLES = {
   // /learn/ と /en/learn/ の一覧（assets/learn/hub/）。英語の一覧の場面は scenes.js の "hub-en"
   "hub": {
-    ja: { t: "お店のための|決済の解説", sub: "ステーブルコイン・カード決済・手数料" },
+    ja: { t: "お店のための|決済の解説", sub: "ステーブルコイン・カード決済・手数料・銀行振込" },
     en: { t: "Guides to payments|in Japan and|stablecoins", sub: "For shops selling to Japan" },
   },
   "stablecoin-payments": {
@@ -58,13 +58,13 @@ const TITLES = {
     ja: { t: "決済手数料の|比較と計算方法", sub: "総コストの計算ツール付き" },
   },
   "payment-reconciliation": {
-    ja: { t: "入金消込|とは？", sub: "やり方と、銀行振込で手間がかかる理由" },
+    ja: { t: "入金消込|とは？", sub: "やり方と、銀行振込で大変な理由" },
   },
   "reconciliation-automation": {
-    ja: { t: "入金消込は|自動化できる？", sub: "銀行 API・バーチャル口座でも残る手作業" },
+    ja: { t: "入金消込は|自動化できる？", sub: "銀行 API・バーチャル口座・AI 消込の範囲と例外" },
   },
   "bank-transfer-payments": {
-    ja: { t: "銀行振込|決済とは？", sub: "消込のいらない受け取り方" },
+    ja: { t: "銀行振込決済とは？|決済代行・決済サービスで|受ける方法", sub: "消込のいらない受け取り方" },
   },
   "policy-expression": {
     ja: { t: "表現に関する|すてぶるペイの方針", sub: "どこまでを約束するか", label: "方針" },
