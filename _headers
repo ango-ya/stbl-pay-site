@@ -21,7 +21,10 @@
 /assets/learn/*
   ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
-/assets/og-*
+/assets/og-stblpay-generative-1200x630.png
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+/assets/og-stblpay-generative-en-1200x630.png
   ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
 
