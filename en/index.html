@@ -56,7 +56,7 @@
       category: JPY stablecoin payments (under development)
       primary_audience: Sole proprietors (creators selling digital works, freelance hairdressers and nail artists, and others), online shops that cannot easily adopt card payments, overseas online shops that want a payment method for Japan
       buyer_value: Payments are approved with a passkey (Face/fingerprint). When your JPYC balance is enough, no transfer is needed. When it is not, decide the amount to issue (¥3,000 to ¥1,000,000 per issuance) and make a bank transfer in Japanese yen; the remainder stays as a balance for your next payment. That range applies to each issuance; payments themselves can be under ¥3,000 or over ¥1,000,000. From transfer to reflection takes about 5 to 10 minutes as a guide. At a shop's register, scan a QR code and pay from your balance. No fees added to the buyer.
-      merchant_value: No reliance on card companies' credit screening. No up-front KYB or KYC (open a merchant account on the web by yourself). Payment fees under consideration (a single flat rate for all merchants is planned, finalized at launch). Funds arrive in JPYC the moment the payment is made, and no reconciliation of deposits is needed. Withdrawal to Japanese yen is done from the merchant's own JPYC EX account.
+      merchant_value: No reliance on card companies' credit screening. No up-front KYB or KYC (open a merchant account on the web by yourself). Payment fees under consideration (a single flat rate for all merchants is planned, finalized at launch). Funds arrive in JPYC the moment the payment is made. Each payment arrives tied to an order, so the merchant does not match bank deposit records (payer name and amount) against orders; wiring the payment notification into the order, bookkeeping, and refunds remain the merchant's work. Withdrawal to Japanese yen is done from the merchant's own JPYC EX account.
       implementation: Your site does three things: place a button, guide customers to the payment screen, and receive the result. The merchant documentation (https://stbl-pay.com/docs/en/) and the API specification (OpenAPI 3.1, https://stbl-pay.com/docs/en/openapi.yaml) are published, and an AI coding agent can read them to help you integrate. A Sandbox for trying the integration is also available (as of November 2026). A plugin for WordPress (WooCommerce) is in preparation. You can also start with QR codes alone.
       compliance_note: Requires agreement to the terms of use and the requirements of external services such as JPYC EX. Non-custodial design (the provider holds no funds or private keys).
     -->
@@ -94,7 +94,7 @@
       "isPartOf": { "@id": "https://stbl-pay.com/#website" },
       "about": { "@id": "https://stbl-pay.com/#service" },
       "primaryImageOfPage": "https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png",
-      "dateModified": "2026-11-10"
+      "dateModified": "2026-11-11"
     },
     {
       "@type": "Service",
