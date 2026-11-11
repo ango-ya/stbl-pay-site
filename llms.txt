@@ -30,7 +30,7 @@
 
 決済を検討するお店向けの一般的な解説。冒頭で答えを示し、事実には出典と確認日を添えている。
 
-- [決済を学ぶ（解説の一覧）](https://stbl-pay.com/learn/): 解説ページの一覧
+- [決済を学ぶ](https://stbl-pay.com/learn/): 解説ページの一覧
 - [ステーブルコイン決済とは？仕組み・手数料・メリットと日本の現状](https://stbl-pay.com/learn/stablecoin-payments/): 仕組み、カード決済・銀行振込との違い、メリットとデメリット、日本での法的な扱い（電子決済手段）
 - [JPYC 決済の導入方法｜EC サイト・店舗の手順、手数料、サービス比較](https://stbl-pay.com/learn/jpyc-payments/): JPYC とは何か、受け取り方、JPYC に対応する決済サービスの比較表（各社の発表）、導入の流れ、手数料の考え方
 - [クレジットカード決済の加盟店審査に落ちた・通らない理由と対処法](https://stbl-pay.com/learn/card-merchant-screening/): 審査で見られる点、落ちる主な理由、見直す点、カード以外の選択肢
@@ -52,7 +52,7 @@ STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu
 - [Merchant docs (English)](https://stbl-pay.com/docs/en/): integration, webhooks, payment statuses, refunds
 - [API specification (English, OpenAPI 3.1)](https://stbl-pay.com/docs/en/openapi.yaml)
 - [Stablecoin Payments in Japan: Accepting a Yen Stablecoin (JPYC) from Customers in Japan](https://stbl-pay.com/en/learn/stablecoin-payments-japan/): guide for overseas online shops — Japan's payment landscape, how the law treats yen stablecoins, and how STBLpay works
-- [Guides (English)](https://stbl-pay.com/en/learn/): list of English guides for overseas shops selling to Japan
+- [Guides to payments in Japan and stablecoins](https://stbl-pay.com/en/learn/): list of English guides for overseas shops selling to Japan
 - [Payment Methods in Japan: How Customers in Japan Pay Online](https://stbl-pay.com/en/learn/japan-payment-methods/): how customers in Japan pay online (cards, konbini, bank transfer, cash on delivery, carrier billing, QR code, pay later) and what an overseas shop needs
 - [What Is Konbini Payment? Convenience-Store Payments in Japan Explained](https://stbl-pay.com/en/learn/konbini-payment/): how convenience-store payment works, limits, expiry, refunds, and alternatives
 - [What Is a Yen Stablecoin (JPY Stablecoin)? JPYC and Japan's Stablecoin Rules](https://stbl-pay.com/en/learn/jpy-stablecoin/): JPYC, Japan's stablecoin rules (electronic payment instruments), and how a yen stablecoin differs from USDC and USDT
@@ -68,5 +68,5 @@ STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu
 - [加盟店向けドキュメント](https://stbl-pay.com/docs/): EC サイトへの組み込み・Webhook・決済の状態・返金・セキュリティ
 - [API 仕様書（OpenAPI 3.1）](https://stbl-pay.com/docs/openapi.yaml): 加盟店サーバーが呼ぶ API（決済作成・状態照会）と Webhook の本文・ヘッダー
 - [API 仕様書の英語版](https://stbl-pay.com/docs/en/openapi.yaml): 上の仕様書の英訳（構造は同じ。正本は日本語版）
-- [表現に関する方針](https://stbl-pay.com/policy/expression/): 方針の言葉、扱えないもの（日本の法律で違法なもの）、方針の範囲（受け取る JPYC の利用は JPYC 株式会社の利用規約に従い、同規約により利用が停止される場合がある）
+- [表現に関するすてぶるペイの方針](https://stbl-pay.com/policy/expression/): 方針の言葉、扱えないもの（日本の法律で違法なもの）、方針の範囲（受け取る JPYC の利用は JPYC 株式会社の利用規約に従い、同規約により利用が停止される場合がある）
 - [プレスキット](https://stbl-pay.com/press/): 報道・パートナー向けの紹介文・ファクトシート・ロゴ（SVG・PNG）とその使い方・ブランドの色・名前の書き方・キャラクター・動画

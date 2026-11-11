@@ -14,6 +14,8 @@ test.beforeEach(async ({ page, baseURL }) => {
   });
   await page.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
 });
+// テストの終わりにまだ転送中の要求（遅れて読む画像など）があると、route.fetch が「Test ended」で落ちるので捨てる
+test.afterEach(({ page }) => page.unrouteAll({ behavior: "ignoreErrors" }));
 
 const events = (page) => page.evaluate(() => (window.dataLayer || []).filter((a) => a[0] === "event").map((a) => [a[1], a[2]]));
 const names = async (page) => (await events(page)).map(([n]) => n);

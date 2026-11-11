@@ -34,14 +34,19 @@ else
   ng "配られている robots.txt がリポジトリのものと違う（Cloudflare の管理された robots.txt や AI の学習を止める設定を確かめる）"
 fi
 
-echo "== OGP 画像（sitemap.xml の全ページ。200 で image/png）と IndexNow の鍵"
+echo "== OGP 画像（sitemap.xml の全ページ。200 で image/png、ほかのサイトからも読める CORP）と IndexNow の鍵"
+n=0
 for u in $(curl -s "$BASE/sitemap.xml" | grep -o '<loc>[^<]*</loc>' | sed 's/<[^>]*>//g'); do
+  n=$((n+1))
   p="/${u#https://stbl-pay.com/}"
   og="$(curl -s "$BASE$p" | grep -o '<meta property="og:image" content="[^"]*"' | head -1 | sed 's/.*content="https:\/\/stbl-pay.com//; s/"$//')"
   if [ -z "$og" ]; then ng "$p に og:image が無い"; continue; fi
   got="$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "$BASE$og")"
   [ "$got" = "200 image/png" ] && ok "$p の og:image → $og" || ng "$p の og:image $og → ${got}（200 image/png のはず）"
+  curl -sI "$BASE$og" | grep -qi '^cross-origin-resource-policy: *cross-origin' && ok "$og は CORP cross-origin" || ng "$og に Cross-Origin-Resource-Policy: cross-origin が無い（_headers の例外が効いていない）"
 done
+[ "$n" -ge 20 ] && ok "sitemap.xml の URL ${n} 件" || ng "sitemap.xml から URL を ${n} 件しか拾えない"
+curl -sI "$BASE/" | grep -qi '^cross-origin-resource-policy: *same-origin' && ok "HTML の CORP は same-origin のまま" || ng "/ の Cross-Origin-Resource-Policy が same-origin でない"
 key="$(grep -o 'const KEY = "[0-9a-f]*"' "$(dirname "$0")/indexnow.mjs" | cut -d'"' -f2)"
 [ "$(curl -s "$BASE/$key.txt")" = "$key" ] && ok "IndexNow の鍵ファイル" || ng "/$key.txt が鍵を返さない"
 

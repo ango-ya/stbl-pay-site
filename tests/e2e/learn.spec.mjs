@@ -484,4 +484,5 @@ test("計測：AI の回答から来た閲覧、一覧のカード・関連欄�
   expect(await events()).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_related" })]);
   await page.locator("button.learn-fig-toggle").first().click();
   expect(await events()).toContainEqual(["figure_toggle", expect.objectContaining({ stopped: true })]);
+  await page.unrouteAll({ behavior: "ignoreErrors" }); // まだ転送中の要求があると route.fetch が「Test ended」で落ちる
 });
