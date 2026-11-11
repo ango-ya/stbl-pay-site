@@ -122,7 +122,7 @@ paths:
         '403':
           description: |
             - `merchant/suspended`: The merchant is suspended. A payment cannot be created. Wait for the suspension to be lifted
-            - `merchant/origin_mismatch`: `returnUrl` does not meet the registered-domain conditions
+            - `merchant/origin_mismatch`: `returnUrl` does not meet the registered-domain conditions. The conditions are `https`, no port number (`:443` is allowed), no userinfo, and a hostname that exactly matches a registered domain (a subdomain is a different domain and is not accepted). `returnUrl` can be omitted. A URL that is not `https` gives 400 `common/invalid_request` instead of this 403, except `http://localhost`, `http://127.0.0.1`, and `http://[::1]`
           content:
             application/json:
               schema:
@@ -467,7 +467,7 @@ components:
           type: string
           pattern: '^https://'
           description: |
-            The URL the buyer returns to after payment. The payment is not created unless all of the following conditions are met.
+            The URL the buyer returns to after payment. It is the page the buyer's browser returns to, not a server-to-server notification endpoint. Receive the payment result by Webhook. However, no Webhook is sent for `nonce_conflict`, so check unconfirmed orders with the payment status API. The payment is not created unless all of the following conditions are met.
 
             - The scheme is `https` (`http` is not allowed, including development URLs such as `http://localhost`)
             - No port number (`:443` is accepted)

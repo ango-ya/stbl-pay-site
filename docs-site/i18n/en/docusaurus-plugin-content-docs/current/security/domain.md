@@ -25,7 +25,7 @@ Pass the browser the `checkoutUrl` returned when you create the payment, and mov
 `returnUrl` is the URL of the page the buyer returns to after payment. Specify a page that meets all of these conditions:
 
 - It starts with `https://`.
-- It has no port number and no [userinfo](/reference/glossary) (`user:pass@`).
+- It has no port number (`:443` is allowed) and no [userinfo](/reference/glossary) (`user:pass@`).
 - Its host name exactly matches the domain registered in the merchant console (case-insensitive; subdomains are not allowed).
 
 You cannot use `localhost`.
