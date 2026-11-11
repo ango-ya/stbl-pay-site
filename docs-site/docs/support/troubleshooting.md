@@ -18,6 +18,7 @@ sidebar_position: 2
 | 復帰先を拒否される | HTTPS、userinfo なし、`returnUrl` のホスト名が登録ドメインと一致するか |
 | 指定期限を拒否される | `merchantExpiresAt` が作成時点から3日より先か（近すぎると 400 `payment/expires_at_too_soon`）。UTC の `Z` で終わる形式か（`+09:00` などのオフセット付きは 400 `common/invalid_request`） |
 | 決済ページへ進めない | API の `checkoutUrl` をそのまま使用しているか |
+| 決済ページが「接続が拒否されました」などと表示され開かない | 決済ページを iframe・popup・モーダルで埋め込んでいないか。決済ページは埋め込みを拒否する。`checkoutUrl` へページ全体を遷移させる（[決済を開始する](/client/start-payment)、[専用決済ページ](/security/boundaries#専用決済ページ)） |
 | 状態を取得できない | 作成時の決済 ID・環境が一致するか。通信エラーを `failed` にしていないか |
 | 金額が照会結果にない | 正常。注文データ・作成応答・検証済み Webhook を参照 |
 | Webhook の署名が合わない | raw body、対象環境の鍵、時刻、複数 `v1` の保持 |
