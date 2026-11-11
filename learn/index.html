@@ -24,7 +24,7 @@
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="決済を学ぶ：お店のための決済の解説。ステーブルコイン・カード決済・手数料。コイン・カード・お店・銀行・本の印が並んでいて、すてぶるちゃんが手のひらで示し、すてぶるくんが見ている絵" />
+    <meta property="og:image:alt" content="決済を学ぶ：お店のための決済の解説。ステーブルコイン・カード決済・手数料・銀行振込。コイン・カード・お店・銀行・本の印が並んでいて、すてぶるちゃんが手のひらで示し、すてぶるくんが見ている絵" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="決済を学ぶ：お店のための決済の解説" />
     <meta
@@ -32,7 +32,7 @@
       content="お店の決済の疑問に、冒頭で答える解説集です。ステーブルコイン決済、JPYC 決済の導入、決済代行、クレジットカード決済の審査・手数料・チャージバック、カード会社の表現規制、銀行振込と入金消込まで、出典と確認日を添えて平易に説明します。"
     />
     <meta name="twitter:image" content="https://stbl-pay.com/assets/learn/hub/og.png" />
-    <meta name="twitter:image:alt" content="決済を学ぶ：お店のための決済の解説。ステーブルコイン・カード決済・手数料。コイン・カード・お店・銀行・本の印が並んでいて、すてぶるちゃんが手のひらで示し、すてぶるくんが見ている絵" />
+    <meta name="twitter:image:alt" content="決済を学ぶ：お店のための決済の解説。ステーブルコイン・カード決済・手数料・銀行振込。コイン・カード・お店・銀行・本の印が並んでいて、すてぶるちゃんが手のひらで示し、すてぶるくんが見ている絵" />
     <link rel="canonical" href="https://stbl-pay.com/learn/" />
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
@@ -57,7 +57,7 @@
       "name": "決済を学ぶ",
       "description": "お店の決済の疑問に、冒頭で答える解説集です。ステーブルコイン決済、JPYC 決済の導入、決済代行、クレジットカード決済の審査・手数料・チャージバック、カード会社の表現規制、銀行振込と入金消込まで、出典と確認日を添えて平易に説明します。",
       "inLanguage": "ja",
-      "dateModified": "2026-11-10",
+      "dateModified": "2026-11-11",
       "isPartOf": { "@id": "https://stbl-pay.com/#website" },
       "publisher": { "@id": "https://stbl-pay.com/#org-angoya" },
       "about": { "@type": "Thing", "name": "決済" },
@@ -127,7 +127,7 @@
 
           <h1>決済を学ぶ</h1>
           <p class="learn-lead">ステーブルコインや決済代行、クレジットカード決済の導入・審査・手数料・チャージバック、決済方法の選び方、銀行振込と入金消込について、お店の立場から平易に解説します。各ページの最初の段落で、問いへの答えを先に示します。法令や他社の料金などの事実には、出典と確認日を添えています。</p>
-          <p class="learn-meta">更新日：<time datetime="2026-11-10">2026年11月10日</time>　文：合同会社暗号屋</p>
+          <p class="learn-meta">更新日：<time datetime="2026-11-11">2026年11月11日</time>　文：合同会社暗号屋</p>
 
           <section class="learn-group" aria-labelledby="group-need">
             <h2 id="group-need">困りごとから探す</h2>
@@ -138,12 +138,15 @@
               <li><a href="/learn/chargeback/">チャージバックの通知が来た</a></li>
               <li><a href="/learn/card-expression-restrictions/">同人・成人向け作品のカード決済が止まった</a></li>
               <li><a href="/learn/jpyc-payments/">JPYC で売上を受け取りたい</a></li>
-              <li><a href="/learn/payment-reconciliation/">銀行振込の入金確認・消込が大変</a></li>
+              <li><a href="/learn/payment-reconciliation/">入金消込が大変・振込名義が違う入金がある</a></li>
+              <li><a href="/learn/reconciliation-automation/">入金消込を自動化したい</a></li>
+              <li><a href="/learn/bank-transfer-payments/">ネットショップで銀行振込を受けたい・入金確認を減らしたい</a></li>
             </ul>
           </section>
 
           <section class="learn-group" aria-labelledby="group-a">
             <h2 id="group-a">ステーブルコイン決済</h2>
+            <p>ステーブルコインの意味、決済の仕組み、JPYC の導入方法、用語を、この順に解説します。</p>
             <ul class="learn-cards">
               <li>
                 <a href="/learn/what-is-stablecoin/">
@@ -178,6 +181,7 @@
 
           <section class="learn-group" aria-labelledby="group-b">
             <h2 id="group-b">カード決済と決済代行</h2>
+            <p>決済代行の仕組み、カード決済の導入と審査、チャージバック、表現規制を解説します。</p>
             <ul class="learn-cards">
               <li>
                 <a href="/learn/payment-gateway/">
@@ -226,6 +230,7 @@
 
           <section class="learn-group" aria-labelledby="group-c">
             <h2 id="group-c">決済方法と手数料</h2>
+            <p>決済方法の選び方と、手数料の比べ方を解説します。</p>
             <ul class="learn-cards">
               <li>
                 <a href="/learn/online-payment-methods/">
@@ -246,6 +251,7 @@
 
           <section class="learn-group" aria-labelledby="group-d">
             <h2 id="group-d">銀行振込と入金消込</h2>
+            <p>入金消込の意味とやり方、自動化できる範囲、消込のいらない受け取り方の条件を、この順に解説します。</p>
             <ul class="learn-cards">
               <li>
                 <a href="/learn/payment-reconciliation/">
@@ -265,7 +271,7 @@
                 <a href="/learn/bank-transfer-payments/">
                   <img class="learn-card-thumb" src="/assets/learn/bank-transfer-payments/thumb.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" />
                   <h3>銀行振込決済とは：お店が銀行振込を受ける方法と、消込のいらない受け取り方</h3>
-                  <p>銀行振込決済は、ネットショップなどで、購入者が銀行振込で代金を払う決済方法です。</p>
+                  <p>銀行振込決済は、購入者が銀行振込で代金を払う決済方法です。お店の口座で受ける方法、決済代行・決済サービスを通す方法、注文ごとに支払いが届く方法を比べます。</p>
                 </a>
               </li>
             </ul>
