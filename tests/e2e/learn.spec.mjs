@@ -19,6 +19,9 @@ const PAGES = [
   { path: "/learn/accept-credit-cards/", main: "Article" },
   { path: "/learn/online-payment-methods/", main: "Article" },
   { path: "/learn/card-expression-restrictions/", main: "Article" },
+  { path: "/learn/payment-reconciliation/", main: "Article" },
+  { path: "/learn/reconciliation-automation/", main: "Article" },
+  { path: "/learn/bank-transfer-payments/", main: "Article" },
   { path: "/policy/expression/", main: "WebPage" },
   { path: "/en/learn/stablecoin-payments-japan/", main: "Article" },
   { path: "/en/learn/", main: "CollectionPage" },
@@ -78,6 +81,9 @@ const MIGRATED = {
   "card-expression-restrictions": ["layers", "chain", "spread"],
   "online-payment-methods": ["combine", "window"],
   "payment-fees": ["total", "payout"],
+  "payment-reconciliation": ["match", "gaps"],
+  "reconciliation-automation": ["api", "virtual"],
+  "bank-transfer-payments": ["ways", "stblpay"],
   "policy-expression": ["line"],
 };
 // 表現に関する方針は /policy/expression/ にある（slug は policy-expression）。それ以外は /learn/<slug>/

@@ -42,6 +42,9 @@
 - [決済代行とは？仕組み・アクワイアラや収納代行との違い・選び方](https://stbl-pay.com/learn/payment-gateway/): 決済代行の仕組みとお金の流れ、アクワイアラ・収納代行との違い、手数料と入金、選び方
 - [クレジットカード決済を導入するには？ネットショップの方法・費用・審査](https://stbl-pay.com/learn/accept-credit-cards/): 導入の方法（決済代行・カート付属の決済・アクワイアラと直接契約）、手順、費用、審査、入金までの日数
 - [ネットショップの決済方法 9 種類を比較：選び方とおすすめの組み合わせ](https://stbl-pay.com/learn/online-payment-methods/): クレジットカード・コンビニ払い・銀行振込・後払い・QR コード・ステーブルコインなどの比べ方と、組み合わせ方
+- [入金消込とは：やり方と、銀行振込で手間がかかる理由](https://stbl-pay.com/learn/payment-reconciliation/): 入金消込のやり方、銀行振込で名義や金額がずれて手間がかかる理由（振込依頼人名の制限、手数料の差し引き、まとめての振込）、手間を減らす方法
+- [入金消込は自動化できる？：銀行 API・バーチャル口座でも残る手作業](https://stbl-pay.com/learn/reconciliation-automation/): 銀行 API・入金の通知・全銀 EDI・バーチャル口座・消込のシステムで自動化できる範囲と、例外として残る作業（過不足・照合できない入金・返金）、消込そのものをなくす受け取り方の条件
+- [銀行振込決済とは：お店が銀行振込を受ける方法と、消込のいらない受け取り方](https://stbl-pay.com/learn/bank-transfer-payments/): お店の口座で受ける方法・決済サービスの銀行振込・銀行振込から使えるステーブルコイン決済を、入金確認・ずれ・返金で比べ、消込のいらない受け取り方の条件を説明（すてぶるペイは開発中で、支払いが注文ごとに届くため、銀行の入金明細と注文を突き合わせる作業が要らない）
 - [ステーブルコイン決済の用語集](https://stbl-pay.com/learn/glossary/): 電子決済手段、資金移動業、JPYC、ノンカストディアル、与信審査、チャージバックなど。語ごとに ID があり、直接リンクできる（https://stbl-pay.com/learn/glossary/#electronic-payment-instrument 、https://stbl-pay.com/learn/glossary/#non-custodial 、https://stbl-pay.com/learn/glossary/#jpy-stablecoin ）
 
 ## English summary
