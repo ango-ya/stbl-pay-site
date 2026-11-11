@@ -83,10 +83,11 @@
     const link = target.closest("a[href]");
     if (link) {
       const href = link.getAttribute("href") || "";
-      // 解説：一覧のカード・記事の関連欄から、どの記事へ進んだか
-      const learnFrom = link.closest(".learn-cards") ? "learn_hub" : link.closest(".learn-related") ? "learn_related" : "";
+      // 解説：一覧の「困りごとから探す」・カード、記事の関連欄から、どの記事へ進んだか。item_id は # 以降を外したパス（節へのリンクも記事単位で数える）
+      const articlePath = (h) => h.split("#")[0];
+      const learnFrom = link.closest(".learn-needs") ? "learn_needs" : link.closest(".learn-cards") ? "learn_hub" : link.closest(".learn-related") ? "learn_related" : "";
       if (learnFrom) {
-        event("select_content", { content_type: learnFrom, item_id: href });
+        event("select_content", { content_type: learnFrom, item_id: articlePath(href) });
         return;
       }
       // 解説・方針の本文と末尾の箱から、LP・相談・docs・Sandbox・方針へ進んだこと（ヘッダー・フッターは対象外）。クラスの有無でなく行き先で見分ける
@@ -101,7 +102,7 @@
           else if (u.pathname.startsWith("/docs/")) exitType = "docs";
           else if (u.pathname.startsWith("/policy/")) exitType = "policy";
           else if (where === "learn_body" && /^\/(en\/)?learn\//.test(u.pathname) && u.pathname !== location.pathname) {
-            event("select_content", { content_type: "learn_body", item_id: href });
+            event("select_content", { content_type: "learn_body", item_id: articlePath(href) });
             return;
           }
         }
@@ -130,9 +131,9 @@
     }
 
     if (button.matches(".learn-fig-toggle")) {
-      // 図の「動きを止める／動かす」。押したあとの名前（data-stopped）で、止めたか動かしたかを送る
+      // 図の「動きを止める／動かす」。押したあとの名前（data-stopped）で、止めたか動かしたかを送る。figure は記事のスラッグつき（別の記事の同じファイル名と区別する）
       const img = button.closest("figure") && button.closest("figure").querySelector("img");
-      event("figure_toggle", { figure: img ? (img.getAttribute("src") || "").split("/").pop() : "", stopped: button.getAttribute("data-stopped") === "true" });
+      event("figure_toggle", { figure: img ? (img.getAttribute("src") || "").split("/").slice(-2).join("/") : "", stopped: button.getAttribute("data-stopped") === "true" });
     } else if (button.id === "openJpyc") {
       event("demo_payment_start", { demo_area: "cart" });
     } else if (button.id === "resetDemo") {

@@ -73,6 +73,32 @@ test("計測：ヘッダーの相談ボタン・出口でないリンクは、�
   expect(header[1].cta_destination).toBe("/#early-access");
 });
 
+test("計測：select_content の item_id は # 以降を外したパスで送る。「困りごとから探す」は learn_needs。figure_toggle の figure は記事のスラッグつき", async ({ page }) => {
+  // リンクで移ると dataLayer が消えるので、押したあとの移動は止める
+  const clickStay = (sel) => page.evaluate((s) => { const a = document.querySelector(s); a.addEventListener("click", (e) => e.preventDefault()); a.click(); }, sel);
+  await page.goto("https://stbl-pay.com/learn/");
+  await clickStay(".learn-needs a[href='/learn/payment-fees/#calc']");
+  let ev = await events(page);
+  expect(ev).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_needs", item_id: "/learn/payment-fees/" })]);
+  expect(ev.some(([, p]) => p.content_type === "learn_hub"), "困りごとのリンクは learn_hub にしない").toBe(false);
+  expect(JSON.stringify(ev), "節の # は item_id に残さない").not.toContain("#calc");
+
+  await page.goto("https://stbl-pay.com/learn/chargeback/");
+  await page.evaluate(() => {
+    const a = document.createElement("a");
+    a.href = "/learn/bank-transfer-payments/#stblpay";
+    a.addEventListener("click", (e) => e.preventDefault());
+    document.querySelector(".learn-body").appendChild(a);
+    a.click();
+    a.remove();
+  });
+  expect(await events(page)).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_body", item_id: "/learn/bank-transfer-payments/" })]);
+
+  await page.locator("button.learn-fig-toggle").first().click();
+  const figure = (await events(page)).find(([n]) => n === "figure_toggle")[1].figure;
+  expect(figure, "スラッグ/ファイル名").toMatch(/^chargeback\/[^/]+\.gif$/);
+});
+
 test("計測：FAQ の問いが開かれたことを、summary の文の先頭 80 字で、1 回の閲覧に同じ問いは 1 回だけ送る", async ({ page }) => {
   await page.goto("https://stbl-pay.com/learn/chargeback/");
   const summary = page.locator(".faq-list details > summary").first();

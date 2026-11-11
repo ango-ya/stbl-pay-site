@@ -112,8 +112,8 @@ LP と同じ静的 HTML で作り、`/learn/` 以下に置く。1 ページで 1
 
 | URL | 主な言葉 |
 |---|---|
-| /learn/payment-reconciliation/ | 入金消込とは、消込とは、入金消込 やり方、入金消込 大変、入金消込 課題、振込 名義 違う |
-| /learn/reconciliation-automation/ | 入金消込 自動化、入金消込 自動化 進まない 原因、入金消込 システム、入金消込 ai、バーチャル口座 消込、バーチャル口座 デメリット、全銀edi |
+| /learn/payment-reconciliation/ | 入金消込とは、消込とは、入金消込 やり方、入金消込 大変、入金消込 課題、入金消込 仕訳、入金消込 エクセル、入金消込 読み方、入金消込 流れ、振込 名義 違う |
+| /learn/reconciliation-automation/ | 入金消込 自動化、入金消込 自動化 進まない 原因、入金消込 システム、入金消込 システム比較、入金消込 ai、入金消込 自動化 エクセル、バーチャル口座 消込、バーチャル口座 デメリット、バーチャル口座とは、全銀edi |
 | /learn/bank-transfer-payments/ | 銀行振込 決済代行、銀行振込 決済サービス、銀行振込決済とは、ネットショップ 銀行振込、銀行振込 入金確認 |
 
 - 狙い：消込の需要は経理向けが中心で、上位は会計ソフト各社（マネーフォワード、バクラク、弥生など）。ここでは争わず、空いていそうな切り口を取る。それは「お店の側で消込そのものを発生させない受け取り方」。6 語の検索結果を見た範囲では、上位の解説に、注文ごとに支払いが特定される受け取り方を並べたものは見当たらなかった（観測の範囲の仮説）。
@@ -171,17 +171,25 @@ AI は、検索の上位のページと、名前の通った第三者の記事�
 | イベント | いつ | 主なパラメータ |
 |---|---|---|
 | cta_click | 解説・方針のページの本文・末尾の箱から、LP・相談（/#early-access）・docs・Sandbox・方針（/policy/）へ進んだとき。ヘッダーとフッターのリンクは、これまでどおりクラスで送る | cta_location（learn_body・learn_about・learn_sources）、exit_type（lp・consult・docs・sandbox・policy）、cta_destination、cta_label |
-| select_content | 一覧のカード（learn_hub）、関連欄（learn_related）、本文から別の解説へ（learn_body） | content_type、item_id |
+| select_content | 一覧の「困りごとから探す」（learn_needs）、一覧のカード（learn_hub）、関連欄（learn_related）、本文から別の解説へ（learn_body） | content_type、item_id（# 以降を外した記事のパス。節へのリンクも記事単位で数える） |
 | faq_open | FAQ の問いが開かれたとき（1 回の閲覧に同じ問いは 1 回） | question（summary の先頭 80 字） |
 | fee_calc_use | 決済手数料の計算ツールに、最初に入力したとき（1 回の表示で 1 回） | なし |
 | ai_referral | 参照元が AI（サブドメインも）、または utm_source が AI の名前・ホストのとき | ai_source、landing_page |
-| figure_toggle | 図の「動きを止める／動かす」 | figure、stopped |
+| figure_toggle | 図の「動きを止める／動かす」 | figure（記事のスラッグつき。例 bank-transfer-payments/ways.gif。別の記事の同じファイル名と混ざらない。2026-11-11 より前は ways.gif のようにファイル名だけ）、stopped |
 
-GA4 で、次のイベントスコープのカスタムディメンションを登録する（登録しないとレポートに出ない。登録以前の分は遡れない）：cta_location、exit_type、cta_destination、content_type、item_id、question、ai_source、landing_page。あわせて、/#early-access に進んだ cta_click（exit_type が consult）と form_start をキーイベントにすると、記事から相談への流れを追える。
+GA4 のカスタムディメンションは、2026-11-11 に登録済み（イベントのスコープで 11 個）：ai_source、landing_page、content_type、item_id、cta_location、exit_type、question、figure、stopped、cta_label、cta_destination。登録以前の分は遡れない。パラメータを足したら、この一覧と GA4 の登録を同じ日にそろえる（登録しないとレポートに出ない）。あわせて、/#early-access に進んだ cta_click（exit_type が consult）と form_start をキーイベントにすると、記事から相談への流れを追える。
 
 Google の AI による概要・AI モードからの来訪は、参照元が google.com なので ai_referral では分けられない。Search Console の生成 AI のレポートで見る。
 
 限界もある。Google の正確な順位と、ChatGPT・Perplexity の実際の回答は、ルーチンからは取れない。前者は Search Console の数字で、後者は人の手で月に 1 回確かめる。
+
+群 D（3-6 の 3 本）の効き目は、次のように見る。
+
+- 入口：一覧の「困りごとから探す」から進んだ数は、select_content の content_type が learn_needs、item_id が記事のパス。言い方ごと（行ごと）の差で、入口の文言を直す。
+- 3 本のあいだの流れ：select_content の content_type が learn_body・learn_related のうち、item_id が /learn/reconciliation-automation/ や /learn/bank-transfer-payments/ のもの。item_id はパスだけなので、前方一致でなく完全一致で足りる。
+- 読まれ方：faq_open の question（記事ごと。page_path で絞る）。図は figure_toggle の figure（例 bank-transfer-payments/ways.gif）。
+- 先への進み：cta_click を page_path で群 D に絞り、exit_type（docs・consult・lp・sandbox）と cta_destination で、docs のどのページへ進んだかを見る。
+- 検索側：Search Console で、ページを 1 本ずつ絞り、`target-keywords.md` の「群 D を絞る正規表現」で表示回数・順位を見る。直しの前後を同じ条件で比べる。AI の回答は、「AI への質問」の群 D の問いを毎週同じ形で聞く。
 
 露出（表示回数・引用）だけでなく、解説ページを読んだ人が相談・docs・Sandbox に進んだかも見る。認知が増えても先に進む人が増えなければ、記事の終わり方（紹介の箱やリンク）を直す。
 
