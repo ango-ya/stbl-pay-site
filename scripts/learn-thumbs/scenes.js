@@ -242,6 +242,47 @@
         kun(ctx, "right", "rest", 640);
       },
     },
+    "payment-reconciliation": {
+      desc: "入金の明細の紙と注文の伝票が並び、間の虫眼鏡で突き合わせていて、すてぶるちゃんが笑顔で手のひらを向け、すてぶるくんが見ている絵",
+      draw(ctx) {
+        halo(ctx, 880, 190, 170);
+        paper(ctx, 720, 70, 130, 170, 5); // 入金の明細
+        coin(ctx, "yen", 785, 250, 0.7);
+        paper(ctx, 930, 70, 120, 150, 4); // 注文の伝票
+        icon(ctx, "check", 1040, 80, 0.8);
+        icon(ctx, "magnifier", 890, 260, 1.2);
+        drawChan(ctx, 0, { pose: "palm", mouth: 2, x: 1040, y: 630, h: 380 });
+        kun(ctx, "right");
+      },
+    },
+    "reconciliation-automation": {
+      desc: "銀行の建物から画面へ矢印がのび、画面に完了の印が並ぶなかで 1 つだけ止まりの印が残っていて、すてぶるちゃんが笑顔で指さし、すてぶるくんが見ている絵",
+      draw(ctx) {
+        halo(ctx, 880, 190, 170);
+        icon(ctx, "bank", 765, 150, 1.1);
+        arrow(ctx, [830, 150], [890, 150], 1, { color: C.blue, width: 6 });
+        rr(ctx, 900, 70, 170, 190, 12); shape(ctx, C.white); // 画面
+        for (let i = 0; i < 3; i++) bars(ctx, 920, 100 + i * 52, 80, 1, 16, i < 2 ? C.light : "#bcd7f7");
+        for (let i = 0; i < 2; i++) icon(ctx, "check", 1035, 104 + i * 52, 0.55);
+        stop(ctx, 1035, 208, 15);
+        drawChan(ctx, 0, { pose: "point", mouth: 2, x: 1040, y: 630, h: 380 });
+        kun(ctx, "right", "o");
+      },
+    },
+    "bank-transfer-payments": {
+      desc: "円のお札から青いコインへ、そしてお店へ矢印が続き、お店の上に完了の印があって、すてぶるちゃんが笑顔で手のひらを向け、すてぶるくんが見ている絵",
+      draw(ctx) {
+        halo(ctx, 880, 190, 170);
+        coin(ctx, "yen", 760, 130, 1.1);
+        arrow(ctx, [815, 130], [880, 130], 1, { color: C.blue, width: 6 });
+        coin(ctx, "stable", 940, 130, 1.3);
+        arrow(ctx, [930, 195], [840, 330], 1, { ctrl: [920, 300], color: C.blue, dash: [10, 12], width: 5 });
+        icon(ctx, "shop", 790, 410, 1.15);
+        icon(ctx, "check", 850, 345, 0.8);
+        drawChan(ctx, 0, { pose: "palm", mouth: 2, x: 1040, y: 630, h: 380 });
+        kun(ctx, "right");
+      },
+    },
     "policy-expression": {
       desc: "抽象的な模様の額縁が並んだ明るい壁の前で、すてぶるちゃんが手のひらで額縁を示し、すてぶるくんが座布団の上で見ている絵",
       draw(ctx) {

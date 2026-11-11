@@ -57,6 +57,15 @@ const TITLES = {
   "payment-fees": {
     ja: { t: "決済手数料の|比較と計算方法", sub: "総コストの計算ツール付き" },
   },
+  "payment-reconciliation": {
+    ja: { t: "入金消込|とは？", sub: "やり方と、銀行振込で手間がかかる理由" },
+  },
+  "reconciliation-automation": {
+    ja: { t: "入金消込は|自動化できる？", sub: "銀行 API・バーチャル口座でも残る手作業" },
+  },
+  "bank-transfer-payments": {
+    ja: { t: "銀行振込|決済とは？", sub: "消込のいらない受け取り方" },
+  },
   "policy-expression": {
     ja: { t: "表現に関する|すてぶるペイの方針", sub: "どこまでを約束するか", label: "方針" },
   },
