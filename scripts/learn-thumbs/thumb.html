@@ -1,0 +1,91 @@
+<!doctype html>
+<!--
+  解説ページのサムネイル（OGP と記事の冒頭の画像）の元。scripts/learn-thumbs/make.mjs が 1200×630 で撮る。
+  ?slug=<記事>&t=<題名の行を | で区切る>&sub=<小さな副題>&label=<ラベル（省略時は「決済を学ぶ」）>&lang=ja|en
+  - 右側の絵：記事ごとの場面（scenes.js）を、図と同じ部品（../figures/engine.js）でキャンバスに描く
+  - 左側に「決済を学ぶ」のラベル・題名・ロゴを重ねる。英語（lang=en）はラベルとロゴを英語にする
+  配信しない（scripts/ はビルドの対象外）。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>解説のサムネイル</title>
+<style>
+  @font-face {
+    font-family: "Schibsted Grotesk";
+    src: url("../../assets/fonts/schibsted-grotesk-latin-wght.woff2") format("woff2-variations");
+    font-weight: 400 900;
+  }
+  html, body { margin: 0; }
+  #thumb {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #F6F7FB;
+    color: #0F206B;
+    font-family: "Schibsted Grotesk", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  }
+  #stage { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .text {
+    position: absolute;
+    left: 72px; top: 70px; bottom: 64px;
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+  }
+  .label {
+    align-self: flex-start;
+    padding: 8px 20px 9px;
+    border-radius: 6px;
+    background: #2775ca;
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  h1 { margin: 30px 0 0; font-size: 70px; font-weight: 800; line-height: 1.22; letter-spacing: 0.01em; }
+  h1 span { display: block; white-space: nowrap; }
+  .sub { margin: 18px 0 0; white-space: nowrap; font-size: 32px; font-weight: 700; color: #1f5fa8; } /* 背景 #F6F7FB に対して 6:1（4.5:1 以上） */
+  .logo { margin-top: auto; align-self: flex-start; height: 46px; }
+</style>
+</head>
+<body>
+<div id="thumb">
+  <canvas id="stage" width="1200" height="630"></canvas>
+  <img id="zabuton" src="../../assets/char/chan/zabuton.webp" alt="" hidden />
+  <div class="text">
+    <span class="label" id="label">決済を学ぶ</span>
+    <h1 id="title"></h1>
+    <p class="sub" id="sub"></p>
+    <img class="logo" id="logo" src="../../assets/brand/stblpay-logo-ja-black.svg" alt="すてぶるペイ" />
+  </div>
+</div>
+<script src="../figures/engine.js"></script>
+<script src="scenes.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  for (const line of (q.get("t") || "").split("|")) {
+    const s = document.createElement("span");
+    s.textContent = line;
+    document.getElementById("title").append(s);
+  }
+  document.getElementById("sub").textContent = q.get("sub") || "";
+  if (q.get("label")) document.getElementById("label").textContent = q.get("label");
+  if (q.get("lang") === "en") {
+    document.documentElement.lang = "en";
+    document.getElementById("label").textContent = "Learn payments";
+    document.getElementById("logo").src = "../../assets/brand/stblpay-logo-en-black.svg";
+    document.getElementById("logo").alt = "STBLpay";
+    document.getElementById("title").style.fontSize = "60px"; // 英文は和文より横に長い
+  }
+  const scene = window.SCENES[q.get("slug")];
+  if (!scene) throw new Error(`scenes.js に場面が無い記事：${q.get("slug")}`);
+  // engine.js の figure の仕組みで描く（絵は止まっているので t は使わない）。背景は全面を塗る（engine は 960×540 だけ塗るため）
+  FX.figure({ duration: 6, draw(ctx) { ctx.fillStyle = FX.C.bg; ctx.fillRect(0, 0, 1200, 630); scene.draw(ctx); } });
+  // 題名と副題が文字の欄（幅 600px）からはみ出して絵にかからないよう、フォントが読めたあとに文字を小さくする
+  const fit = (el, min) => { let size = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth && size > min) { size -= 2; el.style.fontSize = `${size}px`; } };
+  window.ready = window.ready.then(() => { fit(document.getElementById("title"), 44); fit(document.getElementById("sub"), 22); return true; });
+</script>
+</body>
+</html>

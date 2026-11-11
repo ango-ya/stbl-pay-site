@@ -20,21 +20,21 @@
       content="Why card processors label some merchants high risk, what that can mean in practice (reserves, monitoring programs, MATCH), and non-card alternatives."
     />
     <meta property="og:url" content="https://stbl-pay.com/en/learn/high-risk-merchant-account/" />
-    <meta property="og:image" content="https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png" />
+    <meta property="og:image" content="https://stbl-pay.com/assets/learn/high-risk-merchant-account/og-en.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
+    <meta property="og:image:alt" content="Learn payments: What is a high-risk merchant account? Why it happens, and the alternatives. A large card has a stop mark beside it, and a dotted path leads around it to a shop, with Suteburu-chan pointing at the path and Suteburu-kun looking on" />
     <meta property="article:published_time" content="2026-11-09" />
-    <meta property="article:modified_time" content="2026-11-09" />
+    <meta property="article:modified_time" content="2026-11-10" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="What Is a High-Risk Merchant Account? A Plain-English Guide" />
     <meta
       name="twitter:description"
       content="Why card processors label some merchants high risk, what that can mean in practice (reserves, monitoring programs, MATCH), and non-card alternatives."
     />
-    <meta name="twitter:image" content="https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png" />
-    <meta name="twitter:image:alt" content="STBLpay — Pay in yen. Settle in stablecoin." />
+    <meta name="twitter:image" content="https://stbl-pay.com/assets/learn/high-risk-merchant-account/og-en.png" />
+    <meta name="twitter:image:alt" content="Learn payments: What is a high-risk merchant account? Why it happens, and the alternatives. A large card has a stop mark beside it, and a dotted path leads around it to a shop, with Suteburu-chan pointing at the path and Suteburu-kun looking on" />
     <link rel="canonical" href="https://stbl-pay.com/en/learn/high-risk-merchant-account/" />
     <link rel="stylesheet" href="/assets/lp.css" />
     <link rel="stylesheet" href="/assets/learn.css" />
@@ -58,7 +58,7 @@
       "description": "A high-risk merchant account is a card account for businesses that processors see as higher risk. Learn why, what it involves, and the alternatives.",
       "inLanguage": "en",
       "datePublished": "2026-11-09",
-      "dateModified": "2026-11-09",
+      "dateModified": "2026-11-10",
       "author": {
         "@id": "https://stbl-pay.com/#org-angoya"
       },
@@ -66,10 +66,9 @@
         "@id": "https://stbl-pay.com/#org-angoya"
       },
       "mainEntityOfPage": "https://stbl-pay.com/en/learn/high-risk-merchant-account/",
-      "image": "https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png",
-      "about": {
-        "@id": "https://stbl-pay.com/#service"
-      }
+      "image": "https://stbl-pay.com/assets/learn/high-risk-merchant-account/og-en.png",
+      "about": { "@type": "Thing", "name": "High-risk merchant account" },
+      "mentions": { "@type": "Service", "@id": "https://stbl-pay.com/#service", "name": "STBLpay", "url": "https://stbl-pay.com/" }
     },
     {
       "@type": "BreadcrumbList",
@@ -98,6 +97,14 @@
       "@type": "FAQPage",
       "inLanguage": "en",
       "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why is my business considered high risk?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Public documents point to four kinds of reasons: the industry or product, the business model, dispute and fraud levels, and history, such as a listing in a terminated merchant database. Where a business falls is up to its processor, so ask the processor which of its policies applies to you."
+          }
+        },
         {
           "@type": "Question",
           "name": "Is a high-risk merchant account the same as being on the MATCH list?",
@@ -145,6 +152,14 @@
             "@type": "Answer",
             "text": "No. Buyers pay in yen from Japan and need a JPYC EX account, which is for individuals residing in Japan. STBLpay is for selling to buyers in Japan. It is under development, and the launch date has not been set (as of November 2026)."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does a MATCH listing last?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Stripe says a listing stays active for 5 years, and that only the acquirer that listed the business can request removal."
+          }
         }
       ]
     }
@@ -164,6 +179,7 @@
           <a href="/en/#flow">How it works</a>
           <a href="/en/#videos">Video</a>
           <a href="/en/#faq">FAQ</a>
+          <a href="/en/learn/">Guides</a>
           <a href="/docs/en/">Docs</a>
           <a href="/learn/" lang="ja" hreflang="ja">日本語</a>
         </nav>
@@ -183,8 +199,9 @@
           </nav>
 
           <h1>What Is a High-Risk Merchant Account? A Plain-English Guide</h1>
+          <img class="learn-hero" src="/assets/learn/high-risk-merchant-account/thumb-en.webp" width="1200" height="630" alt="Learn payments: What is a high-risk merchant account? Why it happens, and the alternatives. A large card has a stop mark beside it, and a dotted path leads around it to a shop, with Suteburu-chan pointing at the path and Suteburu-kun looking on" fetchpriority="high" decoding="async" />
           <p class="learn-lead">A high-risk merchant account is a card-payment account for a business that its card processor or acquiring bank treats as higher risk than usual. Stripe, for example, says it must follow rules set by card networks and banking partners, so it cannot support some businesses and gives others extra review<sup class="fn"><a href="#src-1">[1]</a></sup>. This guide explains why a business gets the label, what it can involve, why "instant approval" claims deserve care, and what non-card options exist, including a yen stablecoin for selling to buyers in Japan.</p>
-          <p class="learn-meta">Updated: <time datetime="2026-11-09">November 9, 2026</time>　By Ango-ya LLC</p>
+          <p class="learn-meta">Updated: <time datetime="2026-11-10">November 10, 2026</time>　By Ango-ya LLC</p>
 
           <div class="learn-body">
             <h2 id="what">What is a high-risk merchant account?</h2>
@@ -241,6 +258,35 @@
             <h2 id="alternatives">What are the alternatives to card payments?</h2>
             <p>If cards are not available or not a good fit, the options depend on where your buyers are. Ask a processor which payment methods it supports for your business. Some methods work differently from cards. For example, Stripe says its Konbini method used in Japan does not support the standard dispute process, so customers cannot file chargebacks<sup class="fn"><a href="#src-6">[6]</a></sup>. For other methods, see our guides on <a href="/en/learn/japan-payment-methods/">payment methods in Japan</a>, <a href="/en/learn/konbini-payment/">konbini payment</a> and <a href="/en/learn/accept-stablecoin-payments/">accepting stablecoin payments</a>. Each option has its own terms, limits and eligibility rules, so check them before you rely on one.</p>
 
+            <table class="learn-table">
+              <caption>Konbini payment and a yen stablecoin compared</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Option</th>
+                  <th scope="col">Runs on card networks?</th>
+                  <th scope="col">Chargebacks?</th>
+                  <th scope="col">Who can pay</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Konbini payment</th>
+                  <td data-label="Runs on card networks?">No</td>
+                  <td data-label="Chargebacks?">Not supported, per Stripe<sup class="fn"><a href="#src-6">[6]</a></sup></td>
+                  <td data-label="Who can pay">Customers in Japan<sup class="fn"><a href="#src-6">[6]</a></sup></td>
+                </tr>
+                <tr>
+                  <th scope="row">Yen stablecoin (STBLpay, under development)</th>
+                  <td data-label="Runs on card networks?">No</td>
+                  <td data-label="Chargebacks?">No card-style chargeback. Refunds are sent by the merchant</td>
+                  <td data-label="Who can pay">Buyers in Japan with a JPYC EX account</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h2 id="japan">What if a high-risk business sells to customers in Japan?</h2>
+            <p>Card payments in Japan involve merchant screening too. Japan's Installment Sales Act requires a business that contracts with merchants to handle credit card numbers to investigate a merchant before contracting, and not to contract if what it learns shows that the measures the merchant plans to take to manage card numbers and prevent their fraudulent use do not meet, or may not meet, the Act's standards<sup class="fn"><a href="#src-7">[7]</a></sup>. Non-card methods have their own eligibility rules. For example, Stripe's Konbini page names business categories that cannot use Konbini<sup class="fn"><a href="#src-6">[6]</a></sup>. A yen stablecoin is one way to be paid by buyers in Japan that does not run on card networks.</p>
+
             <h2 id="stblpay">How does STBLpay fit?</h2>
             <p>STBLpay (すてぶるペイ) is a payment service in which buyers pay in yen and merchants receive JPYC. It is under development, and the launch date has not been set (as of November 2026). It is not a general replacement for a US card account, because it is for selling to buyers in Japan.</p>
             <ul>
@@ -258,6 +304,10 @@
           <section aria-labelledby="faq-title">
             <h2 id="faq-title">Frequently asked questions</h2>
             <div class="faq-list">
+              <details>
+                <summary>Why is my business considered high risk?</summary>
+                <p>Public documents point to four kinds of reasons: the industry or product, the business model, dispute and fraud levels, and history, such as a listing in a terminated merchant database. Where a business falls is up to its processor, so ask the processor which of its policies applies to you.</p>
+              </details>
               <details>
                 <summary>Is a high-risk merchant account the same as being on the MATCH list?</summary>
                 <p>No. A high-risk label is a processor's own risk assessment. MATCH is Mastercard's database of businesses that acquirers terminated for severe rule violations, fraud or high chargebacks. Stripe says most processors automatically reject listed businesses, and listings stay active for 5 years.</p>
@@ -282,30 +332,36 @@
                 <summary>Is STBLpay a replacement for a US card account?</summary>
                 <p>No. Buyers pay in yen from Japan and need a JPYC EX account, which is for individuals residing in Japan. STBLpay is for selling to buyers in Japan. It is under development, and the launch date has not been set (as of November 2026).</p>
               </details>
+              <details>
+                <summary>How long does a MATCH listing last?</summary>
+                <p>Stripe says a listing stays active for 5 years, and that only the acquirer that listed the business can request removal.</p>
+              </details>
             </div>
           </section>
 
           <section class="learn-sources" aria-labelledby="sources-title">
             <h2 id="sources-title">Sources</h2>
-            <p class="learn-note">All sources are in English. Processor documentation and card network programs change, so check the current page before you rely on it.</p>
+            <p class="learn-note">Source 7 is in Japanese, and the other sources are in English. Sources 1 to 6 were checked on November 9, 2026. Processor documentation and card network programs change, so check the current page before you rely on it.</p>
             <ol>
               <li id="src-1">Stripe, "<a href="https://stripe.com/legal/restricted-businesses">Prohibited and Restricted Businesses</a>" (last updated 2026-09-22; card network and financial partner rules, restricted businesses, additional due diligence, approval can be modified or revoked). Checked on November 9, 2026.</li>
               <li id="src-2">Stripe, "<a href="https://docs.stripe.com/disputes/monitoring-programs">Dispute and fraud card monitoring programs</a>", Stripe Documentation (thresholds, monitoring programs, fines and fees). Checked on November 9, 2026.</li>
               <li id="src-3">Visa, "<a href="https://corporate.visa.com/en/sites/visa-perspectives/security-trust/security-program-takes-aim-payments-fraud.html">New security program refresh takes aim at payments fraud</a>", Visa Perspectives, May 15, 2025 (Visa Acquirer Monitoring Program). Checked on November 9, 2026.</li>
               <li id="src-4">Stripe, "<a href="https://docs.stripe.com/disputes/match">Terminated merchant files</a>", Stripe Documentation (Mastercard MATCH and Visa VMSS, screening, listing period, removal). Checked on November 9, 2026.</li>
               <li id="src-5">Stripe, "<a href="https://stripe.com/legal/ssa">Stripe Services Agreement, General Terms</a>" (definition of "Reserve"). Checked on November 9, 2026.</li>
-              <li id="src-6">Stripe, "<a href="https://docs.stripe.com/payments/konbini">Konbini payments</a>", Stripe Documentation (disputes and chargebacks). Checked on November 9, 2026.</li>
+              <li id="src-6">Stripe, "<a href="https://docs.stripe.com/payments/konbini">Konbini payments</a>", Stripe Documentation (customer location, business categories that cannot use Konbini, disputes and chargebacks). Checked on November 9, 2026.</li>
+              <li id="src-7">e-Gov Laws and Regulations Search, "<a href="https://laws.e-gov.go.jp/law/336AC0000000159" lang="ja">割賦販売法</a>" (Installment Sales Act, Act No. 159 of 1961), Article 35-17-8 (investigation by a business that contracts with merchants to handle credit card numbers). Checked on November 10, 2026 (text read through the e-Gov law data API).</li>
             </ol>
           </section>
 
           <section class="learn-related" aria-labelledby="related-title">
             <h2 id="related-title">Related guides</h2>
             <ul>
-              <li><a href="/en/learn/stablecoin-payments-japan/">Accepting payments from customers in Japan with a yen stablecoin</a></li>
+              <li><a href="/en/learn/stablecoin-payments-japan/">Stablecoin payments in Japan: accepting a yen stablecoin</a></li>
               <li><a href="/en/learn/japan-payment-methods/">Payment methods in Japan</a></li>
               <li><a href="/en/learn/konbini-payment/">What is konbini payment?</a></li>
               <li><a href="/en/learn/jpy-stablecoin/">What is a yen stablecoin?</a></li>
               <li><a href="/en/learn/accept-stablecoin-payments/">How to accept stablecoin payments</a></li>
+              <li><a href="/learn/no-screening-payments/" lang="ja" hreflang="ja">決済代行に審査なしはある？（Japanese）</a></li>
             </ul>
           </section>
 
@@ -323,7 +379,7 @@
         <div>
           <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
           <p>Operated by <a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">Ango-ya LLC</a></p>
-          <p><a href="/docs/en/">Merchant docs</a>　<a href="/learn/" lang="ja" hreflang="ja">Guides (Japanese)</a>　<a href="/en/press/">Press kit</a></p>
+          <p><a href="/docs/en/">Merchant docs</a>　<a href="/en/learn/">Guides</a>　<a href="/learn/" lang="ja" hreflang="ja">Guides (Japanese)</a>　<a href="/en/press/">Press kit</a></p>
           <ul class="footer-facts">
             <li>Founded in February 2019, headquartered in Fukuoka City.</li>
             <li>Co-developed "JPYC Explorer," an accounting audit support tool for JPYC, with Asteria Corporation (announced by Asteria on March 13, 2026).</li>

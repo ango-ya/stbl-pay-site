@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  解説ページの図の舞台。scripts/figures/render.mjs が開いて、window.seek(t) を 1/fps ごとに撮る。
+  ブラウザで直接開いて確かめるときは ?fig=<slug>/<name>&play（例 stage.html?fig=stablecoin-payments/flow&play）。
+  配信しない（scripts/ はビルドの対象外）。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>図の舞台</title>
+<style>html, body { margin: 0; background: #ddd; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="stage" width="960" height="540"></canvas>
+<script src="engine.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const s = document.createElement("script");
+  s.src = `${q.get("fig")}.js`;
+  s.onerror = () => window.figureFailed(`図のファイルが読めない：${s.src}`);
+  document.body.append(s);
+  // 確かめる用の再生（書き出しでは使わない）
+  if (q.has("play")) window.ready.then(() => {
+    const t0 = performance.now();
+    const tick = (now) => { window.seek(((now - t0) / 1000) % window.FIG.duration); requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  });
+</script>
+</body>
+</html>

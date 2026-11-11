@@ -82,6 +82,44 @@ LP と同じ静的 HTML で作り、`/learn/` 以下に置く。1 ページで 1
 - 受け取った JPYC の会計の考え方（税理士の確認を前提に）
 - 個人事業主の決済手段の選び方（比較）
 
+### 3-4. 第 2 弾（2026-11-09 に前倒しで公開）
+
+3-3 の候補とは別に、検索の需要が大きい一般語（ステーブルコイン・決済代行・クレジットカード決済・決済方法）を受ける 4 本を足した。
+
+| URL | 主な言葉 |
+|---|---|
+| /learn/what-is-stablecoin/ | ステーブルコインとは、仕組み、種類、暗号資産との違い |
+| /learn/payment-gateway/ | 決済代行とは、仕組み、収納代行との違い、選び方 |
+| /learn/accept-credit-cards/ | クレジットカード決済 導入、ネットショップ、費用、審査 |
+| /learn/online-payment-methods/ | ネットショップの決済方法、種類、組み合わせ方 |
+
+- /learn/payment-fees/ に、決済手数料の総コストを計算するツールを足した（クレジットカード 手数料 計算、キャッシュレス手数料 計算方法）。
+- 解説を 3 つの群（A. ステーブルコイン決済、B. カード決済と決済代行、C. 決済方法と手数料）で束ね直した。一覧は群ごとの見出しにし、各ページの「関連する解説」は同じ群の他ページ全部と、他の群から 1〜2 本にした。
+- 前倒しは、第 1 弾の表示回数を待たずに出すというユーザーの判断。第 1 弾と公開日が近いため、効果を測るときは両者が混ざる。ページごとの表示回数で分けて見る。
+
+### 3-5. 表現規制と決済（2026-11-09）
+
+| URL | 主な言葉 |
+|---|---|
+| /learn/card-expression-restrictions/ | カード会社 表現規制 なぜ、クレカ 表現規制 なぜ、クレジットカード会社 表現規制、同人 クレカ 決済 |
+| /policy/expression/ | （検索の言葉は狙わない。方針の正本として、LP・プレス・llms.txt・解説から参照する） |
+
+- 狙い：検索は「カード会社の表現規制はなぜ」を柱にする。「JPYC 表現の自由」「ステーブルコイン 表現の自由」などは検索の需要がほぼ無い（research/suggest-expression-2026-11-09.txt）ので、LLMO（AI への質問は target-keywords.md）と発信（drafts/expression-*.md）で扱う。
+- 方針の言葉（2026-11-09 ユーザー決定。変えずに使う）：「日本の法律で違法でない表現は、内容を理由に断りません。表現の良し悪しを決めるのは、決済会社ではありません。」方針が出る箇所には、違法なものは扱えないことと、受け取る JPYC の利用は JPYC 株式会社の利用規約に従い、同規約により利用が停止される場合があることを添える（meta・OGP・JSON-LD・FAQ・投稿など、単独で引用されうる単位ごとに）。
+- 確かめた事実・出典・書き方の決まり（赤松氏・JPYC 社の扱いを含む）は、research/expression-facts.md が正本。
+
+### 3-6. 銀行振込と入金消込（2026-11-10）
+
+| URL | 主な言葉 |
+|---|---|
+| /learn/payment-reconciliation/ | 入金消込とは、消込とは、入金消込 やり方、入金消込 大変、入金消込 課題、振込 名義 違う |
+| /learn/reconciliation-automation/ | 入金消込 自動化、入金消込 自動化 進まない 原因、入金消込 システム、入金消込 ai、バーチャル口座 消込、バーチャル口座 デメリット、全銀edi |
+| /learn/bank-transfer-payments/ | 銀行振込 決済代行、銀行振込 決済サービス、銀行振込決済とは、ネットショップ 銀行振込、銀行振込 入金確認 |
+
+- 狙い：消込の需要は経理向けが中心で、上位は会計ソフト各社（マネーフォワード、バクラク、弥生など）。ここでは争わず、空いていそうな切り口を取る。それは「お店の側で消込そのものを発生させない受け取り方」。6 語の検索結果を見た範囲では、上位の解説に、注文ごとに支払いが特定される受け取り方を並べたものは見当たらなかった（観測の範囲の仮説）。
+- 流れ：A（消込とは・手間の理由）で困りごとを示し、B（銀行 API・バーチャル口座・照合のルールでどこまで自動化できるか、例外として何が残るか）で「自動化すれば済む」を整理し、C（銀行振込決済とは）で消込のいらない受け取り方の条件へつなぐ。すてぶるペイの説明は、各記事の末尾の節に限る。
+- 事実の正本は research/reconciliation-basics.md・research/reconciliation-bank-api.md。言葉と SERP の観察は research/reconciliation-keywords.md（取得結果は research/suggest-reconciliation-2026-11-10.txt）。検索ボリュームは未確認。
+
 ## 4. AI に勧められるためにやること（LLMO）
 
 AI は、検索の上位のページと、名前の通った第三者の記事を根拠に答える。だから、次の 3 つを同時に進める。
@@ -122,7 +160,26 @@ AI は、検索の上位のページと、名前の通った第三者の記事�
 | AI に聞くと勧められるか | ルーチンが、`target-keywords.md` の固定の質問を、サイトの情報を渡していない新しいサブエージェントに検索付きで答えさせ、stbl-pay.com が出るかを見る。モデル名・日付・回答の原文を Issue に残す（参考値） | ルーチン |
 | 第三者の記事での言及 | ルーチンが「すてぶるペイ」「STBLpay」で検索する | ルーチン |
 | Google の AI 機能（AI による概要・AI モード）での表示 | Search Console の生成 AI のパフォーマンスのレポート（2026 年 6 月に公開。表示回数とページが分かる） | ユーザー |
-| 解説ページから先に進んだ数 | GA4 で、/learn/ から LP の相談（/#early-access）、/docs/、Sandbox へ進んだ数を、記事ごとに見る。assets/analytics.js は、相談ボタン（.header-cta）と .button・.text-link のリンクのクリックを cta_click として送る。解説ページの本文にある docs・Sandbox へのリンクのうち、これらのクラスが付いていないものは送られないので、クラスを付けるかイベントを足す（未対応）。GA4 で実際に受け取れているかも未確認 | ユーザー |
+| 解説ページから先に進んだ数 | GA4 で、cta_click のうち cta_location が learn_body・learn_about・learn_sources のものを、記事ごと（page_path）・行き先の種類（exit_type）ごとに見る。assets/analytics.js が、解説と方針のページの本文・末尾の箱のリンクを、クラスの有無でなく行き先で見分けて送る（下の「計測のイベント」） | ユーザー |
+| AI のクローラーが取りに来た回数 | Cloudflare の AI Crawl Control などで、利用者の質問で動くもの（ChatGPT-User・Perplexity-User・Claude-User）と、索引を作るもの（OAI-SearchBot・PerplexityBot・Claude-SearchBot）を、URL ごとに見る。見るだけで、設定は変えない。AI の回答の多くはクリックを生まないので、ai_referral（クリック）と別に見る。画面の項目名は変わりうる | ユーザーが週次の Issue に数字を書く |
+| 記事ごとの効き目 | Search Console の「検索パフォーマンス」で、ページを 1 本ずつ絞り（フィルタ「ページ」）、クエリを `target-keywords.md` の言葉（正規表現も可）で見る。記事の直しの前後を、同じ条件で比べる | ユーザー |
+
+### 計測のイベント（assets/analytics.js・assets/fee-calculator.js）
+
+送るのは、本番のホスト（stbl-pay.com）で、自動操作でないブラウザだけ。`?ga=off` を付けて開いたブラウザは送らない（`?ga=on` で戻す）。入力した値と個人の情報は送らない。
+
+| イベント | いつ | 主なパラメータ |
+|---|---|---|
+| cta_click | 解説・方針のページの本文・末尾の箱から、LP・相談（/#early-access）・docs・Sandbox・方針（/policy/）へ進んだとき。ヘッダーとフッターのリンクは、これまでどおりクラスで送る | cta_location（learn_body・learn_about・learn_sources）、exit_type（lp・consult・docs・sandbox・policy）、cta_destination、cta_label |
+| select_content | 一覧のカード（learn_hub）、関連欄（learn_related）、本文から別の解説へ（learn_body） | content_type、item_id |
+| faq_open | FAQ の問いが開かれたとき（1 回の閲覧に同じ問いは 1 回） | question（summary の先頭 80 字） |
+| fee_calc_use | 決済手数料の計算ツールに、最初に入力したとき（1 回の表示で 1 回） | なし |
+| ai_referral | 参照元が AI（サブドメインも）、または utm_source が AI の名前・ホストのとき | ai_source、landing_page |
+| figure_toggle | 図の「動きを止める／動かす」 | figure、stopped |
+
+GA4 で、次のイベントスコープのカスタムディメンションを登録する（登録しないとレポートに出ない。登録以前の分は遡れない）：cta_location、exit_type、cta_destination、content_type、item_id、question、ai_source、landing_page。あわせて、/#early-access に進んだ cta_click（exit_type が consult）と form_start をキーイベントにすると、記事から相談への流れを追える。
+
+Google の AI による概要・AI モードからの来訪は、参照元が google.com なので ai_referral では分けられない。Search Console の生成 AI のレポートで見る。
 
 限界もある。Google の正確な順位と、ChatGPT・Perplexity の実際の回答は、ルーチンからは取れない。前者は Search Console の数字で、後者は人の手で月に 1 回確かめる。
 

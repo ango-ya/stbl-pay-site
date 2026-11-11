@@ -6,7 +6,8 @@
   "scripts": {
     "test": "playwright test",
     "test:e2e": "playwright test",
-    "check": "./scripts/check-acceptance.sh && ./scripts/check-lr006-terms.sh"
+    "check": "./scripts/check-acceptance.sh && ./scripts/check-lr006-terms.sh",
+    "test:figures": "node --test scripts/figures/outputs.test.mjs"
   },
   "repository": {
     "type": "git",

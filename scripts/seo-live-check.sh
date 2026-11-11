@@ -10,10 +10,13 @@ ok() { echo "OK  $*"; }
 ng() { echo "NG  $*"; fail=1; }
 
 status() { curl -s -o /dev/null -w '%{http_code}' -A "${2:-Mozilla/5.0}" "$BASE$1"; }
+# Cross-Origin-Resource-Policy の値。名前だけ大文字・小文字を無視し、値はそのまま。ヘッダがちょうど 1 つのときだけ値を出す（重複・欠落は空）
+corp_of() { tr -d '\r' | awk 'tolower($0) ~ /^cross-origin-resource-policy:/ { n++; v = $0; sub(/^[^:]*:[ \t]*/, "", v); sub(/[ \t]+$/, "", v) } END { if (n == 1) print v }'; }
+corp() { curl -sI "$BASE$1" | corp_of; }
 expect_status() { # パス 期待するコード [User-Agent]
   local got bot
   got="$(status "$1" "${3:-}")"
-  bot="$(printf '%s' "${3:-}" | grep -oE '[A-Za-z-]*[Bb]ot|ChatGPT-User' | grep -v '^bot$' | head -1)"
+  bot="$(printf '%s' "${3:-}" | grep -oE '[A-Za-z-]*[Bb]ot|ChatGPT-User|Perplexity-User|Claude-User' | grep -v '^bot$' | head -1)"
   [ "$got" = "$2" ] && ok "$1 → ${got}${bot:+（${bot}）}" || ng "$1 → ${got}（${2} のはず）${bot:+（${bot}）}"
 }
 
@@ -26,11 +29,27 @@ for p in /sitemap.xml /docs/sitemap.xml /docs/en/sitemap.xml; do
   curl -s "$BASE/robots.txt" | grep -qx "Sitemap: https://stbl-pay.com$p" && ok "robots.txt に $p" || ng "robots.txt に Sitemap: $p が無い"
 done
 
-echo "== OGP 画像と IndexNow の鍵"
-for p in / /en/; do
-  og="$(curl -s "$BASE$p" | grep -o '<meta property="og:image" content="[^"]*"' | sed 's/.*content="https:\/\/stbl-pay.com//; s/"$//')"
-  [ -n "$og" ] && expect_status "$og" 200 || ng "$p に og:image が無い"
+echo "== robots.txt（リポジトリと同じものが配られているか。Cloudflare が行を差し込むと違いが出る）"
+repo_robots="$(dirname "$0")/../robots.txt"
+if diff <(curl -s "$BASE/robots.txt" | tr -d '\r') <(tr -d '\r' < "$repo_robots") > /dev/null; then
+  ok "配られている robots.txt はリポジトリの robots.txt と同じ"
+else
+  ng "配られている robots.txt がリポジトリのものと違う（Cloudflare の管理された robots.txt や AI の学習を止める設定を確かめる）"
+fi
+
+echo "== OGP 画像（sitemap.xml の全ページ。200 で image/png、ほかのサイトからも読める CORP）と IndexNow の鍵"
+n=0
+for u in $(curl -s "$BASE/sitemap.xml" | grep -o '<loc>[^<]*</loc>' | sed 's/<[^>]*>//g'); do
+  n=$((n+1))
+  p="/${u#https://stbl-pay.com/}"
+  og="$(curl -s "$BASE$p" | grep -o '<meta property="og:image" content="[^"]*"' | head -1 | sed 's/.*content="https:\/\/stbl-pay.com//; s/"$//')"
+  if [ -z "$og" ]; then ng "$p に og:image が無い"; continue; fi
+  got="$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "$BASE$og")"
+  [ "$got" = "200 image/png" ] && ok "$p の og:image → $og" || ng "$p の og:image $og → ${got}（200 image/png のはず）"
+  [ "$(corp "$og")" = "cross-origin" ] && ok "$og は CORP cross-origin" || ng "$og の Cross-Origin-Resource-Policy が cross-origin 1 つでない（_headers の例外が効いていない）"
 done
+[ "$n" -ge 20 ] && ok "sitemap.xml の URL ${n} 件" || ng "sitemap.xml から URL を ${n} 件しか拾えない"
+[ "$(corp /)" = "same-origin" ] && ok "HTML の CORP は same-origin のまま" || ng "/ の Cross-Origin-Resource-Policy が same-origin 1 つでない"
 key="$(grep -o 'const KEY = "[0-9a-f]*"' "$(dirname "$0")/indexnow.mjs" | cut -d'"' -f2)"
 [ "$(curl -s "$BASE/$key.txt")" = "$key" ] && ok "IndexNow の鍵ファイル" || ng "/$key.txt が鍵を返さない"
 
@@ -57,8 +76,10 @@ for ua in \
   "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-SearchBot/1.0; +Claude-SearchBot@anthropic.com)" \
   "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)" \
   "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)" \
+  "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)" \
+  "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; +Claude-User@anthropic.com)" \
   "CCBot/2.0 (https://commoncrawl.org/faq/)"; do
-  for p in / /llms.txt; do expect_status "$p" 200 "$ua"; done
+  for p in / /llms.txt /learn/ /learn/chargeback/; do expect_status "$p" 200 "$ua"; done
 done
 
 [ "$fail" -eq 0 ] && echo "すべて OK" || echo "NG があります"
