@@ -11,6 +11,8 @@ This is a draft specification for preview review. It does not announce productio
 
 Generate a P-256 key inside the merchant server, using Node.js `generateKeyPairSync('ec', { namedCurve: 'prime256v1' })`, for example. Keep the private key in the merchant's secret store or KMS/HSM. Never send it to STBL Pay. Register the uncompressed public key `0x04 || X || Y` in the store detail's merchant server refunds section (Setup for online stores, Settings for in-person QR stores). The owner approves a delegation with a passkey, binding the public key, refund-only permission, per-refund cap, wallet, epoch and chainId. There are at most 10 non-revoked members per store, including pending members. An omitted cap means unlimited; `"0"` disables refunds. The `stblpay_machine_` key followed by 43 base64url characters is displayed only at issuance or rotation. Payment API keys cannot be substituted.
 
+Each refund requires both the machine signature and STBL Pay’s co-signature. STBL Pay can refuse to co-sign after its checks, but cannot transfer funds without the machine signature.
+
 ## API flow
 
 Attach an [HTTP signature](/refunds/signing) to each request. `amountJpy` is a decimal string in yen, with up to six decimal places. Avoid floating-point conversion.
