@@ -50,3 +50,8 @@ Webhook の本文とヘッダーの項目ごとの定義は、OpenAPI 3.1 の仕
 加盟店コンソールから送るテスト通知だけは、`type` が `payment.settled` のまま、本文に `test: true` を持ちます。通常の通知に `test` というキーはありません。ID は `evt_test_`・`pi_test_` で始まり、実在する決済や注文を指しません。各フィールドの値は、[OpenAPI 仕様書](pathname:///openapi/#operation/receivePaymentEvent)の本文の `TestWebhookEvent` にあります。
 
 受信側での判定の手順は、[テスト通知の受信](/webhooks/events#テスト通知)を参照してください。
+
+
+## 返金イベント（公開準備中）
+
+`refund.confirmed` と `refund.failed` のdataは `refund_id`、`payment_intent_id`、`order_id`（nullable）、`amount_jpy`、`status`、`tx_hash`（nullable）、`failed_reason`（nullable）、`settled_at`（nullable）です。typeとstatusはそれぞれconfirmed/failedに対応します。tx hashを確証を持って取得できなければnullです。支払人アドレスは含みません。paymentイベントのdataとして検証しないでください。配信先・HMAC・再送方式は共通です。

@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHash,createPublicKey,verify} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {canonicalRequest,signRequest,signChallenge} from '../docs-site/static/examples/refund-signer.mjs';
+const sha=b=>createHash('sha256').update(b).digest();
+const vectors=JSON.parse(readFileSync(new URL('../docs-site/static/examples/refund-signing-vectors.json',import.meta.url)));
+for(const v of vectors.requests) test(v.name,()=>{
+ const rawBody=Buffer.from(v.rawBodyHex,'hex');
+ const args={...v,rawBody,privateKey:vectors.PUBLIC_TEST_ONLY_privateKeyPem};
+ assert.equal(canonicalRequest(args),v.canonical);
+ assert.equal(sha(Buffer.from(v.canonical)).toString('hex'),v.messageSha256);
+ const signature=Buffer.from(signRequest(args),'hex');
+ assert.equal(signature.length,64);
+ assert.equal(Buffer.from(v.canonical).toString('hex'),v.signingBytesHex);
+ assert.ok(verify('sha256',Buffer.from(v.canonical),{key:vectors.publicKeyPem,dsaEncoding:'ieee-p1363'},Buffer.from(v.signature,'hex')));
+ assert.ok(verify('sha256',Buffer.from(v.canonical),{key:createPublicKey(vectors.publicKeyPem),dsaEncoding:'ieee-p1363'},signature));
+ assert.equal(verify('sha256',sha(Buffer.from(v.canonical)),{key:createPublicKey(vectors.publicKeyPem),dsaEncoding:'ieee-p1363'},signature),false);
+});
+test('assertion uses DER and exactly one outer SHA-256',()=>{
+ const v=vectors.challenge;
+ const a=signChallenge({...v,privateKey:vectors.PUBLIC_TEST_ONLY_privateKeyPem});
+ assert.equal(a.authenticatorData,v.authenticatorData);
+ assert.equal(a.clientDataJSON,v.clientDataJSON);
+ assert.equal(JSON.parse(Buffer.from(a.clientDataJSON,'base64url')).challenge,Buffer.from(v.challenge.slice(2),'hex').toString('base64url'));
+ const bytes=Buffer.concat([Buffer.from(a.authenticatorData,'base64url'),sha(Buffer.from(a.clientDataJSON,'base64url'))]);
+ assert.equal(bytes.toString('hex'),v.signingBytesHex);
+ assert.ok(verify('sha256',bytes,vectors.publicKeyPem,Buffer.from(a.signature,'base64url')));
+ assert.ok(verify('sha256',bytes,vectors.publicKeyPem,Buffer.from(v.signature,'base64url')));
+ assert.equal(verify('sha256',sha(bytes),vectors.publicKeyPem,Buffer.from(a.signature,'base64url')),false);
+ assert.equal(Buffer.from(a.authenticatorData,'base64url').subarray(32).toString('hex'),'0100000000');
+});
+test('fixed raw signature preserves leading zeros and differs from DER',()=>{
+ const v=vectors.leadingZeroSignature;
+ assert.equal(v.rawHex.length,128);
+ assert.ok(v.rawHex.startsWith('00'));
+ assert.ok(v.rawHex.slice(64).startsWith('00'));
+ assert.ok(verify('sha256',Buffer.from(v.message),{key:vectors.publicKeyPem,dsaEncoding:'ieee-p1363'},Buffer.from(v.rawHex,'hex')));
+ assert.ok(verify('sha256',Buffer.from(v.message),vectors.publicKeyPem,Buffer.from(v.derBase64url,'base64url')));
+ assert.notEqual(Buffer.from(v.derBase64url,'base64url').length,64);
+});

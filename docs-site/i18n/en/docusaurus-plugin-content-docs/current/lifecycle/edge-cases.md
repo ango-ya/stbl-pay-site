@@ -29,7 +29,7 @@ This is **not the revival of a payment that STBLpay finalized as `canceled`**. A
 
 ## The payment succeeded after you closed your own order
 
-Your own inventory hold deadline and STBLpay's payment deadline are separate. If STBLpay's payment has not reached a terminal status, it may still succeed. Detect and hold a deposit for an order you cannot fulfill, and escalate it to an operations contact. A refund is available only through the route where an owner approves it from the Transaction details (取引の詳細) screen in the merchant console. The merchant server cannot refund automatically ([Scope of refunds](/refunds/overview)).
+Your own inventory hold deadline and STBLpay's payment deadline are separate. If STBLpay's payment has not reached a terminal status, it may still succeed. Detect and hold a deposit for an order you cannot fulfill, and escalate it to an operations contact. Refunds use separate authority from payment processing. The owner console flow and draft [merchant server API](/refunds/machine-api) are described in [refund scope](/refunds/overview). The draft does not announce production availability.
 
 ## Merchant suspension {/* #merchant-suspension */}
 

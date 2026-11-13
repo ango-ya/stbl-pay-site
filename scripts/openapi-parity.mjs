@@ -45,6 +45,7 @@ export function diffSpecs(ja, en) {
       const [x, y] = [a[k], b[k]];
       if (kind === "data") compare(x, y, p, "data");
       // shortcut: 拡張（x-）は、名前と区別できない場所があるので扱わず、置いたら止める。使うようになったら置く場所ごとに足す
+      else if (k === "x-auth-scheme") compare(x, y, p, "data");
       else if (k.startsWith("x-")) errors.push(`${p}: x- で始まるキーは、この検査が扱わない`);
       else if (kind === "map" || kind === "examples") compare(x, y, p, kind === "examples" ? "example" : "obj");
       else if (Array.isArray(a)) compare(x, y, p, "obj");

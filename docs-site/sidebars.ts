@@ -66,6 +66,8 @@ const sidebars: SidebarsConfig = {
         'refunds/execute',
         'refunds/funding',
         'refunds/errors',
+        'refunds/machine-api',
+        'refunds/signing',
       ],
     },
     {

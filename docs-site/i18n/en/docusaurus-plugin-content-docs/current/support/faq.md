@@ -57,7 +57,7 @@ Do not use a fixed elapsed time. Judge by whether a status lookup or a Webhook s
 
 ## Can I use a refund API?
 
-No. There is no refund API that you can call from the merchant server. The owner makes refunds from the Transaction details (取引の詳細) screen of the merchant console and approves them with a passkey. The refund destination is fixed to the original payer. See [Scope of refunds](/refunds/overview).
+Refunds use separate authority from payment processing. The owner console flow and draft [merchant server API](/refunds/machine-api) are described in [refund scope](/refunds/overview). The draft does not announce production availability.
 
 ## Is the payment ID a secret?
 

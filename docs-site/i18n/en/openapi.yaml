@@ -1,25 +1,34 @@
-# English translation of /docs/openapi.yaml (OpenAPI 3.1 specification of the STBLpay merchant API). Served at https://stbl-pay.com/docs/en/openapi.yaml.
-# The Japanese file (https://stbl-pay.com/docs/openapi.yaml) is the canonical source. The structure must stay identical to it; only description, summary, title, and tag names are translated.
 openapi: 3.1.0
 info:
   title: STBLpay API
-  version: '2026-10-28'
+  version: 0.32.0-feat-647-machine-refund.146
   summary: The API your merchant server calls, and the Webhook your merchant server receives
-  description: |
-    The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server receives, for STBLpay (pronounced "stable pay").
+  description: >-
+    The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server
+    receives, for STBLpay (pronounced "stable pay").
+
     The integration flow and notes are in the [merchant documentation](https://stbl-pay.com/docs/en/).
 
+
     - Bodies are JSON. REST API fields are camelCase, and Webhook bodies are snake_case.
-    - Amounts are decimal strings in yen (example: `"4980"`). They are not JSON numbers. Handle fractions such as fees without converting them to floating-point numbers.
+
+    - Amounts are decimal strings in yen (example: `"4980"`). They are not JSON numbers. Handle fractions such as fees
+    without converting them to floating-point numbers.
+
     - Date-times are ISO 8601 in UTC, ending with `Z`. Responses include milliseconds.
-    - The error body is `{ "code": "...", "details": { ... } }`. `details` may be absent. Branch on `code`, and use the HTTP status only as a supplement. Codes may be added, so fall back to your common error handling for unknown codes.
-    - There is no refund API that the merchant server can call. Refunds are a merchant console feature.
+
+    - The error body is `{ "code": "...", "details": { ... } }`. `details` may be absent. Branch on `code`, and use the
+    HTTP status only as a supplement. Codes may be added, so fall back to your common error handling for unknown codes.
+
+    Machine refund endpoints are draft for preview review; production availability is not announced.
   contact:
     name: STBLpay contact
     url: https://stbl-pay.com/docs/en/support/troubleshooting
 servers:
   - url: '{baseUrl}'
-    description: Check the endpoint URL with your [contact](https://stbl-pay.com/docs/en/support/troubleshooting). Do not assume a public URL or a localhost default
+    description: >-
+      Check the endpoint URL with your [contact](https://stbl-pay.com/docs/en/support/troubleshooting). Do not assume a
+      public URL or a localhost default
     variables:
       baseUrl:
         default: https://api.example.com
@@ -33,15 +42,26 @@ paths:
   /payment_intents:
     post:
       operationId: createPaymentIntent
-      tags: [Payments]
+      tags:
+        - Payments
       summary: Create a payment
-      description: |
-        Creates a payment and returns the URL of the checkout page (`checkoutUrl`) that you send the buyer to by top-level navigation.
-        Even if the response `status` is `created`, the payment has not succeeded. Confirm success with a Webhook or a status lookup.
+      description: >
+        Creates a payment and returns the URL of the checkout page (`checkoutUrl`) that you send the buyer to by
+        top-level navigation.
 
-        Calling again from the same store with the same `orderId` returns the existing payment instead of creating a new one (this is also a 201).
+        Even if the response `status` is `created`, the payment has not succeeded. Confirm success with a Webhook or a
+        status lookup.
+
+
+        Calling again from the same store with the same `orderId` returns the existing payment instead of creating a new
+        one (this is also a 201).
+
         The response has the `status` at that moment, and the amount, fee, and deadline decided at the first creation.
-        From the second call on, the type and format of the body, the store state, and `returnUrl` are still checked. When a payment already exists, the values of the `amountJpy` and `merchantExpiresAt` you sent are not checked (whether the amount is 0, whether the deadline is too close) and are not applied.
+
+        From the second call on, the type and format of the body, the store state, and `returnUrl` are still checked.
+        When a payment already exists, the values of the `amountJpy` and `merchantExpiresAt` you sent are not checked
+        (whether the amount is 0, whether the deadline is too close) and are not applied.
+
 
         Call this from your server. Do not expose the API key to the browser.
       security:
@@ -79,11 +99,16 @@ paths:
                     checkoutExpiresAt: '2026-10-20T03:00:00.000Z'
                     createdAt: '2026-10-19T03:00:00.000Z'
         '400':
-          description: |
+          description: >
             The request is invalid.
 
-            - `common/invalid_request`: A violation of the body's type or format. For a format violation, `details.issues` holds the list of violations. When the amount is 0, or the fractional part of the amount exceeds 6 digits, there is no `details`
-            - `payment/expires_at_too_soon`: `merchantExpiresAt` is too close. `details.minSeconds` holds the minimum number of seconds required from the time of creation
+
+            - `common/invalid_request`: A violation of the body's type or format. For a format violation,
+            `details.issues` holds the list of violations. When the amount is 0, or the fractional part of the amount
+            exceeds 6 digits, there is no `details`
+
+            - `payment/expires_at_too_soon`: `merchantExpiresAt` is too close. `details.minSeconds` holds the minimum
+            number of seconds required from the time of creation
           content:
             application/json:
               schema:
@@ -97,7 +122,8 @@ paths:
                       issues:
                         - code: invalid_string
                           validation: regex
-                          path: [amountJpy]
+                          path:
+                            - amountJpy
                           message: 10 進の非負数
                 amountZero:
                   summary: Amount is 0 (no details)
@@ -120,8 +146,10 @@ paths:
                   value:
                     code: auth/api_key_invalid
         '403':
-          description: |
-            - `merchant/suspended`: The merchant is suspended. A payment cannot be created. Wait for the suspension to be lifted
+          description: >
+            - `merchant/suspended`: The merchant is suspended. A payment cannot be created. Wait for the suspension to
+            be lifted
+
             - `merchant/origin_mismatch`: `returnUrl` does not meet the registered-domain conditions
           content:
             application/json:
@@ -135,11 +163,20 @@ paths:
                   value:
                     code: merchant/origin_mismatch
         '409':
-          description: |
+          description: >
             - `store/disabled`: The store is disabled. Check the store's status in the merchant console
-            - `merchant/domain_required`: An EC payment requires a registered domain. Register one in the merchant console
-            - `payment/order_terminated`: The existing payment with the same `orderId` was terminated by a merchant suspension, or was created before the suspension and has not been submitted yet. `details` holds the existing payment's `paymentIntentId`, `status`, and `failedReason`. Create the payment again with a new `orderId`
-            - `payment/order_id_conflict`: The `orderId` was already used at a different store of the same merchant. The other store's payment is not returned. Retrying with the same value does not resolve it, so create the payment again with a new `orderId`
+
+            - `merchant/domain_required`: An EC payment requires a registered domain. Register one in the merchant
+            console
+
+            - `payment/order_terminated`: The existing payment with the same `orderId` was terminated by a merchant
+            suspension, or was created before the suspension and has not been submitted yet. `details` holds the
+            existing payment's `paymentIntentId`, `status`, and `failedReason`. Create the payment again with a new
+            `orderId`
+
+            - `payment/order_id_conflict`: The `orderId` was already used at a different store of the same merchant. The
+            other store's payment is not returned. Retrying with the same value does not resolve it, so create the
+            payment again with a new `orderId`
           content:
             application/json:
               schema:
@@ -177,18 +214,24 @@ paths:
   /payment_status/{paymentIntentId}:
     get:
       operationId: getPaymentStatus
-      tags: [Payments]
+      tags:
+        - Payments
       summary: Retrieve payment status
-      description: |
-        Returns the current status of a payment. **There is no authentication.** No API key or Authorization header is needed.
+      description: >
+        Returns the current status of a payment. **There is no authentication.** No API key or Authorization header is
+        needed.
+
         A payment ID is not a secret, so do not use it in place of permission to view your own orders.
+
         This response does not include amounts, fees, or wallets.
       security: []
       parameters:
         - name: paymentIntentId
           in: path
           required: true
-          description: The `paymentIntentId` you received when creating the payment. An ID in the wrong format (including IDs starting with `pi_test_` from test notifications) returns 400 before its existence is checked
+          description: >-
+            The `paymentIntentId` you received when creating the payment. An ID in the wrong format (including IDs
+            starting with `pi_test_` from test notifications) returns 400 before its existence is checked
           schema:
             $ref: '#/components/schemas/PaymentIntentId'
       responses:
@@ -245,51 +288,794 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /staged_operations/{stagedOpId}:
+    delete:
+      parameters:
+        - name: stagedOpId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-stbl-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
+        - name: x-stbl-signature
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{128}$
+        - name: x-stbl-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: x-stbl-nonce
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[0-9a-f]{64}$
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    const: true
+                    type: boolean
+                required:
+                  - ok
+                additionalProperties: true
+      x-auth-scheme: machine-signature
+      description: >-
+        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
+        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
+        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
+      operationId: deleteMachinestagedoperationsstagedOpId
+  /refunds/{refundId}:
+    get:
+      parameters:
+        - name: refundId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-stbl-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
+        - name: x-stbl-signature
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{128}$
+        - name: x-stbl-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: x-stbl-nonce
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[0-9a-f]{64}$
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  actor:
+                    oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            const: owner
+                            type: string
+                        required:
+                          - kind
+                        additionalProperties: true
+                      - type: object
+                        properties:
+                          kind:
+                            const: machine
+                            type: string
+                          memberId:
+                            type: string
+                            pattern: ^mem_[0-9a-f]{8,32}$
+                          label:
+                            anyOf:
+                              - type: string
+                              - type: 'null'
+                        required:
+                          - kind
+                          - memberId
+                          - label
+                        additionalProperties: true
+                  refundId:
+                    type: string
+                    pattern: ^rfd_[0-9a-f]{8,32}$
+                  walletOperationId:
+                    type: string
+                    pattern: ^wop_[0-9a-f]{8,32}$
+                  amountJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  status:
+                    type: string
+                    enum:
+                      - queued
+                      - submitted
+                      - confirmed
+                      - failed
+                      - indeterminate
+                  includesUpgrade:
+                    type: boolean
+                  txHash:
+                    anyOf:
+                      - type: string
+                        pattern: ^0x[0-9a-f]{64}$
+                      - type: 'null'
+                  failureReason:
+                    anyOf:
+                      - type: string
+                      - type: 'null'
+                  acceptedAt:
+                    type: string
+                    format: date-time
+                  settledAt:
+                    anyOf:
+                      - type: string
+                        format: date-time
+                      - type: 'null'
+                required:
+                  - refundId
+                  - walletOperationId
+                  - amountJpy
+                  - status
+                  - includesUpgrade
+                  - txHash
+                  - failureReason
+                  - acceptedAt
+                  - settledAt
+                additionalProperties: true
+      x-auth-scheme: machine-signature
+      description: >-
+        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
+        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
+        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
+      operationId: getMachinerefundsrefundId
+  /payment_intents/{paymentIntentId}/refundable:
+    get:
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-stbl-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
+        - name: x-stbl-signature
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{128}$
+        - name: x-stbl-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: x-stbl-nonce
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[0-9a-f]{64}$
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentIntentId:
+                    type: string
+                    pattern: ^pi_[0-9a-f]{8,32}$
+                  paymentStatus:
+                    type: string
+                    enum:
+                      - created
+                      - signed
+                      - issue_pending
+                      - deposit_seen
+                      - deposit_confirmed
+                      - deploying
+                      - executing
+                      - settled
+                      - canceled
+                      - expired
+                      - failed
+                      - nonce_conflict
+                  amountJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  confirmedRefundedJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  reservedJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  refundableJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  refundableNowJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  onchainCreditJpy:
+                    anyOf:
+                      - type: string
+                        pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                      - type: 'null'
+                  walletBalanceJpy:
+                    anyOf:
+                      - type: string
+                        pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                      - type: 'null'
+                  limitedBy:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - onchain_credit
+                        - wallet_balance
+                  blockedBy:
+                    anyOf:
+                      - type: string
+                        enum:
+                          - payment_not_settled
+                          - payer_unknown
+                          - nothing_refundable
+                          - operation_in_progress
+                          - staged_operation_exists
+                          - wallet_not_deployed
+                          - state_unavailable
+                      - type: 'null'
+                  checkedAt:
+                    type: string
+                    format: date-time
+                  delegationCapJpy:
+                    anyOf:
+                      - type: string
+                        pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                      - type: 'null'
+                  executableJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  ownStaged:
+                    anyOf:
+                      - type: object
+                        properties:
+                          stagedOpId:
+                            type: string
+                            pattern: ^stg_[0-9a-f]{8,32}$
+                          amountJpy:
+                            type: string
+                            pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                          includesUpgrade:
+                            type: boolean
+                          expiresAt:
+                            type: string
+                            format: date-time
+                          paymentIntentId:
+                            type: string
+                            pattern: ^pi_[0-9a-f]{8,32}$
+                        required:
+                          - stagedOpId
+                          - amountJpy
+                          - includesUpgrade
+                          - expiresAt
+                          - paymentIntentId
+                        additionalProperties: true
+                      - type: 'null'
+                required:
+                  - paymentIntentId
+                  - paymentStatus
+                  - amountJpy
+                  - confirmedRefundedJpy
+                  - reservedJpy
+                  - refundableJpy
+                  - refundableNowJpy
+                  - onchainCreditJpy
+                  - walletBalanceJpy
+                  - limitedBy
+                  - blockedBy
+                  - checkedAt
+                  - delegationCapJpy
+                  - executableJpy
+                  - ownStaged
+                additionalProperties: true
+      x-auth-scheme: machine-signature
+      description: >-
+        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
+        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
+        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
+      operationId: getMachinepaymentintentspaymentIntentIdrefundable
+  /payment_intents/{paymentIntentId}/refunds:
+    get:
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+        - name: x-stbl-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
+        - name: x-stbl-signature
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{128}$
+        - name: x-stbl-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: x-stbl-nonce
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[0-9a-f]{64}$
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refunds:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        actor:
+                          oneOf:
+                            - type: object
+                              properties:
+                                kind:
+                                  const: owner
+                                  type: string
+                              required:
+                                - kind
+                              additionalProperties: true
+                            - type: object
+                              properties:
+                                kind:
+                                  const: machine
+                                  type: string
+                                memberId:
+                                  type: string
+                                  pattern: ^mem_[0-9a-f]{8,32}$
+                                label:
+                                  anyOf:
+                                    - type: string
+                                    - type: 'null'
+                              required:
+                                - kind
+                                - memberId
+                                - label
+                              additionalProperties: true
+                        refundId:
+                          type: string
+                          pattern: ^rfd_[0-9a-f]{8,32}$
+                        walletOperationId:
+                          type: string
+                          pattern: ^wop_[0-9a-f]{8,32}$
+                        amountJpy:
+                          type: string
+                          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                        status:
+                          type: string
+                          enum:
+                            - queued
+                            - submitted
+                            - confirmed
+                            - failed
+                            - indeterminate
+                        includesUpgrade:
+                          type: boolean
+                        txHash:
+                          anyOf:
+                            - type: string
+                              pattern: ^0x[0-9a-f]{64}$
+                            - type: 'null'
+                        failureReason:
+                          anyOf:
+                            - type: string
+                            - type: 'null'
+                        acceptedAt:
+                          type: string
+                          format: date-time
+                        settledAt:
+                          anyOf:
+                            - type: string
+                              format: date-time
+                            - type: 'null'
+                      required:
+                        - refundId
+                        - walletOperationId
+                        - amountJpy
+                        - status
+                        - includesUpgrade
+                        - txHash
+                        - failureReason
+                        - acceptedAt
+                        - settledAt
+                      additionalProperties: true
+                  nextCursor:
+                    anyOf:
+                      - type: string
+                      - type: 'null'
+                  staged:
+                    anyOf:
+                      - type: object
+                        properties:
+                          stagedOpId:
+                            type: string
+                            pattern: ^stg_[0-9a-f]{8,32}$
+                          amountJpy:
+                            type: string
+                            pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                          includesUpgrade:
+                            type: boolean
+                          expiresAt:
+                            type: string
+                            format: date-time
+                        required:
+                          - stagedOpId
+                          - amountJpy
+                          - includesUpgrade
+                          - expiresAt
+                        additionalProperties: true
+                      - type: 'null'
+                required:
+                  - refunds
+                  - staged
+                additionalProperties: true
+      x-auth-scheme: machine-signature
+      description: >-
+        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
+        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
+        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
+      operationId: getMachinepaymentintentspaymentIntentIdrefunds
+  /payment_intents/{paymentIntentId}/refunds/prepare:
+    post:
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-stbl-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
+        - name: x-stbl-signature
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{128}$
+        - name: x-stbl-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: x-stbl-nonce
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[0-9a-f]{64}$
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenge:
+                    type: string
+                    pattern: ^0x[0-9a-f]{64}$
+                  rpId:
+                    type: string
+                  serverTime:
+                    type: integer
+                  validUntil:
+                    type: string
+                    format: date-time
+                  stagedOpId:
+                    type: string
+                    pattern: ^stg_[0-9a-f]{8,32}$
+                  wallet:
+                    type: string
+                    pattern: ^0x[0-9a-f]{40}$
+                  paymentIntentId:
+                    type: string
+                    pattern: ^pi_[0-9a-f]{8,32}$
+                  amountJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  upgrade:
+                    type: object
+                    properties:
+                      included:
+                        type: boolean
+                    required:
+                      - included
+                    additionalProperties: true
+                required:
+                  - challenge
+                  - rpId
+                  - serverTime
+                  - validUntil
+                  - stagedOpId
+                  - wallet
+                  - paymentIntentId
+                  - amountJpy
+                  - upgrade
+                additionalProperties: true
+      x-auth-scheme: machine-signature
+      description: >-
+        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
+        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
+        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amountJpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+              required:
+                - amountJpy
+              additionalProperties: false
+      operationId: postMachinepaymentintentspaymentIntentIdrefundsprepare
+  /payment_intents/{paymentIntentId}/refunds/submit:
+    post:
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-stbl-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
+        - name: x-stbl-signature
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9a-f]{128}$
+        - name: x-stbl-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: x-stbl-nonce
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[0-9a-f]{64}$
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refundId:
+                    type: string
+                    pattern: ^rfd_[0-9a-f]{8,32}$
+                  walletOperationId:
+                    type: string
+                    pattern: ^wop_[0-9a-f]{8,32}$
+                  status:
+                    type: string
+                    enum:
+                      - queued
+                      - submitted
+                      - confirmed
+                      - failed
+                      - indeterminate
+                required:
+                  - refundId
+                  - walletOperationId
+                  - status
+                additionalProperties: true
+      x-auth-scheme: machine-signature
+      description: >-
+        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
+        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
+        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stagedOpId:
+                  type: string
+                  pattern: ^stg_[0-9a-f]{8,32}$
+                assertion:
+                  type: object
+                  properties:
+                    clientDataJSON:
+                      type: string
+                      minLength: 1
+                      pattern: ^[A-Za-z0-9_-]+$
+                    authenticatorData:
+                      type: string
+                      minLength: 1
+                      pattern: ^[A-Za-z0-9_-]+$
+                    signature:
+                      type: string
+                      minLength: 1
+                      pattern: ^[A-Za-z0-9_-]+$
+                  required:
+                    - clientDataJSON
+                    - authenticatorData
+                    - signature
+                  additionalProperties: true
+              required:
+                - stagedOpId
+                - assertion
+              additionalProperties: false
+      operationId: postMachinepaymentintentspaymentIntentIdrefundssubmit
 webhooks:
   paymentEvent:
     post:
       operationId: receivePaymentEvent
       summary: Receive the payment result (implemented by the merchant's server)
-      description: |
+      description: >-
         When a payment reaches a terminal state, STBLpay sends a `POST` to the URL registered in the merchant console.
-        There is one destination URL and one signing secret per merchant, and notifications for payments from every online shop arrive at the same URL.
-        Tell the types apart by `type` in the body (`payment.settled`, `payment.failed`, `payment.canceled`, `payment.expired`). Make sure an unknown type can be ignored by returning 2xx.
-        There is no notification for a payment whose outcome could not be determined (`nonce_conflict`). Confirm it with a status lookup.
+
+        There is one destination URL and one signing secret per merchant, and notifications for payments from every
+        online shop arrive at the same URL.
+
+        Tell the types apart by `type` in the body (`payment.settled`, `payment.failed`, `payment.canceled`,
+        `payment.expired`). Make sure an unknown type can be ignored by returning 2xx.
+
+        There is no notification for a payment whose outcome could not be determined (`nonce_conflict`). Confirm it with
+        a status lookup.
+
 
         **When you receive a notification, process it in this order.**
 
-        1. Verify the signature. Build `"<t>.<body>"` from the `t` in `Stbl-Pay-Signature` and the byte string of the body before it goes through a JSON parser, compute HMAC-SHA256 with the signing secret, and encode it as lowercase hex. Accept it if it matches any `v1`. Use 300 seconds as the initial tolerance for the difference between `t` and the current time
-        2. If `test` in the body parsed with `JSON.parse` is `true`, it is a test notification sent from the merchant console. Return 2xx without updating any order or payment state
-        3. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a resend, the `id` and the body do not change
-        4. Return 2xx after saving. If you respond first and then stop right after, you lose the notification and it is not resent
-        5. Run business processing from the saved event. Base the deposit recording on `net_received_jpy` in `payment.settled`
+
+        1. Verify the signature. Build `"<t>.<body>"` from the `t` in `Stbl-Pay-Signature` and the byte string of the
+        body before it goes through a JSON parser, compute HMAC-SHA256 with the signing secret, and encode it as
+        lowercase hex. Accept it if it matches any `v1`. Use 300 seconds as the initial tolerance for the difference
+        between `t` and the current time
+
+        2. If `test` in the body parsed with `JSON.parse` is `true`, it is a test notification sent from the merchant
+        console. Return 2xx without updating any order or payment state
+
+        3. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a
+        resend, the `id` and the body do not change
+
+        4. Return 2xx after saving. If you respond first and then stop right after, you lose the notification and it is
+        not resent
+
+        5. Run business processing from the saved event. Base the deposit recording on `net_received_jpy` in
+        `payment.settled`
+
 
         **Delivery and resends**
 
-        - A 2xx response is a success. The response body is not read
-        - A non-2xx response (3xx, 4xx, 5xx), a timeout, and a connection or TLS failure are all treated as failures and resent. Redirects are not followed
-        - The timeout is 10 seconds in the current configuration. Return 2xx once you have saved the event, and defer time-consuming work
-        - The intervals after a failure are 3 seconds, 10 seconds, 30 seconds, 120 seconds, and 600 seconds. Together with the first attempt there are 6 attempts in total, after which delivery is abandoned
-        - A resend keeps the body and `id`, and regenerates `t` and the signature for each attempt. The order of arrival is not guaranteed
 
-        For details, see [Signature verification](https://stbl-pay.com/docs/en/webhooks/signature), [Retry policy](https://stbl-pay.com/docs/en/webhooks/retry), and [Idempotency and ordering](https://stbl-pay.com/docs/en/webhooks/idempotency).
-      # The sender is authenticated by the body signature (Stbl-Pay-Signature), not by an API key
+        - A 2xx response is a success. The response body is not read
+
+        - A non-2xx response (3xx, 4xx, 5xx), a timeout, and a connection or TLS failure are all treated as failures and
+        resent. Redirects are not followed
+
+        - The timeout is 10 seconds in the current configuration. Return 2xx once you have saved the event, and defer
+        time-consuming work
+
+        - The intervals after a failure are 3 seconds, 10 seconds, 30 seconds, 120 seconds, and 600 seconds. Together
+        with the first attempt there are 6 attempts in total, after which delivery is abandoned
+
+        - A resend keeps the body and `id`, and regenerates `t` and the signature for each attempt. The order of arrival
+        is not guaranteed
+
+
+        For details, see [Signature verification](https://stbl-pay.com/docs/en/webhooks/signature), [Retry
+        policy](https://stbl-pay.com/docs/en/webhooks/retry), and [Idempotency and
+        ordering](https://stbl-pay.com/docs/en/webhooks/idempotency).
+
+        Draft preview adds refund.confirmed and refund.failed with dedicated refund data; do not parse these as payment
+        data.
       security: []
       parameters:
         - name: Stbl-Pay-Signature
           in: header
           required: true
-          description: |
+          description: >
             In the form `t=<Unix seconds>,v1=<lowercase hex of HMAC-SHA256>`, separated by commas.
-            For 24 hours after the signing secret is regenerated, two `v1` values appear side by side, one for the old key and one for the new key. Keep all of them, and do not convert the header into a dictionary that overwrites keys with the same name.
-            The signing secret is a string that starts with `whsec_`. Use the whole string, including `whsec_`, as the HMAC key as it is.
+
+            For 24 hours after the signing secret is regenerated, two `v1` values appear side by side, one for the old
+            key and one for the new key. Keep all of them, and do not convert the header into a dictionary that
+            overwrites keys with the same name.
+
+            The signing secret is a string that starts with `whsec_`. Use the whole string, including `whsec_`, as the
+            HMAC key as it is.
           schema:
             type: string
           example: t=1792900000,v1=5f2b0c1e9d8a7b6c5f4e3d2c1b0a99887766554433221100ffeeddccbbaa9988
         - name: Stbl-Pay-Event-Id
           in: header
           required: true
-          description: A copy of the `id` in the body. It does not change on a resend. It is not covered by the signature, so use the `id` of the signature-verified body to remove duplicates
+          description: >-
+            A copy of the `id` in the body. It does not change on a resend. It is not covered by the signature, so use
+            the `id` of the signature-verified body to remove duplicates
           schema:
             type: string
       requestBody:
@@ -299,7 +1085,7 @@ webhooks:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/WebhookEvent'
+                - $ref: '#/components/schemas/WebhookEventPayload'
                 - $ref: '#/components/schemas/TestWebhookEvent'
             examples:
               settled:
@@ -358,7 +1144,7 @@ webhooks:
                     settled_at: '2026-10-28T01:02:03.456Z'
                     failed_reason: null
       responses:
-        '2XX':
+        2XX:
           description: Received successfully. The body is not read
         default:
           description: Anything other than 2xx is treated as a failure and resent
@@ -368,141 +1154,248 @@ components:
       type: apiKey
       in: header
       name: x-stbl-api-key
-      description: |
-        An API key issued per store in the merchant console. Its format is `stblpay_` followed by 43 characters of base64url.
+      description: >
+        An API key issued per store in the merchant console. Its format is `stblpay_` followed by 43 characters of
+        base64url.
+
         The `Authorization` header is not used.
   responses:
     TooManyRequests:
-      description: |
+      description: >
         Rate limited. Retry after a pause.
-        Payment creation and status lookup have no application-level rate limit. However, the network layer in front may apply rate limiting, and the body in that case does not contain a `code`
+
+        Payment creation and status lookup have no application-level rate limit. However, the network layer in front may
+        apply rate limiting, and the body in that case does not contain a `code`
   schemas:
     PaymentIntentId:
       type: string
-      pattern: '^pi_[0-9a-f]{8,32}$'
+      pattern: ^pi_[0-9a-f]{8,32}$
       description: The payment ID. `pi_` followed by 8 to 32 lowercase hex digits
-      examples: [pi_0123456789abcdef0123456789abcdef]
+      examples:
+        - pi_0123456789abcdef0123456789abcdef
     AmountJpy:
       type: string
-      pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'
-      description: An amount in yen. A string of a decimal number, with no leading zeros in the integer part. In responses, trailing zeros in the fractional part are dropped (`"1.50"` becomes `"1.5"`, and `"4980.0"` becomes `"4980"`)
-      examples: ['4980', '49.8']
+      pattern: ^(0|[1-9][0-9]*)(\.[0-9]+)?$
+      description: >-
+        An amount in yen. A string of a decimal number, with no leading zeros in the integer part. In responses,
+        trailing zeros in the fractional part are dropped (`"1.50"` becomes `"1.5"`, and `"4980.0"` becomes `"4980"`)
+      examples:
+        - '4980'
+        - '49.8'
     DateTime:
       type: string
-      pattern: '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?Z$'
-      description: An ISO 8601 date-time in UTC, ending with `Z`. Values with an offset such as `+09:00`, and dates that do not exist on the calendar (such as February 30), are not accepted. In requests, seconds and milliseconds can be omitted. Responses include milliseconds
-      examples: ['2026-10-20T03:00:00.000Z']
+      pattern: ^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?Z$
+      description: >-
+        An ISO 8601 date-time in UTC, ending with `Z`. Values with an offset such as `+09:00`, and dates that do not
+        exist on the calendar (such as February 30), are not accepted. In requests, seconds and milliseconds can be
+        omitted. Responses include milliseconds
+      examples:
+        - '2026-10-20T03:00:00.000Z'
     PaymentStatus:
-      # Not an enum. So that, when a value is added, a generated validator does not reject it before treating it as under review
       type: string
-      examples: [created, settled]
-      description: |
-        The payment status. Only `settled` means the payment succeeded; base delivery of goods and recording of deposits on this status.
+      examples:
+        - created
+        - settled
+      description: >
+        The payment status. Only `settled` means the payment succeeded; base delivery of goods and recording of deposits
+        on this status.
+
 
         | Value | Category | Meaning |
-        |---|---|---|
-        | `created` | In progress | The payment was created. It is waiting for a signature |
-        | `signed` | In progress | The buyer's signature is done |
-        | `issue_pending` | In progress | The buyer proceeded to the JPYC EX procedure. This does not mean the procedure is complete |
-        | `deposit_confirmed` | In progress | The deposit (or the balance) was confirmed. The payment has not been executed yet |
-        | `deploying` | In progress | Creating the required wallets (the buyer's wallet and the merchant's receiving wallet) |
-        | `executing` | In progress | Execution of the payment has started. The result is being confirmed |
-        | `settled` | Succeeded | The payment succeeded and the funds were transferred to the merchant |
-        | `canceled` | Did not succeed | The payment was canceled |
-        | `expired` | Did not succeed | The payment ended because a deadline passed |
-        | `failed` | Did not succeed | The payment failed. The reason is in `failedReason` |
-        | `nonce_conflict` | Needs review | The outcome could not be determined. Do not treat it as either success or failure; hold it and refer it for investigation |
 
-        `deposit_seen` is defined but is not returned now. If you receive an unknown value, do not deliver goods or charge again; treat the payment as under review.
+        |---|---|---|
+
+        | `created` | In progress | The payment was created. It is waiting for a signature |
+
+        | `signed` | In progress | The buyer's signature is done |
+
+        | `issue_pending` | In progress | The buyer proceeded to the JPYC EX procedure. This does not mean the procedure
+        is complete |
+
+        | `deposit_confirmed` | In progress | The deposit (or the balance) was confirmed. The payment has not been
+        executed yet |
+
+        | `deploying` | In progress | Creating the required wallets (the buyer's wallet and the merchant's receiving
+        wallet) |
+
+        | `executing` | In progress | Execution of the payment has started. The result is being confirmed |
+
+        | `settled` | Succeeded | The payment succeeded and the funds were transferred to the merchant |
+
+        | `canceled` | Did not succeed | The payment was canceled |
+
+        | `expired` | Did not succeed | The payment ended because a deadline passed |
+
+        | `failed` | Did not succeed | The payment failed. The reason is in `failedReason` |
+
+        | `nonce_conflict` | Needs review | The outcome could not be determined. Do not treat it as either success or
+        failure; hold it and refer it for investigation |
+
+
+        `deposit_seen` is defined but is not returned now. If you receive an unknown value, do not deliver goods or
+        charge again; treat the payment as under review.
     FailedReason:
-      type: [string, 'null']
-      description: |
+      type:
+        - string
+        - 'null'
+      description: >
         The failure classification code. It is set when `status` is `failed` or `nonce_conflict`, and null otherwise.
-        Codes may be added, so do not validate strictly against an enumeration; **fall back to treating an unknown value as a failure.**
+
+        Codes may be added, so do not validate strictly against an enumeration; **fall back to treating an unknown value
+        as a failure.**
+
         Raw blockchain error strings and the issuer's reasons for a transaction decision are not included.
 
+
         | Code | Meaning |
+
         |---|---|
-        | `userop_expired` | The deposit or a sufficient balance was confirmed, but the time when the payment could be executed had passed. The money has arrived |
-        | `deposit_recipient_mismatch` | The recipient of the deposit differs from the recipient expected for the payment |
-        | `wallet_deploy_failed` | Creating a required wallet (the buyer's wallet or the merchant's receiving wallet) failed |
+
+        | `userop_expired` | The deposit or a sufficient balance was confirmed, but the time when the payment could be
+        executed had passed. The money has arrived |
+
+        | `deposit_recipient_mismatch` | The recipient of the deposit differs from the recipient expected for the
+        payment |
+
+        | `wallet_deploy_failed` | Creating a required wallet (the buyer's wallet or the merchant's receiving wallet)
+        failed |
+
         | `missing_signed_userop` | The signed operation required for execution was missing |
+
         | `insufficient_balance` | The payer's balance is insufficient |
+
         | `policy_violation` | The amount limit or frequency limit of the payer's wallet was hit |
+
         | `not_pay_call` / `not_allowed_call` | The operation was not an allowed form of payment operation |
+
         | `fee_amount_mismatch` | The fee amount does not match |
+
         | `fee_not_collected` | The fee was not collected |
-        | `merchant_wallet_outdated` | The merchant's receiving wallet implementation is outdated and the grace period has passed |
+
+        | `merchant_wallet_outdated` | The merchant's receiving wallet implementation is outdated and the grace period
+        has passed |
+
         | `unexpected_implementation` | The wallet implementation differs from what was expected |
+
         | `userop_reverted` | A payment operation failure that matches none of the above |
-        | `nonce_conflict` | The outcome could not be determined (`status` is also `nonce_conflict`). It is not included in the Webhook |
-        | `merchant_suspended` | A payment that had not started submission was moved to a terminal state because of a merchant suspension |
+
+        | `nonce_conflict` | The outcome could not be determined (`status` is also `nonce_conflict`). It is not included
+        in the Webhook |
+
+        | `merchant_suspended` | A payment that had not started submission was moved to a terminal state because of a
+        merchant suspension |
+
         | `unclassified` | A failure that has not been classified yet |
-      examples: [insufficient_balance]
+      examples:
+        - insufficient_balance
     CreatePaymentIntentRequest:
       type: object
-      required: [amountJpy]
+      required:
+        - amountJpy
       properties:
         amountJpy:
           type: string
-          pattern: '^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$'
+          pattern: ^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$
           not:
-            pattern: '^0(\.0+)?$'
-          description: |
-            The amount to charge (yen). A string of a decimal number, with no leading zeros in the integer part (examples: `"4980"`, `"0.5"`).
-            The amount must be greater than 0 (`"0"` gives 400 `common/invalid_request`). The fractional part can have up to 6 digits.
-            This API does not impose its own upper or lower limit on the amount. At payment time, the amount limit or frequency limit of the buyer's wallet may be hit and the payment may not succeed (`failedReason` is `policy_violation`)
-          examples: ['4980']
+            pattern: ^0(\.0+)?$
+          description: >
+            The amount to charge (yen). A string of a decimal number, with no leading zeros in the integer part
+            (examples: `"4980"`, `"0.5"`).
+
+            The amount must be greater than 0 (`"0"` gives 400 `common/invalid_request`). The fractional part can have
+            up to 6 digits.
+
+            This API does not impose its own upper or lower limit on the amount. At payment time, the amount limit or
+            frequency limit of the buyer's wallet may be hit and the payment may not succeed (`failedReason` is
+            `policy_violation`)
+          examples:
+            - '4980'
         orderId:
           type: string
           maxLength: 128
-          description: |
-            An ID for each payment attempt. The idempotency key. Creating again from the same store with the same value returns the existing payment.
-            Use the same value when you resend the request, and a new value when the buyer pays again after `failed`, `expired`, or `canceled`. You can use your own order number as it is only if you do not let the buyer pay again for the same order.
-            The length is counted in UTF-16 code units, up to 128 (an emoji counts as 2 units). `maxLength` counts characters, so a value containing emoji may pass the schema and still get 400 `common/invalid_request`.
-            If omitted, a new payment is created on every call. With multiple stores, assign values that are unique across the whole merchant (a value used at a different store gives 409 `payment/order_id_conflict`)
-          examples: [ord_0001]
+          description: >
+            An ID for each payment attempt. The idempotency key. Creating again from the same store with the same value
+            returns the existing payment.
+
+            Use the same value when you resend the request, and a new value when the buyer pays again after `failed`,
+            `expired`, or `canceled`. You can use your own order number as it is only if you do not let the buyer pay
+            again for the same order.
+
+            The length is counted in UTF-16 code units, up to 128 (an emoji counts as 2 units). `maxLength` counts
+            characters, so a value containing emoji may pass the schema and still get 400 `common/invalid_request`.
+
+            If omitted, a new payment is created on every call. With multiple stores, assign values that are unique
+            across the whole merchant (a value used at a different store gives 409 `payment/order_id_conflict`)
+          examples:
+            - ord_0001
         returnUrl:
-          # No format: uri. The server accepts internationalized domain names (https://例え.テスト/), but a uri check would reject them
           type: string
-          pattern: '^https://'
-          description: |
-            The URL the buyer returns to after payment. The payment is not created unless all of the following conditions are met.
+          pattern: ^https://
+          description: >
+            The URL the buyer returns to after payment. The payment is not created unless all of the following
+            conditions are met.
+
 
             - The scheme is `https` (`http` is not allowed, including development URLs such as `http://localhost`)
-            - No port number (`:443` is accepted)
-            - No userinfo such as `user:pass@`
-            - The hostname exactly matches a domain registered in the merchant console (case-insensitive; a subdomain is a different domain)
 
-            A URL that is not `https` gives 400 `common/invalid_request`. However, `http://localhost`, `http://127.0.0.1`, and `http://[::1]` give 403 `merchant/origin_mismatch`. An `https` URL that fails the other conditions also gives 403 `merchant/origin_mismatch`.
-            There are no restrictions on the path and query. When the buyer returns, a `stbl_pay_intent` query parameter (whose value is the payment ID) is appended.
-          examples: [https://shop.example.com/orders/ord_0001/return]
+            - No port number (`:443` is accepted)
+
+            - No userinfo such as `user:pass@`
+
+            - The hostname exactly matches a domain registered in the merchant console (case-insensitive; a subdomain is
+            a different domain)
+
+
+            A URL that is not `https` gives 400 `common/invalid_request`. However, `http://localhost`,
+            `http://127.0.0.1`, and `http://[::1]` give 403 `merchant/origin_mismatch`. An `https` URL that fails the
+            other conditions also gives 403 `merchant/origin_mismatch`.
+
+            There are no restrictions on the path and query. When the buyer returns, a `stbl_pay_intent` query parameter
+            (whose value is the payment ID) is appended.
+          examples:
+            - https://shop.example.com/orders/ord_0001/return
         merchantExpiresAt:
           $ref: '#/components/schemas/DateTime'
-          description: |
-            The upper limit of the deposit deadline. Only a date-time more than 3 days after creation can be specified (too close gives 400 `payment/expires_at_too_soon`).
-            The operation deadline (`checkoutExpiresAt`) does not become shorter. Even if you create again with the same `orderId`, the value received first is not overwritten
-          examples: ['2026-10-25T03:00:00Z']
+          description: >
+            The upper limit of the deposit deadline. Only a date-time more than 3 days after creation can be specified
+            (too close gives 400 `payment/expires_at_too_soon`).
+
+            The operation deadline (`checkoutExpiresAt`) does not become shorter. Even if you create again with the same
+            `orderId`, the value received first is not overwritten
+          examples:
+            - '2026-10-25T03:00:00Z'
     CreatePaymentIntentResponse:
       type: object
-      required: [paymentIntentId, checkoutUrl, status, amountJpy, feeJpy, netAmountJpy, checkoutExpiresAt, createdAt]
+      required:
+        - paymentIntentId
+        - checkoutUrl
+        - status
+        - amountJpy
+        - feeJpy
+        - netAmountJpy
+        - checkoutExpiresAt
+        - createdAt
       properties:
         paymentIntentId:
           $ref: '#/components/schemas/PaymentIntentId'
           description: The payment ID. Store it linked to your own order
         checkoutUrl:
           type: string
-          pattern: '^https://'
+          pattern: ^https://
           description: The URL of the checkout page that you send the buyer to by top-level navigation
         status:
           $ref: '#/components/schemas/PaymentStatus'
-          description: '`created` when newly created. When the existing payment with the same `orderId` is returned, its status at that moment'
+          description: >-
+            `created` when newly created. When the existing payment with the same `orderId` is returned, its status at
+            that moment
         amountJpy:
           $ref: '#/components/schemas/AmountJpy'
           description: The amount charged
         feeJpy:
           $ref: '#/components/schemas/AmountJpy'
-          description: An estimate of the fee at the time of creation. The actual fee is received in `fee_jpy` of the `payment.settled` Webhook and may differ from this value
+          description: >-
+            An estimate of the fee at the time of creation. The actual fee is received in `fee_jpy` of the
+            `payment.settled` Webhook and may differ from this value
         netAmountJpy:
           $ref: '#/components/schemas/AmountJpy'
           description: An estimate of the amount the merchant receives (`amountJpy` − `feeJpy`)
@@ -514,21 +1407,31 @@ components:
           description: The date-time the payment was created
     PaymentStatusView:
       type: object
-      required: [paymentIntentId, status, txHash, failedReason, returnUrl, settledAt]
+      required:
+        - paymentIntentId
+        - status
+        - txHash
+        - failedReason
+        - returnUrl
+        - settledAt
       properties:
         paymentIntentId:
           $ref: '#/components/schemas/PaymentIntentId'
         status:
           $ref: '#/components/schemas/PaymentStatus'
         txHash:
-          type: [string, 'null']
-          pattern: '^0x[0-9a-f]{64}$'
+          type:
+            - string
+            - 'null'
+          pattern: ^0x[0-9a-f]{64}$
           description: The transfer transaction. null before execution of the payment starts
         failedReason:
           $ref: '#/components/schemas/FailedReason'
         returnUrl:
-          type: [string, 'null']
-          pattern: '^https://'
+          type:
+            - string
+            - 'null'
+          pattern: ^https://
           description: The `returnUrl` specified at creation. null if none was specified
         settledAt:
           oneOf:
@@ -537,54 +1440,86 @@ components:
           description: The date-time the payment succeeded. null for any status other than `settled`
     Error:
       type: object
-      required: [code]
+      required:
+        - code
       properties:
         code:
           type: string
           description: The error code. Fall back to your common error handling for unknown codes
-          examples: [common/invalid_request]
+          examples:
+            - common/invalid_request
         details:
           type: object
           additionalProperties: true
-          description: |
-            Additional information for each code. It may be absent. The server does not return display text, so the merchant decides it.
+          description: >
+            Additional information for each code. It may be absent. The server does not return display text, so the
+            merchant decides it.
 
-            - `common/invalid_request` (body format violation): `issues` is an array of violations. In each element, `path` is an array pointing to the field, and `message` is the reason
-            - `payment/expires_at_too_soon`: `minSeconds` is the minimum number of seconds required from the time of creation
+
+            - `common/invalid_request` (body format violation): `issues` is an array of violations. In each element,
+            `path` is an array pointing to the field, and `message` is the reason
+
+            - `payment/expires_at_too_soon`: `minSeconds` is the minimum number of seconds required from the time of
+            creation
+
             - `payment/order_terminated`: the existing payment's `paymentIntentId`, `status`, and `failedReason`
     WebhookPaymentData:
       type: object
-      required: [payment_intent_id, order_id, status, merchant_id, payout, amount_jpy, fee_jpy, net_received_jpy, tx_hash, settled_at, failed_reason]
+      required:
+        - payment_intent_id
+        - order_id
+        - status
+        - merchant_id
+        - payout
+        - amount_jpy
+        - fee_jpy
+        - net_received_jpy
+        - tx_hash
+        - settled_at
+        - failed_reason
       properties:
         payment_intent_id:
           $ref: '#/components/schemas/PaymentIntentId'
         order_id:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           description: The `orderId` you passed when creating the payment. null if you did not pass one
         status:
           type: string
-          enum: [settled, failed, canceled, expired]
+          enum:
+            - settled
+            - failed
+            - canceled
+            - expired
           description: The terminal state that corresponds to the event (`payment.settled` corresponds to `settled`, and so on)
         merchant_id:
           type: string
-          pattern: '^m_[0-9a-f]{8,32}$'
+          pattern: ^m_[0-9a-f]{8,32}$
           description: The merchant ID
         payout:
           type: string
-          pattern: '^0x[0-9a-f]{40}$'
+          pattern: ^0x[0-9a-f]{40}$
           description: The address of the merchant's receiving wallet (lowercase)
         amount_jpy:
           $ref: '#/components/schemas/AmountJpy'
           description: The order amount. It stays the order amount in every event
         fee_jpy:
           $ref: '#/components/schemas/AmountJpy'
-          description: 'In `payment.settled`, the fee actually deducted on-chain (only when it could not be obtained from the execution result, a value calculated from the estimate made at creation). In other events, `"0"`'
+          description: >-
+            In `payment.settled`, the fee actually deducted on-chain (only when it could not be obtained from the
+            execution result, a value calculated from the estimate made at creation). In other events, `"0"`
         net_received_jpy:
           $ref: '#/components/schemas/AmountJpy'
-          description: 'In `payment.settled`, the amount the merchant actually receives (only when it could not be obtained from the execution result, a value calculated from the estimate made at creation). In other events, `"0"`. Use this value to record deposits'
+          description: >-
+            In `payment.settled`, the amount the merchant actually receives (only when it could not be obtained from the
+            execution result, a value calculated from the estimate made at creation). In other events, `"0"`. Use this
+            value to record deposits
         tx_hash:
-          type: [string, 'null']
-          pattern: '^0x[0-9a-f]{64}$'
+          type:
+            - string
+            - 'null'
+          pattern: ^0x[0-9a-f]{64}$
           description: The transfer transaction. null for canceled and expired. For failed, it is set if execution had started
         settled_at:
           oneOf:
@@ -593,18 +1528,28 @@ components:
           description: The date-time the payment succeeded. null for any event other than `payment.settled`
         failed_reason:
           $ref: '#/components/schemas/FailedReason'
-          description: 'The reason classification code for `payment.failed` (the same set as `failedReason` in the status lookup; `nonce_conflict` is not included). null for other events'
+          description: >-
+            The reason classification code for `payment.failed` (the same set as `failedReason` in the status lookup;
+            `nonce_conflict` is not included). null for other events
     WebhookEvent:
       type: object
-      required: [id, type, created_at, data]
+      required:
+        - id
+        - type
+        - created_at
+        - data
       properties:
         id:
           type: string
-          pattern: '^evt_[0-9a-f]{8,32}$'
+          pattern: ^evt_[0-9a-f]{8,32}$
           description: The event ID. It does not change on a resend. Use it to remove duplicates
         type:
           type: string
-          examples: [payment.settled, payment.failed, payment.canceled, payment.expired]
+          examples:
+            - payment.settled
+            - payment.failed
+            - payment.canceled
+            - payment.expired
           description: The event type. Types may be added, so ignore an unknown type by returning 2xx
         created_at:
           $ref: '#/components/schemas/DateTime'
@@ -613,12 +1558,19 @@ components:
           $ref: '#/components/schemas/WebhookPaymentData'
     TestWebhookEvent:
       type: object
-      description: A test notification sent from the merchant console. `test` is `true`, and it does not point to a real payment or order. It is sent only once to the saved URL and is not resent
-      required: [id, type, created_at, test, data]
+      description: >-
+        A test notification sent from the merchant console. `test` is `true`, and it does not point to a real payment or
+        order. It is sent only once to the saved URL and is not resent
+      required:
+        - id
+        - type
+        - created_at
+        - test
+        - data
       properties:
         id:
           type: string
-          pattern: '^evt_test_[0-9a-f]{24}$'
+          pattern: ^evt_test_[0-9a-f]{24}$
         type:
           const: payment.settled
         created_at:
@@ -628,23 +1580,34 @@ components:
           const: true
         data:
           type: object
-          required: [payment_intent_id, order_id, status, merchant_id, payout, amount_jpy, fee_jpy, net_received_jpy, tx_hash, settled_at, failed_reason]
+          required:
+            - payment_intent_id
+            - order_id
+            - status
+            - merchant_id
+            - payout
+            - amount_jpy
+            - fee_jpy
+            - net_received_jpy
+            - tx_hash
+            - settled_at
+            - failed_reason
           properties:
             payment_intent_id:
               type: string
-              pattern: '^pi_test_[0-9a-f]{24}$'
+              pattern: ^pi_test_[0-9a-f]{24}$
             order_id:
               type: string
-              pattern: '^test_[0-9a-f]{24}$'
+              pattern: ^test_[0-9a-f]{24}$
             status:
               const: settled
             merchant_id:
               type: string
-              pattern: '^m_[0-9a-f]{8,32}$'
+              pattern: ^m_[0-9a-f]{8,32}$
               description: Your own merchant ID
             payout:
               type: string
-              pattern: '^0x[0-9a-f]{40}$'
+              pattern: ^0x[0-9a-f]{40}$
               description: The address of your registered receiving wallet
             amount_jpy:
               $ref: '#/components/schemas/AmountJpy'
@@ -662,3 +1625,461 @@ components:
               description: The date-time it was sent
             failed_reason:
               type: 'null'
+    WebhookEventPayload:
+      oneOf:
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: ^evt_[0-9a-f]{8,32}$
+            created_at:
+              type: string
+              format: date-time
+            type:
+              const: payment.settled
+              type: string
+            data:
+              type: object
+              properties:
+                payment_intent_id:
+                  type: string
+                  pattern: ^pi_[0-9a-f]{8,32}$
+                order_id:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                status:
+                  type: string
+                  enum:
+                    - created
+                    - signed
+                    - issue_pending
+                    - deposit_seen
+                    - deposit_confirmed
+                    - deploying
+                    - executing
+                    - settled
+                    - canceled
+                    - expired
+                    - failed
+                    - nonce_conflict
+                merchant_id:
+                  type: string
+                  pattern: ^m_[0-9a-f]{8,32}$
+                payout:
+                  type: string
+                  pattern: ^0x[0-9a-f]{40}$
+                amount_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                fee_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                net_received_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                tx_hash:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{64}$
+                    - type: 'null'
+                settled_at:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                    - type: 'null'
+                failed_reason:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+              required:
+                - payment_intent_id
+                - order_id
+                - status
+                - merchant_id
+                - payout
+                - amount_jpy
+                - fee_jpy
+                - net_received_jpy
+                - tx_hash
+                - settled_at
+                - failed_reason
+              additionalProperties: true
+          required:
+            - id
+            - created_at
+            - type
+            - data
+          additionalProperties: true
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: ^evt_[0-9a-f]{8,32}$
+            created_at:
+              type: string
+              format: date-time
+            type:
+              const: payment.failed
+              type: string
+            data:
+              type: object
+              properties:
+                payment_intent_id:
+                  type: string
+                  pattern: ^pi_[0-9a-f]{8,32}$
+                order_id:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                status:
+                  type: string
+                  enum:
+                    - created
+                    - signed
+                    - issue_pending
+                    - deposit_seen
+                    - deposit_confirmed
+                    - deploying
+                    - executing
+                    - settled
+                    - canceled
+                    - expired
+                    - failed
+                    - nonce_conflict
+                merchant_id:
+                  type: string
+                  pattern: ^m_[0-9a-f]{8,32}$
+                payout:
+                  type: string
+                  pattern: ^0x[0-9a-f]{40}$
+                amount_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                fee_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                net_received_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                tx_hash:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{64}$
+                    - type: 'null'
+                settled_at:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                    - type: 'null'
+                failed_reason:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+              required:
+                - payment_intent_id
+                - order_id
+                - status
+                - merchant_id
+                - payout
+                - amount_jpy
+                - fee_jpy
+                - net_received_jpy
+                - tx_hash
+                - settled_at
+                - failed_reason
+              additionalProperties: true
+          required:
+            - id
+            - created_at
+            - type
+            - data
+          additionalProperties: true
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: ^evt_[0-9a-f]{8,32}$
+            created_at:
+              type: string
+              format: date-time
+            type:
+              const: payment.canceled
+              type: string
+            data:
+              type: object
+              properties:
+                payment_intent_id:
+                  type: string
+                  pattern: ^pi_[0-9a-f]{8,32}$
+                order_id:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                status:
+                  type: string
+                  enum:
+                    - created
+                    - signed
+                    - issue_pending
+                    - deposit_seen
+                    - deposit_confirmed
+                    - deploying
+                    - executing
+                    - settled
+                    - canceled
+                    - expired
+                    - failed
+                    - nonce_conflict
+                merchant_id:
+                  type: string
+                  pattern: ^m_[0-9a-f]{8,32}$
+                payout:
+                  type: string
+                  pattern: ^0x[0-9a-f]{40}$
+                amount_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                fee_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                net_received_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                tx_hash:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{64}$
+                    - type: 'null'
+                settled_at:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                    - type: 'null'
+                failed_reason:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+              required:
+                - payment_intent_id
+                - order_id
+                - status
+                - merchant_id
+                - payout
+                - amount_jpy
+                - fee_jpy
+                - net_received_jpy
+                - tx_hash
+                - settled_at
+                - failed_reason
+              additionalProperties: true
+          required:
+            - id
+            - created_at
+            - type
+            - data
+          additionalProperties: true
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: ^evt_[0-9a-f]{8,32}$
+            created_at:
+              type: string
+              format: date-time
+            type:
+              const: payment.expired
+              type: string
+            data:
+              type: object
+              properties:
+                payment_intent_id:
+                  type: string
+                  pattern: ^pi_[0-9a-f]{8,32}$
+                order_id:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                status:
+                  type: string
+                  enum:
+                    - created
+                    - signed
+                    - issue_pending
+                    - deposit_seen
+                    - deposit_confirmed
+                    - deploying
+                    - executing
+                    - settled
+                    - canceled
+                    - expired
+                    - failed
+                    - nonce_conflict
+                merchant_id:
+                  type: string
+                  pattern: ^m_[0-9a-f]{8,32}$
+                payout:
+                  type: string
+                  pattern: ^0x[0-9a-f]{40}$
+                amount_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                fee_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                net_received_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                tx_hash:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{64}$
+                    - type: 'null'
+                settled_at:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                    - type: 'null'
+                failed_reason:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+              required:
+                - payment_intent_id
+                - order_id
+                - status
+                - merchant_id
+                - payout
+                - amount_jpy
+                - fee_jpy
+                - net_received_jpy
+                - tx_hash
+                - settled_at
+                - failed_reason
+              additionalProperties: true
+          required:
+            - id
+            - created_at
+            - type
+            - data
+          additionalProperties: true
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: ^evt_[0-9a-f]{8,32}$
+            created_at:
+              type: string
+              format: date-time
+            type:
+              const: refund.confirmed
+              type: string
+            data:
+              type: object
+              properties:
+                refund_id:
+                  type: string
+                  pattern: ^rfd_[0-9a-f]{8,32}$
+                payment_intent_id:
+                  type: string
+                  pattern: ^pi_[0-9a-f]{8,32}$
+                order_id:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                amount_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                status:
+                  const: confirmed
+                  type: string
+                tx_hash:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{64}$
+                    - type: 'null'
+                failed_reason:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                settled_at:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                    - type: 'null'
+              required:
+                - refund_id
+                - payment_intent_id
+                - order_id
+                - amount_jpy
+                - status
+                - tx_hash
+                - failed_reason
+                - settled_at
+              additionalProperties: true
+          required:
+            - id
+            - created_at
+            - type
+            - data
+          additionalProperties: true
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: ^evt_[0-9a-f]{8,32}$
+            created_at:
+              type: string
+              format: date-time
+            type:
+              const: refund.failed
+              type: string
+            data:
+              type: object
+              properties:
+                refund_id:
+                  type: string
+                  pattern: ^rfd_[0-9a-f]{8,32}$
+                payment_intent_id:
+                  type: string
+                  pattern: ^pi_[0-9a-f]{8,32}$
+                order_id:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                amount_jpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                status:
+                  const: failed
+                  type: string
+                tx_hash:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{64}$
+                    - type: 'null'
+                failed_reason:
+                  anyOf:
+                    - type: string
+                    - type: 'null'
+                settled_at:
+                  anyOf:
+                    - type: string
+                      format: date-time
+                    - type: 'null'
+              required:
+                - refund_id
+                - payment_intent_id
+                - order_id
+                - amount_jpy
+                - status
+                - tx_hash
+                - failed_reason
+                - settled_at
+              additionalProperties: true
+          required:
+            - id
+            - created_at
+            - type
+            - data
+          additionalProperties: true

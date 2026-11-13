@@ -248,3 +248,19 @@ test.describe("加盟店向けドキュメント", () => {
     }
   });
 });
+
+test('machine refund draft, signing examples and fixed vectors are available in both locales', async ({page, request}) => {
+  for (const locale of ['', 'en/']) {
+    await page.goto(`/docs/${locale}refunds/machine-api/`);
+    await expect(page.locator('article')).toContainText(locale ? 'draft' : '公開準備中');
+    await expect(page.locator('article')).toContainText('details.serverTime');
+    await page.goto(`/docs/${locale}refunds/signing/`);
+    await expect(page.locator('article')).toContainText('PUBLIC TEST ONLY');
+    const example = await request.get(`/docs/${locale}examples/refund-signer.mjs`);
+    expect(example.ok()).toBeTruthy();
+    expect(await example.text()).toContain('export function signRequest');
+    const vectors = await request.get(`/docs/${locale}examples/refund-signing-vectors.json`);
+    expect(vectors.ok()).toBeTruthy();
+    expect((await vectors.json()).warning).toContain('PUBLIC TEST ONLY');
+  }
+});

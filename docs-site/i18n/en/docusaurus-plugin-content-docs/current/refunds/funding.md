@@ -25,3 +25,8 @@ When "Refundable now" is smaller than "Refundable amount", the screen shows the 
 - **The on-chain backing for the refund is insufficient.** This happens when the payment was received before the wallet was updated, or when a refund to the same buyer was made earlier. The refundable amount is limited to the cumulative amount the buyer paid to that wallet.
 
 When the screen cannot read on-chain values, it does not guess an amount. It hides Refundable amount and Refundable now, and shows "Refunds are not available right now because the status cannot be confirmed" (状況を確認できないため、今は返金できません。). An amount that is shown is a value the server has confirmed. Do not cache it on your side and issue refunds based only on that.
+
+
+## Server integration limits (draft)
+
+`executableJpy` is the minimum of `refundableNowJpy` and the delegation cap, or `"0"` when blocked. Payment fees are not returned by a refund. A full refund requires the original gross amount, including the amount previously paid as fees.

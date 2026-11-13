@@ -33,7 +33,7 @@ Each merchant has a single Webhook destination, so notifications for the same me
 
 STBLpay does not send a notification for `nonce_conflict`, because the outcome cannot be determined, including whether a transfer was made. Reconcile unconfirmed orders with the [status lookup API](/server/retrieve-payment) and investigate them operationally. STBLpay also does not send a Webhook for each in-progress state.
 
-Merchant account events and refund completion are not payment Webhook events.
+Merchant account events are outside this scope. Refund results use separate refund events.
 
 ## Test notifications {/* #test-notifications */}
 
@@ -53,3 +53,8 @@ if (parsed.test === true) return res.sendStatus(200); // respond without changin
 Check `test === true` on the value right after `JSON.parse` of the raw body. Do not check it on a value that has passed through validation that discards unneeded keys. Such validation drops unknown keys, so `test` disappears and the notification looks like a genuine settled notification. Processing a test notification as a settled notification may mark a nonexistent order as paid. The checkbox on the screen does not guarantee that your receiver is safe, so finish the handling before you send a test.
 
 For the payload, see the [Webhook reference](/reference/webhook-events).
+
+
+## Refund notifications (draft)
+
+Handle `refund.confirmed` and `refund.failed` separately from payment events. After signature verification, ignore unknown types with a 2xx response without changing orders. Reconcile missing refund notifications by query. See [refund event fields](/reference/webhook-events#refund-events-draft).

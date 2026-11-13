@@ -24,4 +24,4 @@ Do not trust the amount or `status` sent from the browser. Receive the order ID 
 
 Keep the API key and the Webhook signing secret only on the server. Do not reproduce passkey signing on a merchant page, and do not embed the checkout screen.
 
-Refunds use a different authority and path from receiving payment results. The only path is for the owner to approve with a passkey in the merchant console. Merchant servers cannot call a refund API (none exists). See [Scope of refunds](/refunds/overview).
+Refunds use separate authority from payment processing. The owner console flow and draft [merchant server API](/refunds/machine-api) are described in [refund scope](/refunds/overview). The draft does not announce production availability.

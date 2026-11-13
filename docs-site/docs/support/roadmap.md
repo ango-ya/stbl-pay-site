@@ -37,3 +37,8 @@ WooCommerce のストアに、STBLpay を決済手段として追加するプラ
 - 決済の作成、決済ページへの移動、Webhook を受けて注文を確定する処理を、プラグインが行います。
 
 それまでは、[既存 EC への結合](/client/integrate-existing-ec)のとおり、API で組み込んでください。
+
+
+## 加盟店サーバーからの返金
+
+[返金 API](/refunds/machine-api)は公開準備中です。JPYC EXへの事前共有後に提供状況を更新します。人のスタッフ招待とは別の機能です。

@@ -1,0 +1,1966 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "STBL Pay 加盟店 API",
+    "version": "0.32.0"
+  },
+  "paths": {
+    "/payment_intents": {
+      "post": {
+        "parameters": [
+          {
+            "name": "x-stbl-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentIntentId": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "amountJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "feeJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "netAmountJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "checkoutUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "checkoutExpiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "paymentIntentId",
+                    "amountJpy",
+                    "feeJpy",
+                    "netAmountJpy",
+                    "status",
+                    "checkoutUrl",
+                    "checkoutExpiresAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "api-key",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amountJpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "returnUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "merchantExpiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "amountJpy"
+                ],
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/staged_operations/{stagedOpId}": {
+      "delete": {
+        "parameters": [
+          {
+            "name": "stagedOpId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-stbl-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^stblpay_machine_[A-Za-z0-9_-]{43}$"
+            }
+          },
+          {
+            "name": "x-stbl-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          {
+            "name": "x-stbl-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          },
+          {
+            "name": "x-stbl-nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "const": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "machine-signature",
+        "description": "P-256/SHA-256 HTTP署名: METHOD + \"\\n\" + originalUrl（queryを含む） + \"\\n\" + sha256hex(rawBody) + \"\\n\" + timestamp + \"\\n\" + nonce。body無しは空バイト列。署名はraw r||s hex128桁、timestampはミリ秒（±60000ms）、nonceは小文字0x付き32bytes。Authorizationは使わない。"
+      }
+    },
+    "/merchants/{merchantId}/domain/challenge": {
+      "get": {
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "domain": {
+                      "type": "string"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "methods": {
+                      "type": "object",
+                      "properties": {
+                        "dnsTxt": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "value"
+                          ],
+                          "additionalProperties": true
+                        },
+                        "wellKnown": {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "content": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "path",
+                            "content"
+                          ],
+                          "additionalProperties": true
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "content": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "content"
+                          ],
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": [
+                        "dnsTxt",
+                        "wellKnown",
+                        "meta"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "domain",
+                    "token",
+                    "methods"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "none"
+      }
+    },
+    "/refunds/{refundId}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "refundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-stbl-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^stblpay_machine_[A-Za-z0-9_-]{43}$"
+            }
+          },
+          {
+            "name": "x-stbl-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          {
+            "name": "x-stbl-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          },
+          {
+            "name": "x-stbl-nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "actor": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "owner",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "machine",
+                              "type": "string"
+                            },
+                            "memberId": {
+                              "type": "string",
+                              "pattern": "^mem_[0-9a-f]{8,32}$"
+                            },
+                            "label": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "memberId",
+                            "label"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    },
+                    "refundId": {
+                      "type": "string",
+                      "pattern": "^rfd_[0-9a-f]{8,32}$"
+                    },
+                    "walletOperationId": {
+                      "type": "string",
+                      "pattern": "^wop_[0-9a-f]{8,32}$"
+                    },
+                    "amountJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "submitted",
+                        "confirmed",
+                        "failed",
+                        "indeterminate"
+                      ]
+                    },
+                    "includesUpgrade": {
+                      "type": "boolean"
+                    },
+                    "txHash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failureReason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "acceptedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "settledAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "refundId",
+                    "walletOperationId",
+                    "amountJpy",
+                    "status",
+                    "includesUpgrade",
+                    "txHash",
+                    "failureReason",
+                    "acceptedAt",
+                    "settledAt"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "machine-signature",
+        "description": "P-256/SHA-256 HTTP署名: METHOD + \"\\n\" + originalUrl（queryを含む） + \"\\n\" + sha256hex(rawBody) + \"\\n\" + timestamp + \"\\n\" + nonce。body無しは空バイト列。署名はraw r||s hex128桁、timestampはミリ秒（±60000ms）、nonceは小文字0x付き32bytes。Authorizationは使わない。"
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refundable": {
+      "get": {
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-stbl-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^stblpay_machine_[A-Za-z0-9_-]{43}$"
+            }
+          },
+          {
+            "name": "x-stbl-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          {
+            "name": "x-stbl-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          },
+          {
+            "name": "x-stbl-nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentIntentId": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "paymentStatus": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "amountJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "confirmedRefundedJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "reservedJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "refundableJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "refundableNowJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "onchainCreditJpy": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "walletBalanceJpy": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "limitedBy": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "onchain_credit",
+                          "wallet_balance"
+                        ]
+                      }
+                    },
+                    "blockedBy": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "payment_not_settled",
+                            "payer_unknown",
+                            "nothing_refundable",
+                            "operation_in_progress",
+                            "staged_operation_exists",
+                            "wallet_not_deployed",
+                            "state_unavailable"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "checkedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "delegationCapJpy": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "executableJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "ownStaged": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "stagedOpId": {
+                              "type": "string",
+                              "pattern": "^stg_[0-9a-f]{8,32}$"
+                            },
+                            "amountJpy": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                            },
+                            "includesUpgrade": {
+                              "type": "boolean"
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "paymentIntentId": {
+                              "type": "string",
+                              "pattern": "^pi_[0-9a-f]{8,32}$"
+                            }
+                          },
+                          "required": [
+                            "stagedOpId",
+                            "amountJpy",
+                            "includesUpgrade",
+                            "expiresAt",
+                            "paymentIntentId"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "paymentIntentId",
+                    "paymentStatus",
+                    "amountJpy",
+                    "confirmedRefundedJpy",
+                    "reservedJpy",
+                    "refundableJpy",
+                    "refundableNowJpy",
+                    "onchainCreditJpy",
+                    "walletBalanceJpy",
+                    "limitedBy",
+                    "blockedBy",
+                    "checkedAt",
+                    "delegationCapJpy",
+                    "executableJpy",
+                    "ownStaged"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "machine-signature",
+        "description": "P-256/SHA-256 HTTP署名: METHOD + \"\\n\" + originalUrl（queryを含む） + \"\\n\" + sha256hex(rawBody) + \"\\n\" + timestamp + \"\\n\" + nonce。body無しは空バイト列。署名はraw r||s hex128桁、timestampはミリ秒（±60000ms）、nonceは小文字0x付き32bytes。Authorizationは使わない。"
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refunds": {
+      "get": {
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "x-stbl-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^stblpay_machine_[A-Za-z0-9_-]{43}$"
+            }
+          },
+          {
+            "name": "x-stbl-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          {
+            "name": "x-stbl-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          },
+          {
+            "name": "x-stbl-nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "refunds": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "actor": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "owner",
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind"
+                                ],
+                                "additionalProperties": true
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "machine",
+                                    "type": "string"
+                                  },
+                                  "memberId": {
+                                    "type": "string",
+                                    "pattern": "^mem_[0-9a-f]{8,32}$"
+                                  },
+                                  "label": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "memberId",
+                                  "label"
+                                ],
+                                "additionalProperties": true
+                              }
+                            ]
+                          },
+                          "refundId": {
+                            "type": "string",
+                            "pattern": "^rfd_[0-9a-f]{8,32}$"
+                          },
+                          "walletOperationId": {
+                            "type": "string",
+                            "pattern": "^wop_[0-9a-f]{8,32}$"
+                          },
+                          "amountJpy": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "queued",
+                              "submitted",
+                              "confirmed",
+                              "failed",
+                              "indeterminate"
+                            ]
+                          },
+                          "includesUpgrade": {
+                            "type": "boolean"
+                          },
+                          "txHash": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^0x[0-9a-f]{64}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "failureReason": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "acceptedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "settledAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "refundId",
+                          "walletOperationId",
+                          "amountJpy",
+                          "status",
+                          "includesUpgrade",
+                          "txHash",
+                          "failureReason",
+                          "acceptedAt",
+                          "settledAt"
+                        ],
+                        "additionalProperties": true
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "staged": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "stagedOpId": {
+                              "type": "string",
+                              "pattern": "^stg_[0-9a-f]{8,32}$"
+                            },
+                            "amountJpy": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                            },
+                            "includesUpgrade": {
+                              "type": "boolean"
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "stagedOpId",
+                            "amountJpy",
+                            "includesUpgrade",
+                            "expiresAt"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "refunds",
+                    "staged"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "machine-signature",
+        "description": "P-256/SHA-256 HTTP署名: METHOD + \"\\n\" + originalUrl（queryを含む） + \"\\n\" + sha256hex(rawBody) + \"\\n\" + timestamp + \"\\n\" + nonce。body無しは空バイト列。署名はraw r||s hex128桁、timestampはミリ秒（±60000ms）、nonceは小文字0x付き32bytes。Authorizationは使わない。"
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refunds/prepare": {
+      "post": {
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-stbl-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^stblpay_machine_[A-Za-z0-9_-]{43}$"
+            }
+          },
+          {
+            "name": "x-stbl-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          {
+            "name": "x-stbl-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          },
+          {
+            "name": "x-stbl-nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "challenge": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{64}$"
+                    },
+                    "rpId": {
+                      "type": "string"
+                    },
+                    "serverTime": {
+                      "type": "integer"
+                    },
+                    "validUntil": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "stagedOpId": {
+                      "type": "string",
+                      "pattern": "^stg_[0-9a-f]{8,32}$"
+                    },
+                    "wallet": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "paymentIntentId": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "amountJpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "upgrade": {
+                      "type": "object",
+                      "properties": {
+                        "included": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "included"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "challenge",
+                    "rpId",
+                    "serverTime",
+                    "validUntil",
+                    "stagedOpId",
+                    "wallet",
+                    "paymentIntentId",
+                    "amountJpy",
+                    "upgrade"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "machine-signature",
+        "description": "P-256/SHA-256 HTTP署名: METHOD + \"\\n\" + originalUrl（queryを含む） + \"\\n\" + sha256hex(rawBody) + \"\\n\" + timestamp + \"\\n\" + nonce。body無しは空バイト列。署名はraw r||s hex128桁、timestampはミリ秒（±60000ms）、nonceは小文字0x付き32bytes。Authorizationは使わない。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amountJpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  }
+                },
+                "required": [
+                  "amountJpy"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refunds/submit": {
+      "post": {
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-stbl-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^stblpay_machine_[A-Za-z0-9_-]{43}$"
+            }
+          },
+          {
+            "name": "x-stbl-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          {
+            "name": "x-stbl-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          },
+          {
+            "name": "x-stbl-nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "refundId": {
+                      "type": "string",
+                      "pattern": "^rfd_[0-9a-f]{8,32}$"
+                    },
+                    "walletOperationId": {
+                      "type": "string",
+                      "pattern": "^wop_[0-9a-f]{8,32}$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "submitted",
+                        "confirmed",
+                        "failed",
+                        "indeterminate"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "refundId",
+                    "walletOperationId",
+                    "status"
+                  ],
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "x-auth-scheme": "machine-signature",
+        "description": "P-256/SHA-256 HTTP署名: METHOD + \"\\n\" + originalUrl（queryを含む） + \"\\n\" + sha256hex(rawBody) + \"\\n\" + timestamp + \"\\n\" + nonce。body無しは空バイト列。署名はraw r||s hex128桁、timestampはミリ秒（±60000ms）、nonceは小文字0x付き32bytes。Authorizationは使わない。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stagedOpId": {
+                    "type": "string",
+                    "pattern": "^stg_[0-9a-f]{8,32}$"
+                  },
+                  "assertion": {
+                    "type": "object",
+                    "properties": {
+                      "clientDataJSON": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "authenticatorData": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "signature": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      }
+                    },
+                    "required": [
+                      "clientDataJSON",
+                      "authenticatorData",
+                      "signature"
+                    ],
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "stagedOpId",
+                  "assertion"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "WebhookEventPayload": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^evt_[0-9a-f]{8,32}$"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "const": "payment.settled",
+                "type": "string"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "payment_intent_id": {
+                    "type": "string",
+                    "pattern": "^pi_[0-9a-f]{8,32}$"
+                  },
+                  "order_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "created",
+                      "signed",
+                      "issue_pending",
+                      "deposit_seen",
+                      "deposit_confirmed",
+                      "deploying",
+                      "executing",
+                      "settled",
+                      "canceled",
+                      "expired",
+                      "failed",
+                      "nonce_conflict"
+                    ]
+                  },
+                  "merchant_id": {
+                    "type": "string",
+                    "pattern": "^m_[0-9a-f]{8,32}$"
+                  },
+                  "payout": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-f]{40}$"
+                  },
+                  "amount_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "fee_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "net_received_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "tx_hash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "settled_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failed_reason": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "payment_intent_id",
+                  "order_id",
+                  "status",
+                  "merchant_id",
+                  "payout",
+                  "amount_jpy",
+                  "fee_jpy",
+                  "net_received_jpy",
+                  "tx_hash",
+                  "settled_at",
+                  "failed_reason"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "created_at",
+              "type",
+              "data"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^evt_[0-9a-f]{8,32}$"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "const": "payment.failed",
+                "type": "string"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "payment_intent_id": {
+                    "type": "string",
+                    "pattern": "^pi_[0-9a-f]{8,32}$"
+                  },
+                  "order_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "created",
+                      "signed",
+                      "issue_pending",
+                      "deposit_seen",
+                      "deposit_confirmed",
+                      "deploying",
+                      "executing",
+                      "settled",
+                      "canceled",
+                      "expired",
+                      "failed",
+                      "nonce_conflict"
+                    ]
+                  },
+                  "merchant_id": {
+                    "type": "string",
+                    "pattern": "^m_[0-9a-f]{8,32}$"
+                  },
+                  "payout": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-f]{40}$"
+                  },
+                  "amount_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "fee_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "net_received_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "tx_hash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "settled_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failed_reason": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "payment_intent_id",
+                  "order_id",
+                  "status",
+                  "merchant_id",
+                  "payout",
+                  "amount_jpy",
+                  "fee_jpy",
+                  "net_received_jpy",
+                  "tx_hash",
+                  "settled_at",
+                  "failed_reason"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "created_at",
+              "type",
+              "data"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^evt_[0-9a-f]{8,32}$"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "const": "payment.canceled",
+                "type": "string"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "payment_intent_id": {
+                    "type": "string",
+                    "pattern": "^pi_[0-9a-f]{8,32}$"
+                  },
+                  "order_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "created",
+                      "signed",
+                      "issue_pending",
+                      "deposit_seen",
+                      "deposit_confirmed",
+                      "deploying",
+                      "executing",
+                      "settled",
+                      "canceled",
+                      "expired",
+                      "failed",
+                      "nonce_conflict"
+                    ]
+                  },
+                  "merchant_id": {
+                    "type": "string",
+                    "pattern": "^m_[0-9a-f]{8,32}$"
+                  },
+                  "payout": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-f]{40}$"
+                  },
+                  "amount_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "fee_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "net_received_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "tx_hash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "settled_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failed_reason": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "payment_intent_id",
+                  "order_id",
+                  "status",
+                  "merchant_id",
+                  "payout",
+                  "amount_jpy",
+                  "fee_jpy",
+                  "net_received_jpy",
+                  "tx_hash",
+                  "settled_at",
+                  "failed_reason"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "created_at",
+              "type",
+              "data"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^evt_[0-9a-f]{8,32}$"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "const": "payment.expired",
+                "type": "string"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "payment_intent_id": {
+                    "type": "string",
+                    "pattern": "^pi_[0-9a-f]{8,32}$"
+                  },
+                  "order_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "created",
+                      "signed",
+                      "issue_pending",
+                      "deposit_seen",
+                      "deposit_confirmed",
+                      "deploying",
+                      "executing",
+                      "settled",
+                      "canceled",
+                      "expired",
+                      "failed",
+                      "nonce_conflict"
+                    ]
+                  },
+                  "merchant_id": {
+                    "type": "string",
+                    "pattern": "^m_[0-9a-f]{8,32}$"
+                  },
+                  "payout": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-f]{40}$"
+                  },
+                  "amount_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "fee_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "net_received_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "tx_hash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "settled_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failed_reason": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "payment_intent_id",
+                  "order_id",
+                  "status",
+                  "merchant_id",
+                  "payout",
+                  "amount_jpy",
+                  "fee_jpy",
+                  "net_received_jpy",
+                  "tx_hash",
+                  "settled_at",
+                  "failed_reason"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "created_at",
+              "type",
+              "data"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^evt_[0-9a-f]{8,32}$"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "const": "refund.confirmed",
+                "type": "string"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "refund_id": {
+                    "type": "string",
+                    "pattern": "^rfd_[0-9a-f]{8,32}$"
+                  },
+                  "payment_intent_id": {
+                    "type": "string",
+                    "pattern": "^pi_[0-9a-f]{8,32}$"
+                  },
+                  "order_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amount_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "status": {
+                    "const": "confirmed",
+                    "type": "string"
+                  },
+                  "tx_hash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failed_reason": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "settled_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "refund_id",
+                  "payment_intent_id",
+                  "order_id",
+                  "amount_jpy",
+                  "status",
+                  "tx_hash",
+                  "failed_reason",
+                  "settled_at"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "created_at",
+              "type",
+              "data"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^evt_[0-9a-f]{8,32}$"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "const": "refund.failed",
+                "type": "string"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "refund_id": {
+                    "type": "string",
+                    "pattern": "^rfd_[0-9a-f]{8,32}$"
+                  },
+                  "payment_intent_id": {
+                    "type": "string",
+                    "pattern": "^pi_[0-9a-f]{8,32}$"
+                  },
+                  "order_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amount_jpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                  },
+                  "status": {
+                    "const": "failed",
+                    "type": "string"
+                  },
+                  "tx_hash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failed_reason": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "settled_at": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "refund_id",
+                  "payment_intent_id",
+                  "order_id",
+                  "amount_jpy",
+                  "status",
+                  "tx_hash",
+                  "failed_reason",
+                  "settled_at"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "created_at",
+              "type",
+              "data"
+            ],
+            "additionalProperties": true
+          }
+        ]
+      }
+    }
+  }
+}

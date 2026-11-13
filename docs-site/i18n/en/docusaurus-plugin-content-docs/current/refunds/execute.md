@@ -35,3 +35,6 @@ When you approve a refund, it first becomes "accepted". Acceptance is not comple
 A communication failure or closing the screen does not by itself mean the refund failed. While the status is Checking result (結果確認中), or while the result is unknown after approval, do not start a new refund. Check the result with Recheck (再確認). If you reopen the screen, it shows the refund in progress again from the server's records.
 
 The history shows the acceptance time and the finalization time separately. The history remains after a full refund.
+
+
+This page covers owner console operations. See the draft [merchant server flow](/refunds/machine-api) for server integration.

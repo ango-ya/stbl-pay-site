@@ -37,3 +37,8 @@ A plugin that adds STBLpay as a payment method to a WooCommerce store.
 - The plugin creates the payment, sends the buyer to the checkout page, and finalizes the order when it receives the Webhook.
 
 Until then, integrate through the API, as described in [Integrating with an existing e-commerce site](/client/integrate-existing-ec).
+
+
+## Merchant server refunds
+
+The [refund API](/refunds/machine-api) is in draft preview. Availability will be updated after advance sharing with JPYC EX. This is separate from human staff invitations.
