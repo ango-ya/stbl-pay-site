@@ -1019,13 +1019,16 @@ webhooks:
         2. If `test` in the body parsed with `JSON.parse` is `true`, it is a test notification sent from the merchant
         console. Return 2xx without updating any order or payment state
 
-        3. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a
+        3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return
+        2xx without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape
+
+        4. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a
         resend, the `id` and the body do not change
 
-        4. Return 2xx after saving. If you respond first and then stop right after, you lose the notification and it is
+        5. Return 2xx after saving. If you respond first and then stop right after, you lose the notification and it is
         not resent
 
-        5. Run business processing from the saved event. Base the deposit recording on `net_received_jpy` in
+        6. Run business processing from the saved event. Base the deposit recording on `net_received_jpy` in
         `payment.settled`
 
 

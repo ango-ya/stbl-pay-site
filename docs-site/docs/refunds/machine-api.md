@@ -30,8 +30,8 @@ owner が店舗の詳細（ネットショップは「組み込みの準備」�
 
 ## 通信結果が不明なとき
 
-- prepare応答喪失：照会の `ownStaged` を確認する。同じmachineが別決済で準備した操作も含みます。再準備の前に `DELETE /staged_operations/{stagedOpId}` で本人の準備を取り消す。
-- submit応答喪失：同じ `stagedOpId` と同じassertionを再送する。HTTPのnonce・timestamp・署名は新しくする。新しい返金をprepareしない。
+- prepare応答喪失：照会の `ownStaged` を確認する。同じmachineが別決済や別プロセスで準備した操作も含みます。`paymentIntentId`・`stagedOpId` と、その準備を作ったプロセスを確認し、処理中のプロセスがあれば調整してください。意図的に取りやめる未消費の準備だけを `DELETE /staged_operations/{stagedOpId}` で取り消してから、再準備する。
+- submit応答喪失：同じ `stagedOpId` と同じassertionを再送する。HTTPのnonce・timestamp・署名は新しくする。受理済みなら同じ `refundId` と `walletOperationId` が返ります。回復後はその `refundId` または決済の返金一覧で通常どおり結果を照会する。新しい返金をprepareしない。
 - Webhook未着：照会で突合する。`refund.confirmed` が完了、`refund.failed` が失敗。元の決済は `settled` のままです。
 - HTTP419 `auth/clock_skew`：応答の `details.serverTime`（epochミリ秒）で差分を補正し、新nonce・timestamp・HTTP署名で一度だけ再送する。補正できなければ時計を直して停止原因を調査する。
 
@@ -39,4 +39,4 @@ owner が店舗の詳細（ネットショップは「組み込みの準備」�
 
 `refundableNowJpy` は台帳残額・オンチェーンの裏付け・ウォレット残高による上限です。`executableJpy` はそれと `delegationCapJpy` の小さい方で、blockerがあれば `"0"` です。観測不能では推測して実行しません。原資と手数料は [返金できる額と原資](/refunds/funding)を参照してください。店舗・決済単位の制限はbackendで検査し、コントラクトが店舗・決済を識別する保証とは区別します。
 
-ownerによる失効・上限の再承認・キー再発行は新規受理に適用します。**受理済み操作を取り消す保証はありません。** 旧委任状のオンチェーン失効は後続対応です（#677）。machineへ償還・任意宛先送金・単独のウォレット更新は委任しません。人のスタッフの権限ではありません。店舗無効時の新規prepare/submitは拒否されますが、照会・本人の準備の取消・ownerの失効とキー再発行は可能です。
+ownerによる失効は新規受理を停止します。上限の再承認とキー再発行は、以後の新規受理に新しい上限・キーを適用します。**受理済み操作を取り消す保証はありません。** 旧委任状のオンチェーン失効は後続対応です（#677）。machineへ償還・任意宛先送金・単独のウォレット更新は委任しません。人のスタッフの権限ではありません。店舗無効時の新規prepare/submitは拒否されますが、照会・本人の準備の取消・ownerの失効とキー再発行は可能です。

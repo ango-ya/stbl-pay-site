@@ -21,8 +21,8 @@ A payment never reaches more than one terminal state. However, STBLpay retries n
 ## Receiving flow
 
 1. Verify the [signature and timestamp over the raw body](/webhooks/signature).
-2. **Immediately after signature verification, before any business processing, determine whether it is a [test notification](#test-notifications).**
-3. Validate the JSON shape, and ignore unknown event types without changing any order.
+2. **Immediately after signature verification, parse the received raw body with `JSON.parse` and check `test === true` for a [test notification](#test-notifications), before any business processing.** For a test notification, return `2xx` without changing orders or payments.
+3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return `2xx` without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape before continuing.
 4. Persist the event, keyed by the `id` of the signature-verified body.
 5. Return `2xx` only after persisting succeeds. Run business processing in a retryable worker.
 6. Verify that the payment ID matches the order, then perform an [idempotent order update](/webhooks/idempotency).

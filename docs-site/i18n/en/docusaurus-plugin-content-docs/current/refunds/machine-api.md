@@ -28,8 +28,8 @@ The recipient is fixed to the original payer and is omitted from prepare. The ow
 
 ## Recovery
 
-- Lost prepare response: inspect `ownStaged`, which can refer to another payment prepared by the same machine. Cancel it with `DELETE /staged_operations/{stagedOpId}` before preparing again.
-- Lost submit response: resend the same stagedOpId and assertion with a fresh HTTP nonce, timestamp and signature. Do not prepare a new refund.
+- Lost prepare response: inspect `ownStaged`, which can refer to another payment or process using the same machine. Check its `paymentIntentId`, `stagedOpId` and the process that created it, and coordinate with any process still working on it. Use `DELETE /staged_operations/{stagedOpId}` only for an unconsumed preparation you intentionally abandon, then prepare again.
+- Lost submit response: resend the same `stagedOpId` and assertion with a fresh HTTP nonce, timestamp and signature. If already accepted, the retry returns the same `refundId` and `walletOperationId`. After recovery, query that `refundId` or the payment’s refund list for the result as usual. Do not prepare a new refund.
 - Missing Webhook: reconcile by query. `refund.confirmed` means completion; `refund.failed` means failure. The original payment stays `settled`.
 - HTTP419 `auth/clock_skew`: adjust the clock offset using `details.serverTime` (epoch milliseconds) in the response and retry once with a fresh nonce, timestamp and HTTP signature. Investigate persistent clock errors.
 
@@ -37,4 +37,4 @@ The recipient is fixed to the original payer and is omitted from prepare. The ow
 
 `refundableNowJpy` is constrained by the ledger, on-chain backing and wallet balance. `executableJpy` is the minimum of that amount and `delegationCapJpy`, or `"0"` when blocked. Unavailable observations are not estimated. See [refund funds](/refunds/funding). Store and payment restrictions are backend checks; the contract does not identify stores or payments.
 
-Revocation, cap replacement and API key rotation prevent new acceptance. **They do not guarantee cancellation of already accepted operations.** On-chain revocation of old delegations is follow-up work (#677). Delegation does not permit redemption, arbitrary recipients, standalone wallet upgrades or human staff access. A disabled store rejects new prepare/submit requests while allowing queries, cancellation of the machine's own preparation, and owner revocation/key rotation.
+Revocation prevents new acceptance. Cap replacement and API key rotation apply the new cap or key to subsequent acceptance. **They do not guarantee cancellation of already accepted operations.** On-chain revocation of old delegations is follow-up work (#677). Delegation does not permit redemption, arbitrary recipients, standalone wallet upgrades or human staff access. A disabled store rejects new prepare/submit requests while allowing queries, cancellation of the machine's own preparation, and owner revocation/key rotation.
