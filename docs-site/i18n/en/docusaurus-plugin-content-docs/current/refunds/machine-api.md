@@ -11,6 +11,8 @@ This is a draft specification for preview review. It does not announce productio
 
 Generate a P-256 key inside the merchant server, using Node.js `generateKeyPairSync('ec', { namedCurve: 'prime256v1' })`, for example. Keep the private key in the merchant's secret store or KMS/HSM. Never send it to STBL Pay. Register the uncompressed public key `0x04 || X || Y` in the store detail's merchant server refunds section (Setup for online stores, Settings for in-person QR stores). The owner approves a delegation with a passkey, binding the public key, refund-only permission, per-refund cap, wallet, epoch and chainId. There are at most 10 non-revoked members per store, including pending members. An omitted cap means unlimited; `"0"` disables refunds. The `stblpay_machine_` key followed by 43 base64url characters is displayed only at issuance or rotation. Payment API keys cannot be substituted.
 
+Delegation does not permit standalone wallet upgrades. On a supported wallet, when the service configuration and Registry conditions are met, it may upgrade to the Registry-designated implementation together with the refund. This does not authorize upgrading to an arbitrary implementation. Approval itself only updates the delegation; it does not submit a refund or a wallet upgrade.
+
 Each refund requires both the machine signature and STBL Pay’s co-signature. STBL Pay can refuse to co-sign after its checks, but cannot transfer funds without the machine signature.
 
 ## API flow
@@ -35,4 +37,4 @@ The recipient is fixed to the original payer and is omitted from prepare. The ow
 
 `refundableNowJpy` is constrained by the ledger, on-chain backing and wallet balance. `executableJpy` is the minimum of that amount and `delegationCapJpy`, or `"0"` when blocked. Unavailable observations are not estimated. See [refund funds](/refunds/funding). Store and payment restrictions are backend checks; the contract does not identify stores or payments.
 
-Revocation, cap replacement and API key rotation prevent new acceptance. **They do not guarantee cancellation of already accepted operations.** On-chain revocation of old delegations is follow-up work (#677). Delegation does not permit redemption, arbitrary recipients, wallet upgrades or human staff access. A disabled store rejects new prepare/submit requests while allowing queries, cancellation of the machine's own preparation, and owner revocation/key rotation.
+Revocation, cap replacement and API key rotation prevent new acceptance. **They do not guarantee cancellation of already accepted operations.** On-chain revocation of old delegations is follow-up work (#677). Delegation does not permit redemption, arbitrary recipients, standalone wallet upgrades or human staff access. A disabled store rejects new prepare/submit requests while allowing queries, cancellation of the machine's own preparation, and owner revocation/key rotation.

@@ -254,6 +254,15 @@ test('machine refund draft, signing examples and fixed vectors are available in 
     await page.goto(`/docs/${locale}refunds/machine-api/`);
     await expect(page.locator('article')).toContainText(locale ? 'draft' : '公開準備中');
     await expect(page.locator('article')).toContainText('details.serverTime');
+    await expect(page.locator('article')).toContainText(locale
+      ? 'standalone wallet upgrades'
+      : '単独のウォレット更新');
+    await expect(page.locator('article')).toContainText(locale
+      ? 'upgrade to the Registry-designated implementation together with the refund'
+      : '返金と同時に Registry が指定した実装へ更新');
+    await expect(page.locator('article')).toContainText(locale
+      ? 'Approval itself only updates the delegation'
+      : '承認操作そのものは委任状だけを更新');
     await page.goto(`/docs/${locale}refunds/signing/`);
     await expect(page.locator('article')).toContainText('PUBLIC TEST ONLY');
     const example = await request.get(`/docs/${locale}examples/refund-signer.mjs`);
