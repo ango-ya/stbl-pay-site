@@ -26,3 +26,8 @@ Store the API key in your server's secret management system, and do not expose i
 On failure, read `{ code, details? }` and handle it according to the `code` in [Errors](/reference/rest#errors). Do not retry authentication or configuration errors without limit. If the result of a create payment request is unknown, use the same `orderId`.
 
 Next, see [Create a payment](/server/create-payment).
+
+
+## Refund API (draft)
+
+A separate machine API key and P-256 signature are required. See [signing](/refunds/signing).

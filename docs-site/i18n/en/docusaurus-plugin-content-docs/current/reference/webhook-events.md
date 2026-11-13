@@ -50,3 +50,8 @@ There is no notification for `nonce_conflict`. Confirm it with the status lookup
 Only the test notification sent from the merchant console keeps `type` as `payment.settled` and carries `test: true` in the body. Regular notifications have no `test` key. The IDs start with `evt_test_` and `pi_test_` and do not point to a real payment or order. The value of each field is in `TestWebhookEvent` in the body in the [OpenAPI specification](pathname:///openapi/#operation/receivePaymentEvent).
 
 For the procedure on the receiving side, see [Receiving test notifications](/webhooks/events#test-notifications).
+
+
+## Refund events (draft)
+
+The data for `refund.confirmed` and `refund.failed` contains `refund_id`, `payment_intent_id`, nullable `order_id`, `amount_jpy`, `status`, nullable `tx_hash`, nullable `failed_reason` and nullable `settled_at`. Type and status correspond to confirmed/failed. The transaction hash is null when execution evidence is unavailable. Payer addresses are omitted. Do not validate refund data as payment data. Destination, HMAC and retries use the existing delivery mechanism.

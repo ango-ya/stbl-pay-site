@@ -24,7 +24,7 @@ sidebar_position: 2
 | The Webhook does not arrive | Check the endpoint setting, persistence errors, your responses, and the resend cutoff. Reconcile with the API |
 | The same notification arrives repeatedly | Check that your response is a success and that you process idempotently by the body's `id` |
 | `nonce_conflict` occurred | Stop automatic re-billing and shipping, and ask the [contact](#contact) to investigate with the payment ID (and the `txHash` from the status lookup, if there is one). You can find the payment ID in `paymentIntentId` of the create or status lookup response, or under Payment ID (決済 ID) on the Transaction details (取引の詳細) screen of the merchant console |
-| Cannot run a refund from the API | Refunds are currently available only in the merchant console. See [Refund procedure](/refunds/execute) |
+| Cannot run a refund from the API | Check the [console procedure](/refunds/execute) and the availability of the draft [server API](/refunds/machine-api) |
 
 ## Contact {/* #contact */}
 

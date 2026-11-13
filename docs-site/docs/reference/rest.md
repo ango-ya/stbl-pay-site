@@ -72,4 +72,4 @@ sidebar_position: 2
 - `common/internal`（500）は、同じ `orderId` で再試行しても決済が二重に立つことはありません。
 - `payment/order_id_conflict`（409）は、同じ加盟店の別の店舗で使った `orderId` で作成したときのエラーです。同じ値で再試行しても解消しないので、新しい `orderId` で作り直してください（[店舗をまたぐ制約](/server/create-payment#冪等性)）。
 
-返金は加盟店コンソールの機能で、加盟店サーバーから呼べる返金 API はありません（[返金の提供範囲](/refunds/overview)）。
+返金は決済処理とは別の権限で行います。ownerのコンソール操作と、公開準備中の[加盟店サーバーAPI](/refunds/machine-api)は[返金の提供範囲](/refunds/overview)を参照してください。本番提供開始の案内ではありません。

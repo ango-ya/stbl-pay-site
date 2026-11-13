@@ -72,4 +72,4 @@ The error body is `{ code, details? }`. The error codes and what to do for each 
 - Retrying `common/internal` (500) with the same `orderId` does not create the payment twice.
 - `payment/order_id_conflict` (409) is returned when you create a payment with an `orderId` already used at a different store of the same merchant. Retrying with the same value does not resolve it, so create the payment again with a new `orderId` ([constraint across stores](/server/create-payment#idempotency)).
 
-Refunds are a merchant console feature, and there is no refund API that the merchant server can call ([scope of refunds](/refunds/overview)).
+Refunds use separate authority from payment processing. The owner console flow and draft [merchant server API](/refunds/machine-api) are described in [refund scope](/refunds/overview). The draft does not announce production availability.

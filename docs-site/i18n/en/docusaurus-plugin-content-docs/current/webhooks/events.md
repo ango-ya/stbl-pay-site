@@ -21,8 +21,8 @@ A payment never reaches more than one terminal state. However, STBLpay retries n
 ## Receiving flow
 
 1. Verify the [signature and timestamp over the raw body](/webhooks/signature).
-2. **Immediately after signature verification, before any business processing, determine whether it is a [test notification](#test-notifications).**
-3. Validate the JSON shape, and ignore unknown event types without changing any order.
+2. **Immediately after signature verification, parse the received raw body with `JSON.parse` and check `test === true` for a [test notification](#test-notifications), before any business processing.** For a test notification, return `2xx` without changing orders or payments.
+3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return `2xx` without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape before continuing.
 4. Persist the event, keyed by the `id` of the signature-verified body.
 5. Return `2xx` only after persisting succeeds. Run business processing in a retryable worker.
 6. Verify that the payment ID matches the order, then perform an [idempotent order update](/webhooks/idempotency).
@@ -33,7 +33,7 @@ Each merchant has a single Webhook destination, so notifications for the same me
 
 STBLpay does not send a notification for `nonce_conflict`, because the outcome cannot be determined, including whether a transfer was made. Reconcile unconfirmed orders with the [status lookup API](/server/retrieve-payment) and investigate them operationally. STBLpay also does not send a Webhook for each in-progress state.
 
-Merchant account events and refund completion are not payment Webhook events.
+Merchant account events are outside this scope. Refund results use separate refund events.
 
 ## Test notifications {/* #test-notifications */}
 
@@ -53,3 +53,8 @@ if (parsed.test === true) return res.sendStatus(200); // respond without changin
 Check `test === true` on the value right after `JSON.parse` of the raw body. Do not check it on a value that has passed through validation that discards unneeded keys. Such validation drops unknown keys, so `test` disappears and the notification looks like a genuine settled notification. Processing a test notification as a settled notification may mark a nonexistent order as paid. The checkbox on the screen does not guarantee that your receiver is safe, so finish the handling before you send a test.
 
 For the payload, see the [Webhook reference](/reference/webhook-events).
+
+
+## Refund notifications (draft)
+
+Handle `refund.confirmed` and `refund.failed` separately from payment events. After signature verification, ignore unknown types with a 2xx response without changing orders. Reconcile missing refund notifications by query. See [refund event fields](/reference/webhook-events#refund-events-draft).

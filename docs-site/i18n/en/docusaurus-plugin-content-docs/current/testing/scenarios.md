@@ -63,4 +63,12 @@ There is no test operation that moves a payment to any status you choose. Produc
 
 - [ ] When you tamper with the query of the browser's return destination, the order is not marked as paid
 
-Refunds are available only through the Transaction details (取引の詳細) screen of the merchant console. To test a refund, prepare the owner's passkey approval and a balance in the receiving wallet.
+
+
+## Machine refunds (draft)
+
+- [ ] Verify fixed vectors for query, empty body, JSON whitespace, non-ASCII, leading zeros, DER/raw and double-hash rejection
+- [ ] Recover a lost prepare response by querying ownStaged and canceling it
+- [ ] Resend the same staged/assertion with a new HTTP signature after a lost submit response without duplicating refunds
+- [ ] Check shared owner slot conflicts, cap violations, revocation and disabled stores
+- [ ] Handle duplicate, unknown and missing refund notifications, reconciling by query

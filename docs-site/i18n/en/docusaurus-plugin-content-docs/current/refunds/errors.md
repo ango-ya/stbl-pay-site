@@ -19,8 +19,13 @@ When you cannot start a refund, the Refund (返金) screen shows the reason.
 | "Cannot refund because the receiving wallet has not been created yet" (受取ウォレットがまだ作成されていないため返金できません) | Recheck after the receiving wallet is created |
 | "Cannot refund now because the status cannot be confirmed" (状況を確認できないため、今は返金できません) | Click Recheck (再確認) after a while |
 
-The screen also shows the reason when a refund is rejected at the assembly or approval stage. When a wallet update is required, you can go to it from the screen with Go to update (アップデートへ). The same applies to rejections such as the refund amount exceeding the refundable amount, or the balance of the receiving wallet being insufficient. These are responses from the API that the merchant console uses, not an API that your server calls.
+The screen also shows the reason when a refund is rejected at the assembly or approval stage. When a wallet update is required, you can go to it from the screen with Go to update (アップデートへ). The same applies to rejections such as the refund amount exceeding the refundable amount, or the balance of the receiving wallet being insufficient. Follow the console guidance for console operations.
 
 ## When the result is unknown
 
 If communication fails or you close the screen after approving a refund, the refund may still have been accepted. Do not assume it was not refunded and refund again. When you reopen the transaction details, the screen shows the refund in progress again from the server's records. While the status is Checking result (結果確認中), you cannot start a new refund.
+
+
+## Server integration errors (draft)
+
+For 401 `auth/api_key_invalid` or `auth/machine_signature_invalid`, check the key and signature. `auth/replay` means nonce reuse. For 419 `auth/clock_skew`, correct the clock and retry once with a fresh nonce. 409 `member/not_active`, `member/revoked` and `delegation/stale` require owner attention. Check the cap for `refund/exceeds_delegation_cap`. Stop new execution for `store/disabled`. Handle unknown codes with a common fallback. Reconcile uncertain outcomes using the [recovery flow](/refunds/machine-api#recovery).
