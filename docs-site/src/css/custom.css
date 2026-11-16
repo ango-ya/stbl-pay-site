@@ -227,6 +227,11 @@ kbd {
   backdrop-filter: blur(8px);
 }
 
+/* backdrop-filter があると、position: fixed のスマホ用メニューがヘッダーの高さに閉じ込められる。メニューを開いている間は外す */
+.navbar.navbar-sidebar--show {
+  backdrop-filter: none;
+}
+
 .navbar__logo {
   display: flex;
   width: 136px;
