@@ -56,10 +56,11 @@ Do not embed the API key in HTML or JavaScript. Do not put the dedicated checkou
 
 ## 7. Check the status on the server
 
-Set the ID you saved at creation in `PAYMENT_INTENT_ID` and look it up. This API does not require authentication.
+Set the ID you saved at creation in `PAYMENT_INTENT_ID` and look it up. Send the store API key in `x-stbl-api-key`.
 
 ```bash
-curl --fail-with-body "$STBL_PAY_BACKEND/payment_status/$PAYMENT_INTENT_ID"
+curl --fail-with-body "$STBL_PAY_BACKEND/payments/$PAYMENT_INTENT_ID" \
+  --header "x-stbl-api-key: $STBL_PAY_API_KEY"
 ```
 
 If `status` is `settled`, the payment has succeeded. `signed` and `deposit_confirmed` are in progress. Do not treat a failed lookup as a failed payment.

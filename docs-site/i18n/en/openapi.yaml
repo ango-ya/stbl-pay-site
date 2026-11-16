@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: STBLpay API
-  version: 0.32.0-feat-647-machine-refund.146
+  version: 0.35.0-feat-699-payment-lookup.152
   summary: The API your merchant server calls, and the Webhook your merchant server receives
   description: >-
     The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server
@@ -990,6 +990,187 @@ paths:
                 - assertion
               additionalProperties: false
       operationId: postMachinepaymentintentspaymentIntentIdrefundssubmit
+  /payments/{paymentIntentId}:
+    get:
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-stbl-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentIntentId:
+                    type: string
+                    pattern: ^pi_[0-9a-f]{8,32}$
+                  orderId:
+                    anyOf:
+                      - type: string
+                      - type: 'null'
+                  status:
+                    type: string
+                    enum:
+                      - created
+                      - signed
+                      - issue_pending
+                      - deposit_seen
+                      - deposit_confirmed
+                      - deploying
+                      - executing
+                      - settled
+                      - canceled
+                      - expired
+                      - failed
+                      - nonce_conflict
+                  amountJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  feeJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  netAmountJpy:
+                    type: string
+                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  txHash:
+                    anyOf:
+                      - type: string
+                        pattern: ^0x[0-9a-f]{64}$
+                      - type: 'null'
+                  settledAt:
+                    anyOf:
+                      - type: string
+                        format: date-time
+                      - type: 'null'
+                  failedReason:
+                    anyOf:
+                      - type: string
+                      - type: 'null'
+                  payerAddress:
+                    anyOf:
+                      - type: string
+                        pattern: ^0x[0-9a-f]{40}$
+                      - type: 'null'
+                  netAmountDestination:
+                    anyOf:
+                      - type: string
+                        pattern: ^0x[0-9a-f]{40}$
+                      - type: 'null'
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - paymentIntentId
+                  - orderId
+                  - status
+                  - amountJpy
+                  - feeJpy
+                  - netAmountJpy
+                  - txHash
+                  - settledAt
+                  - failedReason
+                  - payerAddress
+                  - netAmountDestination
+                  - createdAt
+                additionalProperties: true
+        '400':
+          description: common/invalid_request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    const: common/invalid_request
+                    type: string
+                  details:
+                    type: object
+                    additionalProperties: {}
+                required:
+                  - code
+                additionalProperties: true
+        '401':
+          description: auth/api_key_invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    const: auth/api_key_invalid
+                    type: string
+                  details:
+                    type: object
+                    additionalProperties: {}
+                required:
+                  - code
+                additionalProperties: true
+        '404':
+          description: common/not_found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    const: common/not_found
+                    type: string
+                  details:
+                    type: object
+                    additionalProperties: {}
+                required:
+                  - code
+                additionalProperties: true
+        '429':
+          description: common/rate_limited
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    const: common/rate_limited
+                    type: string
+                  details:
+                    type: object
+                    additionalProperties: {}
+                required:
+                  - code
+                additionalProperties: true
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying (positive integer)
+              schema:
+                type: integer
+                minimum: 1
+        '503':
+          description: common/service_unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    const: common/service_unavailable
+                    type: string
+                  details:
+                    type: object
+                    additionalProperties: {}
+                required:
+                  - code
+                additionalProperties: true
+      x-auth-scheme: api-key
+      operationId: getPayment
 webhooks:
   paymentEvent:
     post:
@@ -1019,8 +1200,8 @@ webhooks:
         2. If `test` in the body parsed with `JSON.parse` is `true`, it is a test notification sent from the merchant
         console. Return 2xx without updating any order or payment state
 
-        3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return
-        2xx without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape
+        3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return 2xx
+        without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape
 
         4. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a
         resend, the `id` and the body do not change
@@ -1109,6 +1290,8 @@ webhooks:
                     tx_hash: '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
                     settled_at: '2026-10-19T03:05:00.000Z'
                     failed_reason: null
+                    payer_address: null
+                    net_amount_destination: null
               failed:
                 summary: payment.failed (values are examples)
                 value:
@@ -1127,6 +1310,8 @@ webhooks:
                     tx_hash: '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
                     settled_at: null
                     failed_reason: insufficient_balance
+                    payer_address: null
+                    net_amount_destination: null
               test:
                 summary: Test notification (values are examples)
                 value:
@@ -1146,6 +1331,8 @@ webhooks:
                     tx_hash: null
                     settled_at: '2026-10-28T01:02:03.456Z'
                     failed_reason: null
+                    payer_address: '0x1111111111111111111111111111111111111111'
+                    net_amount_destination: '0x2222222222222222222222222222222222222222'
       responses:
         2XX:
           description: Received successfully. The body is not read
@@ -1534,6 +1721,16 @@ components:
           description: >-
             The reason classification code for `payment.failed` (the same set as `failedReason` in the status lookup;
             `nonce_conflict` is not included). null for other events
+        payer_address:
+          anyOf:
+            - type: string
+              pattern: ^0x[0-9a-f]{40}$
+            - type: 'null'
+        net_amount_destination:
+          anyOf:
+            - type: string
+              pattern: ^0x[0-9a-f]{40}$
+            - type: 'null'
     WebhookEvent:
       type: object
       required:
@@ -1595,6 +1792,8 @@ components:
             - tx_hash
             - settled_at
             - failed_reason
+            - payer_address
+            - net_amount_destination
           properties:
             payment_intent_id:
               type: string
@@ -1628,6 +1827,12 @@ components:
               description: The date-time it was sent
             failed_reason:
               type: 'null'
+            payer_address:
+              const: '0x1111111111111111111111111111111111111111'
+              type: string
+            net_amount_destination:
+              const: '0x2222222222222222222222222222222222222222'
+              type: string
     WebhookEventPayload:
       oneOf:
         - type: object
@@ -1644,6 +1849,16 @@ components:
             data:
               type: object
               properties:
+                payer_address:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
+                net_amount_destination:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
                 payment_intent_id:
                   type: string
                   pattern: ^pi_[0-9a-f]{8,32}$
@@ -1728,6 +1943,16 @@ components:
             data:
               type: object
               properties:
+                payer_address:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
+                net_amount_destination:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
                 payment_intent_id:
                   type: string
                   pattern: ^pi_[0-9a-f]{8,32}$
@@ -1812,6 +2037,16 @@ components:
             data:
               type: object
               properties:
+                payer_address:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
+                net_amount_destination:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
                 payment_intent_id:
                   type: string
                   pattern: ^pi_[0-9a-f]{8,32}$
@@ -1896,6 +2131,16 @@ components:
             data:
               type: object
               properties:
+                payer_address:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
+                net_amount_destination:
+                  anyOf:
+                    - type: string
+                      pattern: ^0x[0-9a-f]{40}$
+                    - type: 'null'
                 payment_intent_id:
                   type: string
                   pattern: ^pi_[0-9a-f]{8,32}$

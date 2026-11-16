@@ -273,3 +273,14 @@ test('machine refund draft, signing examples and fixed vectors are available in 
     expect((await vectors.json()).warning).toContain('PUBLIC TEST ONLY');
   }
 });
+
+for (const locale of ['', 'en/']) {
+ test(`authenticated payment lookup renders (${locale || 'ja'})`, async ({page}) => {
+  await page.goto(`/docs/${locale}server/retrieve-payment/`);
+  await expect(page.locator('article')).toContainText('/payments/');
+  await expect(page.locator('article')).toContainText('x-stbl-api-key');
+  await page.goto(`/docs/${locale}reference/webhook-events/`);
+  await expect(page.locator('article')).toContainText('payer_address');
+  await expect(page.locator('article')).toContainText('net_amount_destination');
+ });
+}

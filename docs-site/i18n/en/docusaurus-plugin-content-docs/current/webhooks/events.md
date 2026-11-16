@@ -58,3 +58,5 @@ For the payload, see the [Webhook reference](/reference/webhook-events).
 ## Refund notifications (draft)
 
 Handle `refund.confirmed` and `refund.failed` separately from payment events. After signature verification, ignore unknown types with a 2xx response without changing orders. Reconcile missing refund notifications by query. See [refund event fields](/reference/webhook-events#refund-events-draft).
+
+New payment events include `data.payer_address` and `data.net_amount_destination`, null for non-settled events or missing records. Older replays may omit them: treat missing and null alike, and ignore unknown keys. See the [field definitions](/reference/webhook-events).

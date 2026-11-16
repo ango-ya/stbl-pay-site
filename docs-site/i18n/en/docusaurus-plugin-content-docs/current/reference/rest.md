@@ -16,7 +16,9 @@ The type, format, and constraints of each field, the list of errors, and request
 | Method | Path | Authentication | Purpose |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API key (`x-stbl-api-key`) | [Create a payment](#create-payment) |
-| `GET` | `/payment_status/:paymentIntentId` | None | [Retrieve payment status](#retrieve-payment) |
+| `GET` | `/payments/:paymentIntentId` | API key (`x-stbl-api-key`) | [Merchant server lookup](#retrieve-payment) |
+| `GET` | `/payment_status/:paymentIntentId` | None | Checkout-page status |
+| `GET` | `/payment_intents/:paymentIntentId` | None | Checkout-page display information |
 
 Request and response bodies are JSON, and the fields are camelCase.
 
@@ -33,11 +35,16 @@ Request and response bodies are JSON, and the fields are camelCase.
 
 ## Retrieve payment status {/* #retrieve-payment */}
 
-`GET /payment_status/:paymentIntentId` returns the current status of a payment. The fields, errors, and examples are in ["Retrieve payment status" in the OpenAPI specification](pathname:///openapi/#operation/getPaymentStatus).
+Call `GET /payments/:paymentIntentId` from your server with the store API key in `x-stbl-api-key`. See the [OpenAPI specification](pathname:///openapi/#operation/getPayment) and [implementation example](/server/retrieve-payment). There is no request body.
 
-- **There is no authentication.** No API key or Authorization header is needed.
-- A payment ID is not a secret. Do not use it in place of permission to view your own orders.
-- This response does not include amounts, fees, or wallets.
+All twelve keys are required: `paymentIntentId`, `orderId`, `status`, `amountJpy`, `feeJpy`, `netAmountJpy`, `txHash`, `settledAt`, `failedReason`, `payerAddress`, `netAmountDestination`, and `createdAt`. `orderId`, `txHash`, `settledAt`, `failedReason`, `payerAddress`, and `netAmountDestination` can be null. Ignore unknown keys.
+
+- Only the authenticated store's payments are returned. Another store, another merchant, and an unknown ID all return the same 404. Valid keys work during merchant suspension or store disablement; revoked keys are rejected.
+- `payerAddress` is the payer wallet address, not an identity verification result. `netAmountDestination` is the destination recorded for the merchant's proceeds when the payment settled. Missing records in older payments are not backfilled and remain null. Both are null for non-`settled` payments.
+- For `settled`, `feeJpy` and `netAmountJpy` contain actual amounts, or estimates if execution details are unavailable. Other statuses return estimates, unlike the `"0"` amounts in non-settled Webhooks.
+- The default is 600 requests per API key per UTC calendar minute. For 429 `common/rate_limited`, wait for the integer seconds in `Retry-After`. Failure to check the limit returns 503 `common/service_unavailable`. Send unknown error codes to a common fallback.
+
+The existing `GET /payment_status/:paymentIntentId` and `GET /payment_intents/:paymentIntentId` are unauthenticated checkout-page endpoints. The status response has no amounts, fees, or wallets. A payment ID does not authorize viewing your own orders.
 
 ## Status values {/* #status-values */}
 
@@ -73,3 +80,14 @@ The error body is `{ code, details? }`. The error codes and what to do for each 
 - `payment/order_id_conflict` (409) is returned when you create a payment with an `orderId` already used at a different store of the same merchant. Retrying with the same value does not resolve it, so create the payment again with a new `orderId` ([constraint across stores](/server/create-payment#idempotency)).
 
 Refunds use separate authority from payment processing. The owner console flow and draft [merchant server API](/refunds/machine-api) are described in [refund scope](/refunds/overview). The draft does not announce production availability.
+
+## Amounts, chains, and tokens {/* #amounts-chains-tokens */}
+
+Amounts are decimal strings denominated in yen, including fractions (for example, `"4980.125"`). JPYC base units equal yen × 10^18; the existing API Jpy conversion precision is six decimal places. Token decimals and API conversion precision are different. Do not convert amounts to floating-point numbers. One tx can contain multiple payments and Transfer events, so match orders by the saved paymentIntentId rather than txHash alone.
+
+| Environment | chainId | JPYC contract address |
+|---|---|---|
+| Sandbox | Deployment configuration verification pending (unavailable) | Unavailable; confirm with your onboarding contact |
+| Production | Unavailable | Unavailable |
+
+The running Sandbox API's chainId/stablecoin pair has not been verified. Do not use the existing development Amoy values (80002 / `0xe7c3d8c9a439fede00d2600032d5db0be71c3c29`) as Sandbox settings. Production runtime settings have also not been verified, so no unverified address is published.

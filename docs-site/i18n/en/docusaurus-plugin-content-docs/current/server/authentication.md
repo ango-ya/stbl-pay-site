@@ -1,6 +1,6 @@
 ---
 title: Authentication
-description: "How to authenticate with the payment creation API: the merchant server sends its API key in a request header. For developers integrating STBLpay."
+description: "How to authenticate with the payment creation and lookup APIs: the merchant server sends its API key in a request header. For developers integrating STBLpay."
 sidebar_label: Authentication
 sidebar_position: 1
 ---
@@ -31,3 +31,5 @@ Next, see [Create a payment](/server/create-payment).
 ## Refund API (draft)
 
 A separate machine API key and P-256 signature are required. See [signing](/refunds/signing).
+
+`GET /payments/:paymentIntentId` uses the same store API key as payment creation. The existing `GET /payment_status/:paymentIntentId` and `GET /payment_intents/:paymentIntentId` are unauthenticated checkout-page endpoints. Use authenticated lookup for confirming payments from the merchant server.

@@ -58,3 +58,5 @@ if (parsed.test === true) return res.sendStatus(200); // 注文を変えずに�
 ## 返金通知（公開準備中）
 
 `refund.confirmed` と `refund.failed` を決済イベントと分けて処理します。未知のtypeは署名検証後に注文を変えず2xxで無視します。返金通知の未着は照会で突合してください。[返金イベントの項目](/reference/webhook-events#返金イベント公開準備中)を参照してください。
+
+決済4種の `data.payer_address` と `data.net_amount_destination` は新規通知では必須キーで、非成立・記録なしは null です。旧通知の再送では欠落し得るため、null と欠落は同じ扱いにし、未知キーは無視します。[項目の意味](/reference/webhook-events)を確認してください。

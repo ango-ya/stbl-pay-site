@@ -68,7 +68,7 @@ Regenerating the signing secret keeps the previous signing secret valid for 24 h
 - Removing it deletes both the new and previous signing secrets (the previous one is also invalidated immediately).
 - Undelivered and pending-retry notifications are discarded. **Setting up again does not resume discarded notifications.** Setting up again issues a new signing secret.
 - Notifications already in flight may not be cancelable.
-- Reconcile the results of payments whose notifications were discarded with the [status lookup](/server/retrieve-payment) (`GET /payment_status/:paymentIntentId`). The payments themselves are not canceled.
+- Reconcile the results of payments whose notifications were discarded with the [status lookup](/server/retrieve-payment) (`GET /payments/:paymentIntentId` with `x-stbl-api-key`). The payments themselves are not canceled.
 - On your receiving side, also delete the old signing secret.
 
 Notifications for payments that occurred while no Webhook was configured are not sent even if you configure one later. Likewise, reconcile them with the status lookup.

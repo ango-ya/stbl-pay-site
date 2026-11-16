@@ -56,10 +56,11 @@ API キーを HTML や JavaScript に埋め込まないでください。専用�
 
 ## 7. サーバーで状態を確認する
 
-作成時に保存した ID を `PAYMENT_INTENT_ID` に設定して照会します。この API は認証不要です。
+作成時に保存した ID を `PAYMENT_INTENT_ID` に設定して照会します。店舗 API キーを `x-stbl-api-key` で送ります。
 
 ```bash
-curl --fail-with-body "$STBL_PAY_BACKEND/payment_status/$PAYMENT_INTENT_ID"
+curl --fail-with-body "$STBL_PAY_BACKEND/payments/$PAYMENT_INTENT_ID" \
+  --header "x-stbl-api-key: $STBL_PAY_API_KEY"
 ```
 
 `status` が `settled` であれば成立です。`signed` や `deposit_confirmed` は処理途中です。照会失敗を決済失敗として扱わないでください。

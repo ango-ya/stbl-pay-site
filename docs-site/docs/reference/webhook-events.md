@@ -55,3 +55,11 @@ Webhook の本文とヘッダーの項目ごとの定義は、OpenAPI 3.1 の仕
 ## 返金イベント（公開準備中）
 
 `refund.confirmed` と `refund.failed` のdataは `refund_id`、`payment_intent_id`、`order_id`（nullable）、`amount_jpy`、`status`、`tx_hash`（nullable）、`failed_reason`（nullable）、`settled_at`（nullable）です。typeとstatusはそれぞれconfirmed/failedに対応します。tx hashを確証を持って取得できなければnullです。支払人アドレスは含みません。paymentイベントのdataとして検証しないでください。配信先・HMAC・再送方式は共通です。
+
+## 支払人と届け先の記録
+
+決済4種の `data` に `payer_address` と `net_amount_destination` を追加します。新規通知では両キーを必ず出し、非成立なら null です。成立でも元記録がなければ null です。旧通知の保存済み本文は変更せず再送するため、キーが欠落することがあります。受信側は欠落と null を同じ「記録なし」と扱い、現在の設定や別の取引から補完せず、未知キーは無視してください。
+
+`payer_address` は支払人ウォレットのアドレスであり、本人確認結果ではありません。`net_amount_destination` はその決済の成立時に記録した取り分の届け先です。金額は小数の円建て文字列で、JPYC の最小単位は円 × 10^18、既存 API の Jpy 変換精度は小数6桁です。同じ tx の複数 Transfer を1件の注文として合算せず、payment_intent_id で照合します。
+
+テスト通知の固定値は `payer_address = 0x1111111111111111111111111111111111111111`、`net_amount_destination = 0x2222222222222222222222222222222222222222` です。実取引・送金には使いません。`test === true` の判定手順は変わりません。返金2種の data にはこの2キーを追加しません。既存の返金機能は引き続き利用できます。
