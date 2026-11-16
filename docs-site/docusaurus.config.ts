@@ -109,6 +109,11 @@ const config: Config = {
         {
           type: 'html',
           position: 'left',
+          value: `<a class="navbar__item navbar__link lp-nav" href="/${en ? 'en/' : ''}learn/">${en ? 'Guides' : '決済を学ぶ'}</a>`,
+        },
+        {
+          type: 'html',
+          position: 'left',
           value: `<a class="navbar__item navbar__link lp-nav navbar__link--active" aria-current="page" href="/docs/${en ? 'en/' : ''}">${en ? 'Docs' : 'ドキュメント'}</a>`,
         },
         // LP と同じく、もう一方の言語へのリンクだけを出す（src/components/LocaleToggleNavbarItem.tsx）

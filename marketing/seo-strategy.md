@@ -13,6 +13,16 @@
   - LP は 1 枚で、FAQ に答えが埋もれている。docs は組み込む人向け。
 - 提供開始日は未定。手数料の料率も出せない。このため、比較サイトの料率表には今は載れない。
 
+### 2026-11-16 の点検
+
+- Google の登録：77 ページ（LP・英語版・docs）。解説（/learn/）は 0（Search Console の 11/13 時点のデータ）。10 ページが「検出 - インデックス未登録」で、まだ読みに来ていなかった。
+- 11/16 に URL 検査で、次の 10 本の登録をリクエストした：/learn/、stablecoin-payments、jpyc-payments、payment-gateway、what-is-stablecoin、payment-reconciliation、card-merchant-screening、no-screening-payments、payment-fees、/en/learn/。残りの解説とプレスキットは、次の日以降に回す。
+- 検索の数字（28 日）：Google は表示 230・クリック 1（ほぼ名前の検索）。Bing は表示 5・クリック 2。Bing の AI の回答での引用は 0。
+- GA4（11/10〜15）：訪問 29。成果につながった操作は 0。
+- Cloudflare：AI のクローラーからのリクエストは 7 日で約 3,300。本物の Googlebot は /learn/ と /learn/chargeback/ を読みに来ている。404 の大半は、Googlebot や AI のクローラーを名乗って `.env` などを探す、攻撃用の探索。https://www.stbl-pay.com/ は 521（オリジンにつながらない）を返していた。
+- 第三者の記事の「2026年8月に提供開始予定」「SDK を組み込むだけ」は、2026-07-10 の発表のころの説明。プレスキット・LP の FAQ・llms.txt に、日付つきで今の状況を書いた。
+- 週次点検のルーチン（trig_018nBcrRPGuh2wjZw4TZFKiJ）は、ユーザーの判断で 11/16 に止めた。
+
 ## 2. 誰に、どの言葉で届けるか
 
 調査の元データは `marketing/research/` に置いた（すべて 2026-11-05 に取得・確認）。

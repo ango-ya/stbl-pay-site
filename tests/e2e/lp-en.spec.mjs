@@ -35,10 +35,10 @@ test.describe("英語LP", () => {
     const data = JSON.parse(raw);
     const faq = data["@graph"].find((n) => n["@type"] === "FAQPage");
     expect(faq.inLanguage).toBe("en");
-    expect(faq.mainEntity.length).toBe(16);
+    expect(faq.mainEntity.length).toBe(17);
   });
 
-  test("FAQPage JSON-LD の質問・答えが、表示中の FAQ と一致する（16 問）", async ({ page }) => {
+  test("FAQPage JSON-LD の質問・答えが、表示中の FAQ と一致する（17 問）", async ({ page }) => {
     await page.goto("/en/");
     const blocks = await page
       .locator('script[type="application/ld+json"]')
@@ -60,7 +60,7 @@ test.describe("英語LP", () => {
         };
       })
     );
-    expect(visible).toHaveLength(16);
+    expect(visible).toHaveLength(17);
     expect(faq.mainEntity.map((q) => q.name)).toEqual(visible.map((v) => v.question));
     expect(faq.mainEntity.map((q) => q.acceptedAnswer.text.replace(/\s+/g, " ").trim())).toEqual(
       visible.map((v) => v.answer)
@@ -70,10 +70,10 @@ test.describe("英語LP", () => {
   test("FAQ に会計処理とパスキー（端末の買い替え）の 2 問があり、同じ位置に並ぶ", async ({ page }) => {
     await page.goto("/en/");
     const questions = (await page.locator("#faq details summary").allTextContents()).map((s) => s.trim());
-    expect(questions[12]).toBe("How is received JPYC treated for accounting?");
-    expect(questions[13]).toBe("What happens to my passkey if I replace my smartphone?");
-    expect(questions[14]).toBe("Won't the details of payments be visible to anyone on the blockchain?");
-    expect(questions[15]).toBe("Can buyers living outside Japan use this?");
+    expect(questions[13]).toBe("How is received JPYC treated for accounting?");
+    expect(questions[14]).toBe("What happens to my passkey if I replace my smartphone?");
+    expect(questions[15]).toBe("Won't the details of payments be visible to anyone on the blockchain?");
+    expect(questions[16]).toBe("Can buyers living outside Japan use this?");
   });
 
   test("JSON-LD に SoftwareApplication が無く、手数料の offers は Service にある", async ({ page }) => {

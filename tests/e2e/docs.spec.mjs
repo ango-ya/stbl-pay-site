@@ -32,7 +32,22 @@ test.describe("加盟店向けドキュメント", () => {
     // ヘッダーは LP と同じ項目。LP の節へのリンクは /docs/ を付けずに LP を指す
     await expect(page.locator(".navbar").getByRole("link", { name: "手数料", exact: true })).toHaveAttribute("href", "/#comparison");
     await expect(page.locator(".navbar").getByRole("link", { name: "導入を相談する" })).toHaveAttribute("href", "/#early-access");
+    await expect(page.locator(".navbar").getByRole("link", { name: "決済を学ぶ", exact: true })).toHaveAttribute("href", "/learn/");
     expect(consoleErrors).toEqual([]);
+  });
+
+  test("スマホのメニューが画面の高さで開き、決済を学ぶ へ進める", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto("/docs/");
+    await page.locator(".navbar__toggle").click();
+    // docs のページでは docs の目次から開く。ヘッダーの項目は「メインメニューに戻る」の先
+    const back = page.locator(".navbar-sidebar__back");
+    await expect(back).toBeVisible();
+    await back.click();
+    // ヘッダーの backdrop-filter に閉じ込められると、メニューの高さがヘッダーと同じ（60px ほど）になる
+    expect((await page.locator(".navbar-sidebar").boundingBox()).height).toBeGreaterThan(400);
+    await page.locator(".navbar-sidebar").getByRole("link", { name: "決済を学ぶ", exact: true }).click();
+    await expect(page).toHaveURL(/\/learn\/$/);
   });
 
   test("状態遷移のフローチャートが表示される", async ({ page }) => {
@@ -63,6 +78,7 @@ test.describe("加盟店向けドキュメント", () => {
     await expect(page).toHaveTitle(/STBLpay Docs/);
     // ヘッダーの LP の節へのリンクは、英語版の LP を指す
     await expect(page.locator(".navbar").getByRole("link", { name: "Fees", exact: true })).toHaveAttribute("href", "/en/#comparison");
+    await expect(page.locator(".navbar").getByRole("link", { name: "Guides", exact: true })).toHaveAttribute("href", "/en/learn/");
     expect(consoleErrors).toEqual([]);
   });
 
