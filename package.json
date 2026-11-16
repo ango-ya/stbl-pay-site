@@ -7,7 +7,11 @@
     "test": "playwright test",
     "test:e2e": "playwright test",
     "check": "./scripts/check-acceptance.sh && ./scripts/check-lr006-terms.sh",
-    "test:figures": "node --test scripts/figures/outputs.test.mjs"
+    "test:figures": "node --test scripts/figures/outputs.test.mjs",
+    "openapi:build": "node scripts/build-openapi.mjs",
+    "openapi:check": "node scripts/build-openapi.mjs --check",
+    "test:machine-openapi": "node --test scripts/machine-openapi.test.mjs",
+    "build:dist": "bash scripts/build-dist.sh"
   },
   "repository": {
     "type": "git",

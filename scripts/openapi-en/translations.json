@@ -1,0 +1,1138 @@
+{
+  "operations.getPayment.summary": {
+    "source": "決済を照会する",
+    "translation": "Look up a payment"
+  },
+  "operations.getPayment.description": {
+    "source": "店舗の決済 API キーに属する決済1件だけを返します。他店舗の決済は404です。成立していない決済の amountJpy・feeJpy・netAmountJpy は見積りです。API キーごとに既定600回／60秒の毎分固定窓で制限します。HTTP 429 の Retry-After は再試行までの整数秒です。",
+    "translation": "Returns one payment belonging to the store's payment API key. Payments belonging to another store return 404. amountJpy, feeJpy and netAmountJpy are estimates for unsettled payments. The default rate limit is 600 requests per API key in each fixed 60-second minute window. Retry-After on HTTP 429 is an integer number of seconds to wait before retrying."
+  },
+  "operations.getPayment/responses/200/description": {
+    "source": "成功",
+    "translation": "Success"
+  },
+  "operations.getPayment/responses/200/content/application~1json/examples/settled/summary": {
+    "source": "成立した決済",
+    "translation": "Settled payment"
+  },
+  "operations.getPayment/responses/200/content/application~1json/examples/unsettled/summary": {
+    "source": "成立前の見積り",
+    "translation": "Estimate before settlement"
+  },
+  "errors.common/invalid_request.meaning": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "errors.common/invalid_request.action": {
+    "source": "パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。",
+    "translation": "Compare the path, query, headers and body with the API schema."
+  },
+  "operations.getPayment/responses/400/content/application~1json/examples/common_invalid_request/summary": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "errors.auth/api_key_invalid.meaning": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "errors.auth/api_key_invalid.action": {
+    "source": "用途に合う現在の API キーを確認してください。",
+    "translation": "Check the current API key for the intended purpose."
+  },
+  "operations.getPayment/responses/401/content/application~1json/examples/auth_api_key_invalid/summary": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "errors.common/not_found.meaning": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "errors.common/not_found.action": {
+    "source": "識別子と API キーの店舗を確認してください。",
+    "translation": "Check the identifier and the store associated with the API key."
+  },
+  "operations.getPayment/responses/404/content/application~1json/examples/common_not_found/summary": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "errors.common/rate_limited.meaning": {
+    "source": "呼出回数の制限に達しました。",
+    "translation": "The request rate limit has been reached."
+  },
+  "errors.common/rate_limited.action": {
+    "source": "Retry-After の整数秒だけ待ってから再試行してください。",
+    "translation": "Wait the integer number of seconds in Retry-After before retrying."
+  },
+  "operations.getPayment/responses/429/content/application~1json/examples/common_rate_limited/summary": {
+    "source": "呼出回数の制限に達しました。",
+    "translation": "The request rate limit has been reached."
+  },
+  "operations.getPayment/responses/429/headers/Retry-After/description": {
+    "source": "再試行までの待機時間（整数秒）",
+    "translation": "Seconds to wait before retrying (integer)"
+  },
+  "errors.common/internal.meaning": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "errors.common/internal.action": {
+    "source": "送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。",
+    "translation": "If the submission outcome is unknown, recover using the same stagedOpId and assertion. Do not prepare again."
+  },
+  "operations.getPayment/responses/500/content/application~1json/examples/common_internal/summary": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "errors.common/service_unavailable.meaning": {
+    "source": "現在サービスを利用できません。",
+    "translation": "The service is currently unavailable."
+  },
+  "errors.common/service_unavailable.action": {
+    "source": "時間を置いて再試行してください。",
+    "translation": "Wait before retrying."
+  },
+  "operations.getPayment/responses/503/content/application~1json/examples/common_service_unavailable/summary": {
+    "source": "現在サービスを利用できません。",
+    "translation": "The service is currently unavailable."
+  },
+  "operations.getMachineRefundable.summary": {
+    "source": "返金できる額を確かめる",
+    "translation": "Check the refundable amount"
+  },
+  "operations.getMachineRefundable.description": {
+    "source": "executableJpy がこの machine の実行可能額で、refundableNowJpy と delegationCapJpy の小さい方です。上限なしは null。blockedBy があれば \"0\" です。state_unavailable では推測した額で進めません。ownStaged は同じ machine が別決済で作った未消費の準備も含みます。準備の応答を失ったら paymentIntentId・stagedOpId と作成したプロセスを確認し、意図的に取りやめる場合だけ破棄して再準備します。",
+    "translation": "executableJpy is the amount this machine can execute: the smaller of refundableNowJpy and delegationCapJpy. null means no cap. It is \"0\" when blockedBy is present. Do not proceed with an estimated amount when state_unavailable is returned. ownStaged includes unconsumed preparations created by the same machine for other payments. If the preparation response is lost, check paymentIntentId, stagedOpId and the process that created it. Discard and prepare again only when intentionally abandoning the preparation."
+  },
+  "operations.getMachineRefundable/responses/200/description": {
+    "source": "成功",
+    "translation": "Success"
+  },
+  "operations.getMachineRefundable/responses/200/content/application~1json/examples/available/summary": {
+    "source": "返金を開始できる",
+    "translation": "A refund can be started"
+  },
+  "operations.getMachineRefundable/responses/200/content/application~1json/examples/blocked/summary": {
+    "source": "状態を観測できず開始できない",
+    "translation": "Cannot start because the state cannot be observed"
+  },
+  "operations.getMachineRefundable/responses/200/content/application~1json/examples/ownStaged/summary": {
+    "source": "本人の準備が残っている",
+    "translation": "An unconsumed preparation belongs to this machine"
+  },
+  "operations.getMachineRefundable/responses/400/content/application~1json/examples/common_invalid_request/summary": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "errors.auth/machine_signature_invalid.meaning": {
+    "source": "HTTP 署名を検証できません。",
+    "translation": "The HTTP signature could not be verified."
+  },
+  "errors.auth/machine_signature_invalid.action": {
+    "source": "raw body と送信 URL を保ったまま、署名の手順を確認してください。",
+    "translation": "Check the signing procedure while preserving the raw body and request URL."
+  },
+  "errors.auth/replay.meaning": {
+    "source": "同じ HTTP nonce が既に使われています。",
+    "translation": "The HTTP nonce has already been used."
+  },
+  "errors.auth/replay.action": {
+    "source": "新しい nonce・timestamp・HTTP 署名で再送してください。",
+    "translation": "Retry with a new nonce, timestamp and HTTP signature."
+  },
+  "operations.getMachineRefundable/responses/401/content/application~1json/examples/auth_api_key_invalid/summary": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "operations.getMachineRefundable/responses/401/content/application~1json/examples/auth_machine_signature_invalid/summary": {
+    "source": "HTTP 署名を検証できません。",
+    "translation": "The HTTP signature could not be verified."
+  },
+  "operations.getMachineRefundable/responses/401/content/application~1json/examples/auth_replay/summary": {
+    "source": "同じ HTTP nonce が既に使われています。",
+    "translation": "The HTTP nonce has already been used."
+  },
+  "errors.merchant/suspended.meaning": {
+    "source": "加盟店が利用停止中です。",
+    "translation": "The merchant is suspended."
+  },
+  "errors.merchant/suspended.action": {
+    "source": "利用状況を確認し、停止が解消するまで要求を止めてください。",
+    "translation": "Check the merchant's status and stop requests until the suspension is lifted."
+  },
+  "operations.getMachineRefundable/responses/403/content/application~1json/examples/merchant_suspended/summary": {
+    "source": "加盟店が利用停止中です。",
+    "translation": "The merchant is suspended."
+  },
+  "operations.getMachineRefundable/responses/404/content/application~1json/examples/common_not_found/summary": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "errors.member/not_active.meaning": {
+    "source": "machine の委任状が有効になっていません。",
+    "translation": "The machine delegation is not active."
+  },
+  "errors.member/not_active.action": {
+    "source": "管理画面で委任状の承認状況を確認してください。",
+    "translation": "Check the delegation approval status in the dashboard."
+  },
+  "errors.member/revoked.meaning": {
+    "source": "machine が失効しています。",
+    "translation": "The machine has been revoked."
+  },
+  "errors.member/revoked.action": {
+    "source": "この machine で新規の返金を開始せず、管理画面で状態を確認してください。",
+    "translation": "Do not start new refunds with this machine. Check its status in the dashboard."
+  },
+  "errors.delegation/stale.meaning": {
+    "source": "現在の委任状を使用できません。",
+    "translation": "The current delegation cannot be used."
+  },
+  "errors.delegation/stale.action": {
+    "source": "管理画面で現行のウォレットに対する委任状を再承認してください。",
+    "translation": "Approve the delegation again for the current wallet in the dashboard."
+  },
+  "operations.getMachineRefundable/responses/409/content/application~1json/examples/member_not_active/summary": {
+    "source": "machine の委任状が有効になっていません。",
+    "translation": "The machine delegation is not active."
+  },
+  "operations.getMachineRefundable/responses/409/content/application~1json/examples/member_revoked/summary": {
+    "source": "machine が失効しています。",
+    "translation": "The machine has been revoked."
+  },
+  "operations.getMachineRefundable/responses/409/content/application~1json/examples/delegation_stale/summary": {
+    "source": "現在の委任状を使用できません。",
+    "translation": "The current delegation cannot be used."
+  },
+  "errors.auth/clock_skew.meaning": {
+    "source": "HTTP 署名の時刻が許容時刻差を外れています。",
+    "translation": "The HTTP signature timestamp is outside the allowed clock skew."
+  },
+  "errors.auth/clock_skew.action": {
+    "source": "details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送してください。",
+    "translation": "Correct the clock offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature."
+  },
+  "operations.getMachineRefundable/responses/419/content/application~1json/examples/auth_clock_skew/summary": {
+    "source": "HTTP 署名の時刻が許容時刻差を外れています。",
+    "translation": "The HTTP signature timestamp is outside the allowed clock skew."
+  },
+  "operations.getMachineRefundable/responses/500/content/application~1json/examples/common_internal/summary": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "operations.prepareMachineRefund.summary": {
+    "source": "返金を準備する",
+    "translation": "Prepare a refund"
+  },
+  "operations.prepareMachineRefund.description": {
+    "source": "返金額を reservedJpy として確保し、サーバーが UserOperation を組み立てます。challenge は乱数ではなく keccak256(userOpHash ‖ validUntil) の digest です。返金先・額・ウォレットの nonce・更新・期限を決めた後に machine が署名するため、準備と送信が分かれます。返金先は元の支払人に固定で指定できず、応答にも含みません。upgrade.included は返金と同時のウォレット更新を示します。加盟店ウォレットの操作は1件ずつ直列に進みます。",
+    "translation": "Reserves the refund amount as reservedJpy while the server builds the UserOperation. challenge is the digest keccak256(userOpHash ‖ validUntil), not a random value. Preparation and submission are separate because the machine signs after the recipient, amount, wallet nonce, upgrade and expiry have been determined. The recipient is fixed to the original payer, cannot be specified, and is omitted from the response. upgrade.included indicates a wallet upgrade included with the refund. Merchant wallet operations proceed one at a time."
+  },
+  "operations.prepareMachineRefund/responses/200/description": {
+    "source": "成功",
+    "translation": "Success"
+  },
+  "operations.prepareMachineRefund/responses/200/content/application~1json/examples/default/summary": {
+    "source": "署名対象と準備の識別子",
+    "translation": "Signing target and preparation identifier"
+  },
+  "operations.prepareMachineRefund/responses/400/content/application~1json/examples/common_invalid_request/summary": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "operations.prepareMachineRefund/responses/401/content/application~1json/examples/auth_api_key_invalid/summary": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "operations.prepareMachineRefund/responses/401/content/application~1json/examples/auth_machine_signature_invalid/summary": {
+    "source": "HTTP 署名を検証できません。",
+    "translation": "The HTTP signature could not be verified."
+  },
+  "operations.prepareMachineRefund/responses/401/content/application~1json/examples/auth_replay/summary": {
+    "source": "同じ HTTP nonce が既に使われています。",
+    "translation": "The HTTP nonce has already been used."
+  },
+  "operations.prepareMachineRefund/responses/403/content/application~1json/examples/merchant_suspended/summary": {
+    "source": "加盟店が利用停止中です。",
+    "translation": "The merchant is suspended."
+  },
+  "operations.prepareMachineRefund/responses/404/content/application~1json/examples/common_not_found/summary": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "errors.store/disabled.meaning": {
+    "source": "店舗が無効なため新規の返金を受け付けられません。",
+    "translation": "New refunds cannot be accepted because the store is inactive."
+  },
+  "errors.store/disabled.action": {
+    "source": "店舗の状態を確認してください。受付済みの照会と本人の準備の取消は可能です。",
+    "translation": "Check the store's status. Accepted refunds can still be queried and this machine's preparations can still be canceled."
+  },
+  "errors.refund/exceeds_delegation_cap.meaning": {
+    "source": "返金額が委任状の1件あたりの上限を超えています。",
+    "translation": "The refund amount exceeds the delegation's per-refund cap."
+  },
+  "errors.refund/exceeds_delegation_cap.action": {
+    "source": "実行可能額を再照会し、額を下げるか管理画面で上限を再承認してください。",
+    "translation": "Query the executable amount again, then reduce the amount or approve a new cap in the dashboard."
+  },
+  "errors.refund/not_refundable.meaning": {
+    "source": "この決済は返金を開始できません。",
+    "translation": "A refund cannot be started for this payment."
+  },
+  "errors.refund/not_refundable.action": {
+    "source": "元決済の状態と返金可能額を照会してください。",
+    "translation": "Query the original payment status and refundable amount."
+  },
+  "errors.refund/exceeds_available.meaning": {
+    "source": "返金額が現在の返金可能額を超えています。",
+    "translation": "The refund amount exceeds the currently refundable amount."
+  },
+  "errors.refund/exceeds_available.action": {
+    "source": "返金可能額を再照会してから準備してください。",
+    "translation": "Query the refundable amount again before preparing."
+  },
+  "errors.refund/insufficient_funds.meaning": {
+    "source": "返金に必要なウォレット残高が不足しています。",
+    "translation": "The wallet balance is insufficient for this refund."
+  },
+  "errors.refund/insufficient_funds.action": {
+    "source": "残高と返金可能額を確認してから再試行してください。",
+    "translation": "Check the balance and refundable amount before retrying."
+  },
+  "errors.refund/onchain_credit_exceeded.meaning": {
+    "source": "返金額が支払人単位のオンチェーン上限を超えています。",
+    "translation": "The refund amount exceeds the onchain cap for the payer."
+  },
+  "errors.refund/onchain_credit_exceeded.action": {
+    "source": "返金可能額を再照会し、実行可能額の範囲に下げてください。",
+    "translation": "Query the refundable amount again and reduce the amount to within the executable limit."
+  },
+  "errors.wallet/operation_in_progress.meaning": {
+    "source": "加盟店ウォレットで別の操作が進行中です。",
+    "translation": "Another operation is in progress on the merchant wallet."
+  },
+  "errors.wallet/operation_in_progress.action": {
+    "source": "操作が終わってから返金可能額を再照会してください。",
+    "translation": "Wait for the operation to finish, then query the refundable amount again."
+  },
+  "errors.wallet/staged_operation_exists.meaning": {
+    "source": "未消費の準備が残っています。",
+    "translation": "An unconsumed preparation remains."
+  },
+  "errors.wallet/staged_operation_exists.action": {
+    "source": "ownStaged と作成したプロセスを確認し、意図的に取りやめる準備だけを破棄してください。",
+    "translation": "Check ownStaged and the process that created it. Discard only a preparation you intentionally abandon."
+  },
+  "errors.wallet/upgrade_required.meaning": {
+    "source": "返金の前にウォレット更新が必要です。",
+    "translation": "A wallet upgrade is required before refunding."
+  },
+  "errors.wallet/upgrade_required.action": {
+    "source": "管理画面で必要なウォレット更新を確認してください。",
+    "translation": "Check the required wallet upgrade in the dashboard."
+  },
+  "errors.wallet/not_deployed.meaning": {
+    "source": "加盟店ウォレットが未デプロイです。",
+    "translation": "The merchant wallet has not been deployed."
+  },
+  "errors.wallet/not_deployed.action": {
+    "source": "管理画面でウォレットの状態を確認してください。",
+    "translation": "Check the wallet's status in the dashboard."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/member_not_active/summary": {
+    "source": "machine の委任状が有効になっていません。",
+    "translation": "The machine delegation is not active."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/member_revoked/summary": {
+    "source": "machine が失効しています。",
+    "translation": "The machine has been revoked."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/delegation_stale/summary": {
+    "source": "現在の委任状を使用できません。",
+    "translation": "The current delegation cannot be used."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/store_disabled/summary": {
+    "source": "店舗が無効なため新規の返金を受け付けられません。",
+    "translation": "New refunds cannot be accepted because the store is inactive."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/refund_exceeds_delegation_cap/summary": {
+    "source": "返金額が委任状の1件あたりの上限を超えています。",
+    "translation": "The refund amount exceeds the delegation's per-refund cap."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/refund_not_refundable/summary": {
+    "source": "この決済は返金を開始できません。",
+    "translation": "A refund cannot be started for this payment."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/refund_exceeds_available/summary": {
+    "source": "返金額が現在の返金可能額を超えています。",
+    "translation": "The refund amount exceeds the currently refundable amount."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/refund_insufficient_funds/summary": {
+    "source": "返金に必要なウォレット残高が不足しています。",
+    "translation": "The wallet balance is insufficient for this refund."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/refund_onchain_credit_exceeded/summary": {
+    "source": "返金額が支払人単位のオンチェーン上限を超えています。",
+    "translation": "The refund amount exceeds the onchain cap for the payer."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/wallet_operation_in_progress/summary": {
+    "source": "加盟店ウォレットで別の操作が進行中です。",
+    "translation": "Another operation is in progress on the merchant wallet."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/wallet_staged_operation_exists/summary": {
+    "source": "未消費の準備が残っています。",
+    "translation": "An unconsumed preparation remains."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/wallet_upgrade_required/summary": {
+    "source": "返金の前にウォレット更新が必要です。",
+    "translation": "A wallet upgrade is required before refunding."
+  },
+  "operations.prepareMachineRefund/responses/409/content/application~1json/examples/wallet_not_deployed/summary": {
+    "source": "加盟店ウォレットが未デプロイです。",
+    "translation": "The merchant wallet has not been deployed."
+  },
+  "operations.prepareMachineRefund/responses/419/content/application~1json/examples/auth_clock_skew/summary": {
+    "source": "HTTP 署名の時刻が許容時刻差を外れています。",
+    "translation": "The HTTP signature timestamp is outside the allowed clock skew."
+  },
+  "operations.prepareMachineRefund/responses/500/content/application~1json/examples/common_internal/summary": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "errors.wallet/state_unavailable.meaning": {
+    "source": "ウォレットの状態を確認できません。",
+    "translation": "The wallet state could not be checked."
+  },
+  "errors.wallet/state_unavailable.action": {
+    "source": "推測した額で進めず、時間を置いて返金可能額を再照会してください。",
+    "translation": "Do not proceed with an estimated amount. Wait and query the refundable amount again."
+  },
+  "operations.prepareMachineRefund/responses/503/content/application~1json/examples/wallet_state_unavailable/summary": {
+    "source": "ウォレットの状態を確認できません。",
+    "translation": "The wallet state could not be checked."
+  },
+  "operations.prepareMachineRefund/requestBody/content/application~1json/examples/default/summary": {
+    "source": "1000円を準備する",
+    "translation": "Prepare 1,000 JPY"
+  },
+  "operations.submitMachineRefund.summary": {
+    "source": "返金に署名して送る",
+    "translation": "Sign and submit a refund"
+  },
+  "operations.submitMachineRefund.description": {
+    "source": "HTTP 202 は返金の受付であり完了ではありません。tx hash は含みません。refundId を保存し、結果を照会してください。assertion は challenge への署名で、HTTP 署名とは別です。assertion.signature は DER の base64url、HTTP 署名は r‖s の16進128桁です。応答を失ったら同じ stagedOpId と同じ assertion を再送し、HTTP の nonce・timestamp・署名だけ新しくします。受付済みなら同じ refundId と walletOperationId を返します。新しく準備し直しません。失効や上限の再承認は受付済みの返金を取り消しません。署名の手順は https://stbl-pay.com/docs/refunds/signing を参照してください。",
+    "translation": "HTTP 202 means the refund was accepted, not completed. It contains no tx hash. Save refundId and query the result. assertion signs the challenge and is separate from the HTTP signature. assertion.signature is base64url-encoded DER; the HTTP signature is 128 hexadecimal characters encoding r‖s. If the response is lost, resend the same stagedOpId and assertion, refreshing only the HTTP nonce, timestamp and signature. If already accepted, the same refundId and walletOperationId are returned. Do not prepare again. Revocation or approval of a new cap does not cancel accepted refunds. See https://stbl-pay.com/docs/refunds/signing for the signing procedure."
+  },
+  "operations.submitMachineRefund/responses/202/description": {
+    "source": "成功",
+    "translation": "Success"
+  },
+  "operations.submitMachineRefund/responses/202/content/application~1json/examples/accepted/summary": {
+    "source": "受付済み",
+    "translation": "Accepted"
+  },
+  "errors.payment/digest_mismatch.meaning": {
+    "source": "署名した内容が準備した署名対象と一致しません。",
+    "translation": "The signed content does not match the prepared signing target."
+  },
+  "errors.payment/digest_mismatch.action": {
+    "source": "同じ stagedOpId の challenge を使った assertion か確認してください。",
+    "translation": "Check that the assertion uses the challenge for the same stagedOpId."
+  },
+  "operations.submitMachineRefund/responses/400/content/application~1json/examples/common_invalid_request/summary": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "operations.submitMachineRefund/responses/400/content/application~1json/examples/payment_digest_mismatch/summary": {
+    "source": "署名した内容が準備した署名対象と一致しません。",
+    "translation": "The signed content does not match the prepared signing target."
+  },
+  "errors.auth/assertion_invalid.meaning": {
+    "source": "返金の assertion を検証できません。",
+    "translation": "The refund assertion could not be verified."
+  },
+  "errors.auth/assertion_invalid.action": {
+    "source": "準備の challenge と rpId に対する署名と assertion の形式を確認してください。",
+    "translation": "Check the signature for the prepared challenge and rpId, and the assertion format."
+  },
+  "operations.submitMachineRefund/responses/401/content/application~1json/examples/auth_api_key_invalid/summary": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "operations.submitMachineRefund/responses/401/content/application~1json/examples/auth_machine_signature_invalid/summary": {
+    "source": "HTTP 署名を検証できません。",
+    "translation": "The HTTP signature could not be verified."
+  },
+  "operations.submitMachineRefund/responses/401/content/application~1json/examples/auth_replay/summary": {
+    "source": "同じ HTTP nonce が既に使われています。",
+    "translation": "The HTTP nonce has already been used."
+  },
+  "operations.submitMachineRefund/responses/401/content/application~1json/examples/auth_assertion_invalid/summary": {
+    "source": "返金の assertion を検証できません。",
+    "translation": "The refund assertion could not be verified."
+  },
+  "operations.submitMachineRefund/responses/403/content/application~1json/examples/merchant_suspended/summary": {
+    "source": "加盟店が利用停止中です。",
+    "translation": "The merchant is suspended."
+  },
+  "operations.submitMachineRefund/responses/404/content/application~1json/examples/common_not_found/summary": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "errors.wallet/staged_operation_missing.meaning": {
+    "source": "指定した未消費の準備が見つかりません。",
+    "translation": "The specified unconsumed preparation was not found."
+  },
+  "errors.wallet/staged_operation_missing.action": {
+    "source": "ownStaged と受付済み返金を照会し、準備と送信の結果を確認してください。",
+    "translation": "Query ownStaged and accepted refunds to check the preparation and submission outcomes."
+  },
+  "errors.wallet/operation_stale.meaning": {
+    "source": "準備の有効期限または前提が変わっています。",
+    "translation": "The preparation has expired or its prerequisites have changed."
+  },
+  "errors.wallet/operation_stale.action": {
+    "source": "受付済みかを照会してから、未受付なら現在の状態で準備し直してください。",
+    "translation": "Check whether it was accepted. If not, prepare again using the current state."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/member_not_active/summary": {
+    "source": "machine の委任状が有効になっていません。",
+    "translation": "The machine delegation is not active."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/member_revoked/summary": {
+    "source": "machine が失効しています。",
+    "translation": "The machine has been revoked."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/delegation_stale/summary": {
+    "source": "現在の委任状を使用できません。",
+    "translation": "The current delegation cannot be used."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/store_disabled/summary": {
+    "source": "店舗が無効なため新規の返金を受け付けられません。",
+    "translation": "New refunds cannot be accepted because the store is inactive."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/refund_exceeds_delegation_cap/summary": {
+    "source": "返金額が委任状の1件あたりの上限を超えています。",
+    "translation": "The refund amount exceeds the delegation's per-refund cap."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/refund_exceeds_available/summary": {
+    "source": "返金額が現在の返金可能額を超えています。",
+    "translation": "The refund amount exceeds the currently refundable amount."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/wallet_staged_operation_missing/summary": {
+    "source": "指定した未消費の準備が見つかりません。",
+    "translation": "The specified unconsumed preparation was not found."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/wallet_operation_stale/summary": {
+    "source": "準備の有効期限または前提が変わっています。",
+    "translation": "The preparation has expired or its prerequisites have changed."
+  },
+  "operations.submitMachineRefund/responses/409/content/application~1json/examples/wallet_operation_in_progress/summary": {
+    "source": "加盟店ウォレットで別の操作が進行中です。",
+    "translation": "Another operation is in progress on the merchant wallet."
+  },
+  "operations.submitMachineRefund/responses/419/content/application~1json/examples/auth_clock_skew/summary": {
+    "source": "HTTP 署名の時刻が許容時刻差を外れています。",
+    "translation": "The HTTP signature timestamp is outside the allowed clock skew."
+  },
+  "operations.submitMachineRefund/responses/500/content/application~1json/examples/common_internal/summary": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "operations.submitMachineRefund/responses/503/content/application~1json/examples/wallet_state_unavailable/summary": {
+    "source": "ウォレットの状態を確認できません。",
+    "translation": "The wallet state could not be checked."
+  },
+  "operations.submitMachineRefund/requestBody/content/application~1json/examples/default/summary": {
+    "source": "準備に署名して送る（署名値は説明用のダミー）",
+    "translation": "Sign and submit a preparation (dummy signature values for illustration)"
+  },
+  "operations.getMachineRefund.summary": {
+    "source": "返金を照会する",
+    "translation": "Look up a refund"
+  },
+  "operations.getMachineRefund.description": {
+    "source": "同じ店舗の owner・別の machine が受付した返金も照会できます。他店舗の返金は404です。受付後は refundId で照会し、confirmed で確定、failed で失敗を判断します。未知の状態は未確定として扱ってください。元決済の状態は settled のままです。",
+    "translation": "Refunds accepted by the owner or another machine in the same store can also be queried. Refunds belonging to another store return 404. After acceptance, query by refundId: confirmed indicates confirmation and failed indicates failure. Treat unknown states as unconfirmed. The original payment remains settled."
+  },
+  "operations.getMachineRefund/responses/200/description": {
+    "source": "成功",
+    "translation": "Success"
+  },
+  "operations.getMachineRefund/responses/200/content/application~1json/examples/pending/summary": {
+    "source": "処理中",
+    "translation": "In progress"
+  },
+  "operations.getMachineRefund/responses/200/content/application~1json/examples/confirmed/summary": {
+    "source": "確定した返金",
+    "translation": "Confirmed refund"
+  },
+  "operations.getMachineRefund/responses/200/content/application~1json/examples/failed/summary": {
+    "source": "失敗した返金",
+    "translation": "Failed refund"
+  },
+  "operations.getMachineRefund/responses/400/content/application~1json/examples/common_invalid_request/summary": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "operations.getMachineRefund/responses/401/content/application~1json/examples/auth_api_key_invalid/summary": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "operations.getMachineRefund/responses/401/content/application~1json/examples/auth_machine_signature_invalid/summary": {
+    "source": "HTTP 署名を検証できません。",
+    "translation": "The HTTP signature could not be verified."
+  },
+  "operations.getMachineRefund/responses/401/content/application~1json/examples/auth_replay/summary": {
+    "source": "同じ HTTP nonce が既に使われています。",
+    "translation": "The HTTP nonce has already been used."
+  },
+  "operations.getMachineRefund/responses/403/content/application~1json/examples/merchant_suspended/summary": {
+    "source": "加盟店が利用停止中です。",
+    "translation": "The merchant is suspended."
+  },
+  "operations.getMachineRefund/responses/404/content/application~1json/examples/common_not_found/summary": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "operations.getMachineRefund/responses/409/content/application~1json/examples/member_not_active/summary": {
+    "source": "machine の委任状が有効になっていません。",
+    "translation": "The machine delegation is not active."
+  },
+  "operations.getMachineRefund/responses/409/content/application~1json/examples/member_revoked/summary": {
+    "source": "machine が失効しています。",
+    "translation": "The machine has been revoked."
+  },
+  "operations.getMachineRefund/responses/409/content/application~1json/examples/delegation_stale/summary": {
+    "source": "現在の委任状を使用できません。",
+    "translation": "The current delegation cannot be used."
+  },
+  "operations.getMachineRefund/responses/419/content/application~1json/examples/auth_clock_skew/summary": {
+    "source": "HTTP 署名の時刻が許容時刻差を外れています。",
+    "translation": "The HTTP signature timestamp is outside the allowed clock skew."
+  },
+  "operations.getMachineRefund/responses/500/content/application~1json/examples/common_internal/summary": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "operations.listMachinePaymentRefunds.summary": {
+    "source": "決済ごとの返金を一覧する",
+    "translation": "List refunds for a payment"
+  },
+  "operations.listMachinePaymentRefunds.description": {
+    "source": "同じ店舗の owner・別の machine の受付済み返金を含め、決済ごとに照会します。他店舗の決済は404です。未消費の準備 staged は本人のものだけを返します。nextCursor があれば cursor にそのまま渡してください。",
+    "translation": "Queries refunds for a payment, including those accepted by the owner or another machine in the same store. Payments belonging to another store return 404. Only this machine's unconsumed preparations are returned in staged. If nextCursor is present, pass it unchanged as cursor."
+  },
+  "operations.listMachinePaymentRefunds/parameters/1/schema/description": {
+    "source": "1ページの件数。省略時20、最大100。",
+    "translation": "Number of records per page. Default 20, maximum 100."
+  },
+  "operations.listMachinePaymentRefunds/parameters/1/description": {
+    "source": "1ページの件数。省略時20、最大100。",
+    "translation": "Number of records per page. Default 20, maximum 100."
+  },
+  "operations.listMachinePaymentRefunds/parameters/2/schema/description": {
+    "source": "前の応答の nextCursor。中身を解釈せず渡してください。",
+    "translation": "nextCursor from the previous response. Pass it without interpreting its contents."
+  },
+  "operations.listMachinePaymentRefunds/parameters/2/description": {
+    "source": "前の応答の nextCursor。中身を解釈せず渡してください。",
+    "translation": "nextCursor from the previous response. Pass it without interpreting its contents."
+  },
+  "operations.listMachinePaymentRefunds/responses/200/description": {
+    "source": "成功",
+    "translation": "Success"
+  },
+  "operations.listMachinePaymentRefunds/responses/200/content/application~1json/schema/properties/refunds/description": {
+    "source": "同じ店舗の受付済み返金の一覧。",
+    "translation": "Accepted refunds in the same store."
+  },
+  "operations.listMachinePaymentRefunds/responses/200/content/application~1json/schema/properties/nextCursor/description": {
+    "source": "続きの cursor。末尾では null または省略。",
+    "translation": "Cursor for the next page. null or omitted at the end."
+  },
+  "operations.listMachinePaymentRefunds/responses/200/content/application~1json/schema/properties/staged/description": {
+    "source": "本人の未消費の準備。無ければ null。",
+    "translation": "This machine's unconsumed preparation, or null if none."
+  },
+  "operations.listMachinePaymentRefunds/responses/200/content/application~1json/examples/oneRefund/summary": {
+    "source": "返金が1件ある",
+    "translation": "One refund exists"
+  },
+  "operations.listMachinePaymentRefunds/responses/400/content/application~1json/examples/common_invalid_request/summary": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "operations.listMachinePaymentRefunds/responses/401/content/application~1json/examples/auth_api_key_invalid/summary": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "operations.listMachinePaymentRefunds/responses/401/content/application~1json/examples/auth_machine_signature_invalid/summary": {
+    "source": "HTTP 署名を検証できません。",
+    "translation": "The HTTP signature could not be verified."
+  },
+  "operations.listMachinePaymentRefunds/responses/401/content/application~1json/examples/auth_replay/summary": {
+    "source": "同じ HTTP nonce が既に使われています。",
+    "translation": "The HTTP nonce has already been used."
+  },
+  "operations.listMachinePaymentRefunds/responses/403/content/application~1json/examples/merchant_suspended/summary": {
+    "source": "加盟店が利用停止中です。",
+    "translation": "The merchant is suspended."
+  },
+  "operations.listMachinePaymentRefunds/responses/404/content/application~1json/examples/common_not_found/summary": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "operations.listMachinePaymentRefunds/responses/409/content/application~1json/examples/member_not_active/summary": {
+    "source": "machine の委任状が有効になっていません。",
+    "translation": "The machine delegation is not active."
+  },
+  "operations.listMachinePaymentRefunds/responses/409/content/application~1json/examples/member_revoked/summary": {
+    "source": "machine が失効しています。",
+    "translation": "The machine has been revoked."
+  },
+  "operations.listMachinePaymentRefunds/responses/409/content/application~1json/examples/delegation_stale/summary": {
+    "source": "現在の委任状を使用できません。",
+    "translation": "The current delegation cannot be used."
+  },
+  "operations.listMachinePaymentRefunds/responses/419/content/application~1json/examples/auth_clock_skew/summary": {
+    "source": "HTTP 署名の時刻が許容時刻差を外れています。",
+    "translation": "The HTTP signature timestamp is outside the allowed clock skew."
+  },
+  "operations.listMachinePaymentRefunds/responses/500/content/application~1json/examples/common_internal/summary": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "operations.discardMachineStagedOperation.summary": {
+    "source": "準備を破棄する",
+    "translation": "Discard a preparation"
+  },
+  "operations.discardMachineStagedOperation.description": {
+    "source": "本人の未消費の準備だけを破棄します。受付済みの返金は取り消せません。準備の応答を失った場合は ownStaged と作成したプロセスを確認し、意図的に取りやめる準備だけを破棄してから再準備してください。",
+    "translation": "Discards only this machine's unconsumed preparation. Accepted refunds cannot be canceled. If the preparation response was lost, check ownStaged and the process that created it. Discard only a preparation you intentionally abandon before preparing again."
+  },
+  "operations.discardMachineStagedOperation/responses/200/description": {
+    "source": "成功",
+    "translation": "Success"
+  },
+  "operations.discardMachineStagedOperation/responses/200/content/application~1json/schema/properties/ok/description": {
+    "source": "準備の破棄に成功したことを示します。",
+    "translation": "Indicates that the preparation was discarded successfully."
+  },
+  "operations.discardMachineStagedOperation/responses/200/content/application~1json/examples/discarded/summary": {
+    "source": "準備を破棄した",
+    "translation": "Preparation discarded"
+  },
+  "operations.discardMachineStagedOperation/responses/400/content/application~1json/examples/common_invalid_request/summary": {
+    "source": "リクエストの形式が不正です。",
+    "translation": "The request format is invalid."
+  },
+  "operations.discardMachineStagedOperation/responses/401/content/application~1json/examples/auth_api_key_invalid/summary": {
+    "source": "API キーが無効です。",
+    "translation": "The API key is invalid."
+  },
+  "operations.discardMachineStagedOperation/responses/401/content/application~1json/examples/auth_machine_signature_invalid/summary": {
+    "source": "HTTP 署名を検証できません。",
+    "translation": "The HTTP signature could not be verified."
+  },
+  "operations.discardMachineStagedOperation/responses/401/content/application~1json/examples/auth_replay/summary": {
+    "source": "同じ HTTP nonce が既に使われています。",
+    "translation": "The HTTP nonce has already been used."
+  },
+  "operations.discardMachineStagedOperation/responses/403/content/application~1json/examples/merchant_suspended/summary": {
+    "source": "加盟店が利用停止中です。",
+    "translation": "The merchant is suspended."
+  },
+  "operations.discardMachineStagedOperation/responses/404/content/application~1json/examples/common_not_found/summary": {
+    "source": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+    "translation": "The resource was not found. Payments and refunds belonging to another store also return 404."
+  },
+  "operations.discardMachineStagedOperation/responses/409/content/application~1json/examples/member_not_active/summary": {
+    "source": "machine の委任状が有効になっていません。",
+    "translation": "The machine delegation is not active."
+  },
+  "operations.discardMachineStagedOperation/responses/409/content/application~1json/examples/member_revoked/summary": {
+    "source": "machine が失効しています。",
+    "translation": "The machine has been revoked."
+  },
+  "operations.discardMachineStagedOperation/responses/409/content/application~1json/examples/delegation_stale/summary": {
+    "source": "現在の委任状を使用できません。",
+    "translation": "The current delegation cannot be used."
+  },
+  "operations.discardMachineStagedOperation/responses/419/content/application~1json/examples/auth_clock_skew/summary": {
+    "source": "HTTP 署名の時刻が許容時刻差を外れています。",
+    "translation": "The HTTP signature timestamp is outside the allowed clock skew."
+  },
+  "operations.discardMachineStagedOperation/responses/500/content/application~1json/examples/common_internal/summary": {
+    "source": "要求を処理できませんでした。",
+    "translation": "The request could not be processed."
+  },
+  "schemas.ApiError.code.description": {
+    "source": "エラーコード。未知のコードは共通のフォールバックで扱ってください。",
+    "translation": "Error code. Handle unknown codes with a common fallback."
+  },
+  "schemas.Hash32.description": {
+    "source": "0x 付き32バイトの小文字ハッシュ。",
+    "translation": "Lowercase 32-byte hash with a 0x prefix."
+  },
+  "schemas.IsoDateTime.description": {
+    "source": "UTC の ISO 8601 日時。",
+    "translation": "UTC ISO 8601 timestamp."
+  },
+  "schemas.Address.description": {
+    "source": "小文字の EVM ウォレットアドレス。",
+    "translation": "Lowercase EVM wallet address."
+  },
+  "schemas.PaymentLookupResponse.paymentIntentId.description": {
+    "source": "店舗の API キーに属する決済の識別子。",
+    "translation": "Identifier of a payment belonging to the store's API key."
+  },
+  "schemas.PaymentLookupResponse.orderId.description": {
+    "source": "加盟店の注文 ID。未設定なら null。",
+    "translation": "Merchant order ID, or null if not set."
+  },
+  "schemas.PaymentLookupResponse.status.description": {
+    "source": "決済の状態。未知の値は未対応の状態として扱い、成立と判断しないでください。\n\n既知の値: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing, settled, canceled, expired, failed, nonce_conflict。",
+    "translation": "Payment status. Treat unknown values as unsupported states and do not infer settlement.\n\nKnown values: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing, settled, canceled, expired, failed, nonce_conflict."
+  },
+  "schemas.PaymentLookupResponse.amountJpy.description": {
+    "source": "元の決済額。未成立の決済では見積り。",
+    "translation": "Original payment amount. An estimate for unsettled payments."
+  },
+  "schemas.PaymentLookupResponse.feeJpy.description": {
+    "source": "手数料額。未成立の決済では見積り。",
+    "translation": "Fee amount. An estimate for unsettled payments."
+  },
+  "schemas.PaymentLookupResponse.netAmountJpy.description": {
+    "source": "加盟店受取額。未成立の決済では見積り。",
+    "translation": "Merchant net amount. An estimate for unsettled payments."
+  },
+  "schemas.PaymentLookupResponse.txHash.description": {
+    "source": "決済の tx hash。取得できない場合は null。送信済み・未確定でも値を持つことがあります。決済の成立は status が settled であることで判断してください。",
+    "translation": "Payment tx hash, or null if unavailable. A submitted but unconfirmed payment may already have a value. Determine settlement from status being settled."
+  },
+  "schemas.PaymentLookupResponse.settledAt.description": {
+    "source": "決済の成立日時。未成立なら null。",
+    "translation": "Payment settlement timestamp, or null if unsettled."
+  },
+  "schemas.PaymentLookupResponse.failedReason.description": {
+    "source": "失敗理由。失敗していなければ null。",
+    "translation": "Failure reason, or null if the payment has not failed."
+  },
+  "schemas.PaymentLookupResponse.payerAddress.description": {
+    "source": "元の支払人のウォレットアドレス。未確定なら null。",
+    "translation": "Original payer's wallet address, or null if unconfirmed."
+  },
+  "schemas.PaymentLookupResponse.netAmountDestination.description": {
+    "source": "加盟店受取額の送信先アドレス。未確定なら null。",
+    "translation": "Destination address for the merchant net amount, or null if unconfirmed."
+  },
+  "schemas.PaymentLookupResponse.createdAt.description": {
+    "source": "決済の作成日時。",
+    "translation": "Payment creation timestamp."
+  },
+  "schemas.MachineSignatureHeaders.x-stbl-api-key.description": {
+    "source": "返金 API キー。決済の API キーとは相互に使用できません。",
+    "translation": "Refund API key. It is not interchangeable with the payment API key."
+  },
+  "schemas.MachineSignatureHeaders.x-stbl-signature.description": {
+    "source": "リクエストごとの P-256 HTTP 署名。r‖s の小文字16進128桁。手順は https://stbl-pay.com/docs/refunds/signing を参照してください。",
+    "translation": "Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See https://stbl-pay.com/docs/refunds/signing for the procedure."
+  },
+  "schemas.MachineSignatureHeaders.x-stbl-timestamp.description": {
+    "source": "署名時刻。epoch ミリ秒の文字列。許容時刻差は ±60,000 ms。",
+    "translation": "Signing timestamp as a string of epoch milliseconds. Allowed clock skew: ±60,000 ms."
+  },
+  "schemas.MachineSignatureHeaders.x-stbl-nonce.description": {
+    "source": "リクエストごとに新しくする32バイトの単回値。",
+    "translation": "A fresh 32-byte nonce for each request."
+  },
+  "schemas.Jpy.description": {
+    "source": "円建ての非負金額の10進文字列。浮動小数へ変換しません。",
+    "translation": "Non-negative JPY amount as a decimal string. Do not convert to floating point."
+  },
+  "schemas.RefundLimitReason.description": {
+    "source": "返金可能額を下げた制限の種別。未知の値は未対応の制限として扱ってください。\n\n既知の値: onchain_credit, wallet_balance。",
+    "translation": "Kind of constraint reducing the refundable amount. Treat unknown values as unsupported constraints.\n\nKnown values: onchain_credit, wallet_balance."
+  },
+  "schemas.RefundBlocker.description": {
+    "source": "返金の準備を妨げる理由。未知の値でも準備を進めないでください。\n\n既知の値: payment_not_settled, payer_unknown, nothing_refundable, operation_in_progress, staged_operation_exists, wallet_not_deployed, state_unavailable。",
+    "translation": "Reason blocking refund preparation. Do not proceed with preparation for unknown values.\n\nKnown values: payment_not_settled, payer_unknown, nothing_refundable, operation_in_progress, staged_operation_exists, wallet_not_deployed, state_unavailable."
+  },
+  "schemas.MachineRefundableView.paymentIntentId.description": {
+    "source": "元の決済の識別子。",
+    "translation": "Original payment identifier."
+  },
+  "schemas.MachineRefundableView.paymentStatus.description": {
+    "source": "元の決済の状態。未知の値では返金可能と判断しないでください。\n\n既知の値: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing, settled, canceled, expired, failed, nonce_conflict。",
+    "translation": "Original payment status. Do not infer refund eligibility for unknown values.\n\nKnown values: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing, settled, canceled, expired, failed, nonce_conflict."
+  },
+  "schemas.MachineRefundableView.amountJpy.description": {
+    "source": "元決済額。手数料控除前の返金の基準額。",
+    "translation": "Original payment amount before fee deduction, used as the refund basis."
+  },
+  "schemas.MachineRefundableView.confirmedRefundedJpy.description": {
+    "source": "確定した返金額の合計。",
+    "translation": "Total confirmed refund amount."
+  },
+  "schemas.MachineRefundableView.reservedJpy.description": {
+    "source": "受付済み未確定の返金と、有効な未消費の準備で確保している額。",
+    "translation": "Amount reserved by accepted but unconfirmed refunds and valid unconsumed preparations."
+  },
+  "schemas.MachineRefundableView.refundableJpy.description": {
+    "source": "決済額から確定返金額と確保中の額を引いた返金可能額。",
+    "translation": "Refundable amount: payment amount minus confirmed refunds and reserved amounts."
+  },
+  "schemas.MachineRefundableView.refundableNowJpy.description": {
+    "source": "決済単位の返金可能額、オンチェーン上限、ウォレット残高の最小値。",
+    "translation": "The minimum of the payment's refundable amount, onchain cap and wallet balance."
+  },
+  "schemas.MachineRefundableView.onchainCreditJpy.description": {
+    "source": "支払人単位のオンチェーン返金上限。観測不能なら null。",
+    "translation": "Onchain refund cap per payer, or null if unobservable."
+  },
+  "schemas.MachineRefundableView.walletBalanceJpy.description": {
+    "source": "加盟店ウォレットの JPYC 残高。観測不能なら null。",
+    "translation": "Merchant wallet JPYC balance, or null if unobservable."
+  },
+  "schemas.MachineRefundableView.limitedBy.description": {
+    "source": "実行可能額を下げた要因。未知の値は未対応の制限として扱ってください。",
+    "translation": "Factors reducing the executable amount. Treat unknown values as unsupported constraints."
+  },
+  "schemas.MachineRefundableView.blockedBy.description": {
+    "source": "準備できない理由。null なら開始可能。未知の値でも進めず、state_unavailable では推測した額で進めないでください。",
+    "translation": "Reason preparation is blocked. null means it can start. Do not proceed for unknown values or use estimated amounts for state_unavailable."
+  },
+  "schemas.MachineRefundableView.checkedAt.description": {
+    "source": "返金可能額を確認した日時。",
+    "translation": "Timestamp when the refundable amount was checked."
+  },
+  "schemas.MachineRefundableView.delegationCapJpy.description": {
+    "source": "委任状の1件あたりの返金上限。null は上限なし、0 は返金不可。",
+    "translation": "Delegation's per-refund cap. null means no cap; 0 prohibits refunds."
+  },
+  "schemas.MachineRefundableView.executableJpy.description": {
+    "source": "この machine がいま実行できる額。refundableNowJpy と delegationCapJpy の最小値。blockedBy があれば0。",
+    "translation": "Amount this machine can execute now: the minimum of refundableNowJpy and delegationCapJpy, or 0 when blockedBy is present."
+  },
+  "schemas.MachineRefundableView.ownStaged.anyOf.0.stagedOpId.description": {
+    "source": "未消費の準備の識別子。",
+    "translation": "Unconsumed preparation identifier."
+  },
+  "schemas.MachineRefundableView.ownStaged.anyOf.0.amountJpy.description": {
+    "source": "準備で確保している返金額。",
+    "translation": "Refund amount reserved by the preparation."
+  },
+  "schemas.MachineRefundableView.ownStaged.anyOf.0.includesUpgrade.description": {
+    "source": "準備にウォレット更新が含まれるか。",
+    "translation": "Whether the preparation includes a wallet upgrade."
+  },
+  "schemas.MachineRefundableView.ownStaged.anyOf.0.expiresAt.description": {
+    "source": "準備の有効期限。",
+    "translation": "Preparation expiry timestamp."
+  },
+  "schemas.MachineRefundableView.ownStaged.anyOf.0.paymentIntentId.description": {
+    "source": "この準備の元決済。照会中とは別の決済の場合もあります。",
+    "translation": "Original payment for this preparation. It may differ from the payment being queried."
+  },
+  "schemas.MachineRefundableView.ownStaged.description": {
+    "source": "本人の未消費の準備。別決済の準備も含み、無ければ null。",
+    "translation": "This machine's unconsumed preparation, including preparations for other payments; null if none."
+  },
+  "schemas.MachinePrepareResponse.challenge.description": {
+    "source": "署名する32バイトの digest。返金では keccak256(userOpHash ‖ validUntil) であり、乱数ではありません。",
+    "translation": "32-byte digest to sign. For refunds this is keccak256(userOpHash ‖ validUntil), not a random value."
+  },
+  "schemas.MachinePrepareResponse.rpId.description": {
+    "source": "assertion の authenticatorData を組み立てる RP ID。",
+    "translation": "RP ID used to construct assertion authenticatorData."
+  },
+  "schemas.MachinePrepareResponse.serverTime.description": {
+    "source": "時計の差分補正に使うサーバー時刻。epoch ミリ秒。",
+    "translation": "Server time in epoch milliseconds for correcting clock offset."
+  },
+  "schemas.MachinePrepareResponse.validUntil.description": {
+    "source": "UserOperation の有効期限。",
+    "translation": "UserOperation expiry timestamp."
+  },
+  "schemas.MachinePrepareResponse.stagedOpId.description": {
+    "source": "未消費の準備の識別子。送信または破棄に使います。",
+    "translation": "Unconsumed preparation identifier, used for submission or discard."
+  },
+  "schemas.MachinePrepareResponse.wallet.description": {
+    "source": "返金元の加盟店ウォレット。",
+    "translation": "Merchant wallet funding the refund."
+  },
+  "schemas.MachinePrepareResponse.paymentIntentId.description": {
+    "source": "元の決済の識別子。",
+    "translation": "Original payment identifier."
+  },
+  "schemas.MachinePrepareResponse.amountJpy.description": {
+    "source": "準備で確保した返金額。",
+    "translation": "Refund amount reserved during preparation."
+  },
+  "schemas.MachinePrepareResponse.upgrade.included.description": {
+    "source": "この返金と同時にウォレット更新が含まれるか。",
+    "translation": "Whether this refund includes a wallet upgrade."
+  },
+  "schemas.MachinePrepareResponse.upgrade.description": {
+    "source": "返金に含まれるウォレット更新。",
+    "translation": "Wallet upgrade included with the refund."
+  },
+  "schemas.RefundAccepted.refundId.description": {
+    "source": "受付済み返金の識別子。保存し、結果の照会に使ってください。",
+    "translation": "Accepted refund identifier. Save it to query the result."
+  },
+  "schemas.RefundAccepted.walletOperationId.description": {
+    "source": "ウォレット操作の追跡 ID。",
+    "translation": "Wallet operation tracking ID."
+  },
+  "schemas.RefundAccepted.status.description": {
+    "source": "ウォレット操作の状態。受付は完了ではありません。未知の値は未確定として扱ってください。\n\n既知の値: queued, submitted, confirmed, failed, indeterminate。",
+    "translation": "Wallet operation status. Acceptance does not mean completion. Treat unknown values as unconfirmed.\n\nKnown values: queued, submitted, confirmed, failed, indeterminate."
+  },
+  "schemas.StagedOpId.description": {
+    "source": "未消費の準備の識別子。",
+    "translation": "Unconsumed preparation identifier."
+  },
+  "schemas.MachineSubmitRequest.assertion.clientDataJSON.description": {
+    "source": "challenge を含む clientDataJSON の base64url。",
+    "translation": "Base64url-encoded clientDataJSON containing the challenge."
+  },
+  "schemas.MachineSubmitRequest.assertion.authenticatorData.description": {
+    "source": "authenticatorData の base64url。",
+    "translation": "Base64url-encoded authenticatorData."
+  },
+  "schemas.MachineSubmitRequest.assertion.signature.description": {
+    "source": "assertion の P-256 署名。DER の base64url。HTTP 署名の r‖s 16進128桁とは形式が異なります。",
+    "translation": "P-256 assertion signature as base64url-encoded DER. This differs from the HTTP signature's 128 hexadecimal characters encoding r‖s."
+  },
+  "schemas.MachineSubmitRequest.assertion.description": {
+    "source": "challenge に対する machine の署名。HTTP 署名とは別に作成します。",
+    "translation": "Machine signature for the challenge, created separately from the HTTP signature."
+  },
+  "schemas.RefundActor.oneOf.0.kind.description": {
+    "source": "返金を開始した主体の種別。未知の値は未対応として扱ってください。",
+    "translation": "Kind of actor that initiated the refund. Treat unknown values as unsupported."
+  },
+  "schemas.RefundActor.oneOf.1.kind.description": {
+    "source": "返金を開始した主体の種別。未知の値は未対応として扱ってください。",
+    "translation": "Kind of actor that initiated the refund. Treat unknown values as unsupported."
+  },
+  "schemas.RefundActor.oneOf.1.memberId.description": {
+    "source": "返金を開始した machine の識別子。",
+    "translation": "Identifier of the machine that initiated the refund."
+  },
+  "schemas.RefundActor.oneOf.1.label.description": {
+    "source": "machine の表示名。未設定なら null。",
+    "translation": "Machine display name, or null if not set."
+  },
+  "schemas.RefundView.actor.description": {
+    "source": "返金を開始した署名主体。旧応答では省略されることがあります。",
+    "translation": "Signing actor that initiated the refund. May be omitted in older responses."
+  },
+  "schemas.RefundView.refundId.description": {
+    "source": "受付済み返金の識別子。",
+    "translation": "Accepted refund identifier."
+  },
+  "schemas.RefundView.walletOperationId.description": {
+    "source": "ウォレット操作の追跡 ID。",
+    "translation": "Wallet operation tracking ID."
+  },
+  "schemas.RefundView.amountJpy.description": {
+    "source": "返金額。",
+    "translation": "Refund amount."
+  },
+  "schemas.RefundView.status.description": {
+    "source": "返金の進行状態。未知の値は未確定として扱ってください。\n\n既知の値: queued, submitted, confirmed, failed, indeterminate。",
+    "translation": "Refund progress status. Treat unknown values as unconfirmed.\n\nKnown values: queued, submitted, confirmed, failed, indeterminate."
+  },
+  "schemas.RefundView.includesUpgrade.description": {
+    "source": "返金と同時にウォレット更新が含まれるか。",
+    "translation": "Whether a wallet upgrade is included with the refund."
+  },
+  "schemas.RefundView.txHash.description": {
+    "source": "返金の tx hash。取得できない場合は null。送信済み・未確定でも値を持つことがあります。返金の成功は status が confirmed であることで判断してください。",
+    "translation": "Refund tx hash, or null if unavailable. A submitted but unconfirmed refund may already have a value. Determine refund success from status being confirmed."
+  },
+  "schemas.RefundView.failureReason.description": {
+    "source": "返金の失敗理由。失敗していなければ null。",
+    "translation": "Refund failure reason, or null if it has not failed."
+  },
+  "schemas.RefundView.acceptedAt.description": {
+    "source": "返金の受付日時。",
+    "translation": "Refund acceptance timestamp."
+  },
+  "schemas.RefundView.settledAt.description": {
+    "source": "返金の成功または失敗が確定した日時。未確定なら null。",
+    "translation": "Timestamp when refund success or failure was finalized. null if unconfirmed."
+  },
+  "schemas.PageQuery.limit.description": {
+    "source": "1ページの件数。省略時20、最大100。",
+    "translation": "Number of records per page. Default 20, maximum 100."
+  },
+  "schemas.PageQuery.cursor.description": {
+    "source": "前の応答の nextCursor。中身を解釈せず渡してください。",
+    "translation": "nextCursor from the previous response. Pass it without interpreting its contents."
+  },
+  "schemas.StagedRefundView.stagedOpId.description": {
+    "source": "未消費の準備の識別子。",
+    "translation": "Unconsumed preparation identifier."
+  },
+  "schemas.StagedRefundView.amountJpy.description": {
+    "source": "準備で確保している返金額。",
+    "translation": "Refund amount reserved by the preparation."
+  },
+  "schemas.StagedRefundView.includesUpgrade.description": {
+    "source": "準備にウォレット更新が含まれるか。",
+    "translation": "Whether the preparation includes a wallet upgrade."
+  },
+  "schemas.StagedRefundView.expiresAt.description": {
+    "source": "準備の有効期限。",
+    "translation": "Preparation expiry timestamp."
+  },
+  "parameters.MachineSignature.schema.description": {
+    "source": "リクエストごとの P-256 HTTP 署名。r‖s の小文字16進128桁。手順は https://stbl-pay.com/docs/refunds/signing を参照してください。",
+    "translation": "Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See https://stbl-pay.com/docs/refunds/signing for the procedure."
+  },
+  "parameters.MachineSignature.description": {
+    "source": "リクエストごとの P-256 HTTP 署名。r‖s の小文字16進128桁。手順は https://stbl-pay.com/docs/refunds/signing を参照してください。",
+    "translation": "Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See https://stbl-pay.com/docs/refunds/signing for the procedure."
+  },
+  "parameters.MachineTimestamp.schema.description": {
+    "source": "署名時刻。epoch ミリ秒の文字列。許容時刻差は ±60,000 ms。",
+    "translation": "Signing timestamp as a string of epoch milliseconds. Allowed clock skew: ±60,000 ms."
+  },
+  "parameters.MachineTimestamp.description": {
+    "source": "署名時刻。epoch ミリ秒の文字列。許容時刻差は ±60,000 ms。",
+    "translation": "Signing timestamp as a string of epoch milliseconds. Allowed clock skew: ±60,000 ms."
+  },
+  "parameters.MachineNonce.schema.description": {
+    "source": "リクエストごとに新しくする32バイトの単回値。",
+    "translation": "A fresh 32-byte nonce for each request."
+  },
+  "parameters.MachineNonce.description": {
+    "source": "リクエストごとに新しくする32バイトの単回値。",
+    "translation": "A fresh 32-byte nonce for each request."
+  },
+  "securitySchemes.apiKey.description": {
+    "source": "店舗の決済 API キー。返金 API キーとは相互に使用できません。",
+    "translation": "Store payment API key. It is not interchangeable with the refund API key."
+  },
+  "securitySchemes.machineSignature.description": {
+    "source": "返金 API キーとリクエストごとの HTTP 署名が必要です。決済の API キーとは相互に使用できません。HTTP メソッド・URL・raw body・時刻・nonce が署名対象です。署名の手順と参照実装は https://stbl-pay.com/docs/refunds/signing を参照してください。",
+    "translation": "Requires a refund API key and a per-request HTTP signature. It is not interchangeable with the payment API key. The signature covers the HTTP method, URL, raw body, timestamp and nonce. See https://stbl-pay.com/docs/refunds/signing for the signing procedure and reference implementation."
+  },
+  "tags.決済.name": {
+    "source": "決済",
+    "translation": "Payments"
+  },
+  "tags.返金.name": {
+    "source": "返金",
+    "translation": "Refunds"
+  },
+  "tags.返金.description": {
+    "source": "machine は加盟店サーバーが保持する署名鍵で返金に署名する主体です。公開準備中の仕様です。署名鍵の登録と委任状の承認は管理画面で行います。\n\n1. getMachineRefundable で実行可能額と blocker を確かめます。\n2. prepareMachineRefund で返金を準備します。サーバーが UserOperation を組み立て、reservedJpy を確保します。\n3. challenge に署名し、submitMachineRefund で送ります。\n4. 202 は受付であり完了ではありません。refundId を保存し、getMachineRefund または listMachinePaymentRefunds で結果を照会します。\n5. 応答を失ったときは下表に従って回復します。取りやめる未消費の準備は discardMachineStagedOperation で破棄します。\n\n準備と送信を分けるのは、サーバーが決めた返金先・額・nonce・更新・期限を含む UserOperation の digest に machine が署名するためです。返金先は元の支払人に固定され、指定できません。加盟店ウォレットの操作は owner と machine を通して1件ずつ直列に進みます。返金と同時にウォレット更新が含まれることがあります。失効や上限の再承認は受付済みの返金を取り消しません。暗号屋は検査により co-sign を拒否できますが、machine の署名なしに資金は動きません。\n\n| 応答を失った操作 | 回復方法 |\n| --- | --- |\n| 準備 | ownStaged を照会し、作成したプロセスと調整します。意図的に取りやめる場合だけ破棄して準備し直します。 |\n| 送信 | 同じ stagedOpId と同じ assertion を再送し、HTTP 署名の nonce・timestamp・署名だけ新しくします。新しく準備しません。 |\n| HTTP 419 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送します。 |\n\n流れは [加盟店サーバーからの返金](https://stbl-pay.com/docs/refunds/machine-api)、署名の手順と参照実装は [返金 API の署名](https://stbl-pay.com/docs/refunds/signing) を参照してください。",
+    "translation": "A machine is an actor that signs refunds using a signing key held by the merchant server. This specification is being prepared for publication. Register the signing key and approve the delegation in the dashboard.\n\n1. Check the executable amount and blocker with getMachineRefundable.\n2. Prepare the refund with prepareMachineRefund. The server builds the UserOperation and reserves reservedJpy.\n3. Sign the challenge and send it with submitMachineRefund.\n4. 202 means acceptance, not completion. Save refundId and query the result with getMachineRefund or listMachinePaymentRefunds.\n5. Recover from lost responses using the table below. Discard unconsumed preparations you intentionally abandon with discardMachineStagedOperation.\n\nPreparation and submission are separate because the machine signs the digest of a UserOperation containing the server-determined recipient, amount, nonce, upgrade and expiry. The recipient is fixed to the original payer and cannot be specified. Merchant wallet operations through the owner and machines proceed one at a time. A wallet upgrade may be included with a refund. Revocation or approval of a new cap does not cancel accepted refunds. Ango-ya may refuse to co-sign after validation, but funds cannot move without the machine's signature.\n\n| Operation whose response was lost | Recovery |\n| --- | --- |\n| Preparation | Query ownStaged and coordinate with the process that created it. Discard and prepare again only when intentionally abandoning it. |\n| Submission | Resend the same stagedOpId and assertion, refreshing only the HTTP signature nonce, timestamp and signature. Do not prepare again. |\n| HTTP 419 | Correct the clock offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature. |\n\nSee [Refunds from a merchant server](https://stbl-pay.com/docs/refunds/machine-api) for the flow, and [Refund API signatures](https://stbl-pay.com/docs/refunds/signing) for the signing procedure and reference implementation."
+  }
+}

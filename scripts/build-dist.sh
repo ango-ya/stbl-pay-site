@@ -34,6 +34,7 @@ rsync -a \
 if [ ! -d docs-site/node_modules ]; then
   (cd docs-site && npm ci)
 fi
+npm run openapi:check
 (cd docs-site && npm run build)
 cp -R docs-site/build dist/docs
 

@@ -1,12 +1,12 @@
 // 英語版の仕様書 docs-site/i18n/en/openapi.yaml を、英語版のビルド結果（dist/docs/en/openapi.yaml）に入れる。
 // static/ は日英の両方に同じものが写るので、英語版だけここで差し替える。
-// 正本は日本語版（static/openapi.yaml）。訳してよい文以外が日本語版とずれていたら、ビルドを止める（openapi-parity.mjs）。
+// 入力は openapi/handwritten.{ja,en}.yaml と backend 生成 JSON、生成部分の英訳は scripts/openapi-en/translations.json。
+// 出力同士の構造が食い違っていたら、配信物へのコピーを止める（openapi-parity.mjs）。
 import { readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { diffSpecs } from "./openapi-parity.mjs";
 
-// js-yaml は docs-site の依存（Docusaurus が使う）にある
 const yaml = createRequire(new URL("../docs-site/package.json", import.meta.url))("js-yaml");
 
 const dist = process.argv[2];
