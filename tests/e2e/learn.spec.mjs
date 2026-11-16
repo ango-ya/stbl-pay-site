@@ -465,6 +465,51 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
   });
 }
 
+// 共有欄（.learn-share）：SNS ごとに、正規 URL を渡す引数の名前。並びもこのとおり。新しい記事も、ここで共有欄の有無と中身が検査される
+const SHARE = {
+  ja: { x: "url", hatena: "url", line: "url", facebook: "u" },
+  en: { x: "url", linkedin: "url", facebook: "u" },
+};
+test("共有欄：一覧以外のすべての解説と方針にあり、どの SNS にも正規 URL を渡す。X とはてブの題は og:title", async ({ page }) => {
+  for (const { path } of PAGES) {
+    await page.goto(path);
+    const share = page.locator("nav.learn-share");
+    if (isHubPath(path)) {
+      await expect(share, `${path}：一覧には置かない`).toHaveCount(0);
+      continue;
+    }
+    await expect(share, path).toHaveCount(1);
+    const want = SHARE[path.startsWith("/en/") ? "en" : "ja"];
+    const links = await share.locator("a").evaluateAll((as) => as.map((a) => ({ s: a.dataset.share, href: a.href, target: a.target, rel: a.rel })));
+    expect(links.map((l) => l.s), path).toEqual(Object.keys(want));
+    const title = await page.locator('meta[property="og:title"]').getAttribute("content");
+    for (const l of links) {
+      const q = new URL(l.href).searchParams;
+      expect(q.get(want[l.s]), `${path} ${l.s}`).toBe(`${ORIGIN}${path}`);
+      if (l.s === "x") expect(q.get("text"), `${path} x`).toBe(title);
+      if (l.s === "hatena") expect(q.get("title"), `${path} hatena`).toBe(title);
+      expect([l.target, l.rel], `${path} ${l.s}`).toEqual(["_blank", "noopener"]);
+    }
+    await expect(share.locator(".learn-share-copy")).toHaveAttribute("data-url", `${ORIGIN}${path}`);
+  }
+});
+
+test("共有欄：リンクをコピーは JS があるときだけ出て、押すと正規 URL をコピーし、結果を知らせる", async ({ page, context, browser, baseURL }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  for (const [path, done] of [["/learn/chargeback/", "コピーしました"], ["/en/learn/konbini-payment/", "Link copied"]]) {
+    await page.goto(path);
+    await page.locator(".learn-share-copy").click();
+    await expect(page.locator(".learn-share-done")).toHaveText(done);
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`${ORIGIN}${path}`);
+  }
+  const noJs = await browser.newContext({ baseURL, javaScriptEnabled: false });
+  const p = await noJs.newPage();
+  await p.goto("/learn/chargeback/");
+  await expect(p.locator(".learn-share a")).toHaveCount(4);
+  await expect(p.locator(".learn-share-copy")).toBeHidden();
+  await noJs.close();
+});
+
 // 計測（assets/analytics.js）：本番のホスト・自動操作でないブラウザのときだけ、解説の記事の選び方・図の停止・AI の回答からの来訪を送る
 test("計測：AI の回答から来た閲覧、一覧のカード・関連欄から選んだ記事、図の停止ボタンを GA4 のイベントに積む", async ({ page, baseURL }) => {
   const GA = /^https:\/\/([a-z0-9-]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com)\//;

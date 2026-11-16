@@ -99,6 +99,20 @@ test("計測：select_content の item_id は # 以降を外したパスで送�
   expect(figure, "スラッグ/ファイル名").toMatch(/^chargeback\/[^/]+\.gif$/);
 });
 
+test("計測：共有欄の SNS とリンクのコピーを share で送り、解説の出口（cta_click）には数えない", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("https://stbl-pay.com/learn/chargeback/");
+  await page.evaluate(() => document.querySelectorAll(".learn-share a").forEach((a) => a.addEventListener("click", (e) => e.preventDefault())));
+  await page.locator('.learn-share a[data-share="hatena"]').click();
+  await page.locator(".learn-share-copy").click();
+  const ev = await events(page);
+  expect(ev.filter(([n]) => n === "share").map(([, p]) => p)).toEqual([
+    expect.objectContaining({ method: "hatena", content_type: "article", item_id: "/learn/chargeback/" }),
+    expect.objectContaining({ method: "copy", content_type: "article", item_id: "/learn/chargeback/" }),
+  ]);
+  expect(ev.map(([n]) => n)).not.toContain("cta_click");
+});
+
 test("計測：FAQ の問いが開かれたことを、summary の文の先頭 80 字で、1 回の閲覧に同じ問いは 1 回だけ送る", async ({ page }) => {
   await page.goto("https://stbl-pay.com/learn/chargeback/");
   const summary = page.locator(".faq-list details > summary").first();
