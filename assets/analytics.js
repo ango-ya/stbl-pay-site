@@ -83,6 +83,11 @@
     const link = target.closest("a[href]");
     if (link) {
       const href = link.getAttribute("href") || "";
+      // 解説の共有欄：どの SNS で共有しようとしたか（GA4 の推奨イベント share）
+      if (link.closest(".learn-share")) {
+        event("share", { method: link.getAttribute("data-share") || "", content_type: "article", item_id: location.pathname });
+        return;
+      }
       // 解説：一覧の「困りごとから探す」・カード、記事の関連欄から、どの記事へ進んだか。item_id は # 以降を外したパス（節へのリンクも記事単位で数える）
       const articlePath = (h) => h.split("#")[0];
       const learnFrom = link.closest(".learn-needs") ? "learn_needs" : link.closest(".learn-cards") ? "learn_hub" : link.closest(".learn-related") ? "learn_related" : "";
@@ -134,6 +139,8 @@
       // 図の「動きを止める／動かす」。押したあとの名前（data-stopped）で、止めたか動かしたかを送る。figure は記事のスラッグつき（別の記事の同じファイル名と区別する）
       const img = button.closest("figure") && button.closest("figure").querySelector("img");
       event("figure_toggle", { figure: img ? (img.getAttribute("src") || "").split("/").slice(-2).join("/") : "", stopped: button.getAttribute("data-stopped") === "true" });
+    } else if (button.matches(".learn-share-copy")) {
+      event("share", { method: "copy", content_type: "article", item_id: location.pathname });
     } else if (button.id === "openJpyc") {
       event("demo_payment_start", { demo_area: "cart" });
     } else if (button.id === "resetDemo") {

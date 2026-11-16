@@ -202,6 +202,57 @@
   font-weight: 600;
 }
 
+.learn-share {
+  margin: 40px 0 0;
+}
+
+.learn-share-label {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.learn-share ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learn-share a,
+.learn-share button {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.learn-share a:hover,
+.learn-share button:hover {
+  background: var(--paper-dim);
+}
+
+.learn-share a:focus-visible,
+.learn-share button:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 2px;
+}
+
+.learn-share-done {
+  margin-left: 4px;
+  color: var(--gray);
+  font-size: 13px;
+}
+
 .learn-about {
   margin: 56px 0 0;
   padding: 24px;

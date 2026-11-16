@@ -16,10 +16,18 @@
 ### 2026-11-16 の点検
 
 - Google の登録：77 ページ（LP・英語版・docs）。解説（/learn/）は 0（Search Console の 11/13 時点のデータ）。10 ページが「検出 - インデックス未登録」で、まだ読みに来ていなかった。
-- 11/16 に URL 検査で、次の 10 本の登録をリクエストした：/learn/、stablecoin-payments、jpyc-payments、payment-gateway、what-is-stablecoin、payment-reconciliation、card-merchant-screening、no-screening-payments、payment-fees、/en/learn/。残りの解説とプレスキットは、次の日以降に回す。
+- 11/16 に URL 検査で、15 本の登録をリクエストした。
+  - 昼の 13 本：/learn/、stablecoin-payments、jpyc-payments、payment-gateway、what-is-stablecoin、payment-reconciliation、card-merchant-screening、no-screening-payments、payment-fees、/en/learn/、/press/、/en/press/、chargeback
+  - 夜の 2 本：reconciliation-automation、card-expression-restrictions
+  - そこで上限に届いた。上限は日付ではなく、直近 24 時間の回数で数えているらしい。
+  - 夜の時点で bank-transfer-payments と /en/learn/ は、もう登録済みだった。
+  - sitemap.xml を送り直した（前回の読み込みは 11/13）。
+- 残りの 10 本は 11/17 にリクエストする。日本語は accept-credit-cards、online-payment-methods、glossary、/policy/expression/。英語は /en/learn/ の下の 6 本。
 - 検索の数字（28 日）：Google は表示 230・クリック 1（ほぼ名前の検索）。Bing は表示 5・クリック 2。Bing の AI の回答での引用は 0。
 - GA4（11/10〜15）：訪問 29。成果につながった操作は 0。
 - Cloudflare：AI のクローラーからのリクエストは 7 日で約 3,300。本物の Googlebot は /learn/ と /learn/chargeback/ を読みに来ている。404 の大半は、Googlebot や AI のクローラーを名乗って `.env` などを探す、攻撃用の探索。https://www.stbl-pay.com/ は 521（オリジンにつながらない）を返していた。
+  - 原因は、www の DNS が Gandi の転送（webredir.vip.gandi.net）を向いたまま、Cloudflare の中継が有効になっていたこと。
+  - 11/16 に Cloudflare の Redirect Rules で、www を stbl-pay.com へ 301 で転送するようにした。パスとクエリは保つ。
 - 第三者の記事の「2026年8月に提供開始予定」「SDK を組み込むだけ」は、2026-07-10 の発表のころの説明。プレスキット・LP の FAQ・llms.txt に、日付つきで今の状況を書いた。
 - 週次点検のルーチン（trig_018nBcrRPGuh2wjZw4TZFKiJ）は、ユーザーの判断で 11/16 に止めた。
 
@@ -158,6 +166,17 @@ AI は、検索の上位のページと、名前の通った第三者の記事�
 | 4 | 比較記事の運営者への掲載のお願い | 「ステーブルコイン決済」の枠を作ってもらう |
 | 5 | X の投稿（解説ページ 1 本ごとに 1 投稿） | 解説ページを読む人を増やす |
 | 6 | JPYC のコミュニティ、導入事例やパートナーの一覧への掲載の相談 | 発行体の側から見つけてもらう |
+| 7 | YouTube の説明動画の概要欄に、内容の合う /learn/ のページを載せる。記事にも合う動画を埋め込む | 動画から解説へ人を送る。手間が一番小さい |
+| 8 | JPYC・フィンテックの勉強会での登壇（connpass のイベントページ、Speaker Deck の資料） | 関係の深いページからのリンク |
+| 9 | 手数料の計算（/learn/payment-fees/）と用語集を、道具として紹介する | 道具や資料はリンクされやすい |
+
+やらないこと：リンクを買う、相互リンクを頼む、無料ブログに AI の記事を量産する（Google のスパムの決まりの対象）。AI で下書きした記事は、公開の前に人が事実を確かめる（Google の生成 AI の案内）。
+
+サイト側では、2026-11-16 に次の 2 つを入れた。
+- 解説と方針に共有欄（.learn-share）。日本語は X・はてなブックマーク・LINE・Facebook、英語は X・LinkedIn・Facebook。どちらにもリンクのコピーを付けた。
+  - SNS の部品は読み込まず、ただのリンクにした。
+  - 押された数は GA4 の share で数える。
+- 会社の構造化データの sameAs に、YouTube のチャンネル（@ango-ya）を足した。
 
 ## 6. 測り方（週次の点検で見る）
 
@@ -185,9 +204,10 @@ AI は、検索の上位のページと、名前の通った第三者の記事�
 | faq_open | FAQ の問いが開かれたとき（1 回の閲覧に同じ問いは 1 回） | question（summary の先頭 80 字） |
 | fee_calc_use | 決済手数料の計算ツールに、最初に入力したとき（1 回の表示で 1 回） | なし |
 | ai_referral | 参照元が AI（サブドメインも）、または utm_source が AI の名前・ホストのとき | ai_source、landing_page |
+| share | 解説・方針の共有欄で、SNS のリンクか「リンクをコピー」を押したとき（2026-11-16 から） | method（x・hatena・line・facebook・linkedin・copy）、content_type（article）、item_id（ページのパス） |
 | figure_toggle | 図の「動きを止める／動かす」 | figure（記事のスラッグつき。例 bank-transfer-payments/ways.gif。別の記事の同じファイル名と混ざらない。2026-11-11 より前は ways.gif のようにファイル名だけ）、stopped |
 
-GA4 のカスタムディメンションは、2026-11-11 に登録済み（イベントのスコープで 11 個）：ai_source、landing_page、content_type、item_id、cta_location、exit_type、question、figure、stopped、cta_label、cta_destination。登録以前の分は遡れない。パラメータを足したら、この一覧と GA4 の登録を同じ日にそろえる（登録しないとレポートに出ない）。あわせて、/#early-access に進んだ cta_click（exit_type が consult）と form_start をキーイベントにすると、記事から相談への流れを追える。
+GA4 のカスタムディメンションは、2026-11-11 に登録済み（イベントのスコープで 11 個）：ai_source、landing_page、content_type、item_id、cta_location、exit_type、question、figure、stopped、cta_label、cta_destination。登録以前の分は遡れない。share の method は未登録（GA4 の既定のディメンションで見られなければ登録する）。パラメータを足したら、この一覧と GA4 の登録を同じ日にそろえる（登録しないとレポートに出ない）。あわせて、/#early-access に進んだ cta_click（exit_type が consult）と form_start をキーイベントにすると、記事から相談への流れを追える。
 
 Google の AI による概要・AI モードからの来訪は、参照元が google.com なので ai_referral では分けられない。Search Console の生成 AI のレポートで見る。
 
