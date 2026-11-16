@@ -1,7 +1,7 @@
 // 解説ページ（/learn/ と /en/learn/）と表現に関する方針（/policy/expression/）が、検索と AI に読まれる形を保ち、書いてはいけないことを書いていないこと。
 // 書くときの決まりは marketing/seo-strategy.md。本番ヘッダ（CSP）はローカルの静的サーバーが付けないので、_headers の値を付け直して見る。
 import { test, expect } from "@playwright/test";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { BANNED, BANNED_EN, TEXTS, rateViolations, launchDateClaims, CSP } from "./text-rules.mjs";
 
 const ORIGIN = "https://stbl-pay.com";
@@ -465,7 +465,7 @@ for (const [slug, names] of Object.entries(MIGRATED)) {
   });
 }
 
-// 共有欄（.learn-share）：SNS ごとに、正規 URL を渡す引数の名前。並びもこのとおり。新しい記事も、ここで共有欄の有無と中身が検査される
+// 共有欄（.learn-share）：SNS ごとに、正規 URL を渡す引数の名前。並びもこのとおり。PAGES のページが検査の対象（解説のファイルが PAGES から漏れないことは下のテストで見る）
 const SHARE = {
   ja: { x: "url", hatena: "url", line: "url", facebook: "u" },
   en: { x: "url", linkedin: "url", facebook: "u" },
@@ -508,6 +508,33 @@ test("共有欄：リンクをコピーは JS があるときだけ出て、押�
   await expect(p.locator(".learn-share a")).toHaveCount(4);
   await expect(p.locator(".learn-share-copy")).toBeHidden();
   await noJs.close();
+});
+
+test("共有欄：クリップボードが使えない環境ではコピーを出さず、書き込みを断られたら失敗を知らせる", async ({ browser, baseURL }) => {
+  const open = async (clipboard) => {
+    const context = await browser.newContext({ baseURL });
+    const page = await context.newPage();
+    await page.addInitScript((mode) => {
+      const value = mode === "none" ? undefined : { writeText: () => Promise.reject(new Error("denied")) };
+      Object.defineProperty(Navigator.prototype, "clipboard", { get: () => value });
+    }, clipboard);
+    await page.goto("/learn/chargeback/");
+    return { context, page };
+  };
+  const none = await open("none");
+  await expect(none.page.locator(".learn-share a")).toHaveCount(4);
+  await expect(none.page.locator(".learn-share-copy")).toBeHidden();
+  await none.context.close();
+  const denied = await open("denied");
+  await denied.page.locator(".learn-share-copy").click();
+  await expect(denied.page.locator(".learn-share-done")).toHaveText("コピーできませんでした");
+  await denied.context.close();
+});
+
+test("解説のファイルは、すべて PAGES にある（共有欄などの検査から漏れない）", () => {
+  const listed = new Set(PAGES.map((p) => p.path));
+  const files = ["learn", "en/learn"].flatMap((dir) => readdirSync(new URL(`../../${dir}/`, import.meta.url), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `/${dir}/${d.name}/`));
+  expect(files.filter((f) => !listed.has(f))).toEqual([]);
 });
 
 // 計測（assets/analytics.js）：本番のホスト・自動操作でないブラウザのときだけ、解説の記事の選び方・図の停止・AI の回答からの来訪を送る
