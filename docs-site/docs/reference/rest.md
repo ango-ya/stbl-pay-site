@@ -37,6 +37,8 @@ sidebar_position: 2
 
 `GET /payments/:paymentIntentId` を加盟店サーバーから呼び、店舗 API キーを `x-stbl-api-key` に送ります。[OpenAPI 仕様書](pathname:///openapi/#operation/getPayment)と[実装例](/server/retrieve-payment)を参照してください。リクエスト本文はありません。
 
+**この API は公開準備中で、Sandbox への配備前です（2026年11月17日時点）。** 配備までは、認証なしの `GET /payment_status/:paymentIntentId` で状態を確かめてください。
+
 12項目はすべて必須キーです。`paymentIntentId`、`orderId`、`status`、`amountJpy`、`feeJpy`、`netAmountJpy`、`txHash`、`settledAt`、`failedReason`、`payerAddress`、`netAmountDestination`、`createdAt` を返します。`orderId`、`txHash`、`settledAt`、`failedReason`、`payerAddress`、`netAmountDestination` は null を取り得ます。未知キーは無視してください。
 
 - 自店の決済だけを返します。別店舗・別加盟店・不存在は同じ404です。利用停止中・店舗無効でも有効なキーで照会できます。失効キーは拒否します。

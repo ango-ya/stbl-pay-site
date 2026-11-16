@@ -58,6 +58,8 @@ The data for `refund.confirmed` and `refund.failed` contains `refund_id`, `payme
 
 ## Payer and destination records {/* #payer-destination-records */}
 
+**These two keys are being prepared for release and are not yet deployed to Sandbox (as of November 17, 2026).** Until they are deployed, events do not include them. Handle that the same way as the missing keys described below.
+
 The four payment event types add `payer_address` and `net_amount_destination` to `data`. New events always include both keys, null for non-settled events. Settled events also return null if the original records are missing. Previously saved payloads are replayed unchanged and may omit the keys. Treat missing and null as the same absence of a record; do not fill them from current settings or another transaction. Ignore unknown keys.
 
 `payer_address` is the payer wallet address, not an identity verification result. `net_amount_destination` is the destination recorded for the merchant's proceeds when that payment settled. Amounts are decimal yen strings. JPYC base units equal yen × 10^18, while the existing API Jpy conversion uses six decimal places. One tx can contain multiple Transfer events: match by payment_intent_id rather than summing the tx as one order.

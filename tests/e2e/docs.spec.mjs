@@ -299,4 +299,22 @@ for (const locale of ['', 'en/']) {
   await expect(page.locator('article')).toContainText('payer_address');
   await expect(page.locator('article')).toContainText('net_amount_destination');
  });
+
+ // backend が Sandbox に出る前に、この案内だけが先に公開された（stbl-pay#699）。
+ // 配備前であることと、それまでの代わりの確認手段を、読者が試す 3 ページすべてに出す。
+ test(`payment lookup pages state Sandbox availability (${locale || 'ja'})`, async ({page}) => {
+  const notice = locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前';
+  await page.goto(`/docs/${locale}server/retrieve-payment/`);
+  await expect(page.locator('article')).toContainText(notice);
+  await expect(page.locator('article')).toContainText('/payment_status/');
+  // 公開 OpenAPI に無い内部のスキーマ名を、読者の探し先として書かない。
+  await expect(page.locator('article')).not.toContainText('PaymentLookupResponse');
+  await page.goto(`/docs/${locale}getting-started/quickstart/`);
+  await expect(page.locator('article')).toContainText(notice);
+  await expect(page.locator('article')).toContainText('/payment_status/');
+  await page.goto(`/docs/${locale}reference/rest/`);
+  await expect(page.locator('article')).toContainText(notice);
+  await page.goto(`/docs/${locale}reference/webhook-events/`);
+  await expect(page.locator('article')).toContainText(notice);
+ });
 }
