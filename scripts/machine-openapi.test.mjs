@@ -96,3 +96,26 @@ test('同じ参照objectでも各rootから解決しschema注釈と値の比較�
  const left={type:'object',description:'a'},right={type:'object',description:'b'};
  assert.throws(()=>assertCompatibleDefinition('X',{properties:{field:left},default:left},{properties:{field:right},default:right}));
 });
+
+test('defaultやconst内のenum/required配列はデータ順を保持する',()=>{
+ for(const container of ['default','const'])for(const key of ['enum','required']){
+  assert.throws(()=>assertCompatibleDefinition('X',{[container]:{[key]:['a','b']}},{[container]:{[key]:['b','a']}}));
+ }
+});
+
+test('schema enumのobject要素はキー順と集合順を正規化し要素内の配列順は保持する',()=>{
+ assert.doesNotThrow(()=>assertCompatibleDefinition('X',{enum:[{x:1},{x:2}]},{enum:[{x:2},{x:1}]}));
+ assert.doesNotThrow(()=>assertCompatibleDefinition('X',{enum:[{a:1,b:2},{x:2}]},{enum:[{x:2},{b:2,a:1}]}));
+ assert.throws(()=>assertCompatibleDefinition('X',{enum:[{enum:['a','b']}]},{enum:[{enum:['b','a']}]}));
+ assert.throws(()=>assertCompatibleDefinition('X',{enum:[{description:'a'}]},{enum:[{description:'b'}]}));
+});
+
+test('ref siblingも通常のschema比較と同じキー順と集合順を許容する',()=>{
+ const target={type:'object',properties:{a:{type:'string'},b:{type:'number'}},required:['a','b'],enum:[{a:'x',b:1},{a:'y',b:2}]};
+ const siblings={properties:{b:{type:'number'},a:{type:'string'}},required:['b','a'],enum:[{b:2,a:'y'},{b:1,a:'x'}]};
+ const roots={handwritten:{components:{schemas:{X:target}}},generated:{}};
+ assert.doesNotThrow(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',...siblings},target,roots));
+ assert.throws(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',default:{enum:['b','a']}},{...target,default:{enum:['a','b']}},roots));
+ const withDefault={...target,default:{enum:['a','b']}};
+ assert.throws(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',default:{enum:['b','a']}},{...withDefault,default:{enum:['b','a']}},{handwritten:{components:{schemas:{X:withDefault}}},generated:{}}));
+});

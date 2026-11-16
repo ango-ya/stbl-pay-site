@@ -12,8 +12,24 @@ const maps = new Set([
 ]);
 const escapePointer = value => value.replaceAll('~', '~0').replaceAll('/', '~1');
 
+function canonicalJson(value) {
+  if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']';
+  if (value !== null && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + canonicalJson(value[key])).join(',') + '}';
+  }
+  return JSON.stringify(value);
+}
+
+function createComparison(handwrittenRoot, generatedRoot) {
+  return {
+    handwrittenRoot,
+    generatedRoot,
+    pairs: {object: new WeakMap(), map: new WeakMap(), data: new WeakMap(), set: new WeakMap()},
+  };
+}
+
 export function assertCompatibleDefinition(name, handwritten, generated, roots = {handwritten, generated}) {
-  const pairs = {object: new WeakMap(), map: new WeakMap(), data: new WeakMap()};
+  const comparison = createComparison(roots.handwritten, roots.generated);
   const resolved = new Map([
     [roots.handwritten, new WeakMap()], [roots.generated, new WeakMap()],
   ]);
@@ -30,20 +46,20 @@ export function assertCompatibleDefinition(name, handwritten, generated, roots =
     if (target === undefined) throw new Error(`Unresolved reference ${node.$ref}`);
     const expanded = resolve(target, root, new Set([...ancestors, node]));
     const {$ref, ...siblings} = node;
-    for (const [key, value] of Object.entries(siblings)) {
-      if (!annotations.has(key) && key in expanded && JSON.stringify(value) !== JSON.stringify(expanded[key])) {
-        throw new Error(`Conflicting reference sibling ${node.$ref}/${escapePointer(key)}`);
-      }
-    }
     const definition = Object.keys(siblings).length ? {...expanded, ...siblings} : expanded;
     cache.set(node, definition);
+    for (const [key, value] of Object.entries(siblings)) {
+      if (!annotations.has(key) && key in expanded) {
+        equal({[key]: expanded[key]}, {[key]: value}, node.$ref.slice(1), 'object', createComparison(root, root));
+      }
+    }
     return definition;
   }
 
-  function equal(left, right, path, kind = 'object') {
+  function equal(left, right, path, kind = 'object', context = comparison) {
     if (kind === 'object') {
-      left = resolve(left, roots.handwritten);
-      right = resolve(right, roots.generated);
+      left = resolve(left, context.handwrittenRoot);
+      right = resolve(right, context.generatedRoot);
     }
     const fail = () => { throw new Error(`${name}: handwritten${path} conflicts with generated${path}`); };
     if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
@@ -51,25 +67,25 @@ export function assertCompatibleDefinition(name, handwritten, generated, roots =
       return;
     }
     if (Array.isArray(left) !== Array.isArray(right)) fail();
-    const compared = pairs[kind].get(left) ?? new WeakSet();
+    const compared = context.pairs[kind].get(left) ?? new WeakSet();
     if (compared.has(right)) return;
     compared.add(right);
-    pairs[kind].set(left, compared);
+    context.pairs[kind].set(left, compared);
     if (Array.isArray(left)) {
       if (left.length !== right.length) fail();
-      if (path.endsWith('/required') || path.endsWith('/enum')) {
-        left = [...left].sort();
-        right = [...right].sort();
+      if (kind === 'set') {
+        if (JSON.stringify(left.map(canonicalJson).sort()) !== JSON.stringify(right.map(canonicalJson).sort())) fail();
+        return;
       }
-      left.forEach((value, index) => equal(value, right[index], `${path}/${index}`, kind));
+      left.forEach((value, index) => equal(value, right[index], `${path}/${index}`, kind, context));
       return;
     }
     const keys = value => Object.keys(value).filter(key => kind !== 'object' || !annotations.has(key)).sort();
     if (JSON.stringify(keys(left)) !== JSON.stringify(keys(right))) fail();
     for (const key of keys(left)) {
-      const childKind = kind === 'data' ? 'data' : kind === 'map' ? 'object'
-        : dataKeys.has(key) ? 'data' : maps.has(key) ? 'map' : 'object';
-      equal(left[key], right[key], `${path}/${escapePointer(key)}`, childKind);
+      const childKind = kind === 'data' || kind === 'set' ? 'data' : kind === 'map' ? 'object'
+        : key === 'required' || key === 'enum' ? 'set' : dataKeys.has(key) ? 'data' : maps.has(key) ? 'map' : 'object';
+      equal(left[key], right[key], `${path}/${escapePointer(key)}`, childKind, context);
     }
   }
 
