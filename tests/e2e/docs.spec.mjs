@@ -409,10 +409,14 @@ for (const locale of ["ja", "en"]) {
         await expect.poll(() => decodeURIComponent(new URL(viewer.url()).hash)).toBe(`#tag/${tag}/operation/${id}`);
         const heading = viewer.locator(`[id="${hash.slice(1)}"]`).getByRole("heading").first();
         await expect(heading).toBeVisible();
+        await expect(heading).toBeInViewport();
         await viewer.reload();
-        await expect(heading).toBeVisible();
+        await expect.poll(() => decodeURIComponent(new URL(viewer.url()).hash)).toBe(`#tag/${tag}/operation/${id}`);
+        await expect(heading).toBeInViewport();
+        await viewer.goto('about:blank');
         await viewer.goto(href);
-        await expect(heading).toBeVisible();
+        await expect.poll(() => decodeURIComponent(new URL(viewer.url()).hash)).toBe(`#tag/${tag}/operation/${id}`);
+        await expect(heading).toBeInViewport();
         await viewer.close();
       }
     }

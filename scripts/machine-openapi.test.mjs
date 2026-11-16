@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync, mkdtempSync, writeFileSync, rmSync} from 'node:fs';
+import {readFileSync, mkdtempSync, writeFileSync, rmSync, mkdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -136,19 +136,28 @@ test('ref siblingも通常のschema比較と同じキー順と集合順を許容
  assert.equal(root.scripts['lint:openapi'],'npm --prefix docs-site run lint:openapi');
  });
 
-test('Redoclyは未解決ref・重複operationId・未定義タグをそれぞれ拒否する',()=>{
+test('Redoclyは日英のタグなしWebhookだけを例外とし未知タグ・未解決ref・重複IDを拒否する',()=>{
  const config=yaml.load(readFileSync('docs-site/redocly.yaml','utf8'));
  assert.deepEqual(config,{extends:[],rules:{'no-unresolved-refs':'error','operation-operationId-unique':'error','operation-tag-defined':'error'}});
+ const ignores=yaml.load(readFileSync('docs-site/.redocly.lint-ignore.yaml','utf8'));
+ assert.deepEqual(ignores,Object.fromEntries(['static/openapi.yaml','i18n/en/openapi.yaml'].map(path=>[path,{'operation-tag-defined':['#/webhooks/paymentEvent/post']}])));
  const directory=mkdtempSync(join(tmpdir(),'stbl-openapi-lint-'));
  const base={openapi:'3.1.0',info:{title:'Fixture',version:'1.0.0'},tags:[{name:'Known'}],paths:{'/a':{get:{operationId:'first',tags:['Known'],responses:{200:{description:'OK'}}}}}};
- const run=spec=>{const path=join(directory,'spec.json');writeFileSync(path,JSON.stringify(spec));return spawnSync(process.execPath,['docs-site/node_modules/@redocly/cli/bin/cli.js','lint','--config','docs-site/redocly.yaml',path],{encoding:'utf8',env:{...process.env,REDOCLY_TELEMETRY:'off',REDOCLY_SUPPRESS_UPDATE_NOTICE:'true'}});};
+ writeFileSync(join(directory,'redocly.yaml'),readFileSync('docs-site/redocly.yaml'));
+ writeFileSync(join(directory,'.redocly.lint-ignore.yaml'),readFileSync('docs-site/.redocly.lint-ignore.yaml'));
+ const cli=join(process.cwd(),'docs-site/node_modules/@redocly/cli/bin/cli.js');
+ const run=(spec,path)=>{writeFileSync(join(directory,path),JSON.stringify(spec));return spawnSync(process.execPath,[cli,'lint','--config','redocly.yaml',path],{cwd:directory,encoding:'utf8',env:{...process.env,REDOCLY_TELEMETRY:'off',REDOCLY_SUPPRESS_UPDATE_NOTICE:'true'}});};
  try{
- base.webhooks={event:{post:{operationId:'receiveEvent',responses:{200:{description:'OK'}}}}};
- const valid=run(base);assert.equal(valid.status,0,valid.stderr);
- for(const [rule,change] of [
+ base.webhooks={paymentEvent:{post:{operationId:'receiveEvent',responses:{200:{description:'OK'}}}}};
+ for(const path of ['static/openapi.yaml','i18n/en/openapi.yaml']){
+ mkdirSync(join(directory,path,'..'),{recursive:true});
+ const valid=run(base,path);assert.equal(valid.status,0,valid.stderr);
+ for(const [rule,change,pointer] of [
  ['no-unresolved-refs',spec=>{spec.paths['/a'].get.responses[200].content={'application/json':{schema:{$ref:'#/components/schemas/Missing'}}};}],
  ['operation-operationId-unique',spec=>{spec.paths['/b']={get:structuredClone(spec.paths['/a'].get)};}],
- ['operation-tag-defined',spec=>{spec.paths['/a'].get.tags=['Unknown'];}],
- ]){const broken=structuredClone(base);change(broken);const result=run(broken);assert.notEqual(result.status,0,rule);assert.match(result.stdout+result.stderr,new RegExp(rule));}
+ ['operation-tag-defined',spec=>{spec.paths['/a'].get.tags=['Unknown'];},'#/paths/~1a/get/tags/0'],
+ ['operation-tag-defined',spec=>{spec.webhooks.paymentEvent.post.tags=['Unknown'];},'#/webhooks/paymentEvent/post/tags/0'],
+ ]){const broken=structuredClone(base);change(broken);const result=run(broken,path);assert.notEqual(result.status,0,`${path}: ${rule}`);assert.match(result.stdout+result.stderr,new RegExp(rule));if(pointer)assert.ok((result.stdout+result.stderr).includes(pointer),result.stdout+result.stderr);}
+ }
  }finally{rmSync(directory,{recursive:true,force:true});}
 });
