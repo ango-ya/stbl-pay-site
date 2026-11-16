@@ -25,3 +25,5 @@ Do not trust the amount or `status` sent from the browser. Receive the order ID 
 Keep the API key and the Webhook signing secret only on the server. Do not reproduce passkey signing on a merchant page, and do not embed the checkout screen.
 
 Refunds use separate authority from payment processing. The owner console flow and draft [merchant server API](/refunds/machine-api) are described in [refund scope](/refunds/overview). The draft does not announce production availability.
+
+For confirming a payment, call `GET /payments/:paymentIntentId` from the merchant server with `x-stbl-api-key`. Addresses do not establish identity or confer transfer authority.

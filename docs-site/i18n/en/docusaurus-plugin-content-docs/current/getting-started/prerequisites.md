@@ -31,3 +31,5 @@ First, create an online store. In the merchant console menu, open Store & QR cod
 3. Prepare a page to return to after payment (for URL requirements and examples, see [Domain registration](/security/domain#returnurl-requirements)).
 4. Make sure your HTTPS Webhook endpoint can keep the [raw body](/reference/glossary#notifications) (the body exactly as received). Use a final URL that accepts `POST` directly. The URL must use HTTPS, must not contain a username or password ([userinfo](/reference/glossary#screen-navigation-and-domains)), and must not resolve to an internal address. Redirects (`3xx`) are not followed ([Endpoint URL requirements](/webhooks/retry#endpoint-url-requirements)).
 5. Implement Webhook signature verification, persistence of received events, deduplication, and periodic [reconciliation](/reference/glossary#confirmation-and-reconciliation) of orders. If you have a reason not to use Webhooks, confirm `settled` with a status lookup before finalizing the order.
+
+The store API key is required for payment creation and `GET /payments/:paymentIntentId` lookup. Keep it on the merchant server.

@@ -41,7 +41,7 @@ Suspension is an operation in which the operator stops providing the service to 
 - **Creating with the same `orderId` after reinstatement**: If the existing payment was aborted by the suspension, or was created before the suspension and had not yet started sending, the result is 409 `payment/order_terminated`
 - **Using the merchant console while suspended**: You can sign in, but you cannot start a new refund, withdraw, view the transaction history, or change settings (403 `merchant/suspended`)
 
-Even while suspended, [status retrieval](/server/retrieve-payment) (no API authentication required) and Webhook delivery for payments that already exist continue. Keep your receiver running. This does not mean you can view the transaction history in the merchant console. Check the results of payments during the suspension with status retrieval and Webhooks.
+Even while suspended, [status retrieval](/server/retrieve-payment) (requires a valid store API key in `x-stbl-api-key`) and Webhook delivery for payments that already exist continue. Keep your receiver running. This does not mean you can view the transaction history in the merchant console. Check the results of payments during the suspension with status retrieval and Webhooks.
 
 Refunds are made by the merchant. STBLpay does not hold funds or make refunds on your behalf. If an order needs a refund during the suspension, keep a note of it. For lifting the suspension or handling matters during it, use the [contact](/support/troubleshooting#contact) and describe it as a consultation about lifting or handling the suspension.
 

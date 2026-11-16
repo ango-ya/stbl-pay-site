@@ -16,7 +16,9 @@ sidebar_position: 2
 | メソッド | パス | 認証 | 用途 |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API キー（`x-stbl-api-key`） | [決済を作成する](#決済作成) |
-| `GET` | `/payment_status/:paymentIntentId` | なし | [決済の状態を照会する](#状態照会) |
+| `GET` | `/payments/:paymentIntentId` | API キー（`x-stbl-api-key`） | [加盟店サーバーから照会する](#状態照会) |
+| `GET` | `/payment_status/:paymentIntentId` | なし | 決済ページの状態確認 |
+| `GET` | `/payment_intents/:paymentIntentId` | なし | 決済ページの表示情報 |
 
 リクエストとレスポンスの本文は JSON で、フィールドは camelCase です。
 
@@ -33,11 +35,16 @@ sidebar_position: 2
 
 ## 状態照会
 
-`GET /payment_status/:paymentIntentId` で決済の現在の状態を受け取ります。項目・エラー・例は [OpenAPI 仕様書の「決済の状態を照会する」](pathname:///openapi/#operation/getPaymentStatus)にあります。
+`GET /payments/:paymentIntentId` を加盟店サーバーから呼び、店舗 API キーを `x-stbl-api-key` に送ります。[OpenAPI 仕様書](pathname:///openapi/#operation/getPayment)と[実装例](/server/retrieve-payment)を参照してください。リクエスト本文はありません。
 
-- **認証はありません。** API キーや Authorization ヘッダーは不要です。
-- 決済 ID は秘密ではありません。自社の注文を閲覧する権限の代わりには使わないでください。
-- この応答に金額・手数料・ウォレットは含まれません。
+12項目はすべて必須キーです。`paymentIntentId`、`orderId`、`status`、`amountJpy`、`feeJpy`、`netAmountJpy`、`txHash`、`settledAt`、`failedReason`、`payerAddress`、`netAmountDestination`、`createdAt` を返します。`orderId`、`txHash`、`settledAt`、`failedReason`、`payerAddress`、`netAmountDestination` は null を取り得ます。未知キーは無視してください。
+
+- 自店の決済だけを返します。別店舗・別加盟店・不存在は同じ404です。利用停止中・店舗無効でも有効なキーで照会できます。失効キーは拒否します。
+- `payerAddress` は支払人のウォレットアドレスで、本人確認結果ではありません。`netAmountDestination` は成立時に記録した取り分の届け先です。旧決済の欠けた記録は埋め直さず null です。非 `settled` では両方 null です。
+- `feeJpy`・`netAmountJpy` は `settled` なら実額、実行結果が確認できなければ見積りです。非 `settled` は見積りで、Webhook の非成立通知の `"0"` とは異なります。
+- 既定は API キーごとに UTC 毎分600回です。429 `common/rate_limited` の整数秒 `Retry-After` を待って再試行します。制限の確認障害は503 `common/service_unavailable`です。未知のエラーコードは共通フォールバックへ落とします。
+
+既存の `GET /payment_status/:paymentIntentId` と `GET /payment_intents/:paymentIntentId` は認証なしの決済ページ向けです。状態照会応答には金額・手数料・ウォレットを含みません。決済 ID を自社注文の閲覧権限の代わりに使わないでください。
 
 ## 状態の値
 
@@ -73,3 +80,14 @@ sidebar_position: 2
 - `payment/order_id_conflict`（409）は、同じ加盟店の別の店舗で使った `orderId` で作成したときのエラーです。同じ値で再試行しても解消しないので、新しい `orderId` で作り直してください（[店舗をまたぐ制約](/server/create-payment#冪等性)）。
 
 返金は決済処理とは別の権限で行います。ownerのコンソール操作と、公開準備中の[加盟店サーバーAPI](/refunds/machine-api)は[返金の提供範囲](/refunds/overview)を参照してください。本番提供開始の案内ではありません。
+
+## 金額・チェーンとトークン
+
+金額は小数を含む円建て10進文字列（例：`"4980.125"`）です。JPYC の最小単位は円 × 10^18 で、API の既存の Jpy 変換精度は小数6桁です。トークンの decimals と API の変換精度は別です。数値型へ変換しないでください。同じ tx に複数の決済や複数の Transfer が含まれる場合があるので、txHash だけで注文を対応付けず、保存した paymentIntentId を使います。
+
+| 環境 | chainId | JPYC コントラクトアドレス |
+|---|---|---|
+| Sandbox | 実配備設定の確認待ち（未提供） | 未提供。導入担当者へ確認してください |
+| 本番 | 未提供 | 未提供 |
+
+Sandbox の稼働 API の chainId／stablecoin の組は未照合です。開発用 Amoy の既存値（80002／`0xe7c3d8c9a439fede00d2600032d5db0be71c3c29`）を Sandbox の値として使わないでください。本番の稼働設定も未照合のため、未検証のアドレスは掲載していません。

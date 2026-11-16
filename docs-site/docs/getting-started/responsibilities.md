@@ -25,3 +25,5 @@ sidebar_position: 2
 API キー・Webhook 署名鍵はサーバーにだけ保持します。加盟店ページでパスキー署名を再現したり、決済画面を埋め込んだりしないでください。
 
 返金は決済処理とは別の権限で行います。ownerのコンソール操作と、公開準備中の[加盟店サーバーAPI](/refunds/machine-api)は[返金の提供範囲](/refunds/overview)を参照してください。本番提供開始の案内ではありません。
+
+決済の確定照会は加盟店サーバーから `GET /payments/:paymentIntentId` を呼び、`x-stbl-api-key` を送ります。アドレスは本人確認結果や送金権限を表しません。

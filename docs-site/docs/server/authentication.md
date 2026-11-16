@@ -1,6 +1,6 @@
 ---
 title: 認証
-description: "決済作成 API の認証方法を説明します。加盟店サーバーから API キーをヘッダで送る方法が分かる、JPYC 決済の導入を進める開発者向けです。"
+description: "決済作成・照会 API の認証方法を説明します。加盟店サーバーから API キーをヘッダで送る方法が分かる、JPYC 決済の導入を進める開発者向けです。"
 sidebar_label: 認証
 sidebar_position: 1
 ---
@@ -31,3 +31,5 @@ API キーはサーバーのシークレット管理基盤に保管し、ブラ�
 ## 返金 API（公開準備中）
 
 決済キーとは別のmachineキーとP-256署名が必要です。[署名の形式](/refunds/signing)を参照してください。
+
+`GET /payments/:paymentIntentId` は決済作成と同じ店舗 API キーを使います。既存の `GET /payment_status/:paymentIntentId` と `GET /payment_intents/:paymentIntentId` は認証なしの決済ページ向けです。加盟店サーバーの確定照会には使わず、API キー照会を使ってください。

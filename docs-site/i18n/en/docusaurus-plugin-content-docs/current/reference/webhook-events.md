@@ -55,3 +55,11 @@ For the procedure on the receiving side, see [Receiving test notifications](/web
 ## Refund events (draft)
 
 The data for `refund.confirmed` and `refund.failed` contains `refund_id`, `payment_intent_id`, nullable `order_id`, `amount_jpy`, `status`, nullable `tx_hash`, nullable `failed_reason` and nullable `settled_at`. Type and status correspond to confirmed/failed. The transaction hash is null when execution evidence is unavailable. Payer addresses are omitted. Do not validate refund data as payment data. Destination, HMAC and retries use the existing delivery mechanism.
+
+## Payer and destination records {/* #payer-destination-records */}
+
+The four payment event types add `payer_address` and `net_amount_destination` to `data`. New events always include both keys, null for non-settled events. Settled events also return null if the original records are missing. Previously saved payloads are replayed unchanged and may omit the keys. Treat missing and null as the same absence of a record; do not fill them from current settings or another transaction. Ignore unknown keys.
+
+`payer_address` is the payer wallet address, not an identity verification result. `net_amount_destination` is the destination recorded for the merchant's proceeds when that payment settled. Amounts are decimal yen strings. JPYC base units equal yen × 10^18, while the existing API Jpy conversion uses six decimal places. One tx can contain multiple Transfer events: match by payment_intent_id rather than summing the tx as one order.
+
+Test notifications use fixed values: `payer_address = 0x1111111111111111111111111111111111111111` and `net_amount_destination = 0x2222222222222222222222222222222222222222`. Never use them for real transactions or transfers. Keep the `test === true` check unchanged. The two refund event types do not add these keys. Existing refund features remain available.
