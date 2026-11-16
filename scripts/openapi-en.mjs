@@ -27,6 +27,11 @@ if (errors.length) {
   process.exit(1);
 }
 
+if (dist === "--check") {
+  console.log("openapi-en: 日英parity OK");
+  process.exit(0);
+}
+
 writeFileSync(join(dist, "docs/en/openapi.yaml"), enText);
 console.log("openapi-en: dist/docs/en/openapi.yaml を英語版に差し替えた");
 

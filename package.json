@@ -9,9 +9,11 @@
     "check": "./scripts/check-acceptance.sh && ./scripts/check-lr006-terms.sh",
     "test:figures": "node --test scripts/figures/outputs.test.mjs",
     "openapi:build": "node scripts/build-openapi.mjs",
-    "openapi:check": "node scripts/build-openapi.mjs --check",
+    "openapi:check": "node scripts/build-openapi.mjs --check && node scripts/openapi-en.mjs --check",
     "test:machine-openapi": "node --test scripts/machine-openapi.test.mjs",
-    "build:dist": "bash scripts/build-dist.sh"
+    "test:refund-signer": "node --test scripts/refund-signer.test.mjs",
+    "build:docs": "bash scripts/build-dist.sh",
+    "lint:openapi": "npm --prefix docs-site run lint:openapi"
   },
   "repository": {
     "type": "git",

@@ -12,7 +12,8 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "lint:openapi": "redocly lint --config redocly.yaml static/openapi.yaml i18n/en/openapi.yaml"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -31,6 +32,7 @@
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
+    "@redocly/cli": "1.25.15",
     "@types/react": "^19.0.0",
     "typescript": "~6.0.2"
   },

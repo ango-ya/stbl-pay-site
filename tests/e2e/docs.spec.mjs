@@ -2,10 +2,24 @@ import { test, expect } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import { diffSpecs } from "../../scripts/openapi-parity.mjs";
 
 // 加盟店向けドキュメント（/docs/・docs-site のビルド結果）
 
+// Playwright の変換器に docs-site の tsconfig を解決させず、同サイトの YAML parser を使う。
+function readOpenApiSpec(path) {
+  const script = `
+    import {createRequire} from "node:module";
+    import {readFileSync} from "node:fs";
+    const yaml = createRequire(new URL("./docs-site/package.json", \`file://\${process.cwd()}/\`))("js-yaml");
+    console.log(JSON.stringify(yaml.load(readFileSync(process.argv[1], "utf8"))));
+  `;
+  return JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", script, fileURLToPath(new URL(path, import.meta.url))], {
+    cwd: fileURLToPath(new URL("../../", import.meta.url)),
+    encoding: "utf8",
+  }));
+}
 const dist = fileURLToPath(new URL("../../dist/", import.meta.url));
 
 test.describe("加盟店向けドキュメント", () => {
@@ -145,7 +159,7 @@ test.describe("加盟店向けドキュメント", () => {
       // 英語版の docs からは英訳した仕様書を開く。日本語は、サーバーが返す文そのままの例と、国際化ドメイン名の例だけ
       if (path.startsWith("/docs/en/")) {
         expect(spec).toContain("summary: Create a payment");
-        const rest = spec.replace(/message: 10 進の非負数|例え\.テスト/g, "");
+        const rest = spec.replace(/^\s*(?:message|failureReason):.*$/gm, "").replace(/例え\.テスト/g, "");
         expect(rest).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
       } else {
         expect(spec).toContain("summary: 決済を作成する");
@@ -243,7 +257,7 @@ test.describe("加盟店向けドキュメント", () => {
     }
     // 拡張（x-）は、置いた場所にかかわらず扱わずに止める
     const withExtension = structuredClone(ja);
-    withExtension.paths["x-config"] = { description: "値" };
+    withExtension.paths["/p"].post["x-config"] = { description: "値" };
     expect(diffSpecs(withExtension, structuredClone(withExtension))).not.toEqual([]);
   });
 
@@ -350,4 +364,57 @@ for (const locale of ['', 'en/']) {
   // 読者がその場で呼んで確かめる項目なので、配備前であることをこのページにも出す。
   await expect(scenarios).toContainText(locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前');
  });
+}
+
+for (const locale of ["ja", "en"]) {
+  const prefix = locale === "ja" ? "/docs" : "/docs/en";
+  const specPath = locale === "ja" ? "../../docs-site/static/openapi.yaml" : "../../docs-site/i18n/en/openapi.yaml";
+  test(`${locale}: 決済と返金のoperationがタグ配下で順に表示される`, async ({page}) => {
+    const spec = readOpenApiSpec(specPath);
+    const operations = Object.values(spec.paths).flatMap(Object.values);
+    test.setTimeout(90000);
+    const ids = ["getMachineRefundable", "prepareMachineRefund", "submitMachineRefund", "getMachineRefund", "listMachinePaymentRefunds", "discardMachineStagedOperation"];
+    await page.goto(`${prefix}/openapi/`);
+    for (const id of ["getPayment", ...ids]) {
+      const operation = operations.find(value => value.operationId === id);
+      const section = page.locator(`[id="operation/${id}"]`);
+      const heading = section.getByRole("heading", {level:2}).first();
+      await expect(heading).toContainText(operation.summary);
+      await heading.scrollIntoViewIfNeeded();
+      await expect(heading).toBeVisible();
+      const tag = id === "getPayment" ? (locale === "ja" ? "決済" : "Payments") : (locale === "ja" ? "返金" : "Refunds");
+      const tagBefore = await section.evaluate((element, expected) => element.parentElement.id === expected, `tag/${tag}/operation/${id}`);
+      expect(tagBefore, `${id} under ${tag}`).toBe(true);
+    }
+    const shown = await page.locator('[id^="operation/"]').evaluateAll(elements => elements.map(element => element.id.slice(10)));
+    expect(shown.filter(id => ids.includes(id))).toEqual(ids);
+  });
+
+  test(`${locale}: RESTと返金フローの実リンクからoperationを開き直リンクとリロードでも表示できる`, async ({page, context}) => {
+    test.setTimeout(300000);
+    for (const source of ["reference/rest", "refunds/machine-api"]) {
+      await page.goto(`${prefix}/${source}`);
+      const links = page.locator('article a[href*="/openapi/#operation/"]');
+      const hrefs = [...new Set(await links.evaluateAll(elements => elements.map(element => element.getAttribute("href"))))];
+      expect(hrefs.length).toBeGreaterThanOrEqual(source === "reference/rest" ? 7 : 6);
+      for (const href of hrefs) {
+        expect(href).toContain(`${prefix}/openapi/#operation/`);
+        const anchor = page.locator(`article a[href="${href}"]`).first();
+        const [viewer] = await Promise.all([context.waitForEvent("page"), anchor.click()]);
+        await viewer.waitForLoadState();
+        const hash = new URL(href, page.url()).hash;
+        expect(new URL(href, page.url()).hash).toMatch(/^#operation\//);
+        const id = hash.split("/").pop();
+        const tag = ["createPaymentIntent", "getPaymentStatus", "getPayment"].includes(id) ? (locale === "ja" ? "決済" : "Payments") : (locale === "ja" ? "返金" : "Refunds");
+        await expect.poll(() => decodeURIComponent(new URL(viewer.url()).hash)).toBe(`#tag/${tag}/operation/${id}`);
+        const heading = viewer.locator(`[id="${hash.slice(1)}"]`).getByRole("heading").first();
+        await expect(heading).toBeVisible();
+        await viewer.reload();
+        await expect(heading).toBeVisible();
+        await viewer.goto(href);
+        await expect(heading).toBeVisible();
+        await viewer.close();
+      }
+    }
+  });
 }

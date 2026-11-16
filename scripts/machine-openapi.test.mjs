@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync, mkdtempSync, writeFileSync, rmSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createRequire} from 'node:module';
 import {buildOpenApi, assertCompatibleDefinition} from './build-openapi.mjs';
 import {translateGenerated} from './openapi-en/translate.mjs';
@@ -118,4 +121,34 @@ test('ref siblingも通常のschema比較と同じキー順と集合順を許容
  assert.throws(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',default:{enum:['b','a']}},{...target,default:{enum:['a','b']}},roots));
  const withDefault={...target,default:{enum:['a','b']}};
  assert.throws(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',default:{enum:['b','a']}},{...withDefault,default:{enum:['b','a']}},{handwritten:{components:{schemas:{X:withDefault}}},generated:{}}));
+});
+
+ test('CIは生成一致・単体・lint・build・E2Eをnpm scriptsから順に実行する',()=>{
+ const root=loadJson('../package.json');
+ const workflow=yaml.load(readFileSync('.github/workflows/ci.yml','utf8'));
+ const runs=workflow.jobs.test.steps.map(step=>step.run).filter(Boolean);
+ const commands=['npm ci','npm --prefix docs-site ci','npm run openapi:check','npm run test:machine-openapi','npm run test:refund-signer','npm run lint:openapi','npm run build:docs','npm run test:e2e'];
+ let previous=-1;
+ for(const command of commands){const index=runs.indexOf(command);assert.ok(index>previous,`Missing or misplaced ${command}`);previous=index;}
+ assert.equal(root.scripts['test:machine-openapi'],'node --test scripts/machine-openapi.test.mjs');
+ assert.equal(root.scripts['test:refund-signer'],'node --test scripts/refund-signer.test.mjs');
+ assert.equal(root.scripts['build:docs'],'bash scripts/build-dist.sh');
+ assert.equal(root.scripts['lint:openapi'],'npm --prefix docs-site run lint:openapi');
+ });
+
+test('Redoclyは未解決ref・重複operationId・未定義タグをそれぞれ拒否する',()=>{
+ const config=yaml.load(readFileSync('docs-site/redocly.yaml','utf8'));
+ assert.deepEqual(config,{extends:[],rules:{'no-unresolved-refs':'error','operation-operationId-unique':'error','operation-tag-defined':'error'}});
+ const directory=mkdtempSync(join(tmpdir(),'stbl-openapi-lint-'));
+ const base={openapi:'3.1.0',info:{title:'Fixture',version:'1.0.0'},tags:[{name:'Known'}],paths:{'/a':{get:{operationId:'first',tags:['Known'],responses:{200:{description:'OK'}}}}}};
+ const run=spec=>{const path=join(directory,'spec.json');writeFileSync(path,JSON.stringify(spec));return spawnSync(process.execPath,['docs-site/node_modules/@redocly/cli/bin/cli.js','lint','--config','docs-site/redocly.yaml',path],{encoding:'utf8',env:{...process.env,REDOCLY_TELEMETRY:'off',REDOCLY_SUPPRESS_UPDATE_NOTICE:'true'}});};
+ try{
+ base.webhooks={event:{post:{operationId:'receiveEvent',responses:{200:{description:'OK'}}}}};
+ const valid=run(base);assert.equal(valid.status,0,valid.stderr);
+ for(const [rule,change] of [
+ ['no-unresolved-refs',spec=>{spec.paths['/a'].get.responses[200].content={'application/json':{schema:{$ref:'#/components/schemas/Missing'}}};}],
+ ['operation-operationId-unique',spec=>{spec.paths['/b']={get:structuredClone(spec.paths['/a'].get)};}],
+ ['operation-tag-defined',spec=>{spec.paths['/a'].get.tags=['Unknown'];}],
+ ]){const broken=structuredClone(base);change(broken);const result=run(broken);assert.notEqual(result.status,0,rule);assert.match(result.stdout+result.stderr,new RegExp(rule));}
+ }finally{rmSync(directory,{recursive:true,force:true});}
 });
