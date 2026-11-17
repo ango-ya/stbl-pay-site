@@ -22,7 +22,8 @@
   - そこで上限に届いた。上限は日付ではなく、直近 24 時間の回数で数えているらしい。
   - 夜の時点で bank-transfer-payments と /en/learn/ は、もう登録済みだった。
   - sitemap.xml を送り直した（前回の読み込みは 11/13）。
-- 残りの 10 本は 11/17 にリクエストする。日本語は accept-credit-cards、online-payment-methods、glossary、/policy/expression/。英語は /en/learn/ の下の 6 本。
+- 残りの 10 本は 11/17 の 14:58〜15:15 にリクエストした（昼の 13 本からちょうど 24 時間後で、上限には当たらなかった）。日本語は accept-credit-cards、online-payment-methods、glossary、/policy/expression/。英語は /en/learn/ の下の 6 本。これで解説と方針は、すべてリクエスト済みか登録済みになった。
+  - 検査の時点で、10 本とも未登録だった。英語の japan-payment-methods、high-risk-merchant-account、stablecoin-payments-japan の 3 本は「URL が Google に認識されていません」だった。3 本とも本番の sitemap.xml には載っているので、送り直したサイトマップをまだ読み終えていないだけと見ている。
 - 検索の数字（28 日）：Google は表示 230・クリック 1（ほぼ名前の検索）。Bing は表示 5・クリック 2。Bing の AI の回答での引用は 0。
 - GA4（11/10〜15）：訪問 29。成果につながった操作は 0。
 - Cloudflare：AI のクローラーからのリクエストは 7 日で約 3,300。本物の Googlebot は /learn/ と /learn/chargeback/ を読みに来ている。404 の大半は、Googlebot や AI のクローラーを名乗って `.env` などを探す、攻撃用の探索。https://www.stbl-pay.com/ は 521（オリジンにつながらない）を返していた。
