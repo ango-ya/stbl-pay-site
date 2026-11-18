@@ -37,7 +37,7 @@ Yes. The same store gets the existing payment back for the same `orderId`. Do no
 
 ## Is the amount a number?
 
-No. API amounts are strings in yen, and Webhook amounts are strings too. In the `payment.failed`, `payment.canceled`, and `payment.expired` notifications, `fee_jpy` and `net_received_jpy` are `"0"` ([Amounts](/reference/webhook-events#amounts)). The status lookup API does not return the amount or the fee.
+No. API amounts are strings in yen, and Webhook amounts are strings too. In the `payment.failed`, `payment.canceled`, and `payment.expired` notifications, `fee_jpy` and `net_received_jpy` are `"0"` ([Amounts](/reference/webhook-events#amounts)). A [status lookup](/reference/rest#retrieve-payment) from the merchant server (`GET /payments/:paymentIntentId`) also returns `amountJpy`, `feeJpy`, and `netAmountJpy` as strings. For statuses other than `settled`, `feeJpy` and `netAmountJpy` are estimates, unlike the `"0"` amounts in non-settled Webhooks.
 
 ## Can I provide the goods once it is signed?
 

@@ -14,7 +14,7 @@ sidebar_position: 3
 完了の確認経路は次のとおりです。
 
 - **`payment.settled` Webhook**：raw body の署名と時刻を検証し、ボディの `id` で冪等に処理する
-- **ステータス確認 API のサーバー間照会**：作成時に保存した決済 ID で `settled` を確認する
+- **加盟店サーバーからの[状態照会](/server/retrieve-payment)**：店舗 API キーを付けて `GET /payments/:paymentIntentId` を呼び、作成時に保存した決済 ID で `settled` を確認する
 
 Webhook を結果通知の主経路にし、必要時の確定照会と通知欠落時の定期[突合](/reference/glossary)に API を使います。両方が届くことを商品提供の必須条件にすると、通知欠落時に成立済み注文が止まるため、そのような条件にはしません。
 
@@ -31,6 +31,6 @@ Webhook を結果通知の主経路にし、必要時の確定照会と通知欠
 
 ## 金額と終端
 
-Webhook の金額は文字列です。成立した決済の受取額は `net_received_jpy`、手数料は `fee_jpy` で確認します。これらは `payment.settled` ではチェーン上の実額で、実額を取れなかった回だけ作成時の見積りです。`payment.failed`・`payment.canceled`・`payment.expired` では資金が動いていないため、どちらも `"0"` です（`amount_jpy` は注文額のまま）。失敗・取消・失効の通知の金額を入金として計上しないでください。状態照会 API には金額がないため、保存した注文・作成応答と照合し、照会応答から金額を推測しないでください。
+Webhook の金額は文字列です。成立した決済の受取額は `net_received_jpy`、手数料は `fee_jpy` で確認します。これらは `payment.settled` ではチェーン上の実額で、実額を取れなかった回だけ作成時の見積りです。`payment.failed`・`payment.canceled`・`payment.expired` では資金が動いていないため、どちらも `"0"` です（`amount_jpy` は注文額のまま）。失敗・取消・失効の通知の金額を入金として計上しないでください。状態照会の応答も金額を返します。`feeJpy` と `netAmountJpy` は `settled` 以外では見積りで、非成立 Webhook の `"0"` とは異なります（[照会の境界](/server/retrieve-payment#照会の境界)）。
 
 `settled` は終端です。通知の配信失敗や、その後の返金で元の決済が別の状態になることはありません。提供できない注文への成立通知は運用対応に回してください。

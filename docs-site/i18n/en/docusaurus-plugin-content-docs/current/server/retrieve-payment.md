@@ -9,6 +9,8 @@ sidebar_position: 3
 
 From the merchant server, [look up](/reference/glossary) the current status using the saved `paymentIntentId`. Send the store API key in the `x-stbl-api-key` header.
 
+**This API is being prepared for release and is not yet deployed to Sandbox (as of November 17, 2026).** You cannot call it until it is deployed. Ask your [contact](/support/troubleshooting#contact) about the timing. Until then, you can check the status with the unauthenticated `GET /payment_status/:paymentIntentId`. That response returns the status and does not include amounts, fees, or addresses.
+
 ```js
 const response = await fetch(
   `${process.env.STBL_PAY_BACKEND}/payments/${encodeURIComponent(paymentIntentId)}`,
@@ -22,7 +24,7 @@ Your own order display API needs login and an order ownership check. Use the ID 
 
 ## Handling the response
 
-The response fields are summarized in the [REST reference](/reference/rest#retrieve-payment). For the definition of each field, see `PaymentLookupResponse` in the [OpenAPI specification](pathname:///openapi/#operation/getPayment). The response contains twelve fields, including amounts, fees, and addresses. Do not treat a lookup failure or timeout as a `failed` payment.
+The response fields are summarized in the [REST reference](/reference/rest#retrieve-payment). For the definition of each field, see the 200 response of `GET /payments/{paymentIntentId}` in the [OpenAPI specification](pathname:///openapi/#operation/getPayment). The response contains twelve fields, including amounts, fees, and addresses. Do not treat a lookup failure or timeout as a `failed` payment.
 
 | Status | Order-side handling |
 |---|---|

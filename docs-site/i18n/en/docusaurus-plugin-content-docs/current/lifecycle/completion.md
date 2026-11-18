@@ -14,7 +14,7 @@ sidebar_position: 3
 The ways to confirm completion are as follows.
 
 - **`payment.settled` Webhook**: Verify the signature and timestamp on the raw body, and process idempotently by the `id` in the body
-- **Server-to-server lookup with the status API**: Confirm `settled` using the payment ID saved at creation
+- **[Status lookup](/server/retrieve-payment) from the merchant server**: Call `GET /payments/:paymentIntentId` with the store API key, and confirm `settled` using the payment ID saved at creation
 
 Use Webhooks as the main path for result notification, and use the API for a confirming lookup when needed and for periodic [reconciliation](/reference/glossary) when notifications are missing. Do not require both the Webhook and the API lookup result to arrive before providing goods. If you did, a settled order would stall when a notification is missing.
 
@@ -31,6 +31,6 @@ If you only mark the received event as "processed" first and then run external p
 
 ## Amounts and terminal statuses
 
-Amounts in a Webhook are strings. For a settled payment, check the received amount in `net_received_jpy` and the fee in `fee_jpy`. In `payment.settled` these are the actual on-chain amounts; only when the actual amounts could not be obtained are they the estimates from creation. In `payment.failed`, `payment.canceled`, and `payment.expired`, no funds moved, so both are `"0"` (`amount_jpy` stays the order amount). Do not record the amount in a failed, canceled, or expired notification as a deposit. The status lookup API has no amounts, so match against your saved order and the creation response, and do not infer amounts from the lookup response.
+Amounts in a Webhook are strings. For a settled payment, check the received amount in `net_received_jpy` and the fee in `fee_jpy`. In `payment.settled` these are the actual on-chain amounts; only when the actual amounts could not be obtained are they the estimates from creation. In `payment.failed`, `payment.canceled`, and `payment.expired`, no funds moved, so both are `"0"` (`amount_jpy` stays the order amount). Do not record the amount in a failed, canceled, or expired notification as a deposit. The status lookup response also returns amounts. For statuses other than `settled`, `feeJpy` and `netAmountJpy` are estimates, unlike the `"0"` amounts in non-settled Webhooks ([Lookup boundaries](/server/retrieve-payment#lookup-boundaries)).
 
 `settled` is terminal. A delivery failure of a notification or a later refund does not change the original payment to another status. Route a settled notification for an order that cannot be fulfilled to operational handling.

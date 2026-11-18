@@ -37,6 +37,8 @@ Request and response bodies are JSON, and the fields are camelCase.
 
 Call `GET /payments/:paymentIntentId` from your server with the store API key in `x-stbl-api-key`. See the [OpenAPI specification](pathname:///openapi/#operation/getPayment) and [implementation example](/server/retrieve-payment). There is no request body.
 
+**This API is being prepared for release and is not yet deployed to Sandbox (as of November 17, 2026).** Until it is deployed, check the status with the unauthenticated `GET /payment_status/:paymentIntentId`.
+
 All twelve keys are required: `paymentIntentId`, `orderId`, `status`, `amountJpy`, `feeJpy`, `netAmountJpy`, `txHash`, `settledAt`, `failedReason`, `payerAddress`, `netAmountDestination`, and `createdAt`. `orderId`, `txHash`, `settledAt`, `failedReason`, `payerAddress`, and `netAmountDestination` can be null. Ignore unknown keys.
 
 - Only the authenticated store's payments are returned. Another store, another merchant, and an unknown ID all return the same 404. Valid keys work during merchant suspension or store disablement; revoked keys are rejected.
