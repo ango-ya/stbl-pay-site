@@ -28,7 +28,7 @@ sequenceDiagram
         Pay-->>Shop: Webhook (terminal result, if configured)
         Shop->>Shop: Verify signature, update order idempotently
         opt Webhook not configured, or not delivered
-            Shop->>Pay: Status lookup (GET /payment_status)
+            Shop->>Pay: Status lookup (GET /payments, API key)
             Pay-->>Shop: Status such as settled
         end
     and Flow 2: Buyer returns (for display)

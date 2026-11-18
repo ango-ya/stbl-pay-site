@@ -28,7 +28,7 @@ sequenceDiagram
         Pay-->>Shop: Webhook（終端結果。設定した場合）
         Shop->>Shop: 署名検証・冪等な注文更新
         opt Webhook を設定していない、または届かない
-            Shop->>Pay: 状態照会（GET /payment_status）
+            Shop->>Pay: 状態照会（GET /payments・API キー）
             Pay-->>Shop: settled などの状態
         end
     and 流れ 2：利用者の復帰（表示用）

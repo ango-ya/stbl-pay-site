@@ -317,4 +317,34 @@ for (const locale of ['', 'en/']) {
   await page.goto(`/docs/${locale}reference/webhook-events/`);
   await expect(page.locator('article')).toContainText(notice);
  });
+
+ // 加盟店サーバーの照会先が GET /payments に替わったあとも、認証なしの旧い API を前提にした
+ // 記述が 4 ページに残っていた（stbl-pay#699）。文言の全文ではなく、旧記述が無いことと、
+ // 新しい照会先・エラーコードが出ていることだけを確かめる。
+ test(`merchant-server lookup guidance points at GET /payments (${locale || 'ja'})`, async ({page}) => {
+  await page.goto(`/docs/${locale}getting-started/payment-flow/`);
+  // シーケンス図（Mermaid の SVG）の中の文字列も article に含まれる。
+  await expect(page.locator('article')).toContainText('GET /payments');
+  await expect(page.locator('article')).not.toContainText('GET /payment_status');
+
+  await page.goto(`/docs/${locale}lifecycle/completion/`);
+  await expect(page.locator('article')).toContainText('GET /payments/');
+  await expect(page.locator('article')).not.toContainText(locale ? 'the status API' : 'ステータス確認 API');
+  await expect(page.locator('article')).not.toContainText(locale ? 'has no amounts' : '金額がない');
+
+  await page.goto(`/docs/${locale}support/faq/`);
+  await expect(page.locator('article')).toContainText('GET /payments/');
+  await expect(page.locator('article')).not.toContainText(locale
+   ? 'does not return the amount'
+   : '金額・手数料を返しません');
+
+  await page.goto(`/docs/${locale}testing/scenarios/`);
+  const scenarios = page.locator('article');
+  await expect(scenarios).toContainText('GET /payments/');
+  await expect(scenarios).toContainText('auth/api_key_invalid');
+  await expect(scenarios).toContainText('common/not_found');
+  await expect(scenarios).not.toContainText(locale ? 'without an authentication header' : '認証ヘッダなし');
+  // 読者がその場で呼んで確かめる項目なので、配備前であることをこのページにも出す。
+  await expect(scenarios).toContainText(locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前');
+ });
 }

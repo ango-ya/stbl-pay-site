@@ -28,7 +28,11 @@ There is no test operation that moves a payment to any status you choose. Produc
 
 ## Looking up the status
 
-- [ ] When you call the status lookup API without an authentication header, only the [fields of the status lookup response](/reference/rest#retrieve-payment) are returned, and the amount is not included
+`GET /payments/:paymentIntentId` is not yet deployed to Sandbox (as of November 17, 2026). Until it is deployed, record the items in this section as unverified (see [Retrieve payment status](/server/retrieve-payment)).
+
+- [ ] When you call `GET /payments/:paymentIntentId` with the store API key in `x-stbl-api-key`, the [fields of the status lookup response](/reference/rest#retrieve-payment), including amounts, fees, and addresses, are returned
+- [ ] When you call without an API key, or with an invalid or revoked API key, the request is rejected with 401 `auth/api_key_invalid`
+- [ ] When you call with another store's payment ID or a nonexistent payment ID, both return the same 404 `common/not_found`
 
 ## Moving to the checkout page
 

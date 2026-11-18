@@ -37,7 +37,7 @@ sidebar_position: 1
 
 ## 金額は数値ですか
 
-API の金額は円建ての文字列です。Webhook の金額も文字列です。`payment.failed`・`payment.canceled`・`payment.expired` の通知では `fee_jpy` と `net_received_jpy` が `"0"` になります（[金額の扱い](/reference/webhook-events#金額の扱い)）。状態照会 API は金額・手数料を返しません。
+API の金額は円建ての文字列です。Webhook の金額も文字列です。`payment.failed`・`payment.canceled`・`payment.expired` の通知では `fee_jpy` と `net_received_jpy` が `"0"` になります（[金額の扱い](/reference/webhook-events#金額の扱い)）。加盟店サーバーからの[状態照会](/reference/rest#状態照会)（`GET /payments/:paymentIntentId`）も、`amountJpy`・`feeJpy`・`netAmountJpy` を文字列で返します。`settled` 以外では `feeJpy` と `netAmountJpy` は見積りで、非成立 Webhook の `"0"` とは異なります。
 
 ## 署名済みなら商品を提供できますか
 
