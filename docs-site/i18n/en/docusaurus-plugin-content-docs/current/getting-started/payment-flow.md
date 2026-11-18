@@ -28,7 +28,7 @@ sequenceDiagram
         Pay-->>Shop: Webhook (terminal result, if configured)
         Shop->>Shop: Verify signature, update order idempotently
         opt Webhook not configured, or not delivered
-            Shop->>Pay: Status lookup (GET /payments, API key)
+            Shop->>Pay: Status lookup (GET /payments/{paymentIntentId}, API key)
             Pay-->>Shop: Status such as settled
         end
     and Flow 2: Buyer returns (for display)
@@ -41,6 +41,8 @@ sequenceDiagram
         Shop-->>User: Show the result ("Checking" if unknown)
     end
 ```
+
+`GET /payments/:paymentIntentId` is not yet deployed to Sandbox (as of November 17, 2026). Until it is deployed, use the unauthenticated `GET /payment_status/:paymentIntentId` for the status lookup in the diagram (see [Retrieve payment status](/server/retrieve-payment)).
 
 ## Payment paths
 

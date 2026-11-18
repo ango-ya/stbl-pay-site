@@ -324,8 +324,11 @@ for (const locale of ['', 'en/']) {
  test(`merchant-server lookup guidance points at GET /payments (${locale || 'ja'})`, async ({page}) => {
   await page.goto(`/docs/${locale}getting-started/payment-flow/`);
   // シーケンス図（Mermaid の SVG）の中の文字列も article に含まれる。
-  await expect(page.locator('article')).toContainText('GET /payments');
-  await expect(page.locator('article')).not.toContainText('GET /payment_status');
+  await expect(page.locator('article')).toContainText('GET /payments/{paymentIntentId}');
+  // 図の中に旧い照会先を描かない。配備前の代わりの手段は、図の下の注記に出す。
+  await expect(page.locator('article svg').first()).not.toContainText('payment_status');
+  await expect(page.locator('article')).toContainText(locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前');
+  await expect(page.locator('article')).toContainText('/payment_status/');
 
   await page.goto(`/docs/${locale}lifecycle/completion/`);
   await expect(page.locator('article')).toContainText('GET /payments/');
