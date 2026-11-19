@@ -1,10 +1,10 @@
 // 検索エンジンと AI の検索・回答が読む部分（canonical・構造化データ・サイトマップ・robots・llms.txt）が崩れていないこと。
 // 本番の応答（ヘッダー・404・クローラーごとの状態）は scripts/seo-live-check.sh で見る。
 import { test, expect } from "@playwright/test";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
 const LPS = [
   { path: "/", url: "https://stbl-pay.com/", lang: "ja", og: "og-stblpay-generative-1200x630.png" },
@@ -201,24 +201,28 @@ test("404 以外のすべてのページが OGP を持ち、og:url は canonical
 test("英語版の仕様書のビューアに日本語の OGP が残ると、組み立てが止まる（属性の順序・引用符を変えても）", () => {
   const viewer = readFileSync(new URL("../../docs-site/static/openapi/index.html", import.meta.url), "utf8");
   const ogTitle = viewer.match(/^.*property="og:title".*$/m)[0];
+  // 組み立ての結果を { status, html, stderr } で返す（失敗の理由まで確かめるため、例外をまとめて成功扱いにしない）
   const build = (html) => {
     const dist = mkdtempSync(join(tmpdir(), "openapi-en-"));
-    mkdirSync(join(dist, "docs/en/openapi"), { recursive: true });
-    writeFileSync(join(dist, "docs/en/openapi/index.html"), html);
     try {
-      execFileSync("node", ["scripts/openapi-en.mjs", dist], { stdio: "pipe" });
-      return readFileSync(join(dist, "docs/en/openapi/index.html"), "utf8");
-    } catch {
-      return null;
+      mkdirSync(join(dist, "docs/en/openapi"), { recursive: true });
+      writeFileSync(join(dist, "docs/en/openapi/index.html"), html);
+      const r = spawnSync("node", ["scripts/openapi-en.mjs", dist], { encoding: "utf8" });
+      return { status: r.status, stderr: r.stderr, html: readFileSync(join(dist, "docs/en/openapi/index.html"), "utf8") };
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
     }
   };
   const ok = build(viewer);
-  expect(ok).toContain('property="og:locale" content="en_US"');
+  expect(ok.status, ok.stderr).toBe(0);
+  expect(ok.html).toContain('property="og:locale" content="en_US"');
   for (const variant of [
     `  <meta content="STBLpay API の仕様書" property="og:title">`,
     `  <meta property='og:title' content='STBLpay API の仕様書'>`,
   ]) {
-    expect(build(viewer.replace(ogTitle, variant)), variant).toBeNull();
+    const r = build(viewer.replace(ogTitle, variant));
+    expect(r.status, variant).toBe(1);
+    expect(r.stderr, variant).toContain("<head> に日本語が残っている");
   }
 });
 
