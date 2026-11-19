@@ -52,8 +52,8 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
   // LP の日英と解説（/learn/ と /en/learn/）とプレスキット（/press/ と /en/press/）と表現に関する方針（/policy/expression/）、プライバシーポリシーと開示等の請求の手続。中身は learn.spec.mjs と press.spec.mjs で見る
   const top = await locsOf("/sitemap.xml");
   expect(top.slice(0, 2)).toEqual(LPS.map((lp) => lp.url));
-  expect(top).toEqual(expect.arrayContaining(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/"]));
-  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/((en\/)?(learn\/([a-z-]+\/)?|press\/|policy\/expression\/)|privacy\/(requests\/)?)$/);
+  expect(top).toEqual(expect.arrayContaining(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/", "https://stbl-pay.com/terms/", "https://stbl-pay.com/terms/users/", "https://stbl-pay.com/terms/merchants/", "https://stbl-pay.com/company/"]));
+  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/((en\/)?(learn\/([a-z-]+\/)?|press\/|policy\/expression\/)|privacy\/(requests\/)?|terms\/((users|merchants)\/)?|company\/)$/);
   for (const loc of top) expect((await request.get(new URL(loc).pathname)).status(), loc).toBe(200);
   // lastmod は、そのページの JSON-LD の dateModified と同じ（dateModified の無いページは見ない）
   const xml = await (await request.get("/sitemap.xml")).text();
@@ -91,7 +91,25 @@ test("LP のフッターからプライバシーポリシーへ、その第11条
   await expect(page.locator('main a[href^="mailto:support.stbl-pay@ango-ya.org"]').first()).toBeVisible();
 });
 
-test("開示等の請求のページからポリシーの条へのリンクは実在の見出しを指し、どちらのページもスマートフォンの幅で横にはみ出さない", async ({ page }) => {
+test("LP のフッターから利用規約の入口へ、そこから 2 つの規約へ辿れ、運営会社のページに規約第43条第2項の表示事項がある", async ({ page }) => {
+  await page.goto("/");
+  await page.locator(".site-footer").getByRole("link", { name: "利用規約" }).click();
+  await expect(page).toHaveURL(/\/terms\/$/);
+  for (const [name, path] of [["個人ユーザー向け利用規約", "/terms/users/"], ["加盟店向け利用規約", "/terms/merchants/"]]) {
+    await page.goto("/terms/");
+    await page.locator("main").getByRole("link", { name }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://stbl-pay.com${path}`);
+    await expect(page.locator("h1")).toHaveText(name);
+  }
+  await page.locator(".site-footer").getByRole("link", { name: "合同会社暗号屋" }).click();
+  await expect(page).toHaveURL(/\/company\/$/);
+  for (const term of ["名称", "所在地", "代表者", "お問い合わせの窓口", "受付時間"]) await expect(page.locator("main dt", { hasText: term })).toHaveCount(1);
+  await expect(page.locator("main dt", { hasText: "所在地" }).locator("+ dd")).toHaveText("〒810-0041 福岡県福岡市中央区大名1-3-41 プリオ大名ビル2F");
+  await expect(page.locator('main dd a[href="mailto:support.stbl-pay@ango-ya.org"]')).toHaveCount(1);
+});
+
+test("開示等の請求のページからポリシーの条へのリンクは実在の見出しを指し、法務のページはどれもスマートフォンの幅で横にはみ出さない", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   const fits = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
   await page.goto("/privacy/requests/");
@@ -101,6 +119,10 @@ test("開示等の請求のページからポリシーの条へのリンクは�
   await page.goto("/privacy/");
   expect(await fits(), "/privacy/ の横幅（特則第2条の表と長い URL）").toBe(true);
   for (const id of ids) await expect(page.locator(`[id="${id}"]`), id).toHaveCount(1);
+  for (const path of ["/terms/", "/terms/users/", "/terms/merchants/", "/company/"]) {
+    await page.goto(path);
+    expect(await fits(), `${path} の横幅`).toBe(true);
+  }
 });
 
 test("デモ画面は noindex、404 ページがある", async ({ request }) => {
@@ -144,7 +166,7 @@ test("IndexNow は変わったページだけを送る（dist/ のサイトマ�
     execFileSync("node", ["scripts/indexnow.mjs", "--dry-run", ...args], { encoding: "utf8" }).trim().split("\n");
   expect(run("index.html", "README.md")).toEqual(["https://stbl-pay.com/"]);
   expect(run("en/index.html")).toEqual(["https://stbl-pay.com/en/"]);
-  expect(run("privacy/index.html", "privacy/requests/index.html")).toEqual(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/"]);
+  expect(run("privacy/index.html", "privacy/requests/index.html", "terms/users/index.html", "company/index.html")).toEqual(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/", "https://stbl-pay.com/terms/users/", "https://stbl-pay.com/company/"]);
   expect(run("README.md")).toEqual(["IndexNow: 送る URL なし"]);
   expect(run("learn/chargeback/index.html", "en/learn/stablecoin-payments-japan/index.html")).toEqual([
     "https://stbl-pay.com/learn/chargeback/",

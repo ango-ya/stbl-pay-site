@@ -163,7 +163,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 - **クローラー**：`robots.txt` は AI の学習用も含めて許可。Cloudflare の AI Crawl Control でブロックしていると 403 になるので、方針を変えるときは両方そろえる
 - **点検**：E2E の `tests/e2e/seo.spec.mjs` が上の形を守る。本番の応答（404・noindex・クローラーごとの可否）は、デプロイのあとに `./scripts/seo-live-check.sh` で見る
 - **Search Console**：URL プレフィックスのプロパティ `https://stbl-pay.com/`。所有権の確認は `index.html` の `google-site-verification` の meta（消すと確認が外れる）
-- **IndexNow（Bing など）**：`main` への push でデプロイしたあと、`scripts/indexnow.mjs` が変わったページ（LP 日英・解説・プレスキット・プライバシーポリシーと開示等の請求のページ・docs）の URL だけを送る。全件を送り直すときは `./scripts/build-dist.sh` のあと `node scripts/indexnow.mjs --all`。鍵はリポジトリ直下の `<鍵>.txt`（公開してよいもの。消すと送信が拒否される）
+- **IndexNow（Bing など）**：`main` への push でデプロイしたあと、`scripts/indexnow.mjs` が変わったページ（LP 日英・解説・プレスキット・法務のページ・docs）の URL だけを送る。全件を送り直すときは `./scripts/build-dist.sh` のあと `node scripts/indexnow.mjs --all`。鍵はリポジトリ直下の `<鍵>.txt`（公開してよいもの。消すと送信が拒否される）
 - **解説ページ `/learn/`**：名前を知らない人が調べる言葉（ステーブルコイン決済、加盟店審査、決済手数料、チャージバックなど）に答える静的 HTML。共通の見た目は `assets/learn.css`、英語は `/en/learn/`。足したら `sitemap.xml`・`llms.txt`・ハブ（`learn/index.html`）にも足す。形と書いてはいけないこと（禁止語・自社の料率・CSP）は `tests/e2e/learn.spec.mjs` が見る
 - **プレスキット `/press/`・`/en/press/`**：報道・パートナー向けの紹介文・ファクトシート・ロゴ・ブランドの色・名前の書き方。ロゴの素材は `assets/brand/`（SVG と横幅 2000px の透明 PNG、日英 × 黒白）、見た目は `assets/press.css`。紹介文や提供状況を変えたら LP・`llms.txt` とそろえる。形と書いてはいけないこと、素材の配信は `tests/e2e/press.spec.mjs` が見る
 - **`marketing/`**：検索と AI での認知の戦略（`seo-strategy.md`）と狙う言葉（`target-keywords.md`）。書くときの決まりもここ。配信はしない（`build-dist.sh` が dist/ から外す）
@@ -173,6 +173,8 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 - `privacy/index.html`（`/privacy/`）：プライバシーポリシー。弁護士の確認を経た最終版（2026-11-17 版の Word）を、文言を変えずに写したものです。LP（日本語）のフッターからリンクしています。改定するときは、Word の最終版から写し直し、文言が一致することを確かめます
 - `privacy/requests/index.html`（`/privacy/requests/`）：個人情報の開示等の請求の手続。ポリシー第11条が「当社ウェブサイト上に掲載するところによります」と指すページで、第11条の文言からリンクしています（Issue #22）
+- `terms/users/index.html`・`terms/merchants/index.html`（`/terms/users/`・`/terms/merchants/`）：個人ユーザー向けと加盟店向けの利用規約。弁護士の確認を経た版（2026-08-31 版の Word）を、文言を変えずに写したものです（Word のコメントは写していません）。例外は加盟店向け第39条第1項の「民法第547条の4」で、定型約款の変更の条の誤記なので「民法第548条の4」に直して載せています（Word の原本の訂正は法務に依頼）。入口は `terms/index.html`（`/terms/`）で、LP（日本語）のフッターからリンクしています
+- `company/index.html`（`/company/`）：運営会社。規約（両方とも第43条第2項）が「当社ウェブサイト上に表示します」とする名称・所在地・代表者・窓口・受付時間です。これらが変わっても規約の改定は要らず、このページを直します
 - どちらも、文面を直すときは法務の確認を取ります
 
 ## デプロイ
