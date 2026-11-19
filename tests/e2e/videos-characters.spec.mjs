@@ -349,6 +349,12 @@ test.describe("つかいかた動画（日本語LP）", () => {
     await expectEmbed(player, FAKE_ID["how-sp"], "ja");
     await expect(player).toHaveAttribute("title", /番外編.*すてぶるペイ まるごと解説/);
     await expect(page.locator("[data-video-next]")).toBeHidden();
+    // 動画の比較の数字の時点と Square の改定を、選んだ回の説明欄と一覧の下の注記で示し、/fees/ へつなぐ
+    await expect(page.locator("#videos .video-now-desc")).toContainText("動画の比較の数字は、2026年9月時点の目安です（Square の即時入金は、2026年12月17日から1.95%）");
+    const note = page.locator("#videos .video-foot", { hasText: "まるごと解説" });
+    await expect(note).toContainText("2026年9月に各社の公表情報や当社への請求例から確かめた目安");
+    await expect(note).toContainText("2026年12月17日から1.95%");
+    await expect(note.locator('a[href="/fees/"]')).toBeVisible();
   });
 
   test("各セクションの「動画で見る」から、その回を選べる", async ({ page }) => {
