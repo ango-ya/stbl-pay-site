@@ -15,15 +15,15 @@ import { join } from "node:path";
 //   実際の再生、YouTube 側のエラー（埋め込み不可など）は、公開前の手動確認（プレビューと iPhone の Safari）で見る
 // - 本番ヘッダ（CSP・Referrer-Policy）はローカルの静的サーバーが付けないので、「本番ヘッダ」の 2 本だけ、_headers の値を応答に付け直して動かす
 
-// 第1〜8回と番外編のパスキーのはなし（how-pk）
-const EPISODES = ["how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08", "how-pk"];
+// 第1〜8回と番外編のパスキーのはなし（how-pk）・まるごと解説（how-sp）
+const EPISODES = ["how-01", "how-02", "how-03", "how-04", "how-05", "how-06", "how-07", "how-08", "how-pk", "how-sp"];
 const ENGLISH_EPISODE = "how-08en";
 
 const YT_ORIGIN = "https://www.youtube-nocookie.com";
 const WATCH = "https://www.youtube.com/watch?v=";
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
-// テスト用の偽の ID（11 文字）。how-01 → test0000001、how-08 → test0000008、how-pk → test000000k、how-08en → test00008en
+// テスト用の偽の ID（11 文字）。how-01 → test0000001、how-08 → test0000008、how-pk → test000000k、how-sp → test000000p、how-08en → test00008en
 const FAKE_ID = {
   ...Object.fromEntries(EPISODES.map((id) => [id, `test000000${id.slice(-1)}`])),
   [ENGLISH_EPISODE]: "test00008en",
@@ -142,7 +142,7 @@ const preconnects = (page) =>
   );
 
 test.describe("つかいかた動画（日本語LP）", () => {
-  test("一覧に第1〜8回と番外編のパスキーのはなしが並び（予告・まるごと解説は出さない）、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
+  test("一覧に第1〜8回と番外編のパスキーのはなし・まるごと解説が並び（予告は出さない）、mp4 は使わず、ポスター・サムネイルはサイトから配信される", async ({
     page,
     request,
   }) => {
@@ -174,8 +174,7 @@ test.describe("つかいかた動画（日本語LP）", () => {
       .evaluateAll((els) => els.map((el) => el.getAttribute("src")));
     expect(thumbs).toEqual(EPISODES.map((id) => `assets/video/${id}-thumb.webp`));
 
-    // 番外編のまるごと解説（手数料 5% が LP の「検討中」と食い違う）は LP に出さない。予告も YouTube に上げていないので出さない
-    await expect(page.locator('#videos [href*="how-sp"], #videos [data-video="how-sp"], #videos [href*="EXfpLc6FXzw"]')).toHaveCount(0);
+    // 予告は YouTube に上げていないので出さない
     await expect(page.locator('#video-how-00, #videos [data-video="how-00"], #videos [src*="how-00"]')).toHaveCount(0);
   });
 
@@ -345,10 +344,10 @@ test.describe("つかいかた動画（日本語LP）", () => {
     await expect(player).toHaveAttribute("title", /第3回.*2回目からは、パスキーで/);
     await expect(page.locator("iframe")).toHaveCount(1);
 
-    // 最後の回（番外編のパスキーのはなし）では「次の回へ」を出さない
-    await page.locator('#videos .video-item[data-video="how-pk"]').click();
-    await expectEmbed(player, FAKE_ID["how-pk"], "ja");
-    await expect(player).toHaveAttribute("title", /番外編.*パスキーのはなし/);
+    // 最後の回（番外編のまるごと解説）では「次の回へ」を出さない
+    await page.locator('#videos .video-item[data-video="how-sp"]').click();
+    await expectEmbed(player, FAKE_ID["how-sp"], "ja");
+    await expect(player).toHaveAttribute("title", /番外編.*すてぶるペイ まるごと解説/);
     await expect(page.locator("[data-video-next]")).toBeHidden();
   });
 
@@ -427,6 +426,9 @@ test.describe("つかいかた動画（日本語LP）", () => {
     await page.keyboard.press("Enter");
     const player = page.locator(`#video-stage ${PLAYER}`);
     await expectEmbed(player, FAKE_ID["how-pk"], "ja");
+    await next.focus();
+    await page.keyboard.press("Enter");
+    await expectEmbed(player, FAKE_ID["how-sp"], "ja");
     await expect(next).toBeHidden();
     await expect(player).toBeFocused();
   });
