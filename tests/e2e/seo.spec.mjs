@@ -133,6 +133,10 @@ test("/fees/ は canonical・h1・3 つの節・出典 4 件を持ち、利用�
     await page.goto(path);
     await expect(page.locator('a[href="/fees/"]').first(), `${path} から /fees/ へのリンク`).toBeVisible();
   }
+  // LP の「まるごと解説」は、動画の比較の数字の時点と Square の改定を、選んだときの説明と一覧の下の注記で示し、/fees/ へつなぐ
+  await page.goto("/");
+  await expect(page.locator('#videos [data-video="how-sp"]')).toHaveAttribute("data-desc", /2026年9月時点.*2026年12月17日から1\.95%/);
+  await expect(page.locator('#videos .video-foot a[href="/fees/"]')).toBeVisible();
 });
 
 test("開示等の請求のページからポリシーの条へのリンクは実在の見出しを指し、法務のページはどれもスマートフォンの幅で横にはみ出さない", async ({ page }) => {

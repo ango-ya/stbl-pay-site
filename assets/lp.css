@@ -2693,7 +2693,8 @@ sup.fn a:hover {
 
 .legal .fees-guide-cta {
   margin-top: auto;
-  color: var(--link);
+  /* 薄い背景の上で 4.5:1 を満たす濃い青（--link は 4.37:1 で足りない） */
+  color: var(--accent-dark);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
