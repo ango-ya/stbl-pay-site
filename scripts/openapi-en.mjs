@@ -48,10 +48,11 @@ for (const [ja, en] of OGP_EN) {
   }
   html = html.replaceAll(ja, en);
 }
-// 置き換えの漏れ（static 側だけ文言を変えたときなど）で、英語版の OGP に日本語が残らないようにする
-const leftover = [...html.matchAll(/<meta (?:property|name)="((?:og|twitter):[^"]+)" content="([^"]*)"/g)].filter(([, , v]) => /[\u3040-\u30ff\u4e00-\u9fff]/.test(v));
+// 置き換えの漏れ（static 側だけ文言を変えたときなど）で英語版に日本語が残らないよう、<head> 全体（題と OGP）を見る。
+// 属性の順序や引用符の書き方に左右されないよう、タグを読まずに文字で確かめる
+const leftover = html.slice(0, html.indexOf("</head>")).split("\n").filter((line) => /[\u3040-\u30ff\u4e00-\u9fff]/.test(line));
 if (leftover.length) {
-  console.error(`openapi-en: ${viewer} の OGP に日本語が残っている：${leftover.map(([, k]) => k).join("、")}`);
+  console.error(`openapi-en: ${viewer} の <head> に日本語が残っている：\n${leftover.map((l) => `  ${l.trim()}`).join("\n")}`);
   process.exit(1);
 }
 writeFileSync(viewer, html);

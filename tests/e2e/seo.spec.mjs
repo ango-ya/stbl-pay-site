@@ -1,7 +1,9 @@
 // 検索エンジンと AI の検索・回答が読む部分（canonical・構造化データ・サイトマップ・robots・llms.txt）が崩れていないこと。
 // 本番の応答（ヘッダー・404・クローラーごとの状態）は scripts/seo-live-check.sh で見る。
 import { test, expect } from "@playwright/test";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 
 const LPS = [
@@ -179,6 +181,30 @@ test("404 以外のすべてのページが OGP を持ち、og:url は canonical
     if (/^(docs\/)?en\//.test(file)) {
       for (const [key, value] of Object.entries(meta)) expect(value, `${file} の ${key}`).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
     }
+  }
+});
+
+test("英語版の仕様書のビューアに日本語の OGP が残ると、組み立てが止まる（属性の順序・引用符を変えても）", () => {
+  const viewer = readFileSync(new URL("../../docs-site/static/openapi/index.html", import.meta.url), "utf8");
+  const ogTitle = viewer.match(/^.*property="og:title".*$/m)[0];
+  const build = (html) => {
+    const dist = mkdtempSync(join(tmpdir(), "openapi-en-"));
+    mkdirSync(join(dist, "docs/en/openapi"), { recursive: true });
+    writeFileSync(join(dist, "docs/en/openapi/index.html"), html);
+    try {
+      execFileSync("node", ["scripts/openapi-en.mjs", dist], { stdio: "pipe" });
+      return readFileSync(join(dist, "docs/en/openapi/index.html"), "utf8");
+    } catch {
+      return null;
+    }
+  };
+  const ok = build(viewer);
+  expect(ok).toContain('property="og:locale" content="en_US"');
+  for (const variant of [
+    `  <meta content="STBLpay API の仕様書" property="og:title">`,
+    `  <meta property='og:title' content='STBLpay API の仕様書'>`,
+  ]) {
+    expect(build(viewer.replace(ogTitle, variant)), variant).toBeNull();
   }
 });
 
