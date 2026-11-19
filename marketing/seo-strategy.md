@@ -32,6 +32,16 @@
 - 第三者の記事の「2026年8月に提供開始予定」「SDK を組み込むだけ」は、2026-07-10 の発表のころの説明。プレスキット・LP の FAQ・llms.txt に、日付つきで今の状況を書いた。
 - 週次点検のルーチン（trig_018nBcrRPGuh2wjZw4TZFKiJ）は、ユーザーの判断で 11/16 に止めた。
 
+### 2026-11-19 の点検（登録依頼の効果）
+
+- Google の表示回数は、11/15 まで 1 日 10〜20 回だった。依頼した 11/16 に 163 回、11/17 に 320 回へ増えた。データは 11/17 まで（Search Console は 2 日ほど遅れる）。
+- 直近 7 日（11/11〜17）：表示 569・クリック 8・平均掲載順位 7.7。表示のあったページは 41 で、解説と方針は全部入っている。
+  - 表示が多いのは、card-expression-restrictions 52、payment-reconciliation 50、en/japan-payment-methods 40、chargeback 39。
+  - 検索語は 92 で、ほとんどが名前以外の検索。チャージバック（泣き寝入り・いつまで）、カードの表現規制、審査なしのカード決済、high risk merchant account、銀行振込決済、japan payment methods、ステーブルコイン・JPYC などで、6〜15 位に出ている。
+- 生成 AI の機能（AI による概要など）での表示：11 月に 137 回、26 ページ。多いのは LP、en/japan-payment-methods、en/、reconciliation-automation、card-expression-restrictions。
+- 「ページ」の登録数（77）は 11/13 のデータのままで、まだ増えていない。表示があるので、解説はもう登録されていると見ている。
+- 本番の点検で新しい NG：11/19 に出した法務の 6 ページ（/privacy/、/privacy/requests/、/terms/、/terms/users/、/terms/merchants/、/company/）に og:image がない。
+
 ## 2. 誰に、どの言葉で届けるか
 
 調査の元データは `marketing/research/` に置いた（すべて 2026-11-05 に取得・確認）。
