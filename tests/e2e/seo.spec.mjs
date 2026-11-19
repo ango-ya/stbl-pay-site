@@ -154,22 +154,31 @@ for (const [path, og] of [
   });
 }
 
-test("404 以外のすべてのページが OGP を持ち、og:url は canonical と同じで、og:image は配る画像を指す", () => {
+test("404 以外のすべてのページが OGP を持ち、og:url は canonical と同じで、og:image は配る画像を指す。英語のページの OGP に日本語はない", async ({ page }) => {
   const dist = new URL("../../dist/", import.meta.url);
-  // Docusaurus の出力は属性の引用符を省くので、どちらも読む
-  const meta = (html, key) => {
-    const tag = html.match(new RegExp(`<meta[^>]*(?:property|name)="?${key}"?[\\s/>][^>]*>`));
-    return tag?.[0].match(/content=(?:"([^"]*)"|([^\s>]+))/)?.slice(1).find(Boolean);
-  };
-  const pages = readdirSync(dist, { recursive: true }).filter((f) => f.endsWith(".html") && !f.endsWith("404.html"));
-  expect(pages.length).toBeGreaterThan(100);
-  for (const f of pages) {
-    const html = readFileSync(new URL(f, dist), "utf8");
-    for (const key of ["og:title", "og:description", "og:image", "twitter:card"]) expect(meta(html, key), `${f} の ${key}`).toBeTruthy();
-    const canonical = html.match(/<link[^>]*rel="?canonical"?[^>]*href="?([^"\s>]+)/)?.[1];
-    if (canonical) expect(meta(html, "og:url"), `${f} の og:url`).toBe(canonical);
-    const img = new URL(meta(html, "og:image")).pathname.slice(1);
-    expect(existsSync(new URL(img, dist)), `${f} の og:image（${img}）`).toBe(true);
+  const files = readdirSync(dist, { recursive: true }).filter((f) => f.endsWith(".html") && !f.endsWith("404.html"));
+  expect(files.length).toBeGreaterThan(100);
+  // 属性の順序・引用符の有無・コメントの扱いを正規表現で真似ず、ブラウザの HTML パーサーで読む（スクリプトは動かない）
+  const heads = await page.evaluate(
+    (docs) =>
+      docs.map(([file, html]) => {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const meta = {};
+        for (const m of doc.querySelectorAll("meta[property^='og:'], meta[name^='twitter:']")) {
+          meta[m.getAttribute("property") ?? m.getAttribute("name")] ??= m.getAttribute("content");
+        }
+        return { file, meta, canonical: doc.querySelector("link[rel='canonical']")?.getAttribute("href") ?? null };
+      }),
+    files.map((f) => [f, readFileSync(new URL(f, dist), "utf8")]),
+  );
+  for (const { file, meta, canonical } of heads) {
+    for (const key of ["og:title", "og:description", "og:image", "twitter:card"]) expect(meta[key], `${file} の ${key}`).toBeTruthy();
+    if (canonical) expect(meta["og:url"], `${file} の og:url`).toBe(canonical);
+    const img = new URL(meta["og:image"]).pathname.slice(1);
+    expect(existsSync(new URL(img, dist)), `${file} の og:image（${img}）`).toBe(true);
+    if (/^(docs\/)?en\//.test(file)) {
+      for (const [key, value] of Object.entries(meta)) expect(value, `${file} の ${key}`).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+    }
   }
 });
 

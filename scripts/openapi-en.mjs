@@ -48,5 +48,11 @@ for (const [ja, en] of OGP_EN) {
   }
   html = html.replaceAll(ja, en);
 }
+// 置き換えの漏れ（static 側だけ文言を変えたときなど）で、英語版の OGP に日本語が残らないようにする
+const leftover = [...html.matchAll(/<meta (?:property|name)="((?:og|twitter):[^"]+)" content="([^"]*)"/g)].filter(([, , v]) => /[\u3040-\u30ff\u4e00-\u9fff]/.test(v));
+if (leftover.length) {
+  console.error(`openapi-en: ${viewer} の OGP に日本語が残っている：${leftover.map(([, k]) => k).join("、")}`);
+  process.exit(1);
+}
 writeFileSync(viewer, html);
 console.log("openapi-en: dist/docs/en/openapi/index.html の OGP を英語にした");
