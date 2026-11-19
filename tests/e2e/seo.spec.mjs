@@ -116,6 +116,12 @@ test("/fees/ は canonical・h1・3 つの節・出典 4 件を持ち、利用�
   for (const [id, heading] of [["rate", "決済手数料"], ["gas", "ガス代の負担の条件と上限"], ["why", "5%の考え方"]]) {
     await expect(page.locator(`h2[id="${id}"]`), id).toHaveText(heading);
   }
+  // 自社の料率を書く場所（料率の欄と description）の % は 5% だけ。他社の料率は「5%の考え方」の節にだけ出典つきで書く
+  const pcts = (t) => [...t.matchAll(/[0-9０-９][0-9０-９.]*\s*[%％]/g)].map((m) => m[0]);
+  for (const own of [pcts(await page.locator("h2#rate + dl").textContent()), pcts(await page.locator('meta[name="description"]').getAttribute("content"))]) {
+    expect(own.length).toBeGreaterThan(0);
+    expect(own.every((p) => p === "5%"), `自社の料率に 5% 以外がある: ${own}`).toBe(true);
+  }
   const sources = page.locator("li[id^='src-'] a[href^='https://']");
   await expect(sources).toHaveCount(4);
   for (const href of await sources.evaluateAll((as) => as.map((a) => a.getAttribute("href")))) expect(href).toMatch(/^https:\/\/[^/]+\//);

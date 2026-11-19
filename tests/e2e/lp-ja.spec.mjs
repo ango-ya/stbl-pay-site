@@ -156,10 +156,19 @@ test.describe("日本語LP 手数料文言ガード（料率は 5% だけ）", (
     // 「手数料」の近くに数字の % が来たら、その数字は 5 でなければ落とす。
     // 「数%〜」（03 の従来側）や 55%以上・84.5% は数字と「手数料」が離れているので当たらない
     // 改行やタグをまたいでも見逃さないよう、タグを空白に変え、空白・改行を 1 つにまとめてから調べる
-    const norm = (text) => text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-    const feeRate = /手数料[^。]{0,30}[0-9０-９][0-9０-９.]*\s*[%％]|[0-9０-９][0-9０-９.]*\s*[%％][^。]{0,15}手数料|料率[^。]{0,15}[0-9０-９][0-9０-９.]*\s*[%％]/g;
-    const ratesIn = (text) =>
-      [...norm(text).matchAll(feeRate)].flatMap((m) => [...m[0].matchAll(/([0-9０-９][0-9０-９.]*)\s*[%％]/g)].map((n) => n[1]));
+    // HTML コメント（head の AI_DISCOVERY_BLOCK など）の中身も調べるため、コメントの記号だけ先に外す
+    const norm = (text) => text.replace(/<!--|-->/g, " ").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+    // % の数字ごとに、同じ文の前 30 字に「手数料」、前 15 字に「料率」、後 15 字に「手数料」があるかを見る
+    const ratesIn = (text) => {
+      const t = norm(text);
+      return [...t.matchAll(/([0-9０-９][0-9０-９.]*)\s*[%％]/g)]
+        .filter((m) => {
+          const before = t.slice(Math.max(0, m.index - 30), m.index).split("。").pop();
+          const after = t.slice(m.index + m[0].length, m.index + m[0].length + 15).split("。")[0];
+          return /手数料/.test(before) || /料率/.test(before.slice(-15)) || /手数料/.test(after);
+        })
+        .map((m) => m[1]);
+    };
     const onlyFive = (text) => ratesIn(text).every((n) => n === "5");
     await page.goto("/");
     // 閉じた FAQ の答えも含めるため innerText ではなく textContent
@@ -182,6 +191,8 @@ test.describe("日本語LP 手数料文言ガード（料率は 5% だけ）", (
     expect(onlyFive("料率 1.5%")).toBe(false);
     expect(onlyFive("手数料\n決済額の15%")).toBe(false);
     expect(onlyFive("<th>手数料</th>\n<td>５％</td>")).toBe(false);
+    expect(onlyFive("5%の手数料（6%になる場合があります）")).toBe(false);
+    expect(onlyFive("<!-- merchant_value: 決済手数料は6%（全加盟店一律） -->")).toBe(false);
   });
 });
 

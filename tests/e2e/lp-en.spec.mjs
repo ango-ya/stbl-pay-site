@@ -172,10 +172,19 @@ test.describe("英語LP 手数料の料率は 5% だけ", () => {
     // fee / rate の近くに数字の % が来たら、その数字は 5 でなければ落とす
     // （マイナンバーカードの holding rate of 84.5% は手数料ではないので除く）
     // 改行やタグをまたいでも見逃さないよう、タグを空白に変え、空白・改行を 1 つにまとめてから調べる
-    const norm = (text) => text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-    const feeRate = /\bfees?\b[^.]{0,80}\d[\d.]*\s*%|\d[\d.]*\s*%[^.]{0,20}\bfees?\b|(?<!holding )\brate\b[^.]{0,20}\d[\d.]*\s*%/gi;
-    const ratesIn = (text) =>
-      [...norm(text).matchAll(feeRate)].flatMap((m) => [...m[0].matchAll(/(\d[\d.]*)\s*%/g)].map((n) => n[1]));
+    // HTML コメント（head の AI_DISCOVERY_BLOCK など）の中身も調べるため、コメントの記号だけ先に外す
+    const norm = (text) => text.replace(/<!--|-->/g, " ").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+    // % の数字ごとに、同じ文の前 80 字に fee、前 20 字に rate（holding rate を除く）、後 20 字に fee があるかを見る
+    const ratesIn = (text) => {
+      const t = norm(text);
+      return [...t.matchAll(/(\d[\d.]*)\s*%/g)]
+        .filter((m) => {
+          const before = t.slice(Math.max(0, m.index - 80), m.index).split(/\.\s/).pop();
+          const after = t.slice(m.index + m[0].length, m.index + m[0].length + 20).split(/\.(?:\s|$)/)[0];
+          return /\bfees?\b/i.test(before) || /(?<!holding )\brate\b/i.test(before.slice(-20)) || /\bfees?\b/i.test(after);
+        })
+        .map((m) => m[1]);
+    };
     const onlyFive = (text) => ratesIn(text).every((n) => n === "5");
     await page.goto("/en/");
     // 閉じた FAQ の答えも含めるため innerText ではなく textContent
@@ -195,6 +204,8 @@ test.describe("英語LP 手数料の料率は 5% だけ", () => {
     expect(onlyFive("Payment fee:\n15%.")).toBe(false);
     expect(onlyFive("<th>Fees</th>\n<td>7%</td>")).toBe(false);
     expect(onlyFive("a holding rate of 84.5%")).toBe(true);
+    expect(onlyFive("a 5% fee (it may become 6%)")).toBe(false);
+    expect(onlyFive("<!-- merchant_value: Payment fee: 6% of the payment amount -->")).toBe(false);
   });
 });
 
