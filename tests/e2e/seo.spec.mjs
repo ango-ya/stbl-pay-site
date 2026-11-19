@@ -127,6 +127,20 @@ test("開示等の請求のページからポリシーの条へのリンクは�
   }
 });
 
+// Cloudflare のメール難読化は、ページの CSP（Trusted Types）で復号の script が動かず「[email protected]」と出る。メールは email_off で囲む
+test("ページのメールアドレスは email_off で囲み、Cloudflare に書き換えさせない", () => {
+  const files = execFileSync("git", ["ls-files", "*.html"], { encoding: "utf8" })
+    .split("\n")
+    .filter((f) => f && !/^(docs-site|marketing|tests)\//.test(f));
+  expect(files).toContain("privacy/requests/index.html");
+  for (const f of files) {
+    const rest = readFileSync(f, "utf8")
+      .replace(/<!--email_off-->[\s\S]*?<!--\/email_off-->/g, "")
+      .replace(/\splaceholder="[^"]*"/g, "");
+    expect(rest.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g), f).toBeNull();
+  }
+});
+
 test("デモ画面は noindex、404 ページがある", async ({ request }) => {
   const headers = readFileSync(new URL("../../_headers", import.meta.url), "utf8");
   for (const path of ["/demo", "/demo/*", "/pay", "/jpyc-ex"]) {
