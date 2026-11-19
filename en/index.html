@@ -56,7 +56,7 @@
       category: JPY stablecoin payments (under development)
       primary_audience: Sole proprietors (creators selling digital works, freelance hairdressers and nail artists, and others), online shops that cannot easily adopt card payments, overseas online shops that want a payment method for Japan
       buyer_value: Payments are approved with a passkey (Face/fingerprint). When your JPYC balance is enough, no transfer is needed. When it is not, decide the amount to issue (¥3,000 to ¥1,000,000 per issuance) and make a bank transfer in Japanese yen; the remainder stays as a balance for your next payment. That range applies to each issuance; payments themselves can be under ¥3,000 or over ¥1,000,000. From transfer to reflection takes about 5 to 10 minutes as a guide. At a shop's register, scan a QR code and pay from your balance. No fees added to the buyer.
-      merchant_value: No reliance on card companies' credit screening. No up-front KYB or KYC (open a merchant account on the web by yourself). Payment fees under consideration (a single flat rate for all merchants is planned, finalized at launch). Funds arrive in JPYC the moment the payment is made. Each payment arrives tied to an order, so the merchant does not match bank deposit records (payer name and amount) against orders; wiring the payment notification into the order, bookkeeping, and refunds remain the merchant's work. Withdrawal to Japanese yen is done from the merchant's own JPYC EX account.
+      merchant_value: No reliance on card companies' credit screening. No up-front KYB or KYC (open a merchant account on the web by yourself). Payment fee: 5% of the payment amount (a single flat rate for all merchants, paid by the merchant; nothing added for buyers; no initial or monthly fees). Funds arrive in JPYC the moment the payment is made. Each payment arrives tied to an order, so the merchant does not match bank deposit records (payer name and amount) against orders; wiring the payment notification into the order, bookkeeping, and refunds remain the merchant's work. Withdrawal to Japanese yen is done from the merchant's own JPYC EX account.
       implementation: Your site does three things: place a button, guide customers to the payment screen, and receive the result. The merchant documentation (https://stbl-pay.com/docs/en/) and the API specification (OpenAPI 3.1, https://stbl-pay.com/docs/en/openapi.yaml) are published, and an AI coding agent can read them to help you integrate. A Sandbox for trying the integration is also available (as of November 2026). A plugin for WordPress (WooCommerce) is in preparation. You can also start with QR codes alone.
       compliance_note: Requires agreement to the terms of use and the requirements of external services such as JPYC EX. Non-custodial design (the provider holds no funds or private keys).
     -->
@@ -95,7 +95,7 @@
       "isPartOf": { "@id": "https://stbl-pay.com/#website" },
       "about": { "@id": "https://stbl-pay.com/#service" },
       "primaryImageOfPage": "https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png",
-      "dateModified": "2026-11-16"
+      "dateModified": "2026-11-19"
     },
     {
       "@type": "Service",
@@ -126,7 +126,7 @@
       "offers": {
         "@type": "Offer",
         "priceCurrency": "JPY",
-        "description": "Payment fees and initial costs are under consideration (a single flat rate for all merchants is planned). Official terms will be finalized at launch."
+        "description": "Payment fee: 5% of the payment amount (a single flat rate for all merchants; nothing added for buyers). No initial or monthly fees. Details (in Japanese): https://stbl-pay.com/fees/"
       }
     },
     {
@@ -138,7 +138,7 @@
           "name": "How much are the initial costs and fees?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Rates are under consideration; we plan a single flat rate for all merchants (no individual discounts). Nothing extra is charged to the buyer. Official pricing will be announced at launch."
+            "text": "The payment fee is 5% of the payment amount, the same for all merchants (no individual discounts). There are no initial or monthly fees, and nothing is added for buyers. What the fee covers and how we arrived at 5% are on our fee page (in Japanese)."
           }
         },
         {
@@ -315,7 +315,7 @@
           </div>
           <p class="hero-note">
             STBLpay is a payment service where buyers pay by Japanese-yen bank transfer with a passkey, and merchants receive their sales in JPYC, a Japanese-yen stablecoin.
-            Fees are under consideration; a single flat rate for all merchants is planned<sup class="fn"><a href="#fn-1" id="fnref-h1">*1</a></sup>. STBLpay is under development<sup class="fn"><a href="#fn-2" id="fnref-h2">*2</a></sup>.
+            Fee: <a class="text-link" href="/fees/" hreflang="ja">5%</a> (a single flat rate for all merchants)<sup class="fn"><a href="#fn-1" id="fnref-h1">*1</a></sup>. STBLpay is under development<sup class="fn"><a href="#fn-2" id="fnref-h2">*2</a></sup>.
             Subject to agreement to the terms of use and the requirements of external services such as JPYC EX.
           </p>
         </div>
@@ -514,7 +514,7 @@
                 <tr>
                   <th scope="row">Fees</th>
                   <td>From a few percent (varies by industry)</td>
-                  <td class="col-self">Under consideration (one flat rate for all merchants; nothing added to buyers)<sup class="fn"><a href="#fn-1" id="fnref-t1">*1</a></sup></td>
+                  <td class="col-self"><a class="text-link" href="/fees/" hreflang="ja">5%</a> (one flat rate for all merchants; nothing added to buyers)<sup class="fn"><a href="#fn-1" id="fnref-t1">*1</a></sup></td>
                 </tr>
               </tbody>
             </table>
@@ -544,7 +544,7 @@
           <div class="faq-list">
             <details>
               <summary>How much are the initial costs and fees?</summary>
-              <p>Rates are under consideration; we plan a single flat rate for all merchants (no individual discounts). Nothing extra is charged to the buyer. Official pricing will be announced at launch.<sup class="fn"><a href="#fn-1" id="fnref-q0">*1</a></sup></p>
+              <p>The payment fee is 5% of the payment amount, the same for all merchants (no individual discounts). There are no initial or monthly fees, and nothing is added for buyers. What the fee covers and how we arrived at 5% are on our <a class="text-link" href="/fees/" hreflang="ja">fee page (in Japanese)</a>.<sup class="fn"><a href="#fn-1" id="fnref-q0">*1</a></sup></p>
             </details>
             <details>
               <summary>When can we start using it?</summary>
@@ -689,7 +689,7 @@
         <div class="shell">
           <h2 id="footnotes-title">Notes</h2>
           <ol class="footnote-list">
-            <li id="fn-1">Payment fees and initial costs are under consideration. We plan a single flat rate for all merchants (no individual discounts) and do not intend to add anything on the buyer's side. Official terms will be finalized at launch.</li>
+            <li id="fn-1">The payment fee is 5% of the payment amount, the same for all merchants (no individual discounts). There are no initial or monthly fees, and nothing is added for buyers. We will give 90 days' notice before raising the rate. For details, see our <a class="text-link" href="/fees/" hreflang="ja">fee page (in Japanese)</a>.</li>
             <li id="fn-2">STBLpay is under development. Screens, features, and conditions may change depending on the status of checks on integration with external services and the scope of implementation. "One day for a standard integration" is a target.</li>
             <li id="fn-3">Statistics sources: SB Payment Service, survey on payment methods (FY2024; based on the original wording "55% or more") / Japan Multi-Payment Network Promotion Council publications (April 2026; Pay-easy FY2025 results, including taxes and other public-sector payments) / Ministry of Internal Affairs and Communications, "Information and Communications in Japan" (Communications Usage Trend Survey; payment methods for online purchases, multiple answers) / JCB, "Comprehensive Survey on Cashless Payments" (FY2025) and a Cross Marketing survey (2026).</li>
             <li id="fn-4">Rates of other companies and payment methods are reference values based on their public materials. They vary by industry and contract and are subject to change. Check each company's official information for the latest terms.</li>

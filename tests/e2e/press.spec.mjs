@@ -1,7 +1,7 @@
 // プレスキット（/press/ と /en/press/）が、検索と AI に読まれる形を保ち、配る素材がそのまま使え、書いてはいけないことを書いていないこと。
 // 本番ヘッダ（CSP）はローカルの静的サーバーが付けないので、_headers の値を付け直して見る（learn.spec.mjs と同じ）。
 import { test, expect } from "@playwright/test";
-import { BANNED, BANNED_EN, TEXTS, rateViolations, launchDateClaims, CSP } from "./text-rules.mjs";
+import { BANNED, BANNED_EN, TEXTS, sentences, rateViolations, launchDateClaims, CSP } from "./text-rules.mjs";
 
 const ORIGIN = "https://stbl-pay.com";
 const PAGES = [
@@ -80,9 +80,19 @@ for (const { path, lang, title } of PAGES) {
       for (const term of BANNED) expect(text, `「${term}」がある`).not.toContain(term);
       expect(text).not.toMatch(BANNED_EN);
     }
-    // 自社の料率と提供開始日を書かない。プレスキットには他社の % も載せないので、許可リストは空
+    // 自社の料率は 5% だけ（2026-11-19 運営者の決定）。提供開始日は書かない。プレスキットには他社の % も載せない。
+    // 許可リストは、5% を書く文の、% の直前の言い回しだけ（数値は 5% に固定。ほかの数字は今までどおり違反）
     const texts = await page.evaluate(TEXTS);
-    expect(rateViolations(texts, []), "% を書いている").toEqual([]);
+    const FEE_5 = lang === "ja"
+      ? ["手数料は", "手数料の書き方「"].map((prefix) => ({ prefix, value: "5%" }))
+      : ["The fee is ", 'How to describe feesPlease write "'].map((prefix) => ({ prefix, value: "5%" }));
+    expect(rateViolations(texts, FEE_5), "5% 以外の % を書いている").toEqual([]);
+    // 許可リストは「% の直前」しか見ないので、5% を書く文が決めた言い回しで始まることも確かめる（「他社の手数料は5%」などを通さない）
+    for (const s of sentences(texts).filter((x) => /5\s*%/.test(x))) {
+      expect(FEE_5.some((a) => s.startsWith(a.prefix + "5%")), `5% を書いてよい文ではない: ${s}`).toBe(true);
+    }
+    expect(bodyText, "手数料は 5% と書く").toContain("5%");
+    await expect(page.locator('main a[href="/fees/"]')).toHaveCount(1);
     expect(launchDateClaims(texts), "自社名と開始の語が同じ文にある（提供開始日は書かない）").toEqual([]);
 
     // ページ内の参照は、行き先がある

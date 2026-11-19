@@ -52,8 +52,8 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
   // LP の日英と解説（/learn/ と /en/learn/）とプレスキット（/press/ と /en/press/）と表現に関する方針（/policy/expression/）、プライバシーポリシーと開示等の請求の手続。中身は learn.spec.mjs と press.spec.mjs で見る
   const top = await locsOf("/sitemap.xml");
   expect(top.slice(0, 2)).toEqual(LPS.map((lp) => lp.url));
-  expect(top).toEqual(expect.arrayContaining(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/", "https://stbl-pay.com/terms/", "https://stbl-pay.com/terms/users/", "https://stbl-pay.com/terms/merchants/", "https://stbl-pay.com/company/"]));
-  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/((en\/)?(learn\/([a-z-]+\/)?|press\/|policy\/expression\/)|privacy\/(requests\/)?|terms\/((users|merchants)\/)?|company\/)$/);
+  expect(top).toEqual(expect.arrayContaining(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/", "https://stbl-pay.com/terms/", "https://stbl-pay.com/terms/users/", "https://stbl-pay.com/terms/merchants/", "https://stbl-pay.com/company/", "https://stbl-pay.com/fees/"]));
+  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/((en\/)?(learn\/([a-z-]+\/)?|press\/|policy\/expression\/)|privacy\/(requests\/)?|terms\/((users|merchants)\/)?|company\/|fees\/)$/);
   for (const loc of top) expect((await request.get(new URL(loc).pathname)).status(), loc).toBe(200);
   // lastmod は、そのページの JSON-LD の dateModified と同じ（dateModified の無いページは見ない）
   const xml = await (await request.get("/sitemap.xml")).text();
@@ -109,6 +109,36 @@ test("LP のフッターから利用規約の入口へ、そこから 2 つの�
   await expect(page.locator('main dd a[href="mailto:support.stbl-pay@ango-ya.org"]')).toHaveCount(1);
 });
 
+test("/fees/ は canonical・h1・3 つの節・出典 4 件を持ち、利用規約の入口と解説の一覧からリンクされている", async ({ page }) => {
+  await page.goto("/fees/");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://stbl-pay.com/fees/");
+  await expect(page.locator("h1")).toHaveText("すてぶるペイの手数料");
+  const guide = page.locator("a.fees-guide");
+  await expect(guide).toBeVisible();
+  await expect(guide).toHaveAttribute("href", "/learn/payment-fees/");
+  await expect(guide.locator("img")).toHaveAttribute("src", "/assets/learn/payment-fees/thumb.webp");
+  for (const [id, heading] of [["rate", "決済手数料"], ["gas", "ガス代の負担の条件と上限"], ["why", "5%の考え方"]]) {
+    await expect(page.locator(`h2[id="${id}"]`), id).toHaveText(heading);
+  }
+  // 自社の料率を書く場所（料率の欄と description）の % は 5% だけ。他社の料率は「5%の考え方」の節にだけ出典つきで書く
+  const pcts = (t) => [...t.matchAll(/[0-9０-９][0-9０-９.]*\s*[%％]/g)].map((m) => m[0]);
+  for (const own of [pcts(await page.locator("h2#rate + dl").textContent()), pcts(await page.locator('meta[name="description"]').getAttribute("content"))]) {
+    expect(own.length).toBeGreaterThan(0);
+    expect(own.every((p) => p === "5%"), `自社の料率に 5% 以外がある: ${own}`).toBe(true);
+  }
+  const sources = page.locator("li[id^='src-'] a[href^='https://']");
+  await expect(sources).toHaveCount(4);
+  for (const href of await sources.evaluateAll((as) => as.map((a) => a.getAttribute("href")))) expect(href).toMatch(/^https:\/\/[^/]+\//);
+  for (const path of ["/terms/", "/learn/"]) {
+    await page.goto(path);
+    await expect(page.locator('a[href="/fees/"]').first(), `${path} から /fees/ へのリンク`).toBeVisible();
+  }
+  // LP の「まるごと解説」は、動画の比較の数字の時点と Square の改定を、選んだときの説明と一覧の下の注記で示し、/fees/ へつなぐ
+  await page.goto("/");
+  await expect(page.locator('#videos [data-video="how-sp"]')).toHaveAttribute("data-desc", /2026年9月時点.*2026年12月17日から1\.95%/);
+  await expect(page.locator('#videos .video-foot a[href="/fees/"]')).toBeVisible();
+});
+
 test("開示等の請求のページからポリシーの条へのリンクは実在の見出しを指し、法務のページはどれもスマートフォンの幅で横にはみ出さない", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   const fits = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
@@ -119,7 +149,7 @@ test("開示等の請求のページからポリシーの条へのリンクは�
   await page.goto("/privacy/");
   expect(await fits(), "/privacy/ の横幅（特則第2条の表と長い URL）").toBe(true);
   for (const id of ids) await expect(page.locator(`[id="${id}"]`), id).toHaveCount(1);
-  for (const path of ["/terms/", "/terms/users/", "/terms/merchants/", "/company/"]) {
+  for (const path of ["/terms/", "/terms/users/", "/terms/merchants/", "/company/", "/fees/"]) {
     await page.goto(path);
     expect(await fits(), `${path} の横幅`).toBe(true);
   }
@@ -180,7 +210,7 @@ test("IndexNow は変わったページだけを送る（dist/ のサイトマ�
     execFileSync("node", ["scripts/indexnow.mjs", "--dry-run", ...args], { encoding: "utf8" }).trim().split("\n");
   expect(run("index.html", "README.md")).toEqual(["https://stbl-pay.com/"]);
   expect(run("en/index.html")).toEqual(["https://stbl-pay.com/en/"]);
-  expect(run("privacy/index.html", "privacy/requests/index.html", "terms/users/index.html", "company/index.html")).toEqual(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/", "https://stbl-pay.com/terms/users/", "https://stbl-pay.com/company/"]);
+  expect(run("privacy/index.html", "privacy/requests/index.html", "terms/users/index.html", "company/index.html", "fees/index.html")).toEqual(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/", "https://stbl-pay.com/terms/users/", "https://stbl-pay.com/company/", "https://stbl-pay.com/fees/"]);
   expect(run("README.md")).toEqual(["IndexNow: 送る URL なし"]);
   expect(run("learn/chargeback/index.html", "en/learn/stablecoin-payments-japan/index.html")).toEqual([
     "https://stbl-pay.com/learn/chargeback/",
