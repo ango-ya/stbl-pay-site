@@ -113,6 +113,10 @@ test("/fees/ は canonical・h1・3 つの節・出典 4 件を持ち、利用�
   await page.goto("/fees/");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://stbl-pay.com/fees/");
   await expect(page.locator("h1")).toHaveText("すてぶるペイの手数料");
+  const guide = page.locator("a.fees-guide");
+  await expect(guide).toBeVisible();
+  await expect(guide).toHaveAttribute("href", "/learn/payment-fees/");
+  await expect(guide.locator("img")).toHaveAttribute("src", "/assets/learn/payment-fees/thumb.webp");
   for (const [id, heading] of [["rate", "決済手数料"], ["gas", "ガス代の負担の条件と上限"], ["why", "5%の考え方"]]) {
     await expect(page.locator(`h2[id="${id}"]`), id).toHaveText(heading);
   }
