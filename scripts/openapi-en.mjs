@@ -29,3 +29,24 @@ if (errors.length) {
 
 writeFileSync(join(dist, "docs/en/openapi.yaml"), enText);
 console.log("openapi-en: dist/docs/en/openapi.yaml を英語版に差し替えた");
+
+// 仕様書のビューア（static/openapi/index.html）も日英で同じものが写るので、英語版の OGP をここで英語にする
+const viewer = join(dist, "docs/en/openapi/index.html");
+const OGP_EN = [
+  ['content="ja_JP"', 'content="en_US"'],
+  ['content="すてぶるペイ / STBLpay"', 'content="STBLpay"'],
+  ["STBLpay API（OpenAPI）", "STBLpay API (OpenAPI)"],
+  ["STBLpay API の仕様書（OpenAPI 3.1）です。プログラムや AI エージェントは、本体の openapi.yaml を読めます。", "STBLpay API specification (OpenAPI 3.1). Programs and AI agents can read the source openapi.yaml."],
+  ["og-stblpay-generative-1200x630.png?v=2", "og-stblpay-generative-en-1200x630.png"],
+  ["すてぶるペイ — 円を使って、ステーブルで払う。", "STBLpay — Pay in yen. Settle in stablecoin."],
+];
+let html = readFileSync(viewer, "utf8");
+for (const [ja, en] of OGP_EN) {
+  if (!html.includes(ja)) {
+    console.error(`openapi-en: ${viewer} に「${ja}」が無い（static/openapi/index.html の OGP と合わせる）`);
+    process.exit(1);
+  }
+  html = html.replaceAll(ja, en);
+}
+writeFileSync(viewer, html);
+console.log("openapi-en: dist/docs/en/openapi/index.html の OGP を英語にした");

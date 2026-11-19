@@ -1,7 +1,7 @@
 // 検索エンジンと AI の検索・回答が読む部分（canonical・構造化データ・サイトマップ・robots・llms.txt）が崩れていないこと。
 // 本番の応答（ヘッダー・404・クローラーごとの状態）は scripts/seo-live-check.sh で見る。
 import { test, expect } from "@playwright/test";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const LPS = [
@@ -153,6 +153,25 @@ for (const [path, og] of [
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", og);
   });
 }
+
+test("404 以外のすべてのページが OGP を持ち、og:url は canonical と同じで、og:image は配る画像を指す", () => {
+  const dist = new URL("../../dist/", import.meta.url);
+  // Docusaurus の出力は属性の引用符を省くので、どちらも読む
+  const meta = (html, key) => {
+    const tag = html.match(new RegExp(`<meta[^>]*(?:property|name)="?${key}"?[\\s/>][^>]*>`));
+    return tag?.[0].match(/content=(?:"([^"]*)"|([^\s>]+))/)?.slice(1).find(Boolean);
+  };
+  const pages = readdirSync(dist, { recursive: true }).filter((f) => f.endsWith(".html") && !f.endsWith("404.html"));
+  expect(pages.length).toBeGreaterThan(100);
+  for (const f of pages) {
+    const html = readFileSync(new URL(f, dist), "utf8");
+    for (const key of ["og:title", "og:description", "og:image", "twitter:card"]) expect(meta(html, key), `${f} の ${key}`).toBeTruthy();
+    const canonical = html.match(/<link[^>]*rel="?canonical"?[^>]*href="?([^"\s>]+)/)?.[1];
+    if (canonical) expect(meta(html, "og:url"), `${f} の og:url`).toBe(canonical);
+    const img = new URL(meta(html, "og:image")).pathname.slice(1);
+    expect(existsSync(new URL(img, dist)), `${f} の og:image（${img}）`).toBe(true);
+  }
+});
 
 test("IndexNow の鍵ファイルが、スクリプトの鍵と同じ中身で配信される", async ({ request }) => {
   const key = readFileSync(new URL("../../scripts/indexnow.mjs", import.meta.url), "utf8").match(/const KEY = "([0-9a-f]+)"/)[1];
