@@ -84,7 +84,8 @@ test.describe("英語LP", () => {
     const service = graph.find((n) => n["@type"] === "Service");
     expect(service.audience).toHaveLength(3);
     expect(service.offers.priceCurrency).toBe("JPY");
-    expect(service.offers.description).toContain("under consideration");
+    expect(service.offers.description).toContain("5%");
+    expect(service.offers.description).not.toContain("under consideration");
   });
 
   test("ヒーローとティッカーが「開発中」を示し、提供開始の時期を書かない", async ({ page }) => {
@@ -147,28 +148,53 @@ test.describe("英語LP", () => {
   });
 });
 
-test.describe("英語LP 手数料の料率を出さない", () => {
-  test("手数料の料率（5% など）を、表示と HTML ソースのどこにも出さない", async ({ page, request }) => {
-    // 料率は検討中（2026-10-16 ユーザー決定：5% は出さない）。fee / rate の近くに数字の % が来たら落とす
+test.describe("英語LP 手数料の料率は 5% だけ", () => {
+  test("ヒーロー・比較表・FAQ に 5% があり /fees/ へ（日本語と明示して）リンクし、under consideration は残らない", async ({ page, request }) => {
+    await page.goto("/en/");
+    await expect(page.locator(".hero-note")).toContainText("5%");
+    await expect(page.locator(".hero-note a[href='/fees/'][hreflang='ja']")).toHaveCount(1);
+    await expect(page.locator("#comparison")).toContainText("5%");
+    await expect(page.locator("#comparison a[href='/fees/'][hreflang='ja']")).toHaveCount(1);
+    await expect(page.locator("#faq")).toContainText("5% of the payment amount");
+    await expect(page.locator("#faq a[href='/fees/'][hreflang='ja']")).toHaveCount(1);
+    await expect(page.locator("#faq a[href='/fees/']")).toContainText("(in Japanese)");
+    await expect(page.locator(".footnotes a[href='/fees/'][hreflang='ja']")).toHaveCount(1);
+    const text = await page.locator("body").textContent();
+    // プライバシー機能の「timing and method are under consideration」は手数料ではないので、fee / rate を含む文だけ見る
+    const feeUndecided = /\b(fees?|rates?)\b[^.]{0,60}under consideration|under consideration[^.]{0,60}\b(fees?|rates?)\b|flat rate for all merchants is planned/i;
+    expect(text).not.toMatch(feeUndecided);
+    const html = await (await request.get("/en/")).text();
+    expect(html).not.toMatch(feeUndecided);
+  });
+
+  test("自社の手数料の料率は 5% だけで、ほかの料率を表示と HTML ソースのどこにも出さない", async ({ page, request }) => {
+    // 2026-11-19 運営者の決定（2026-10-16 の「5% を出さない」を置き換え）。間違った料率を出さない意図は変えない：
+    // fee / rate の近くに数字の % が来たら、その数字は 5 でなければ落とす
     // （マイナンバーカードの holding rate of 84.5% は手数料ではないので除く）
     // 改行やタグをまたいでも見逃さないよう、タグを空白に変え、空白・改行を 1 つにまとめてから調べる
     const norm = (text) => text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-    const feeRate = /\bfees?\b[^.]{0,80}\d[\d.]*\s*%|\d[\d.]*\s*%[^.]{0,20}\bfees?\b|(?<!holding )\brate\b[^.]{0,20}\d[\d.]*\s*%/i;
+    const feeRate = /\bfees?\b[^.]{0,80}\d[\d.]*\s*%|\d[\d.]*\s*%[^.]{0,20}\bfees?\b|(?<!holding )\brate\b[^.]{0,20}\d[\d.]*\s*%/gi;
+    const ratesIn = (text) =>
+      [...norm(text).matchAll(feeRate)].flatMap((m) => [...m[0].matchAll(/(\d[\d.]*)\s*%/g)].map((n) => n[1]));
+    const onlyFive = (text) => ratesIn(text).every((n) => n === "5");
     await page.goto("/en/");
     // 閉じた FAQ の答えも含めるため innerText ではなく textContent
     const body = await page.locator("body").textContent();
-    expect(feeRate.test(norm(body)), "英語ページの表示に手数料の料率がある").toBe(false);
-    // 比較表の手数料の行（すてぶるペイ側）には、数字の % を置かない
+    expect(ratesIn(body).length, "英語ページの表示に 5% の手数料がある").toBeGreaterThan(0);
+    expect(onlyFive(body), `英語ページの表示に 5% 以外の手数料の料率がある: ${ratesIn(body)}`).toBe(true);
+    // 比較表の手数料の行（STBLpay 側）の数字の % は 5% だけ
     const selfFee = await page.locator("#comparison tr", { has: page.locator('th:text-is("Fees")') }).locator("td.col-self").textContent();
-    expect(/\d[\d.]*\s*%/.test(selfFee), "比較表の手数料（STBLpay 側）に料率がある").toBe(false);
+    expect([...selfFee.matchAll(/\d[\d.]*\s*%/g)].map((m) => m[0])).toEqual(["5%"]);
     const html = await (await request.get("/en/")).text();
-    expect(feeRate.test(norm(html)), "英語ページの HTML ソースに手数料の料率がある").toBe(false);
-    // 検査が効くこと（改行やタグで分かれていても当たる）
-    expect(feeRate.test(norm("The payment fee is 5%."))).toBe(true);
-    expect(feeRate.test(norm("a flat rate of 1.5%"))).toBe(true);
-    expect(feeRate.test(norm("Payment fee:\n5%."))).toBe(true);
-    expect(feeRate.test(norm("<th>Fees</th>\n<td>5%</td>"))).toBe(true);
-    expect(feeRate.test(norm("a holding rate of 84.5%"))).toBe(false);
+    expect(onlyFive(html), "英語ページの HTML ソースに 5% 以外の手数料の料率がある").toBe(true);
+    expect(ratesIn(html).length, "英語ページの HTML ソースに 5% の手数料がある").toBeGreaterThan(0);
+    // 検査が効くこと（5% 以外の料率を足した文は、改行やタグで分かれていても当たる）
+    expect(onlyFive("The payment fee is 5%.")).toBe(true);
+    expect(onlyFive("The payment fee is 6%.")).toBe(false);
+    expect(onlyFive("a flat rate of 1.5%")).toBe(false);
+    expect(onlyFive("Payment fee:\n15%.")).toBe(false);
+    expect(onlyFive("<th>Fees</th>\n<td>7%</td>")).toBe(false);
+    expect(onlyFive("a holding rate of 84.5%")).toBe(true);
   });
 });
 

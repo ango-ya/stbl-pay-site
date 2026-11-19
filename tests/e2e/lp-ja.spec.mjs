@@ -111,14 +111,16 @@ test.describe("日本語LP Google Analytics", () => {
 
 // ─── 手数料文言ガード ────────────────────────────────────────────────────────
 
-test.describe("日本語LP 手数料文言ガード（料率は検討中）", () => {
-  test("確定料率・導入費用0円ではなく「検討中」と表示される", async ({
+test.describe("日本語LP 手数料文言ガード（料率は 5% だけ）", () => {
+  test("ヒーロー・比較表・FAQ に 5% があり /fees/ へリンクし、「検討中」は手数料について残らない", async ({
     page,
   }) => {
     await page.goto("/");
 
-    // 手数料は「検討中（全加盟店一律の固定料率を予定）」— 確定料率・導入費用0円は表示しない
-    await expect(page.locator(".hero-note")).toContainText("検討中");
+    // 2026-11-19 運営者の決定：手数料は 5%（全加盟店一律）を、もとの場所に慎ましく書く
+    await expect(page.locator(".hero-note")).toContainText("5%");
+    await expect(page.locator(".hero-note a[href='/fees/']")).toHaveCount(1);
+    await expect(page.locator(".hero-note")).not.toContainText("検討中");
     // 提供開始時期は出さず、開発中のサービスであることを示す
     await expect(page.locator(".hero-note")).toContainText("開発中");
     await expect(page.locator(".hero-note")).not.toContainText("先行導入");
@@ -128,42 +130,58 @@ test.describe("日本語LP 手数料文言ガード（料率は検討中）", ()
     await expect(page.locator("#comparison h2")).toContainText(
       "従来の決済との違い"
     );
-    await expect(page.locator("#comparison")).toContainText("検討中");
+    await expect(page.locator("#comparison")).toContainText("5%");
     await expect(page.locator("#comparison")).toContainText("全加盟店一律");
-    await expect(page.locator("#faq")).toContainText("全加盟店一律の固定料率");
+    await expect(page.locator("#comparison a[href='/fees/']")).toHaveCount(1);
+    await expect(page.locator("#faq")).toContainText("決済額の5%");
+    await expect(page.locator("#faq a[href='/fees/']")).toHaveCount(1);
+    await expect(page.locator(".footnotes a[href='/fees/']")).toHaveCount(1);
 
-    // 自社の確定料率・導入費用0円は表示しない（未定のため）
+    // 他の料率・導入費用0円は表示しない
     await expect(page.locator("#comparison")).not.toContainText("1.5%");
     await expect(page.locator(".hero")).not.toContainText("1.5%");
     const body = await page.locator("body").innerText();
     expect(body).not.toContain("導入費用0円");
+    // 手数料について「検討中」「固定料率を予定」が残らない（プライバシー機能の「提供時期・方式は検討中」は手数料ではない）
+    const text = await page.locator("body").textContent();
+    expect(text).not.toContain("固定料率");
+    expect(text).not.toMatch(/手数料[^。]{0,20}検討中|検討中[^。]{0,20}手数料|料率[^。]{0,10}検討中/);
   });
 
-  test("手数料の料率（5% など）を、表示・HTML ソース・llms.txt のどこにも出さない", async ({
+  test("自社の手数料の料率は 5% だけで、ほかの料率を表示・HTML ソース・llms.txt のどこにも出さない", async ({
     page,
     request,
   }) => {
-    // 料率は検討中（2026-10-16 ユーザー決定：5% は出さない）。「手数料」の近くに数字の % が来たら落とす。
+    // 2026-11-19 運営者の決定（2026-10-16 の「5% を出さない」を置き換え）。間違った料率を出さない意図は変えない：
+    // 「手数料」の近くに数字の % が来たら、その数字は 5 でなければ落とす。
     // 「数%〜」（03 の従来側）や 55%以上・84.5% は数字と「手数料」が離れているので当たらない
     // 改行やタグをまたいでも見逃さないよう、タグを空白に変え、空白・改行を 1 つにまとめてから調べる
     const norm = (text) => text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-    const feeRate = /手数料[^。]{0,30}[0-9０-９][0-9０-９.]*\s*[%％]|[0-9０-９][0-9０-９.]*\s*[%％][^。]{0,15}手数料|料率[^。]{0,15}[0-9０-９][0-9０-９.]*\s*[%％]/;
+    const feeRate = /手数料[^。]{0,30}[0-9０-９][0-9０-９.]*\s*[%％]|[0-9０-９][0-9０-９.]*\s*[%％][^。]{0,15}手数料|料率[^。]{0,15}[0-9０-９][0-9０-９.]*\s*[%％]/g;
+    const ratesIn = (text) =>
+      [...norm(text).matchAll(feeRate)].flatMap((m) => [...m[0].matchAll(/([0-9０-９][0-9０-９.]*)\s*[%％]/g)].map((n) => n[1]));
+    const onlyFive = (text) => ratesIn(text).every((n) => n === "5");
     await page.goto("/");
     // 閉じた FAQ の答えも含めるため innerText ではなく textContent
     const body = await page.locator("body").textContent();
-    expect(feeRate.test(norm(body)), "表示に手数料の料率がある").toBe(false);
-    // 比較表の手数料の行（すてぶるペイ側）には、数字の % を置かない
+    expect(ratesIn(body).length, "表示に 5% の手数料がある").toBeGreaterThan(0);
+    expect(onlyFive(body), `表示に 5% 以外の手数料の料率がある: ${ratesIn(body)}`).toBe(true);
+    // 比較表の手数料の行（すてぶるペイ側）の数字の % は 5% だけ
     const selfFee = await page.locator("#comparison tr", { has: page.locator('th:text-is("手数料")') }).locator("td.col-self").textContent();
-    expect(/[0-9０-９][0-9０-９.]*\s*[%％]/.test(selfFee), "比較表の手数料（すてぶるペイ側）に料率がある").toBe(false);
+    expect(selfFee).toContain("5%");
+    expect([...selfFee.matchAll(/[0-9０-９][0-9０-９.]*\s*[%％]/g)].map((m) => m[0])).toEqual(["5%"]);
     const html = await (await request.get("/")).text();
-    expect(feeRate.test(norm(html)), "HTML ソース（meta・JSON-LD・AI_DISCOVERY_BLOCK）に手数料の料率がある").toBe(false);
+    expect(onlyFive(html), "HTML ソース（meta・JSON-LD・AI_DISCOVERY_BLOCK）に 5% 以外の手数料の料率がある").toBe(true);
+    expect(ratesIn(html).length, "HTML ソースに 5% の手数料がある").toBeGreaterThan(0);
     const llms = await (await request.get("/llms.txt")).text();
-    expect(feeRate.test(norm(llms)), "llms.txt に手数料の料率がある").toBe(false);
-    // 検査が効くこと（料率を足した文は、改行やタグで分かれていても当たる）
-    expect(feeRate.test(norm("決済手数料は5%です"))).toBe(true);
-    expect(feeRate.test(norm("料率 1.5%"))).toBe(true);
-    expect(feeRate.test(norm("手数料\n検討中（予定5%）"))).toBe(true);
-    expect(feeRate.test(norm("<th>手数料</th>\n<td>５％</td>"))).toBe(true);
+    expect(onlyFive(llms), "llms.txt に 5% 以外の手数料の料率がある").toBe(true);
+    expect(ratesIn(llms).length, "llms.txt に 5% の手数料がある").toBeGreaterThan(0);
+    // 検査が効くこと（5% 以外の料率を足した文は、改行やタグで分かれていても当たる）
+    expect(onlyFive("決済手数料は5%です")).toBe(true);
+    expect(onlyFive("決済手数料は6%です")).toBe(false);
+    expect(onlyFive("料率 1.5%")).toBe(false);
+    expect(onlyFive("手数料\n決済額の15%")).toBe(false);
+    expect(onlyFive("<th>手数料</th>\n<td>５％</td>")).toBe(false);
   });
 });
 

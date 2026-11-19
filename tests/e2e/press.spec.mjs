@@ -80,9 +80,15 @@ for (const { path, lang, title } of PAGES) {
       for (const term of BANNED) expect(text, `「${term}」がある`).not.toContain(term);
       expect(text).not.toMatch(BANNED_EN);
     }
-    // 自社の料率と提供開始日を書かない。プレスキットには他社の % も載せないので、許可リストは空
+    // 自社の料率は 5% だけ（2026-11-19 運営者の決定）。提供開始日は書かない。プレスキットには他社の % も載せない。
+    // 許可リストは、5% を書く文の、% の直前の言い回しだけ（数値は 5% に固定。ほかの数字は今までどおり違反）
     const texts = await page.evaluate(TEXTS);
-    expect(rateViolations(texts, []), "% を書いている").toEqual([]);
+    const FEE_5 = lang === "ja"
+      ? ["手数料は", "「"].map((prefix) => ({ prefix, value: "5%" }))
+      : ["The fee is ", 'Please write "'].map((prefix) => ({ prefix, value: "5%" }));
+    expect(rateViolations(texts, FEE_5), "5% 以外の % を書いている").toEqual([]);
+    expect(bodyText, "手数料は 5% と書く").toContain("5%");
+    await expect(page.locator('main a[href="/fees/"]')).toHaveCount(1);
     expect(launchDateClaims(texts), "自社名と開始の語が同じ文にある（提供開始日は書かない）").toEqual([]);
 
     // ページ内の参照は、行き先がある
