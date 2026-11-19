@@ -2609,3 +2609,26 @@ sup.fn a:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* プライバシーポリシーの号（(1)　…）と特則第2条の表。長い URL がスマートフォンの幅からはみ出さないよう、どこでも折り返す */
+.legal {
+  overflow-wrap: anywhere;
+}
+
+.legal .sub {
+  padding-left: 1.5em;
+}
+
+.legal table {
+  width: 100%;
+  margin: 0 0 14px;
+  border-collapse: collapse;
+}
+
+.legal th,
+.legal td {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}

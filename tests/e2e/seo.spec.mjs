@@ -49,11 +49,11 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
     expect(xml, path).toContain("<urlset");
     return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   };
-  // LP の日英と解説（/learn/ と /en/learn/）とプレスキット（/press/ と /en/press/）と表現に関する方針（/policy/expression/）、開示等の請求の手続。中身は learn.spec.mjs と press.spec.mjs で見る
+  // LP の日英と解説（/learn/ と /en/learn/）とプレスキット（/press/ と /en/press/）と表現に関する方針（/policy/expression/）、プライバシーポリシーと開示等の請求の手続。中身は learn.spec.mjs と press.spec.mjs で見る
   const top = await locsOf("/sitemap.xml");
   expect(top.slice(0, 2)).toEqual(LPS.map((lp) => lp.url));
-  expect(top).toContain("https://stbl-pay.com/privacy/requests/");
-  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/((en\/)?(learn\/([a-z-]+\/)?|press\/|policy\/expression\/)|privacy\/requests\/)$/);
+  expect(top).toEqual(expect.arrayContaining(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/"]));
+  for (const loc of top.slice(2)) expect(loc).toMatch(/^https:\/\/stbl-pay\.com\/((en\/)?(learn\/([a-z-]+\/)?|press\/|policy\/expression\/)|privacy\/(requests\/)?)$/);
   for (const loc of top) expect((await request.get(new URL(loc).pathname)).status(), loc).toBe(200);
   // lastmod は、そのページの JSON-LD の dateModified と同じ（dateModified の無いページは見ない）
   const xml = await (await request.get("/sitemap.xml")).text();
@@ -78,13 +78,29 @@ test("sitemap.xml の URL は canonical と一致し、robots.txt から辿れ�
   }
 });
 
-test("開示等の請求のページは LP のフッターから辿れ、canonical と窓口を持つ", async ({ page }) => {
+test("LP のフッターからプライバシーポリシーへ、その第11条から開示等の請求のページへ辿れ、どちらも canonical を持つ", async ({ page }) => {
   await page.goto("/");
-  await page.locator(".site-footer").getByRole("link", { name: "個人情報の開示等のご請求" }).click();
+  await page.locator(".site-footer").getByRole("link", { name: "プライバシーポリシー" }).click();
+  await expect(page).toHaveURL(/\/privacy\/$/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://stbl-pay.com/privacy/");
+  await expect(page.locator("h1")).toHaveText("プライバシーポリシー");
+  await page.locator("#art-11 + p").getByRole("link", { name: "当社ウェブサイト上に掲載するところ" }).click();
   await expect(page).toHaveURL(/\/privacy\/requests\/$/);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://stbl-pay.com/privacy/requests/");
   await expect(page.locator("h1")).toHaveText("個人情報の開示等のご請求");
   await expect(page.locator('main a[href^="mailto:support.stbl-pay@ango-ya.org"]').first()).toBeVisible();
+});
+
+test("開示等の請求のページからポリシーの条へのリンクは実在の見出しを指し、どちらのページもスマートフォンの幅で横にはみ出さない", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  const fits = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+  await page.goto("/privacy/requests/");
+  expect(await fits(), "/privacy/requests/ の横幅").toBe(true);
+  const ids = await page.locator('main a[href^="/privacy/#"]').evaluateAll((as) => as.map((a) => a.getAttribute("href").split("#")[1]));
+  expect(ids).toEqual(expect.arrayContaining(["art-11", "art-3-2", "art-16"]));
+  await page.goto("/privacy/");
+  expect(await fits(), "/privacy/ の横幅（特則第2条の表と長い URL）").toBe(true);
+  for (const id of ids) await expect(page.locator(`[id="${id}"]`), id).toHaveCount(1);
 });
 
 test("デモ画面は noindex、404 ページがある", async ({ request }) => {
@@ -128,7 +144,7 @@ test("IndexNow は変わったページだけを送る（dist/ のサイトマ�
     execFileSync("node", ["scripts/indexnow.mjs", "--dry-run", ...args], { encoding: "utf8" }).trim().split("\n");
   expect(run("index.html", "README.md")).toEqual(["https://stbl-pay.com/"]);
   expect(run("en/index.html")).toEqual(["https://stbl-pay.com/en/"]);
-  expect(run("privacy/requests/index.html")).toEqual(["https://stbl-pay.com/privacy/requests/"]);
+  expect(run("privacy/index.html", "privacy/requests/index.html")).toEqual(["https://stbl-pay.com/privacy/", "https://stbl-pay.com/privacy/requests/"]);
   expect(run("README.md")).toEqual(["IndexNow: 送る URL なし"]);
   expect(run("learn/chargeback/index.html", "en/learn/stablecoin-payments-japan/index.html")).toEqual([
     "https://stbl-pay.com/learn/chargeback/",
