@@ -16,9 +16,15 @@ The type, format, and constraints of each field, the list of errors, and request
 | Method | Path | Authentication | Purpose |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API key (`x-stbl-api-key`) | [Create a payment](#create-payment) |
-| `GET` | `/payments/:paymentIntentId` | API key (`x-stbl-api-key`) | [Merchant server lookup](#retrieve-payment) |
+| `GET` | `/payments/:paymentIntentId` | API key (`x-stbl-api-key`) | [Look up a payment](pathname:///openapi/#operation/getPayment) (In preparation for release; until then, use the [status check](/server/retrieve-payment)) |
 | `GET` | `/payment_status/:paymentIntentId` | None | Checkout-page status |
 | `GET` | `/payment_intents/:paymentIntentId` | None | Checkout-page display information |
+| `GET` | `/payment_intents/{paymentIntentId}/refundable` | Refund API key + HTTP signature | [Check the refundable amount](pathname:///openapi/#operation/getMachineRefundable) (In preparation for release) |
+| `POST` | `/payment_intents/{paymentIntentId}/refunds/prepare` | Refund API key + HTTP signature | [Prepare a refund](pathname:///openapi/#operation/prepareMachineRefund) (In preparation for release) |
+| `POST` | `/payment_intents/{paymentIntentId}/refunds/submit` | Refund API key + HTTP signature | [Sign and submit a refund](pathname:///openapi/#operation/submitMachineRefund) (In preparation for release) |
+| `GET` | `/refunds/{refundId}` | Refund API key + HTTP signature | [Look up a refund](pathname:///openapi/#operation/getMachineRefund) (In preparation for release) |
+| `GET` | `/payment_intents/{paymentIntentId}/refunds` | Refund API key + HTTP signature | [List refunds for a payment](pathname:///openapi/#operation/listMachinePaymentRefunds) (In preparation for release) |
+| `DELETE` | `/staged_operations/{stagedOpId}` | Refund API key + HTTP signature | [Discard a preparation](pathname:///openapi/#operation/discardMachineStagedOperation) (In preparation for release) |
 
 Request and response bodies are JSON, and the fields are camelCase.
 
