@@ -5,6 +5,13 @@ import {translateGenerated} from './openapi-en/translate.mjs';
 
 const yaml = createRequire(new URL('../docs-site/package.json', import.meta.url))('js-yaml');
 const annotations = new Set(['description', 'summary', 'title', 'example', 'examples', '$comment', 'comment']);
+// $ref の兄弟として許す注釈。これ以外の検証キーは、参照先との積（JSON Schema 2020-12 では両方を満たす）になり、
+// 展開してマージした形とは意味が違う（additionalProperties など）ため、比べられないものとして拒否する
+const refSiblingAnnotations = new Set([
+  'description', 'summary', 'title', 'examples', 'example', 'deprecated', 'readOnly', 'writeOnly', 'default', '$comment', 'comment',
+]);
+const operationMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+const normalizePathTemplate = path => path.replace(/\{[^}]*\}/g, '{}');
 const dataKeys = new Set(['default', 'const', 'enum', 'required', 'security', 'mapping', 'flows']);
 const maps = new Set([
   'properties', 'patternProperties', '$defs', 'dependentSchemas', 'schemas',
@@ -46,6 +53,11 @@ export function assertCompatibleDefinition(name, handwritten, generated, roots =
     if (target === undefined) throw new Error(`Unresolved reference ${node.$ref}`);
     const expanded = resolve(target, root, new Set([...ancestors, node]));
     const {$ref, ...siblings} = node;
+    for (const key of Object.keys(siblings)) {
+      if (!refSiblingAnnotations.has(key) && !key.startsWith('x-') && !(key in expanded)) {
+        throw new Error(`${name}: $ref ${node.$ref} has validation keyword sibling ${key}; handwritten${node.$ref.slice(1)} conflicts with generated${node.$ref.slice(1)}`);
+      }
+    }
     const definition = Object.keys(siblings).length ? {...expanded, ...siblings} : expanded;
     cache.set(node, definition);
     for (const [key, value] of Object.entries(siblings)) {
@@ -100,7 +112,17 @@ export function buildOpenApi(handwritten, generated, locale, translations) {
   const input = locale === 'en' ? translateGenerated(generated, translations) : structuredClone(generated);
   const output = structuredClone(handwritten);
   output.info.version = input.info.version;
+  const templates = new Map(Object.keys(output.paths).map(path => [normalizePathTemplate(path), path]));
   for (const [path, methods] of Object.entries(input.paths ?? {})) {
+    const known = templates.get(normalizePathTemplate(path));
+    if (known !== undefined && known !== path) {
+      throw new Error(`Path template collision: handwritten ${known} and generated ${path}`);
+    }
+    const pathLevel = value => Object.fromEntries(Object.entries(value).filter(([key]) => !operationMethods.includes(key)));
+    if (known !== undefined && canonicalJson(pathLevel(output.paths[path])) !== canonicalJson(pathLevel(methods))) {
+      throw new Error(`Path-level fields differ for shared path ${path}; they would apply to operations of the other input`);
+    }
+    templates.set(normalizePathTemplate(path), path);
     const target = output.paths[path] ??= {};
     for (const [method, operation] of Object.entries(methods)) {
       if (method in target) {
@@ -128,20 +150,25 @@ export function buildOpenApi(handwritten, generated, locale, translations) {
   return output;
 }
 
-function run() {
-  const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
+export function run({
+  argv = process.argv,
+  read = path => readFileSync(new URL(path, import.meta.url), 'utf8'),
+  write = (destination, text) => writeFileSync(destination, text),
+} = {}) {
   const generated = JSON.parse(read('./fixtures/merchant-openapi.json'));
   const translations = JSON.parse(read('./openapi-en/translations.json'));
-  for (const locale of ['ja', 'en']) {
+  // 片方の言語だけ更新された状態を残さないため、両方を組み立てて直列化してから書く
+  const outputs = ['ja', 'en'].map(locale => {
     const handwritten = yaml.load(read(`../docs-site/openapi/handwritten.${locale}.yaml`));
     const text = yaml.dump(buildOpenApi(handwritten, generated, locale, translations), {lineWidth: 120, noRefs: true});
     const destination = new URL(locale === 'ja' ? '../docs-site/static/openapi.yaml' : '../docs-site/i18n/en/openapi.yaml', import.meta.url);
-    if (process.argv.includes('--check')) {
-      if (readFileSync(destination, 'utf8') !== text) {
-        throw new Error(`${destination.pathname} is stale; run npm run openapi:build`);
-      }
-    } else writeFileSync(destination, text);
-  }
+    return {destination, text};
+  });
+  if (argv.includes('--check')) {
+    for (const {destination, text} of outputs) {
+      if (readFileSync(destination, 'utf8') !== text) throw new Error(`${destination.pathname} is stale; run npm run openapi:build`);
+    }
+  } else for (const {destination, text} of outputs) write(destination, text);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) run();

@@ -44,6 +44,8 @@ export function diffSpecs(ja, en) {
       const p = `${path}/${k}`;
       const [x, y] = [a[k], b[k]];
       if (kind === "data") compare(x, y, p, "data");
+      // paths・webhooks・operation の responses のキーは、パス・ステータスコードで x- 拡張と区別できる
+      else if (kind === "map" && k.startsWith("x-") && /^\/(paths|webhooks|(paths|webhooks)\/.+\/(get|put|post|delete|options|head|patch|trace)\/responses)$/.test(path)) errors.push(`${p}: x- で始まるキーは、この検査が扱わない`);
       else if (kind === "map" || kind === "examples") compare(x, y, p, kind === "examples" ? "example" : "obj");
       // shortcut: 拡張（x-）は、名前と区別できない場所があるので扱わず、置いたら止める。使うようになったら置く場所ごとに足す
       else if (k.startsWith("x-")) errors.push(`${p}: x- で始まるキーは、この検査が扱わない`);

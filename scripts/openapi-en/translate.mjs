@@ -6,6 +6,9 @@ const mapKeys = new Set([
 ]);
 const pointer = parts => '/' + parts.map(part => String(part).replaceAll('~', '~0').replaceAll('/', '~1')).join('/');
 
+const isErrorResponseDescription = (prefix, parts, key) => key === 'description' && prefix.startsWith('operations.')
+  && parts.length === 2 && parts[0] === 'responses' && /^[45]\d\d$/.test(parts[1]);
+
 // 原文の一致検査を翻訳適用と分離しない。古い訳を新しい説明に適用しないため。
 export function visitGeneratedText(generated, visit) {
   function walk(node, parts, prefix, kind = 'object') {
@@ -21,7 +24,8 @@ export function visitGeneratedText(generated, visit) {
         const translationKey = prefix.startsWith('operations.') && fieldPath.length > 1
           ? prefix + pointer(fieldPath)
           : prefix + '.' + fieldPath.filter(part => part !== 'properties').join('.');
-        if (key === 'description' && value.startsWith('|')) {
+        // エラー表を生成するのは operation のエラー応答（responses.4xx/5xx）の description だけ。他の表は通常の文として訳す
+        if (isErrorResponseDescription(prefix, parts, key) && value.startsWith('|')) {
           const lines = value.split('\n');
           if (lines[0] !== '| code | meaning | action |' || lines[1] !== '| --- | --- | --- |' || lines.length < 3) {
             throw new Error(`Invalid error table: ${translationKey}`);

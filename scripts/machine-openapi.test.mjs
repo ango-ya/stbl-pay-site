@@ -5,7 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createRequire} from 'node:module';
-import {buildOpenApi, assertCompatibleDefinition} from './build-openapi.mjs';
+import {buildOpenApi, assertCompatibleDefinition, run as runBuild} from './build-openapi.mjs';
 import {translateGenerated} from './openapi-en/translate.mjs';
 import {diffSpecs} from './openapi-parity.mjs';
 const yaml=createRequire(new URL('../docs-site/package.json',import.meta.url))('js-yaml');
@@ -160,4 +160,56 @@ test('Redoclyは日英のタグなしWebhookだけを例外とし未知タグ・
  ]){const broken=structuredClone(base);change(broken);const result=run(broken,path);assert.notEqual(result.status,0,`${path}: ${rule}`);assert.match(result.stdout+result.stderr,new RegExp(rule));if(pointer)assert.ok((result.stdout+result.stderr).includes(pointer),result.stdout+result.stderr);}
  }
  }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('$refのsiblingは注釈だけを許し検証キーは重ねて評価できないため拒否する',()=>{
+ const roots={handwritten:{components:{schemas:{X:{type:'object',properties:{a:{type:'string'}}}}}},generated:{}};
+ const target={type:'object',properties:{a:{type:'string'}}};
+ assert.doesNotThrow(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',description:'注釈',title:'題',examples:['a']},target,roots));
+ assert.throws(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',additionalProperties:false},{...target,additionalProperties:false},roots),/conflicts/);
+ assert.throws(()=>assertCompatibleDefinition('X',{$ref:'#/components/schemas/X',maxProperties:1},{...target,maxProperties:1},roots),/conflicts/);
+});
+
+test('パス変数名だけが違うパスは衝突として拒否する',()=>{
+ const input=handwritten('ja');input.paths['/payments/{id}']={post:{operationId:'dummyPost',responses:{200:{description:'ok'}}}};
+ assert.throws(()=>buildOpenApi(input,generated,'ja',translations),/Path template collision/);
+});
+
+test('パスを共有するときパスレベルのフィールドが食い違えば拒否する',()=>{
+ const input=handwritten('ja');input.paths['/payments/{paymentIntentId}']={parameters:[{name:'x',in:'header',schema:{type:'string'}}],post:{operationId:'dummyPost',responses:{200:{description:'ok'}}}};
+ assert.throws(()=>buildOpenApi(input,generated,'ja',translations),/Path-level/);
+ const same=handwritten('ja');same.paths['/payments/{paymentIntentId}']={post:{operationId:'dummyPost',responses:{200:{description:'ok'}}}};
+ assert.doesNotThrow(()=>buildOpenApi(same,generated,'ja',translations));
+});
+
+test('古い訳があるとき日英どちらのファイルも書かずに失敗する',()=>{
+ const files={
+  './fixtures/merchant-openapi.json':JSON.stringify(generated),
+  './openapi-en/translations.json':JSON.stringify(Object.fromEntries(Object.entries(translations).map(([k,v],i)=>[k,i?v:{...v,source:v.source+'変更'}]))),
+  '../docs-site/openapi/handwritten.ja.yaml':readFileSync('docs-site/openapi/handwritten.ja.yaml','utf8'),
+  '../docs-site/openapi/handwritten.en.yaml':readFileSync('docs-site/openapi/handwritten.en.yaml','utf8'),
+ };
+ const written=[];
+ assert.throws(()=>runBuild({argv:[],read:path=>files[path],write:(destination)=>written.push(destination)}),/stale translation/);
+ assert.deepEqual(written,[]);
+});
+
+test('エラー表の検証はエラー応答の説明だけに限り他の説明の表は通常の文として訳す',()=>{
+ const changed=structuredClone(generated);
+ const [name,schema]=Object.entries(changed.components.schemas).find(([,value])=>typeof value.description==='string');
+ schema.description='| Value | Meaning |\n| --- | --- |\n| a | b |';
+ const key=`schemas.${name}.description`;
+ assert.doesNotThrow(()=>translateGenerated(changed,{...translations,[key]:{source:schema.description,translation:'| Value | Meaning |\n| --- | --- |\n| a | B |'}}));
+ const response=changed.paths['/payments/{paymentIntentId}'].get.responses['400'];
+ response.description=response.description.replace('| code | meaning | action |','| Value | Meaning |');
+ assert.throws(()=>translateGenerated(changed,translations),/Invalid error table/);
+});
+
+test('parityはpathsとoperationのresponses直下のx-拡張を拒否する',()=>{
+ assert.ok(diffSpecs({paths:{'x-a':{}}},{paths:{'x-a':{}}}).length);
+ assert.ok(diffSpecs({webhooks:{'x-a':{}}},{webhooks:{'x-a':{}}}).length);
+ const op=()=>({paths:{'/a':{get:{responses:{'x-a':{description:'d'}}}}}});
+ assert.ok(diffSpecs(op(),op()).length);
+ const named=()=>({components:{schemas:{'x-a':{type:'string'}}},paths:{'/a':{get:{responses:{200:{description:'d',content:{'application/json':{examples:{'x-a':{value:1}}}}}}}}}});
+ assert.deepEqual(diffSpecs(named(),named()),[]);
 });
