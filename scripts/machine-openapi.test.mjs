@@ -20,7 +20,7 @@ test('手書きの2 operationとWebhookと到達定義を日英とも保持す�
  const expected=baseline[locale];for(const [path,methods] of Object.entries(expected.paths))assert.deepEqual(actual.paths[path],methods);
  assert.deepEqual(actual.webhooks,expected.webhooks);
  for(const [kind,definitions] of Object.entries(expected.components))for(const [name,value] of Object.entries(definitions))assert.deepEqual(actual.components[kind][name],value);
- assert.deepEqual(actual.info,{...expected.info,version:'0.38.0'});assert.deepEqual(actual.security,expected.security);
+ assert.deepEqual(actual.info,{...expected.info,version:generated.info.version});assert.deepEqual(actual.security,expected.security);
  assert.equal(Object.values(expected.paths).flatMap(Object.values).length,2);
  for(const tag of expected.tags)assert.deepEqual(actual.tags.find(value=>value.name===tag.name),tag);
  }
