@@ -2446,7 +2446,8 @@ test.describe("ヒーローの登場", () => {
     await page.waitForFunction(() => document.readyState !== "loading");
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
     release();
-    await expect(page.locator("#early-access")).toBeInViewport({ timeout: 10_000 });
+    // いちばん下まで来たこと（フッター）を見る。相談の欄は、あとに「決済を学ぶ」とフッターの運営会社のカードがあるので、ここでは画面に入らない
+    await expect(page.locator(".site-footer")).toBeInViewport({ timeout: 10_000 });
     await page.waitForLoadState("load");
     // スクリプト開始から 800ms をすぎるまで、下で待つ
     await page.waitForTimeout(1500);

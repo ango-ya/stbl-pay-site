@@ -88,9 +88,10 @@
         event("share", { method: link.getAttribute("data-share") || "", content_type: "article", item_id: location.pathname });
         return;
       }
-      // 解説：一覧の「困りごとから探す」・カード、記事の関連欄から、どの記事へ進んだか。item_id は # 以降を外したパス（節へのリンクも記事単位で数える）
+      // 解説：一覧の「困りごとから探す」・カード、記事の関連欄、LP の「決済を学ぶ」から、どの記事へ進んだか。item_id は # 以降を外したパス（節へのリンクも記事単位で数える）。
+      // 関連欄と LP もカード（.learn-cards）なので、一覧より先に見分ける
       const articlePath = (h) => h.split("#")[0];
-      const learnFrom = link.closest(".learn-needs") ? "learn_needs" : link.closest(".learn-cards") ? "learn_hub" : link.closest(".learn-related") ? "learn_related" : "";
+      const learnFrom = link.closest(".learn-needs") ? "learn_needs" : link.closest(".learn-related") ? "learn_related" : link.closest("#learn") ? "learn_lp" : link.closest(".learn-cards") ? "learn_hub" : "";
       if (learnFrom) {
         event("select_content", { content_type: learnFrom, item_id: articlePath(href) });
         return;
@@ -113,7 +114,8 @@
         }
         if (exitType) {
           event("cta_click", {
-            cta_label: (link.textContent || "").trim().slice(0, 80),
+            // 末尾の箱のカードは、題だけをラベルにする（説明文を足す前の値と比べられるように）
+            cta_label: ((link.querySelector(".about-card-title") || link).textContent || "").trim().slice(0, 80),
             cta_destination: href,
             cta_location: where,
             exit_type: exitType,
