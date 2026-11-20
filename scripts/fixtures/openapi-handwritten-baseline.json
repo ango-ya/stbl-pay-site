@@ -1,0 +1,3168 @@
+{
+  "ja": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "STBLpay API",
+      "version": "0.35.0-feat-699-payment-lookup.152",
+      "summary": "加盟店のサーバーが呼ぶ API と、加盟店のサーバーが受け取る Webhook",
+      "description": "すてぶるペイ（STBLpay）で、加盟店（EC サイト）のサーバーが呼ぶ API と、加盟店のサーバーが受け取る Webhook の仕様です。\n組み込みの流れと注意点は[加盟店向けドキュメント](https://stbl-pay.com/docs/)にあります。\n\n- 本文は JSON です。REST API のフィールドは camelCase、Webhook の本文は snake_case です。\n- 金額は円建ての 10 進の文字列です（例：`\"4980\"`）。JSON number ではありません。手数料などの端数も、浮動小数点数へ変換せずに扱ってください。\n- 日時は UTC の `Z` で終わる ISO 8601 です。応答はミリ秒まで付きます。\n- エラーの本文は `{ \"code\": \"...\", \"details\": { ... } }` です。`details` が無いこともあります。分岐には `code` を使い、HTTP ステータスは補助にしてください。コードは増えることがあるので、未知のコードは共通のエラー処理へ落としてください。\nmachine返金エンドポイントは公開準備中のpreview仕様で、本番提供開始の案内ではありません。",
+      "contact": {
+        "name": "STBLpay の問い合わせ先",
+        "url": "https://stbl-pay.com/docs/support/troubleshooting"
+      }
+    },
+    "servers": [
+      {
+        "url": "{baseUrl}",
+        "description": "接続先の URL は、[問い合わせ先](https://stbl-pay.com/docs/support/troubleshooting)に確認してください。公開 URL や localhost の既定値を仮定しないでください",
+        "variables": {
+          "baseUrl": {
+            "default": "https://api.example.com",
+            "description": "確認した接続先の URL（末尾の / は付けない）。既定値は置き換え用の仮の値です"
+          }
+        }
+      },
+      {
+        "url": "https://api.sandbox.stbl-pay.com",
+        "description": "Sandbox（JPYC EX の部分はモック。https://stbl-pay.com/docs/testing/sandbox）"
+      }
+    ],
+    "tags": [
+      {
+        "name": "決済",
+        "description": "決済の作成と状態の照会"
+      }
+    ],
+    "paths": {
+      "/payment_intents": {
+        "post": {
+          "operationId": "createPaymentIntent",
+          "tags": [
+            "決済"
+          ],
+          "summary": "決済を作成する",
+          "description": "決済を作成し、利用者をトップレベル遷移させる決済ページの URL（`checkoutUrl`）を返します。\n応答の `status` が `created` でも、決済は成立していません。成立は Webhook か状態照会で確かめます。\n\n同じ店舗から同じ `orderId` で呼ぶと、新しい決済を作らずに既存の決済を返します（このときも 201）。\n返るのはその時点の `status` と、最初の作成で決まった金額・手数料・期限です。\n2 回目以降も、本文の型と形式、店舗の状態、`returnUrl` は検査します。既存の決済があるときは、送った `amountJpy` と `merchantExpiresAt` の値の検査（金額が 0 でないか、期限が近すぎないか）をせず、反映もしません。\n\nサーバーから呼んでください。API キーをブラウザへ出さないでください。\n",
+          "security": [
+            {
+              "apiKey": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePaymentIntentRequest"
+                },
+                "examples": {
+                  "basic": {
+                    "summary": "注文 ID と戻り先を付けて作成する",
+                    "value": {
+                      "amountJpy": "4980",
+                      "orderId": "ord_0001",
+                      "returnUrl": "https://shop.example.com/orders/ord_0001/return"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "決済を作成した。または、同じ `orderId` の既存の決済を返した",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CreatePaymentIntentResponse"
+                  },
+                  "examples": {
+                    "created": {
+                      "summary": "新しく作成した（値は例）",
+                      "value": {
+                        "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                        "checkoutUrl": "https://checkout.example/checkout/pi_0123456789abcdef0123456789abcdef",
+                        "status": "created",
+                        "amountJpy": "4980",
+                        "feeJpy": "49.8",
+                        "netAmountJpy": "4930.2",
+                        "checkoutExpiresAt": "2026-10-20T03:00:00.000Z",
+                        "createdAt": "2026-10-19T03:00:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "リクエストが正しくない。\n\n- `common/invalid_request`：本文の型・形式の違反。本文の形式の違反では `details.issues` に違反の一覧が入ります。金額が 0 のとき、金額の小数部が 6 桁を超えるときは `details` がありません\n- `payment/expires_at_too_soon`：`merchantExpiresAt` が近すぎる。`details.minSeconds` に、作成時点から最低限あける秒数が入ります\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "invalidRequest": {
+                      "summary": "本文の形式の違反",
+                      "value": {
+                        "code": "common/invalid_request",
+                        "details": {
+                          "issues": [
+                            {
+                              "code": "invalid_string",
+                              "validation": "regex",
+                              "path": [
+                                "amountJpy"
+                              ],
+                              "message": "10 進の非負数"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "amountZero": {
+                      "summary": "金額が 0（details なし）",
+                      "value": {
+                        "code": "common/invalid_request"
+                      }
+                    },
+                    "expiresAtTooSoon": {
+                      "summary": "merchantExpiresAt が近すぎる",
+                      "value": {
+                        "code": "payment/expires_at_too_soon",
+                        "details": {
+                          "minSeconds": 259200
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "`auth/api_key_invalid`：API キーが無効、失効済み、または送られていない",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "apiKeyInvalid": {
+                      "value": {
+                        "code": "auth/api_key_invalid"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "- `merchant/suspended`：加盟店が利用停止中。決済を作成できない。再開を待つ\n- `merchant/origin_mismatch`：`returnUrl` が登録ドメインの条件に合わない\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "suspended": {
+                      "value": {
+                        "code": "merchant/suspended"
+                      }
+                    },
+                    "originMismatch": {
+                      "value": {
+                        "code": "merchant/origin_mismatch"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "- `store/disabled`：店舗が無効化されている。加盟店コンソールで店舗の状態を確認する\n- `merchant/domain_required`：EC の決済にはドメインの登録が必要。加盟店コンソールで登録する\n- `payment/order_terminated`：同じ `orderId` の既存の決済が、加盟店の利用停止で中止済み、または停止前に作られてまだ送信していない。`details` に既存の決済の `paymentIntentId`・`status`・`failedReason` が入る。新しい `orderId` で作り直す\n- `payment/order_id_conflict`：同じ加盟店の別の店舗で使った `orderId` を指定した。別の店舗の決済は返らない。同じ値で再試行しても解消しないので、新しい `orderId` で作り直す\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "storeDisabled": {
+                      "value": {
+                        "code": "store/disabled"
+                      }
+                    },
+                    "domainRequired": {
+                      "value": {
+                        "code": "merchant/domain_required"
+                      }
+                    },
+                    "orderTerminated": {
+                      "value": {
+                        "code": "payment/order_terminated",
+                        "details": {
+                          "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                          "status": "failed",
+                          "failedReason": "merchant_suspended"
+                        }
+                      }
+                    },
+                    "orderIdConflict": {
+                      "value": {
+                        "code": "payment/order_id_conflict"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "description": "`common/internal`：サーバー側の障害。同じ `orderId` で再試行しても、決済が二重に立つことはありません\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "internal": {
+                      "value": {
+                        "code": "common/internal"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/payment_status/{paymentIntentId}": {
+        "get": {
+          "operationId": "getPaymentStatus",
+          "tags": [
+            "決済"
+          ],
+          "summary": "決済の状態を照会する",
+          "description": "決済の現在の状態を返します。**認証はありません。** API キーや Authorization ヘッダーは不要です。\n決済 ID は秘密ではないので、自社の注文を閲覧する権限の代わりには使わないでください。\nこの応答に金額・手数料・ウォレットは含まれません。\n",
+          "security": [],
+          "parameters": [
+            {
+              "name": "paymentIntentId",
+              "in": "path",
+              "required": true,
+              "description": "決済の作成で受け取った `paymentIntentId`。形式が違う ID（テスト通知の `pi_test_` で始まる ID を含む）は、存在を確かめる前に 400 になります",
+              "schema": {
+                "$ref": "#/components/schemas/PaymentIntentId"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "決済の現在の状態",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaymentStatusView"
+                  },
+                  "examples": {
+                    "settled": {
+                      "summary": "成立した（値は例）",
+                      "value": {
+                        "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                        "status": "settled",
+                        "txHash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "failedReason": null,
+                        "returnUrl": "https://shop.example.com/orders/ord_0001/return",
+                        "settledAt": "2026-10-19T03:05:00.000Z"
+                      }
+                    },
+                    "failed": {
+                      "summary": "失敗した（値は例）",
+                      "value": {
+                        "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                        "status": "failed",
+                        "txHash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "failedReason": "insufficient_balance",
+                        "returnUrl": null,
+                        "settledAt": null
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "`common/invalid_request`：決済 ID の形式が違う（`details` なし）",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "invalidRequest": {
+                      "value": {
+                        "code": "common/invalid_request"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "`payment/not_found`：その決済 ID の決済は無い",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "notFound": {
+                      "value": {
+                        "code": "payment/not_found"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "description": "`common/internal`：サーバー側の障害",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "webhooks": {
+      "paymentEvent": {
+        "post": {
+          "operationId": "receivePaymentEvent",
+          "summary": "決済の結果を受け取る（加盟店のサーバーが実装する）",
+          "description": "決済が終端に着くと、加盟店コンソールで登録した URL へ STBLpay が `POST` します。\n送信先の URL と署名鍵は加盟店ごとに 1 組で、どのネットショップの決済の通知も同じ URL に届きます。\n種類は本文の `type` で区別します（`payment.settled`・`payment.failed`・`payment.canceled`・`payment.expired`）。未知の種類は 2xx を返して無視できるようにしてください。\n結末を特定できなかった決済（`nonce_conflict`）の通知はありません。状態照会で確かめます。\n\n**受け取ったら、次の順に処理してください。**\n\n1. 署名を検証する。`Stbl-Pay-Signature` の `t` と、JSON パーサーを通す前の本文のバイト列から `\"<t>.<本文>\"` を作り、署名鍵で HMAC-SHA256 を計算して小文字の 16 進にする。`v1` のいずれかと一致すれば受理する。`t` と現在時刻のずれの許容は 300 秒を初期値にする\n2. 本文を `JSON.parse` した値の `test` が `true` なら、加盟店コンソールから送ったテスト通知。注文や決済の状態を更新せずに 2xx を返す\n3. 既知イベントのスキーマで検証する前に、`type` の文字列で処理を分ける。未知の種別は注文を変えずに 2xx を返して無視する。 処理対象の既知の種別だけ、その種別に対応する本文と `data` の形を検証する\n4. 署名を検証した本文の `id` で重複を除きながら、イベントを耐久性のある DB またはキューへ保存する。再送でも `id` と本文は変わらない\n5. 保存してから 2xx を返す。先に応答すると、直後の停止で通知を失っても再送されない\n6. 保存したイベントから業務の処理をする。入金の計上は `payment.settled` の `net_received_jpy` を根拠にする\n\n**配信と再送**\n\n- 2xx の応答を成功とします。応答の本文は読みません\n- 2xx 以外（3xx・4xx・5xx）、タイムアウト、接続や TLS の失敗は、すべて失敗として再送します。リダイレクトは追いません\n- タイムアウトは、現在の設定で 10 秒です。イベントを保存したら 2xx を返し、時間のかかる処理は後に回してください\n- 失敗後の間隔は 3 秒 → 10 秒 → 30 秒 → 120 秒 → 600 秒です。初回と合わせて 6 回試行し、以降は打ち切ります\n- 再送では本文と `id` を保ち、`t` と署名を試行ごとに作り直します。到着の順序は保証しません\n\n詳しくは[署名検証](https://stbl-pay.com/docs/webhooks/signature)、[再送ポリシー](https://stbl-pay.com/docs/webhooks/retry)、[冪等性](https://stbl-pay.com/docs/webhooks/idempotency)を参照してください。\n公開準備中の仕様でrefund.confirmedとrefund.failedを追加します。専用の返金dataを決済dataとして検証しないでください。",
+          "security": [],
+          "parameters": [
+            {
+              "name": "Stbl-Pay-Signature",
+              "in": "header",
+              "required": true,
+              "description": "`t=<Unix 秒>,v1=<HMAC-SHA256 の小文字 16 進>` の形で、コンマで区切ります。\n署名鍵を作り直してから 24 時間は、新旧の鍵の `v1` が 2 つ並びます。すべて保持し、同名のキーを上書きする辞書へ変換しないでください。\n署名鍵は `whsec_` で始まる文字列で、`whsec_` を含む文字列全体をそのまま HMAC の鍵に使います。\n",
+              "schema": {
+                "type": "string"
+              },
+              "example": "t=1792900000,v1=5f2b0c1e9d8a7b6c5f4e3d2c1b0a99887766554433221100ffeeddccbbaa9988"
+            },
+            {
+              "name": "Stbl-Pay-Event-Id",
+              "in": "header",
+              "required": true,
+              "description": "本文の `id` の複製。再送でも変わりません。署名の対象外なので、重複の除去には署名を検証した本文の `id` を使ってください",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "description": "`Content-Type` は `application/json; charset=utf-8` です。キーの順序に依存しないでください",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/WebhookEventPayload"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TestWebhookEvent"
+                    }
+                  ]
+                },
+                "examples": {
+                  "settled": {
+                    "summary": "payment.settled（値は例）",
+                    "value": {
+                      "id": "evt_0123456789abcdef0123456789abcdef",
+                      "type": "payment.settled",
+                      "created_at": "2026-10-19T03:05:01.000Z",
+                      "data": {
+                        "payment_intent_id": "pi_0123456789abcdef0123456789abcdef",
+                        "order_id": "ord_0001",
+                        "status": "settled",
+                        "merchant_id": "m_0123456789abcdef0123456789abcdef",
+                        "payout": "0x0123456789abcdef0123456789abcdef01234567",
+                        "amount_jpy": "4980",
+                        "fee_jpy": "49.8",
+                        "net_received_jpy": "4930.2",
+                        "tx_hash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "settled_at": "2026-10-19T03:05:00.000Z",
+                        "failed_reason": null,
+                        "payer_address": null,
+                        "net_amount_destination": null
+                      }
+                    }
+                  },
+                  "failed": {
+                    "summary": "payment.failed（値は例）",
+                    "value": {
+                      "id": "evt_fedcba9876543210fedcba9876543210",
+                      "type": "payment.failed",
+                      "created_at": "2026-10-19T03:05:01.000Z",
+                      "data": {
+                        "payment_intent_id": "pi_0123456789abcdef0123456789abcdef",
+                        "order_id": "ord_0001",
+                        "status": "failed",
+                        "merchant_id": "m_0123456789abcdef0123456789abcdef",
+                        "payout": "0x0123456789abcdef0123456789abcdef01234567",
+                        "amount_jpy": "4980",
+                        "fee_jpy": "0",
+                        "net_received_jpy": "0",
+                        "tx_hash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "settled_at": null,
+                        "failed_reason": "insufficient_balance",
+                        "payer_address": null,
+                        "net_amount_destination": null
+                      }
+                    }
+                  },
+                  "test": {
+                    "summary": "テスト通知（値は例）",
+                    "value": {
+                      "id": "evt_test_0123456789abcdef01234567",
+                      "type": "payment.settled",
+                      "created_at": "2026-10-28T01:02:03.456Z",
+                      "test": true,
+                      "data": {
+                        "payment_intent_id": "pi_test_0123456789abcdef01234567",
+                        "order_id": "test_0123456789abcdef01234567",
+                        "status": "settled",
+                        "merchant_id": "m_0123456789abcdef0123456789abcdef",
+                        "payout": "0x0123456789abcdef0123456789abcdef01234567",
+                        "amount_jpy": "1000",
+                        "fee_jpy": "0",
+                        "net_received_jpy": "1000",
+                        "tx_hash": null,
+                        "settled_at": "2026-10-28T01:02:03.456Z",
+                        "failed_reason": null,
+                        "payer_address": "0x1111111111111111111111111111111111111111",
+                        "net_amount_destination": "0x2222222222222222222222222222222222222222"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "2XX": {
+              "description": "受信に成功した。本文は読まれません"
+            },
+            "default": {
+              "description": "2xx 以外は失敗として扱い、再送します"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "CreatePaymentIntentRequest": {
+          "type": "object",
+          "required": [
+            "amountJpy"
+          ],
+          "properties": {
+            "amountJpy": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+              "not": {
+                "pattern": "^0(\\.0+)?$"
+              },
+              "description": "請求額（円）。10 進の数の文字列で、整数部に先頭のゼロは付けない（例：`\"4980\"`、`\"0.5\"`）。\n0 を超える金額にする（`\"0\"` は 400 `common/invalid_request`）。小数部は 6 桁まで。\nこの API は金額の上限と下限を独自にはかけていません。支払い時に、利用者のウォレットの金額上限・頻度上限に触れて成立しないことがあります（`failedReason` は `policy_violation`）\n",
+              "examples": [
+                "4980"
+              ]
+            },
+            "orderId": {
+              "type": "string",
+              "maxLength": 128,
+              "description": "決済を試すたびの ID。冪等性のキー。同じ店舗から同じ値で再作成すると既存の決済を返します。\n通信の再送では同じ値を使い、`failed`・`expired`・`canceled` のあとの払い直しでは新しい値にします。自社の注文番号をそのまま使えるのは、同じ注文で払い直しをしない場合だけです。\n長さは UTF-16 のコード単位で数えて 128 までです（絵文字などは 1 文字で 2 単位）。`maxLength` は文字数で数えるので、絵文字などを含むとスキーマを通っても 400 `common/invalid_request` になることがあります。\n省略すると、呼ぶたびに新しい決済を作ります。複数の店舗があるときは、加盟店全体で一意に採番してください（別の店舗で使った値は 409 `payment/order_id_conflict`）\n",
+              "examples": [
+                "ord_0001"
+              ]
+            },
+            "returnUrl": {
+              "type": "string",
+              "pattern": "^https://",
+              "description": "決済の後に利用者が戻る URL。次の条件をすべて満たさないと、決済は作成されません。\n\n- スキームは `https`（`http` は `http://localhost` のような開発用の URL も不可）\n- ポート番号を付けない（`:443` は付けても通る）\n- `user:pass@` のような userinfo を含めない\n- ホスト名が、加盟店コンソールで登録したドメインと完全に一致する（大文字小文字は区別しない。サブドメインは別のドメイン）\n\n`https` でない URL は 400 `common/invalid_request` です。ただし `http://localhost`・`http://127.0.0.1`・`http://[::1]` は 403 `merchant/origin_mismatch` です。`https` で、ほかの条件に合わないときも 403 `merchant/origin_mismatch` です。\nパスとクエリに制限はありません。利用者が戻るときは、`stbl_pay_intent` クエリ（値は決済 ID）が付きます。\n",
+              "examples": [
+                "https://shop.example.com/orders/ord_0001/return"
+              ]
+            },
+            "merchantExpiresAt": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "着金期限の上限。作成から 3 日より先の日時だけを指定できます（近すぎると 400 `payment/expires_at_too_soon`）。\n操作期限（`checkoutExpiresAt`）は短くなりません。同じ `orderId` で再作成しても、最初に受け取った値は上書きされません\n",
+              "examples": [
+                "2026-10-25T03:00:00Z"
+              ]
+            }
+          }
+        },
+        "CreatePaymentIntentResponse": {
+          "type": "object",
+          "required": [
+            "paymentIntentId",
+            "checkoutUrl",
+            "status",
+            "amountJpy",
+            "feeJpy",
+            "netAmountJpy",
+            "checkoutExpiresAt",
+            "createdAt"
+          ],
+          "properties": {
+            "paymentIntentId": {
+              "$ref": "#/components/schemas/PaymentIntentId",
+              "description": "決済 ID。自社の注文と結び付けて保存する"
+            },
+            "checkoutUrl": {
+              "type": "string",
+              "pattern": "^https://",
+              "description": "利用者をトップレベル遷移させる決済ページの URL"
+            },
+            "status": {
+              "$ref": "#/components/schemas/PaymentStatus",
+              "description": "新しく作成したときは `created`。同じ `orderId` で既存の決済を返したときは、その時点の状態"
+            },
+            "amountJpy": {
+              "$ref": "#/components/schemas/AmountJpy",
+              "description": "請求額"
+            },
+            "feeJpy": {
+              "$ref": "#/components/schemas/AmountJpy",
+              "description": "作成時点の手数料の見積り。実際の手数料は `payment.settled` の Webhook の `fee_jpy` で受け取り、この値と違うことがある"
+            },
+            "netAmountJpy": {
+              "$ref": "#/components/schemas/AmountJpy",
+              "description": "加盟店の受取額の見積り（`amountJpy` − `feeJpy`）"
+            },
+            "checkoutExpiresAt": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "決済ページの期限"
+            },
+            "createdAt": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "決済の作成日時"
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "required": [
+            "code"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "エラーコード。未知のコードは共通のエラー処理へ落とす",
+              "examples": [
+                "common/invalid_request"
+              ]
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "コードごとの追加の情報。無いこともあります。表示文言はサーバーが返さないので、加盟店側で決めます。\n\n- `common/invalid_request`（本文の形式の違反）：`issues` に違反の配列。各要素の `path` は該当フィールドを指す配列、`message` は理由\n- `payment/expires_at_too_soon`：`minSeconds` に、作成時点から最低限あける秒数\n- `payment/order_terminated`：既存の決済の `paymentIntentId`・`status`・`failedReason`\n"
+            }
+          }
+        },
+        "PaymentIntentId": {
+          "type": "string",
+          "pattern": "^pi_[0-9a-f]{8,32}$",
+          "description": "決済 ID。`pi_` に小文字の 16 進が 8〜32 桁続く",
+          "examples": [
+            "pi_0123456789abcdef0123456789abcdef"
+          ]
+        },
+        "PaymentStatusView": {
+          "type": "object",
+          "required": [
+            "paymentIntentId",
+            "status",
+            "txHash",
+            "failedReason",
+            "returnUrl",
+            "settledAt"
+          ],
+          "properties": {
+            "paymentIntentId": {
+              "$ref": "#/components/schemas/PaymentIntentId"
+            },
+            "status": {
+              "$ref": "#/components/schemas/PaymentStatus"
+            },
+            "txHash": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^0x[0-9a-f]{64}$",
+              "description": "送金のトランザクション。決済の実行を始める前は null"
+            },
+            "failedReason": {
+              "$ref": "#/components/schemas/FailedReason"
+            },
+            "returnUrl": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^https://",
+              "description": "作成時に指定した `returnUrl`。指定しなかったときは null"
+            },
+            "settledAt": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DateTime"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "成立した日時。`settled` 以外では null"
+            }
+          }
+        },
+        "WebhookEventPayload": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.settled",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.failed",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.canceled",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.expired",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "refund.confirmed",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "refund_id": {
+                      "type": "string",
+                      "pattern": "^rfd_[0-9a-f]{8,32}$"
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "status": {
+                      "const": "confirmed",
+                      "type": "string"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "refund_id",
+                    "payment_intent_id",
+                    "order_id",
+                    "amount_jpy",
+                    "status",
+                    "tx_hash",
+                    "failed_reason",
+                    "settled_at"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "refund.failed",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "refund_id": {
+                      "type": "string",
+                      "pattern": "^rfd_[0-9a-f]{8,32}$"
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "status": {
+                      "const": "failed",
+                      "type": "string"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "refund_id",
+                    "payment_intent_id",
+                    "order_id",
+                    "amount_jpy",
+                    "status",
+                    "tx_hash",
+                    "failed_reason",
+                    "settled_at"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            }
+          ]
+        },
+        "TestWebhookEvent": {
+          "type": "object",
+          "description": "加盟店コンソールから送るテスト通知。`test` が `true` で、実在する決済や注文を指さない。保存した URL へ 1 回だけ送り、再送しない",
+          "required": [
+            "id",
+            "type",
+            "created_at",
+            "test",
+            "data"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^evt_test_[0-9a-f]{24}$"
+            },
+            "type": {
+              "const": "payment.settled"
+            },
+            "created_at": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "送信した日時"
+            },
+            "test": {
+              "const": true
+            },
+            "data": {
+              "type": "object",
+              "required": [
+                "payment_intent_id",
+                "order_id",
+                "status",
+                "merchant_id",
+                "payout",
+                "amount_jpy",
+                "fee_jpy",
+                "net_received_jpy",
+                "tx_hash",
+                "settled_at",
+                "failed_reason",
+                "payer_address",
+                "net_amount_destination"
+              ],
+              "properties": {
+                "payment_intent_id": {
+                  "type": "string",
+                  "pattern": "^pi_test_[0-9a-f]{24}$"
+                },
+                "order_id": {
+                  "type": "string",
+                  "pattern": "^test_[0-9a-f]{24}$"
+                },
+                "status": {
+                  "const": "settled"
+                },
+                "merchant_id": {
+                  "type": "string",
+                  "pattern": "^m_[0-9a-f]{8,32}$",
+                  "description": "自社の加盟店 ID"
+                },
+                "payout": {
+                  "type": "string",
+                  "pattern": "^0x[0-9a-f]{40}$",
+                  "description": "登録している受取先のアドレス"
+                },
+                "amount_jpy": {
+                  "$ref": "#/components/schemas/AmountJpy",
+                  "description": "`\"1000\"`"
+                },
+                "fee_jpy": {
+                  "$ref": "#/components/schemas/AmountJpy",
+                  "description": "`\"0\"`"
+                },
+                "net_received_jpy": {
+                  "$ref": "#/components/schemas/AmountJpy",
+                  "description": "`\"1000\"`"
+                },
+                "tx_hash": {
+                  "type": "null"
+                },
+                "settled_at": {
+                  "$ref": "#/components/schemas/DateTime",
+                  "description": "送信した日時"
+                },
+                "failed_reason": {
+                  "type": "null"
+                },
+                "payer_address": {
+                  "const": "0x1111111111111111111111111111111111111111",
+                  "type": "string"
+                },
+                "net_amount_destination": {
+                  "const": "0x2222222222222222222222222222222222222222",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "DateTime": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?Z$",
+          "description": "UTC の `Z` で終わる ISO 8601 の日時。`+09:00` のようなオフセット付きと、暦に無い日付（2 月 30 日など）は受け付けない。リクエストでは秒とミリ秒を省略できる。応答はミリ秒まで付く",
+          "examples": [
+            "2026-10-20T03:00:00.000Z"
+          ]
+        },
+        "PaymentStatus": {
+          "type": "string",
+          "examples": [
+            "created",
+            "settled"
+          ],
+          "description": "決済の状態。`settled` だけが成立で、商品の提供や入金の計上はこの状態を根拠にします。\n\n| 値 | 区分 | 意味 |\n|---|---|---|\n| `created` | 途中 | 決済を作成した。署名を待っている |\n| `signed` | 途中 | 利用者の署名が済んだ |\n| `issue_pending` | 途中 | 利用者が JPYC EX の手続きへ進んだ。手続きが済んだことは意味しない |\n| `deposit_confirmed` | 途中 | 着金（または残高）を確認した。決済の実行前 |\n| `deploying` | 途中 | 必要なウォレット（利用者のウォレット、加盟店の受取ウォレット）を作成している |\n| `executing` | 途中 | 決済の実行を始めた。結果を確認している |\n| `settled` | 成立 | 決済が成立し、加盟店へ送金された |\n| `canceled` | 成立しなかった | 決済が取り消された |\n| `expired` | 成立しなかった | 期限が来て終了した |\n| `failed` | 成立しなかった | 決済が失敗した。理由は `failedReason` |\n| `nonce_conflict` | 要確認 | 結末を特定できなかった。成立とも失敗とも判断せず、保留して調査へ回す |\n\n`deposit_seen` は定義だけがあり、今は返りません。未知の値を受け取ったときは、商品の提供や再請求をせず、確認中として扱ってください。\n"
+        },
+        "AmountJpy": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "description": "円建ての金額。10 進の数の文字列で、整数部に先頭のゼロは付かない。応答では小数部の末尾の 0 を落とす（`\"1.50\"` は `\"1.5\"`、`\"4980.0\"` は `\"4980\"` になる）",
+          "examples": [
+            "4980",
+            "49.8"
+          ]
+        },
+        "FailedReason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "失敗の分類コード。`status` が `failed` または `nonce_conflict` のときに入り、それ以外では null です。\nコードは増えることがあるので、列挙で厳密に検証せず、**未知の値は失敗として扱うフォールバックに落としてください。**\n生のチェーンのエラー文字列と、発行体の取引可否判断の理由は入りません。\n\n| コード | 意味 |\n|---|---|\n| `userop_expired` | 着金または残高の充足は確認できたが、決済を実行できる時刻を過ぎていた。お金は届いている |\n| `deposit_recipient_mismatch` | 着金の宛先が、決済で想定した宛先と違う |\n| `wallet_deploy_failed` | 必要なウォレット（利用者のウォレットまたは加盟店の受取ウォレット）の作成に失敗した |\n| `missing_signed_userop` | 実行に必要な署名済みの操作が無かった |\n| `insufficient_balance` | 支払人の残高が足りない |\n| `policy_violation` | 支払人のウォレットの金額上限・頻度上限に触れた |\n| `not_pay_call` / `not_allowed_call` | 許可された形の支払い操作ではなかった |\n| `fee_amount_mismatch` | 手数料の額が合わない |\n| `fee_not_collected` | 手数料が徴収されていない |\n| `merchant_wallet_outdated` | 加盟店の受取ウォレットの実装が古く、猶予を過ぎている |\n| `unexpected_implementation` | ウォレットの実装が想定と違う |\n| `userop_reverted` | 上のどれにも当てはまらない、支払い操作の失敗 |\n| `nonce_conflict` | 結末を特定できなかった（`status` も `nonce_conflict`）。Webhook には入らない |\n| `merchant_suspended` | 加盟店の利用停止で、送信を開始していない決済を終端にした |\n| `unclassified` | まだ分類していない失敗 |\n",
+          "examples": [
+            "insufficient_balance"
+          ]
+        }
+      },
+      "responses": {
+        "TooManyRequests": {
+          "description": "回数の制限にかかった。間を置いて再試行してください。\n決済作成と状態照会には、アプリ側の回数制限はありません。ただし、前段のネットワークで回数を制限することがあり、そのときの本文には `code` が入りません\n"
+        }
+      },
+      "securitySchemes": {
+        "apiKey": {
+          "type": "apiKey",
+          "in": "header",
+          "name": "x-stbl-api-key",
+          "description": "加盟店コンソールで店舗ごとに発行する API キー。形式は `stblpay_` に 43 文字の base64url が続く文字列です。\n`Authorization` ヘッダーは使いません。\n"
+        }
+      }
+    }
+  },
+  "en": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "STBLpay API",
+      "version": "0.35.0-feat-699-payment-lookup.152",
+      "summary": "The API your merchant server calls, and the Webhook your merchant server receives",
+      "description": "The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server receives, for STBLpay (pronounced \"stable pay\").\nThe integration flow and notes are in the [merchant documentation](https://stbl-pay.com/docs/en/).\n\n- Bodies are JSON. REST API fields are camelCase, and Webhook bodies are snake_case.\n- Amounts are decimal strings in yen (example: `\"4980\"`). They are not JSON numbers. Handle fractions such as fees without converting them to floating-point numbers.\n- Date-times are ISO 8601 in UTC, ending with `Z`. Responses include milliseconds.\n- The error body is `{ \"code\": \"...\", \"details\": { ... } }`. `details` may be absent. Branch on `code`, and use the HTTP status only as a supplement. Codes may be added, so fall back to your common error handling for unknown codes.\nMachine refund endpoints are draft for preview review; production availability is not announced.",
+      "contact": {
+        "name": "STBLpay contact",
+        "url": "https://stbl-pay.com/docs/en/support/troubleshooting"
+      }
+    },
+    "servers": [
+      {
+        "url": "{baseUrl}",
+        "description": "Check the endpoint URL with your [contact](https://stbl-pay.com/docs/en/support/troubleshooting). Do not assume a public URL or a localhost default",
+        "variables": {
+          "baseUrl": {
+            "default": "https://api.example.com",
+            "description": "The endpoint URL you confirmed (without a trailing /). The default is a placeholder to be replaced"
+          }
+        }
+      },
+      {
+        "url": "https://api.sandbox.stbl-pay.com",
+        "description": "Sandbox (the JPYC EX part is a mock. https://stbl-pay.com/docs/en/testing/sandbox)"
+      }
+    ],
+    "tags": [
+      {
+        "name": "Payments",
+        "description": "Creating payments and looking up their status"
+      }
+    ],
+    "paths": {
+      "/payment_intents": {
+        "post": {
+          "operationId": "createPaymentIntent",
+          "tags": [
+            "Payments"
+          ],
+          "summary": "Create a payment",
+          "description": "Creates a payment and returns the URL of the checkout page (`checkoutUrl`) that you send the buyer to by top-level navigation.\nEven if the response `status` is `created`, the payment has not succeeded. Confirm success with a Webhook or a status lookup.\n\nCalling again from the same store with the same `orderId` returns the existing payment instead of creating a new one (this is also a 201).\nThe response has the `status` at that moment, and the amount, fee, and deadline decided at the first creation.\nFrom the second call on, the type and format of the body, the store state, and `returnUrl` are still checked. When a payment already exists, the values of the `amountJpy` and `merchantExpiresAt` you sent are not checked (whether the amount is 0, whether the deadline is too close) and are not applied.\n\nCall this from your server. Do not expose the API key to the browser.\n",
+          "security": [
+            {
+              "apiKey": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePaymentIntentRequest"
+                },
+                "examples": {
+                  "basic": {
+                    "summary": "Create with an order ID and a return URL",
+                    "value": {
+                      "amountJpy": "4980",
+                      "orderId": "ord_0001",
+                      "returnUrl": "https://shop.example.com/orders/ord_0001/return"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "The payment was created, or the existing payment with the same `orderId` was returned",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CreatePaymentIntentResponse"
+                  },
+                  "examples": {
+                    "created": {
+                      "summary": "Newly created (values are examples)",
+                      "value": {
+                        "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                        "checkoutUrl": "https://checkout.example/checkout/pi_0123456789abcdef0123456789abcdef",
+                        "status": "created",
+                        "amountJpy": "4980",
+                        "feeJpy": "49.8",
+                        "netAmountJpy": "4930.2",
+                        "checkoutExpiresAt": "2026-10-20T03:00:00.000Z",
+                        "createdAt": "2026-10-19T03:00:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "The request is invalid.\n\n- `common/invalid_request`: A violation of the body's type or format. For a format violation, `details.issues` holds the list of violations. When the amount is 0, or the fractional part of the amount exceeds 6 digits, there is no `details`\n- `payment/expires_at_too_soon`: `merchantExpiresAt` is too close. `details.minSeconds` holds the minimum number of seconds required from the time of creation\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "invalidRequest": {
+                      "summary": "Body format violation",
+                      "value": {
+                        "code": "common/invalid_request",
+                        "details": {
+                          "issues": [
+                            {
+                              "code": "invalid_string",
+                              "validation": "regex",
+                              "path": [
+                                "amountJpy"
+                              ],
+                              "message": "10 進の非負数"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "amountZero": {
+                      "summary": "Amount is 0 (no details)",
+                      "value": {
+                        "code": "common/invalid_request"
+                      }
+                    },
+                    "expiresAtTooSoon": {
+                      "summary": "merchantExpiresAt is too close",
+                      "value": {
+                        "code": "payment/expires_at_too_soon",
+                        "details": {
+                          "minSeconds": 259200
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "`auth/api_key_invalid`: The API key is invalid, revoked, or was not sent",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "apiKeyInvalid": {
+                      "value": {
+                        "code": "auth/api_key_invalid"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "- `merchant/suspended`: The merchant is suspended. A payment cannot be created. Wait for the suspension to be lifted\n- `merchant/origin_mismatch`: `returnUrl` does not meet the registered-domain conditions\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "suspended": {
+                      "value": {
+                        "code": "merchant/suspended"
+                      }
+                    },
+                    "originMismatch": {
+                      "value": {
+                        "code": "merchant/origin_mismatch"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "- `store/disabled`: The store is disabled. Check the store's status in the merchant console\n- `merchant/domain_required`: An EC payment requires a registered domain. Register one in the merchant console\n- `payment/order_terminated`: The existing payment with the same `orderId` was terminated by a merchant suspension, or was created before the suspension and has not been submitted yet. `details` holds the existing payment's `paymentIntentId`, `status`, and `failedReason`. Create the payment again with a new `orderId`\n- `payment/order_id_conflict`: The `orderId` was already used at a different store of the same merchant. The other store's payment is not returned. Retrying with the same value does not resolve it, so create the payment again with a new `orderId`\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "storeDisabled": {
+                      "value": {
+                        "code": "store/disabled"
+                      }
+                    },
+                    "domainRequired": {
+                      "value": {
+                        "code": "merchant/domain_required"
+                      }
+                    },
+                    "orderTerminated": {
+                      "value": {
+                        "code": "payment/order_terminated",
+                        "details": {
+                          "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                          "status": "failed",
+                          "failedReason": "merchant_suspended"
+                        }
+                      }
+                    },
+                    "orderIdConflict": {
+                      "value": {
+                        "code": "payment/order_id_conflict"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "description": "`common/internal`: A server-side failure. Retrying with the same `orderId` does not create the payment twice\n",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "internal": {
+                      "value": {
+                        "code": "common/internal"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/payment_status/{paymentIntentId}": {
+        "get": {
+          "operationId": "getPaymentStatus",
+          "tags": [
+            "Payments"
+          ],
+          "summary": "Retrieve payment status",
+          "description": "Returns the current status of a payment. **There is no authentication.** No API key or Authorization header is needed.\nA payment ID is not a secret, so do not use it in place of permission to view your own orders.\nThis response does not include amounts, fees, or wallets.\n",
+          "security": [],
+          "parameters": [
+            {
+              "name": "paymentIntentId",
+              "in": "path",
+              "required": true,
+              "description": "The `paymentIntentId` you received when creating the payment. An ID in the wrong format (including IDs starting with `pi_test_` from test notifications) returns 400 before its existence is checked",
+              "schema": {
+                "$ref": "#/components/schemas/PaymentIntentId"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "The current status of the payment",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaymentStatusView"
+                  },
+                  "examples": {
+                    "settled": {
+                      "summary": "Succeeded (values are examples)",
+                      "value": {
+                        "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                        "status": "settled",
+                        "txHash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "failedReason": null,
+                        "returnUrl": "https://shop.example.com/orders/ord_0001/return",
+                        "settledAt": "2026-10-19T03:05:00.000Z"
+                      }
+                    },
+                    "failed": {
+                      "summary": "Failed (values are examples)",
+                      "value": {
+                        "paymentIntentId": "pi_0123456789abcdef0123456789abcdef",
+                        "status": "failed",
+                        "txHash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "failedReason": "insufficient_balance",
+                        "returnUrl": null,
+                        "settledAt": null
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "`common/invalid_request`: The payment ID is in the wrong format (no `details`)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "invalidRequest": {
+                      "value": {
+                        "code": "common/invalid_request"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "`payment/not_found`: There is no payment with that payment ID",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "examples": {
+                    "notFound": {
+                      "value": {
+                        "code": "payment/not_found"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "429": {
+              "$ref": "#/components/responses/TooManyRequests"
+            },
+            "500": {
+              "description": "`common/internal`: A server-side failure",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "webhooks": {
+      "paymentEvent": {
+        "post": {
+          "operationId": "receivePaymentEvent",
+          "summary": "Receive the payment result (implemented by the merchant's server)",
+          "description": "When a payment reaches a terminal state, STBLpay sends a `POST` to the URL registered in the merchant console.\nThere is one destination URL and one signing secret per merchant, and notifications for payments from every online shop arrive at the same URL.\nTell the types apart by `type` in the body (`payment.settled`, `payment.failed`, `payment.canceled`, `payment.expired`). Make sure an unknown type can be ignored by returning 2xx.\nThere is no notification for a payment whose outcome could not be determined (`nonce_conflict`). Confirm it with a status lookup.\n\n**When you receive a notification, process it in this order.**\n\n1. Verify the signature. Build `\"<t>.<body>\"` from the `t` in `Stbl-Pay-Signature` and the byte string of the body before it goes through a JSON parser, compute HMAC-SHA256 with the signing secret, and encode it as lowercase hex. Accept it if it matches any `v1`. Use 300 seconds as the initial tolerance for the difference between `t` and the current time\n2. If `test` in the body parsed with `JSON.parse` is `true`, it is a test notification sent from the merchant console. Return 2xx without updating any order or payment state\n3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return 2xx without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape\n4. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a resend, the `id` and the body do not change\n5. Return 2xx after saving. If you respond first and then stop right after, you lose the notification and it is not resent\n6. Run business processing from the saved event. Base the deposit recording on `net_received_jpy` in `payment.settled`\n\n**Delivery and resends**\n\n- A 2xx response is a success. The response body is not read\n- A non-2xx response (3xx, 4xx, 5xx), a timeout, and a connection or TLS failure are all treated as failures and resent. Redirects are not followed\n- The timeout is 10 seconds in the current configuration. Return 2xx once you have saved the event, and defer time-consuming work\n- The intervals after a failure are 3 seconds, 10 seconds, 30 seconds, 120 seconds, and 600 seconds. Together with the first attempt there are 6 attempts in total, after which delivery is abandoned\n- A resend keeps the body and `id`, and regenerates `t` and the signature for each attempt. The order of arrival is not guaranteed\n\nFor details, see [Signature verification](https://stbl-pay.com/docs/en/webhooks/signature), [Retry policy](https://stbl-pay.com/docs/en/webhooks/retry), and [Idempotency and ordering](https://stbl-pay.com/docs/en/webhooks/idempotency).\nDraft preview adds refund.confirmed and refund.failed with dedicated refund data; do not parse these as payment data.",
+          "security": [],
+          "parameters": [
+            {
+              "name": "Stbl-Pay-Signature",
+              "in": "header",
+              "required": true,
+              "description": "In the form `t=<Unix seconds>,v1=<lowercase hex of HMAC-SHA256>`, separated by commas.\nFor 24 hours after the signing secret is regenerated, two `v1` values appear side by side, one for the old key and one for the new key. Keep all of them, and do not convert the header into a dictionary that overwrites keys with the same name.\nThe signing secret is a string that starts with `whsec_`. Use the whole string, including `whsec_`, as the HMAC key as it is.\n",
+              "schema": {
+                "type": "string"
+              },
+              "example": "t=1792900000,v1=5f2b0c1e9d8a7b6c5f4e3d2c1b0a99887766554433221100ffeeddccbbaa9988"
+            },
+            {
+              "name": "Stbl-Pay-Event-Id",
+              "in": "header",
+              "required": true,
+              "description": "A copy of the `id` in the body. It does not change on a resend. It is not covered by the signature, so use the `id` of the signature-verified body to remove duplicates",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "description": "`Content-Type` is `application/json; charset=utf-8`. Do not depend on the order of keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/WebhookEventPayload"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TestWebhookEvent"
+                    }
+                  ]
+                },
+                "examples": {
+                  "settled": {
+                    "summary": "payment.settled (values are examples)",
+                    "value": {
+                      "id": "evt_0123456789abcdef0123456789abcdef",
+                      "type": "payment.settled",
+                      "created_at": "2026-10-19T03:05:01.000Z",
+                      "data": {
+                        "payment_intent_id": "pi_0123456789abcdef0123456789abcdef",
+                        "order_id": "ord_0001",
+                        "status": "settled",
+                        "merchant_id": "m_0123456789abcdef0123456789abcdef",
+                        "payout": "0x0123456789abcdef0123456789abcdef01234567",
+                        "amount_jpy": "4980",
+                        "fee_jpy": "49.8",
+                        "net_received_jpy": "4930.2",
+                        "tx_hash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "settled_at": "2026-10-19T03:05:00.000Z",
+                        "failed_reason": null,
+                        "payer_address": null,
+                        "net_amount_destination": null
+                      }
+                    }
+                  },
+                  "failed": {
+                    "summary": "payment.failed (values are examples)",
+                    "value": {
+                      "id": "evt_fedcba9876543210fedcba9876543210",
+                      "type": "payment.failed",
+                      "created_at": "2026-10-19T03:05:01.000Z",
+                      "data": {
+                        "payment_intent_id": "pi_0123456789abcdef0123456789abcdef",
+                        "order_id": "ord_0001",
+                        "status": "failed",
+                        "merchant_id": "m_0123456789abcdef0123456789abcdef",
+                        "payout": "0x0123456789abcdef0123456789abcdef01234567",
+                        "amount_jpy": "4980",
+                        "fee_jpy": "0",
+                        "net_received_jpy": "0",
+                        "tx_hash": "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                        "settled_at": null,
+                        "failed_reason": "insufficient_balance",
+                        "payer_address": null,
+                        "net_amount_destination": null
+                      }
+                    }
+                  },
+                  "test": {
+                    "summary": "Test notification (values are examples)",
+                    "value": {
+                      "id": "evt_test_0123456789abcdef01234567",
+                      "type": "payment.settled",
+                      "created_at": "2026-10-28T01:02:03.456Z",
+                      "test": true,
+                      "data": {
+                        "payment_intent_id": "pi_test_0123456789abcdef01234567",
+                        "order_id": "test_0123456789abcdef01234567",
+                        "status": "settled",
+                        "merchant_id": "m_0123456789abcdef0123456789abcdef",
+                        "payout": "0x0123456789abcdef0123456789abcdef01234567",
+                        "amount_jpy": "1000",
+                        "fee_jpy": "0",
+                        "net_received_jpy": "1000",
+                        "tx_hash": null,
+                        "settled_at": "2026-10-28T01:02:03.456Z",
+                        "failed_reason": null,
+                        "payer_address": "0x1111111111111111111111111111111111111111",
+                        "net_amount_destination": "0x2222222222222222222222222222222222222222"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "2XX": {
+              "description": "Received successfully. The body is not read"
+            },
+            "default": {
+              "description": "Anything other than 2xx is treated as a failure and resent"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "CreatePaymentIntentRequest": {
+          "type": "object",
+          "required": [
+            "amountJpy"
+          ],
+          "properties": {
+            "amountJpy": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+              "not": {
+                "pattern": "^0(\\.0+)?$"
+              },
+              "description": "The amount to charge (yen). A string of a decimal number, with no leading zeros in the integer part (examples: `\"4980\"`, `\"0.5\"`).\nThe amount must be greater than 0 (`\"0\"` gives 400 `common/invalid_request`). The fractional part can have up to 6 digits.\nThis API does not impose its own upper or lower limit on the amount. At payment time, the amount limit or frequency limit of the buyer's wallet may be hit and the payment may not succeed (`failedReason` is `policy_violation`)\n",
+              "examples": [
+                "4980"
+              ]
+            },
+            "orderId": {
+              "type": "string",
+              "maxLength": 128,
+              "description": "An ID for each payment attempt. The idempotency key. Creating again from the same store with the same value returns the existing payment.\nUse the same value when you resend the request, and a new value when the buyer pays again after `failed`, `expired`, or `canceled`. You can use your own order number as it is only if you do not let the buyer pay again for the same order.\nThe length is counted in UTF-16 code units, up to 128 (an emoji counts as 2 units). `maxLength` counts characters, so a value containing emoji may pass the schema and still get 400 `common/invalid_request`.\nIf omitted, a new payment is created on every call. With multiple stores, assign values that are unique across the whole merchant (a value used at a different store gives 409 `payment/order_id_conflict`)\n",
+              "examples": [
+                "ord_0001"
+              ]
+            },
+            "returnUrl": {
+              "type": "string",
+              "pattern": "^https://",
+              "description": "The URL the buyer returns to after payment. The payment is not created unless all of the following conditions are met.\n\n- The scheme is `https` (`http` is not allowed, including development URLs such as `http://localhost`)\n- No port number (`:443` is accepted)\n- No userinfo such as `user:pass@`\n- The hostname exactly matches a domain registered in the merchant console (case-insensitive; a subdomain is a different domain)\n\nA URL that is not `https` gives 400 `common/invalid_request`. However, `http://localhost`, `http://127.0.0.1`, and `http://[::1]` give 403 `merchant/origin_mismatch`. An `https` URL that fails the other conditions also gives 403 `merchant/origin_mismatch`.\nThere are no restrictions on the path and query. When the buyer returns, a `stbl_pay_intent` query parameter (whose value is the payment ID) is appended.\n",
+              "examples": [
+                "https://shop.example.com/orders/ord_0001/return"
+              ]
+            },
+            "merchantExpiresAt": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "The upper limit of the deposit deadline. Only a date-time more than 3 days after creation can be specified (too close gives 400 `payment/expires_at_too_soon`).\nThe operation deadline (`checkoutExpiresAt`) does not become shorter. Even if you create again with the same `orderId`, the value received first is not overwritten\n",
+              "examples": [
+                "2026-10-25T03:00:00Z"
+              ]
+            }
+          }
+        },
+        "CreatePaymentIntentResponse": {
+          "type": "object",
+          "required": [
+            "paymentIntentId",
+            "checkoutUrl",
+            "status",
+            "amountJpy",
+            "feeJpy",
+            "netAmountJpy",
+            "checkoutExpiresAt",
+            "createdAt"
+          ],
+          "properties": {
+            "paymentIntentId": {
+              "$ref": "#/components/schemas/PaymentIntentId",
+              "description": "The payment ID. Store it linked to your own order"
+            },
+            "checkoutUrl": {
+              "type": "string",
+              "pattern": "^https://",
+              "description": "The URL of the checkout page that you send the buyer to by top-level navigation"
+            },
+            "status": {
+              "$ref": "#/components/schemas/PaymentStatus",
+              "description": "`created` when newly created. When the existing payment with the same `orderId` is returned, its status at that moment"
+            },
+            "amountJpy": {
+              "$ref": "#/components/schemas/AmountJpy",
+              "description": "The amount charged"
+            },
+            "feeJpy": {
+              "$ref": "#/components/schemas/AmountJpy",
+              "description": "An estimate of the fee at the time of creation. The actual fee is received in `fee_jpy` of the `payment.settled` Webhook and may differ from this value"
+            },
+            "netAmountJpy": {
+              "$ref": "#/components/schemas/AmountJpy",
+              "description": "An estimate of the amount the merchant receives (`amountJpy` − `feeJpy`)"
+            },
+            "checkoutExpiresAt": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "The deadline of the checkout page"
+            },
+            "createdAt": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "The date-time the payment was created"
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "required": [
+            "code"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "The error code. Fall back to your common error handling for unknown codes",
+              "examples": [
+                "common/invalid_request"
+              ]
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Additional information for each code. It may be absent. The server does not return display text, so the merchant decides it.\n\n- `common/invalid_request` (body format violation): `issues` is an array of violations. In each element, `path` is an array pointing to the field, and `message` is the reason\n- `payment/expires_at_too_soon`: `minSeconds` is the minimum number of seconds required from the time of creation\n- `payment/order_terminated`: the existing payment's `paymentIntentId`, `status`, and `failedReason`\n"
+            }
+          }
+        },
+        "PaymentIntentId": {
+          "type": "string",
+          "pattern": "^pi_[0-9a-f]{8,32}$",
+          "description": "The payment ID. `pi_` followed by 8 to 32 lowercase hex digits",
+          "examples": [
+            "pi_0123456789abcdef0123456789abcdef"
+          ]
+        },
+        "PaymentStatusView": {
+          "type": "object",
+          "required": [
+            "paymentIntentId",
+            "status",
+            "txHash",
+            "failedReason",
+            "returnUrl",
+            "settledAt"
+          ],
+          "properties": {
+            "paymentIntentId": {
+              "$ref": "#/components/schemas/PaymentIntentId"
+            },
+            "status": {
+              "$ref": "#/components/schemas/PaymentStatus"
+            },
+            "txHash": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^0x[0-9a-f]{64}$",
+              "description": "The transfer transaction. null before execution of the payment starts"
+            },
+            "failedReason": {
+              "$ref": "#/components/schemas/FailedReason"
+            },
+            "returnUrl": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^https://",
+              "description": "The `returnUrl` specified at creation. null if none was specified"
+            },
+            "settledAt": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DateTime"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The date-time the payment succeeded. null for any status other than `settled`"
+            }
+          }
+        },
+        "WebhookEventPayload": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.settled",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.failed",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.canceled",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "payment.expired",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "payer_address": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "net_amount_destination": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{40}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "signed",
+                        "issue_pending",
+                        "deposit_seen",
+                        "deposit_confirmed",
+                        "deploying",
+                        "executing",
+                        "settled",
+                        "canceled",
+                        "expired",
+                        "failed",
+                        "nonce_conflict"
+                      ]
+                    },
+                    "merchant_id": {
+                      "type": "string",
+                      "pattern": "^m_[0-9a-f]{8,32}$"
+                    },
+                    "payout": {
+                      "type": "string",
+                      "pattern": "^0x[0-9a-f]{40}$"
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "fee_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "net_received_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "payment_intent_id",
+                    "order_id",
+                    "status",
+                    "merchant_id",
+                    "payout",
+                    "amount_jpy",
+                    "fee_jpy",
+                    "net_received_jpy",
+                    "tx_hash",
+                    "settled_at",
+                    "failed_reason"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "refund.confirmed",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "refund_id": {
+                      "type": "string",
+                      "pattern": "^rfd_[0-9a-f]{8,32}$"
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "status": {
+                      "const": "confirmed",
+                      "type": "string"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "refund_id",
+                    "payment_intent_id",
+                    "order_id",
+                    "amount_jpy",
+                    "status",
+                    "tx_hash",
+                    "failed_reason",
+                    "settled_at"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^evt_[0-9a-f]{8,32}$"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "const": "refund.failed",
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "refund_id": {
+                      "type": "string",
+                      "pattern": "^rfd_[0-9a-f]{8,32}$"
+                    },
+                    "payment_intent_id": {
+                      "type": "string",
+                      "pattern": "^pi_[0-9a-f]{8,32}$"
+                    },
+                    "order_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "amount_jpy": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$"
+                    },
+                    "status": {
+                      "const": "failed",
+                      "type": "string"
+                    },
+                    "tx_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-f]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "failed_reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "settled_at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "refund_id",
+                    "payment_intent_id",
+                    "order_id",
+                    "amount_jpy",
+                    "status",
+                    "tx_hash",
+                    "failed_reason",
+                    "settled_at"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "id",
+                "created_at",
+                "type",
+                "data"
+              ],
+              "additionalProperties": true
+            }
+          ]
+        },
+        "TestWebhookEvent": {
+          "type": "object",
+          "description": "A test notification sent from the merchant console. `test` is `true`, and it does not point to a real payment or order. It is sent only once to the saved URL and is not resent",
+          "required": [
+            "id",
+            "type",
+            "created_at",
+            "test",
+            "data"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^evt_test_[0-9a-f]{24}$"
+            },
+            "type": {
+              "const": "payment.settled"
+            },
+            "created_at": {
+              "$ref": "#/components/schemas/DateTime",
+              "description": "The date-time it was sent"
+            },
+            "test": {
+              "const": true
+            },
+            "data": {
+              "type": "object",
+              "required": [
+                "payment_intent_id",
+                "order_id",
+                "status",
+                "merchant_id",
+                "payout",
+                "amount_jpy",
+                "fee_jpy",
+                "net_received_jpy",
+                "tx_hash",
+                "settled_at",
+                "failed_reason",
+                "payer_address",
+                "net_amount_destination"
+              ],
+              "properties": {
+                "payment_intent_id": {
+                  "type": "string",
+                  "pattern": "^pi_test_[0-9a-f]{24}$"
+                },
+                "order_id": {
+                  "type": "string",
+                  "pattern": "^test_[0-9a-f]{24}$"
+                },
+                "status": {
+                  "const": "settled"
+                },
+                "merchant_id": {
+                  "type": "string",
+                  "pattern": "^m_[0-9a-f]{8,32}$",
+                  "description": "Your own merchant ID"
+                },
+                "payout": {
+                  "type": "string",
+                  "pattern": "^0x[0-9a-f]{40}$",
+                  "description": "The address of your registered receiving wallet"
+                },
+                "amount_jpy": {
+                  "$ref": "#/components/schemas/AmountJpy",
+                  "description": "`\"1000\"`"
+                },
+                "fee_jpy": {
+                  "$ref": "#/components/schemas/AmountJpy",
+                  "description": "`\"0\"`"
+                },
+                "net_received_jpy": {
+                  "$ref": "#/components/schemas/AmountJpy",
+                  "description": "`\"1000\"`"
+                },
+                "tx_hash": {
+                  "type": "null"
+                },
+                "settled_at": {
+                  "$ref": "#/components/schemas/DateTime",
+                  "description": "The date-time it was sent"
+                },
+                "failed_reason": {
+                  "type": "null"
+                },
+                "payer_address": {
+                  "const": "0x1111111111111111111111111111111111111111",
+                  "type": "string"
+                },
+                "net_amount_destination": {
+                  "const": "0x2222222222222222222222222222222222222222",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "DateTime": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?Z$",
+          "description": "An ISO 8601 date-time in UTC, ending with `Z`. Values with an offset such as `+09:00`, and dates that do not exist on the calendar (such as February 30), are not accepted. In requests, seconds and milliseconds can be omitted. Responses include milliseconds",
+          "examples": [
+            "2026-10-20T03:00:00.000Z"
+          ]
+        },
+        "PaymentStatus": {
+          "type": "string",
+          "examples": [
+            "created",
+            "settled"
+          ],
+          "description": "The payment status. Only `settled` means the payment succeeded; base delivery of goods and recording of deposits on this status.\n\n| Value | Category | Meaning |\n|---|---|---|\n| `created` | In progress | The payment was created. It is waiting for a signature |\n| `signed` | In progress | The buyer's signature is done |\n| `issue_pending` | In progress | The buyer proceeded to the JPYC EX procedure. This does not mean the procedure is complete |\n| `deposit_confirmed` | In progress | The deposit (or the balance) was confirmed. The payment has not been executed yet |\n| `deploying` | In progress | Creating the required wallets (the buyer's wallet and the merchant's receiving wallet) |\n| `executing` | In progress | Execution of the payment has started. The result is being confirmed |\n| `settled` | Succeeded | The payment succeeded and the funds were transferred to the merchant |\n| `canceled` | Did not succeed | The payment was canceled |\n| `expired` | Did not succeed | The payment ended because a deadline passed |\n| `failed` | Did not succeed | The payment failed. The reason is in `failedReason` |\n| `nonce_conflict` | Needs review | The outcome could not be determined. Do not treat it as either success or failure; hold it and refer it for investigation |\n\n`deposit_seen` is defined but is not returned now. If you receive an unknown value, do not deliver goods or charge again; treat the payment as under review.\n"
+        },
+        "AmountJpy": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "description": "An amount in yen. A string of a decimal number, with no leading zeros in the integer part. In responses, trailing zeros in the fractional part are dropped (`\"1.50\"` becomes `\"1.5\"`, and `\"4980.0\"` becomes `\"4980\"`)",
+          "examples": [
+            "4980",
+            "49.8"
+          ]
+        },
+        "FailedReason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The failure classification code. It is set when `status` is `failed` or `nonce_conflict`, and null otherwise.\nCodes may be added, so do not validate strictly against an enumeration; **fall back to treating an unknown value as a failure.**\nRaw blockchain error strings and the issuer's reasons for a transaction decision are not included.\n\n| Code | Meaning |\n|---|---|\n| `userop_expired` | The deposit or a sufficient balance was confirmed, but the time when the payment could be executed had passed. The money has arrived |\n| `deposit_recipient_mismatch` | The recipient of the deposit differs from the recipient expected for the payment |\n| `wallet_deploy_failed` | Creating a required wallet (the buyer's wallet or the merchant's receiving wallet) failed |\n| `missing_signed_userop` | The signed operation required for execution was missing |\n| `insufficient_balance` | The payer's balance is insufficient |\n| `policy_violation` | The amount limit or frequency limit of the payer's wallet was hit |\n| `not_pay_call` / `not_allowed_call` | The operation was not an allowed form of payment operation |\n| `fee_amount_mismatch` | The fee amount does not match |\n| `fee_not_collected` | The fee was not collected |\n| `merchant_wallet_outdated` | The merchant's receiving wallet implementation is outdated and the grace period has passed |\n| `unexpected_implementation` | The wallet implementation differs from what was expected |\n| `userop_reverted` | A payment operation failure that matches none of the above |\n| `nonce_conflict` | The outcome could not be determined (`status` is also `nonce_conflict`). It is not included in the Webhook |\n| `merchant_suspended` | A payment that had not started submission was moved to a terminal state because of a merchant suspension |\n| `unclassified` | A failure that has not been classified yet |\n",
+          "examples": [
+            "insufficient_balance"
+          ]
+        }
+      },
+      "responses": {
+        "TooManyRequests": {
+          "description": "Rate limited. Retry after a pause.\nPayment creation and status lookup have no application-level rate limit. However, the network layer in front may apply rate limiting, and the body in that case does not contain a `code`\n"
+        }
+      },
+      "securitySchemes": {
+        "apiKey": {
+          "type": "apiKey",
+          "in": "header",
+          "name": "x-stbl-api-key",
+          "description": "An API key issued per store in the merchant console. Its format is `stblpay_` followed by 43 characters of base64url.\nThe `Authorization` header is not used.\n"
+        }
+      }
+    }
+  }
+}

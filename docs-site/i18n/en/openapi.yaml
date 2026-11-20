@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: STBLpay API
-  version: 0.35.0-feat-699-payment-lookup.152
+  version: 0.40.0
   summary: The API your merchant server calls, and the Webhook your merchant server receives
   description: >-
     The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server
@@ -38,6 +38,49 @@ servers:
 tags:
   - name: Payments
     description: Creating payments and looking up their status
+  - name: Refunds
+    description: >-
+      A machine is an actor that signs refunds using a signing key held by the merchant server. This specification is
+      being prepared for publication. Register the signing key and approve the delegation in the dashboard.
+
+
+      1. Check the executable amount and blocker with getMachineRefundable.
+
+      2. Prepare the refund with prepareMachineRefund. The server builds the UserOperation and reserves reservedJpy.
+
+      3. Sign the challenge and send it with submitMachineRefund.
+
+      4. 202 means acceptance, not completion. Save refundId and query the result with getMachineRefund or
+      listMachinePaymentRefunds.
+
+      5. Recover from lost responses using the table below. Discard unconsumed preparations you intentionally abandon
+      with discardMachineStagedOperation.
+
+
+      Preparation and submission are separate because the machine signs the digest of a UserOperation containing the
+      server-determined recipient, amount, nonce, upgrade and expiry. The recipient is fixed to the original payer and
+      cannot be specified. Merchant wallet operations through the owner and machines proceed one at a time. A wallet
+      upgrade may be included with a refund. Revocation or approval of a new cap does not cancel accepted refunds.
+      Ango-ya may refuse to co-sign after validation, but funds cannot move without the machine's signature.
+
+
+      | Operation whose response was lost | Recovery |
+
+      | --- | --- |
+
+      | Preparation | Query ownStaged and coordinate with the process that created it. Discard and prepare again only
+      when intentionally abandoning it. |
+
+      | Submission | Resend the same stagedOpId and assertion, refreshing only the HTTP signature nonce, timestamp and
+      signature. Do not prepare again. |
+
+      | HTTP 419 | Correct the clock offset using details.serverTime and retry once with a new nonce, timestamp and HTTP
+      signature. |
+
+
+      See [Refunds from a merchant server](https://stbl-pay.com/docs/en/refunds/machine-api) for the flow, and [Refund
+      API signatures](https://stbl-pay.com/docs/en/refunds/signing) for the signing procedure and reference
+      implementation.
 paths:
   /payment_intents:
     post:
@@ -288,342 +331,1275 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /staged_operations/{stagedOpId}:
-    delete:
-      parameters:
-        - name: stagedOpId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: x-stbl-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
-        - name: x-stbl-signature
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9a-f]{128}$
-        - name: x-stbl-timestamp
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9]+$
-        - name: x-stbl-nonce
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^0x[0-9a-f]{64}$
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok:
-                    const: true
-                    type: boolean
-                required:
-                  - ok
-                additionalProperties: true
-      x-auth-scheme: machine-signature
-      description: >-
-        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
-        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
-        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
-      operationId: deleteMachinestagedoperationsstagedOpId
-  /refunds/{refundId}:
+  /payments/{paymentIntentId}:
     get:
-      parameters:
-        - name: refundId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: x-stbl-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
-        - name: x-stbl-signature
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9a-f]{128}$
-        - name: x-stbl-timestamp
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9]+$
-        - name: x-stbl-nonce
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^0x[0-9a-f]{64}$
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  actor:
-                    oneOf:
-                      - type: object
-                        properties:
-                          kind:
-                            const: owner
-                            type: string
-                        required:
-                          - kind
-                        additionalProperties: true
-                      - type: object
-                        properties:
-                          kind:
-                            const: machine
-                            type: string
-                          memberId:
-                            type: string
-                            pattern: ^mem_[0-9a-f]{8,32}$
-                          label:
-                            anyOf:
-                              - type: string
-                              - type: 'null'
-                        required:
-                          - kind
-                          - memberId
-                          - label
-                        additionalProperties: true
-                  refundId:
-                    type: string
-                    pattern: ^rfd_[0-9a-f]{8,32}$
-                  walletOperationId:
-                    type: string
-                    pattern: ^wop_[0-9a-f]{8,32}$
-                  amountJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  status:
-                    type: string
-                    enum:
-                      - queued
-                      - submitted
-                      - confirmed
-                      - failed
-                      - indeterminate
-                  includesUpgrade:
-                    type: boolean
-                  txHash:
-                    anyOf:
-                      - type: string
-                        pattern: ^0x[0-9a-f]{64}$
-                      - type: 'null'
-                  failureReason:
-                    anyOf:
-                      - type: string
-                      - type: 'null'
-                  acceptedAt:
-                    type: string
-                    format: date-time
-                  settledAt:
-                    anyOf:
-                      - type: string
-                        format: date-time
-                      - type: 'null'
-                required:
-                  - refundId
-                  - walletOperationId
-                  - amountJpy
-                  - status
-                  - includesUpgrade
-                  - txHash
-                  - failureReason
-                  - acceptedAt
-                  - settledAt
-                additionalProperties: true
-      x-auth-scheme: machine-signature
+      operationId: getPayment
+      tags:
+        - Payments
+      summary: Look up a payment
       description: >-
-        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
-        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
-        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
-      operationId: getMachinerefundsrefundId
-  /payment_intents/{paymentIntentId}/refundable:
-    get:
+        Returns one payment belonging to the store's payment API key. Payments belonging to another store return 404.
+        amountJpy, feeJpy and netAmountJpy are estimates for unsettled payments. The default rate limit is 600 requests
+        per API key in each fixed 60-second minute window. Retry-After on HTTP 429 is an integer number of seconds to
+        wait before retrying.
       parameters:
         - name: paymentIntentId
           in: path
           required: true
           schema:
             type: string
-        - name: x-stbl-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
-        - name: x-stbl-signature
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9a-f]{128}$
-        - name: x-stbl-timestamp
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9]+$
-        - name: x-stbl-nonce
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^0x[0-9a-f]{64}$
+      security:
+        - apiKey: []
       responses:
         '200':
           description: Success
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  paymentIntentId:
-                    type: string
-                    pattern: ^pi_[0-9a-f]{8,32}$
-                  paymentStatus:
-                    type: string
-                    enum:
-                      - created
-                      - signed
-                      - issue_pending
-                      - deposit_seen
-                      - deposit_confirmed
-                      - deploying
-                      - executing
-                      - settled
-                      - canceled
-                      - expired
-                      - failed
-                      - nonce_conflict
-                  amountJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  confirmedRefundedJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  reservedJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  refundableJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  refundableNowJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  onchainCreditJpy:
-                    anyOf:
-                      - type: string
-                        pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                      - type: 'null'
-                  walletBalanceJpy:
-                    anyOf:
-                      - type: string
-                        pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                      - type: 'null'
-                  limitedBy:
-                    type: array
-                    items:
-                      type: string
-                      enum:
-                        - onchain_credit
-                        - wallet_balance
-                  blockedBy:
-                    anyOf:
-                      - type: string
-                        enum:
-                          - payment_not_settled
-                          - payer_unknown
-                          - nothing_refundable
-                          - operation_in_progress
-                          - staged_operation_exists
-                          - wallet_not_deployed
-                          - state_unavailable
-                      - type: 'null'
-                  checkedAt:
-                    type: string
-                    format: date-time
-                  delegationCapJpy:
-                    anyOf:
-                      - type: string
-                        pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                      - type: 'null'
-                  executableJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  ownStaged:
-                    anyOf:
-                      - type: object
-                        properties:
-                          stagedOpId:
-                            type: string
-                            pattern: ^stg_[0-9a-f]{8,32}$
-                          amountJpy:
-                            type: string
-                            pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                          includesUpgrade:
-                            type: boolean
-                          expiresAt:
-                            type: string
-                            format: date-time
-                          paymentIntentId:
-                            type: string
-                            pattern: ^pi_[0-9a-f]{8,32}$
-                        required:
-                          - stagedOpId
-                          - amountJpy
-                          - includesUpgrade
-                          - expiresAt
-                          - paymentIntentId
-                        additionalProperties: true
-                      - type: 'null'
-                required:
-                  - paymentIntentId
-                  - paymentStatus
-                  - amountJpy
-                  - confirmedRefundedJpy
-                  - reservedJpy
-                  - refundableJpy
-                  - refundableNowJpy
-                  - onchainCreditJpy
-                  - walletBalanceJpy
-                  - limitedBy
-                  - blockedBy
-                  - checkedAt
-                  - delegationCapJpy
-                  - executableJpy
-                  - ownStaged
-                additionalProperties: true
-      x-auth-scheme: machine-signature
+                $ref: '#/components/schemas/PaymentLookupResponse'
+              examples:
+                settled:
+                  summary: Settled payment
+                  value:
+                    paymentIntentId: pi_1111111111111111
+                    orderId: null
+                    status: settled
+                    amountJpy: '1000'
+                    feeJpy: '10'
+                    netAmountJpy: '990'
+                    txHash: '0x1111111111111111111111111111111111111111111111111111111111111111'
+                    settledAt: '2026-11-16T00:00:00.000Z'
+                    failedReason: null
+                    payerAddress: '0x1111111111111111111111111111111111111111'
+                    netAmountDestination: '0x2222222222222222222222222222222222222222'
+                    createdAt: '2026-11-16T00:00:00.000Z'
+                unsettled:
+                  summary: Estimate before settlement
+                  value:
+                    paymentIntentId: pi_1111111111111111
+                    orderId: null
+                    status: created
+                    amountJpy: '1000'
+                    feeJpy: '10'
+                    netAmountJpy: '990'
+                    txHash: null
+                    settledAt: null
+                    failedReason: null
+                    payerAddress: null
+                    netAmountDestination: null
+                    createdAt: '2026-11-16T00:00:00.000Z'
+        '400':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/invalid_request | The request format is invalid. | Compare the path, query, headers and body with
+            the API schema. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_invalid_request:
+                  summary: The request format is invalid.
+                  value:
+                    code: common/invalid_request
+                    message: リクエストの形式が不正です。
+        '401':
+          description: |-
+            | code | meaning | action |
+            | --- | --- | --- |
+            | auth/api_key_invalid | The API key is invalid. | Check the current API key for the intended purpose. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_api_key_invalid:
+                  summary: The API key is invalid.
+                  value:
+                    code: auth/api_key_invalid
+                    message: API キーが無効です。
+        '404':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/not_found | The resource was not found. Payments and refunds belonging to another store also return
+            404. | Check the identifier and the store associated with the API key. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_not_found:
+                  summary: The resource was not found. Payments and refunds belonging to another store also return 404.
+                  value:
+                    code: common/not_found
+                    message: 指定した資源が見つかりません。他店舗の決済・返金も404です。
+        '429':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/rate_limited | The request rate limit has been reached. | Wait the integer number of seconds in
+            Retry-After before retrying. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_rate_limited:
+                  summary: The request rate limit has been reached.
+                  value:
+                    code: common/rate_limited
+                    message: 呼出回数の制限に達しました。
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying (integer)
+              schema:
+                type: integer
+                minimum: 1
+        '500':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_internal:
+                  summary: The request could not be processed.
+                  value:
+                    code: common/internal
+                    message: 要求を処理できませんでした。
+        '503':
+          description: |-
+            | code | meaning | action |
+            | --- | --- | --- |
+            | common/service_unavailable | The service is currently unavailable. | Wait before retrying. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_service_unavailable:
+                  summary: The service is currently unavailable.
+                  value:
+                    code: common/service_unavailable
+                    message: 現在サービスを利用できません。
+  /payment_intents/{paymentIntentId}/refundable:
+    get:
+      operationId: getMachineRefundable
+      tags:
+        - Refunds
+      summary: Check the refundable amount
       description: >-
-        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
-        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
-        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
-      operationId: getMachinepaymentintentspaymentIntentIdrefundable
+        executableJpy is the amount this machine can execute: the smaller of refundableNowJpy and delegationCapJpy. null
+        means no cap. It is "0" when blockedBy is present. Do not proceed with an estimated amount when
+        state_unavailable is returned. ownStaged includes unconsumed preparations created by the same machine for other
+        payments. If the preparation response is lost, check paymentIntentId, stagedOpId and the process that created
+        it. Discard and prepare again only when intentionally abandoning the preparation.
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/MachineSignature'
+        - $ref: '#/components/parameters/MachineTimestamp'
+        - $ref: '#/components/parameters/MachineNonce'
+      security:
+        - machineSignature: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineRefundableView'
+              examples:
+                available:
+                  summary: A refund can be started
+                  value:
+                    paymentIntentId: pi_1111111111111111
+                    paymentStatus: settled
+                    amountJpy: '1000'
+                    confirmedRefundedJpy: '0'
+                    reservedJpy: '0'
+                    refundableJpy: '1000'
+                    refundableNowJpy: '1000'
+                    onchainCreditJpy: '1000'
+                    walletBalanceJpy: '1000'
+                    limitedBy: []
+                    blockedBy: null
+                    checkedAt: '2026-11-16T00:00:00.000Z'
+                    delegationCapJpy: null
+                    executableJpy: '1000'
+                    ownStaged: null
+                blocked:
+                  summary: Cannot start because the state cannot be observed
+                  value:
+                    paymentIntentId: pi_1111111111111111
+                    paymentStatus: settled
+                    amountJpy: '1000'
+                    confirmedRefundedJpy: '0'
+                    reservedJpy: '0'
+                    refundableJpy: '1000'
+                    refundableNowJpy: '0'
+                    onchainCreditJpy: null
+                    walletBalanceJpy: null
+                    limitedBy: []
+                    blockedBy: state_unavailable
+                    checkedAt: '2026-11-16T00:00:00.000Z'
+                    delegationCapJpy: null
+                    executableJpy: '0'
+                    ownStaged: null
+                ownStaged:
+                  summary: An unconsumed preparation belongs to this machine
+                  value:
+                    paymentIntentId: pi_1111111111111111
+                    paymentStatus: settled
+                    amountJpy: '1000'
+                    confirmedRefundedJpy: '0'
+                    reservedJpy: '1000'
+                    refundableJpy: '0'
+                    refundableNowJpy: '0'
+                    onchainCreditJpy: '1000'
+                    walletBalanceJpy: '1000'
+                    limitedBy: []
+                    blockedBy: staged_operation_exists
+                    checkedAt: '2026-11-16T00:00:00.000Z'
+                    delegationCapJpy: null
+                    executableJpy: '0'
+                    ownStaged:
+                      stagedOpId: stg_1111111111111111
+                      amountJpy: '1000'
+                      includesUpgrade: false
+                      expiresAt: '2026-11-16T00:00:00.000Z'
+                      paymentIntentId: pi_1111111111111111
+        '400':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/invalid_request | The request format is invalid. | Compare the path, query, headers and body with
+            the API schema. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_invalid_request:
+                  summary: The request format is invalid.
+                  value:
+                    code: common/invalid_request
+                    message: リクエストの形式が不正です。
+        '401':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/api_key_invalid | The API key is invalid. | Check the current API key for the intended purpose. |
+
+            | auth/machine_signature_invalid | The HTTP signature could not be verified. | Check the signing procedure
+            while preserving the raw body and request URL. |
+
+            | auth/replay | The HTTP nonce has already been used. | Retry with a new nonce, timestamp and HTTP
+            signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_api_key_invalid:
+                  summary: The API key is invalid.
+                  value:
+                    code: auth/api_key_invalid
+                    message: API キーが無効です。
+                auth_machine_signature_invalid:
+                  summary: The HTTP signature could not be verified.
+                  value:
+                    code: auth/machine_signature_invalid
+                    message: HTTP 署名を検証できません。
+                auth_replay:
+                  summary: The HTTP nonce has already been used.
+                  value:
+                    code: auth/replay
+                    message: 同じ HTTP nonce が既に使われています。
+        '403':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | merchant/suspended | The merchant is suspended. | Check the merchant's status and stop requests until the
+            suspension is lifted. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                merchant_suspended:
+                  summary: The merchant is suspended.
+                  value:
+                    code: merchant/suspended
+                    message: 加盟店が利用停止中です。
+        '404':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/not_found | The resource was not found. Payments and refunds belonging to another store also return
+            404. | Check the identifier and the store associated with the API key. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_not_found:
+                  summary: The resource was not found. Payments and refunds belonging to another store also return 404.
+                  value:
+                    code: common/not_found
+                    message: 指定した資源が見つかりません。他店舗の決済・返金も404です。
+        '409':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | member/not_active | The machine delegation is not active. | Check the delegation approval status in the
+            dashboard. |
+
+            | member/revoked | The machine has been revoked. | Do not start new refunds with this machine. Check its
+            status in the dashboard. |
+
+            | delegation/stale | The current delegation cannot be used. | Approve the delegation again for the current
+            wallet in the dashboard. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                member_not_active:
+                  summary: The machine delegation is not active.
+                  value:
+                    code: member/not_active
+                    message: machine の委任状が有効になっていません。
+                member_revoked:
+                  summary: The machine has been revoked.
+                  value:
+                    code: member/revoked
+                    message: machine が失効しています。
+                delegation_stale:
+                  summary: The current delegation cannot be used.
+                  value:
+                    code: delegation/stale
+                    message: 現在の委任状を使用できません。
+        '419':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/clock_skew | The HTTP signature timestamp is outside the allowed clock skew. | Correct the clock
+            offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_clock_skew:
+                  summary: The HTTP signature timestamp is outside the allowed clock skew.
+                  value:
+                    code: auth/clock_skew
+                    message: HTTP 署名の時刻が許容時刻差を外れています。
+                    details:
+                      serverTime: 1794787200000
+        '500':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_internal:
+                  summary: The request could not be processed.
+                  value:
+                    code: common/internal
+                    message: 要求を処理できませんでした。
+  /payment_intents/{paymentIntentId}/refunds/prepare:
+    post:
+      operationId: prepareMachineRefund
+      tags:
+        - Refunds
+      summary: Prepare a refund
+      description: >-
+        Reserves the refund amount as reservedJpy while the server builds the UserOperation. challenge is the digest
+        keccak256(userOpHash ‖ validUntil), not a random value. Preparation and submission are separate because the
+        machine signs after the recipient, amount, wallet nonce, upgrade and expiry have been determined. The recipient
+        is fixed to the original payer, cannot be specified, and is omitted from the response. upgrade.included
+        indicates a wallet upgrade included with the refund. Merchant wallet operations proceed one at a time.
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/MachineSignature'
+        - $ref: '#/components/parameters/MachineTimestamp'
+        - $ref: '#/components/parameters/MachineNonce'
+      security:
+        - machineSignature: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachinePrepareResponse'
+              examples:
+                default:
+                  summary: Signing target and preparation identifier
+                  value:
+                    challenge: '0x1111111111111111111111111111111111111111111111111111111111111111'
+                    rpId: stbl-pay.com
+                    serverTime: 1794787200000
+                    validUntil: '2026-11-16T00:00:00.000Z'
+                    stagedOpId: stg_1111111111111111
+                    wallet: '0x1111111111111111111111111111111111111111'
+                    paymentIntentId: pi_1111111111111111
+                    amountJpy: '1000'
+                    upgrade:
+                      included: false
+        '400':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/invalid_request | The request format is invalid. | Compare the path, query, headers and body with
+            the API schema. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_invalid_request:
+                  summary: The request format is invalid.
+                  value:
+                    code: common/invalid_request
+                    message: リクエストの形式が不正です。
+        '401':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/api_key_invalid | The API key is invalid. | Check the current API key for the intended purpose. |
+
+            | auth/machine_signature_invalid | The HTTP signature could not be verified. | Check the signing procedure
+            while preserving the raw body and request URL. |
+
+            | auth/replay | The HTTP nonce has already been used. | Retry with a new nonce, timestamp and HTTP
+            signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_api_key_invalid:
+                  summary: The API key is invalid.
+                  value:
+                    code: auth/api_key_invalid
+                    message: API キーが無効です。
+                auth_machine_signature_invalid:
+                  summary: The HTTP signature could not be verified.
+                  value:
+                    code: auth/machine_signature_invalid
+                    message: HTTP 署名を検証できません。
+                auth_replay:
+                  summary: The HTTP nonce has already been used.
+                  value:
+                    code: auth/replay
+                    message: 同じ HTTP nonce が既に使われています。
+        '403':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | merchant/suspended | The merchant is suspended. | Check the merchant's status and stop requests until the
+            suspension is lifted. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                merchant_suspended:
+                  summary: The merchant is suspended.
+                  value:
+                    code: merchant/suspended
+                    message: 加盟店が利用停止中です。
+        '404':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/not_found | The resource was not found. Payments and refunds belonging to another store also return
+            404. | Check the identifier and the store associated with the API key. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_not_found:
+                  summary: The resource was not found. Payments and refunds belonging to another store also return 404.
+                  value:
+                    code: common/not_found
+                    message: 指定した資源が見つかりません。他店舗の決済・返金も404です。
+        '409':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | member/not_active | The machine delegation is not active. | Check the delegation approval status in the
+            dashboard. |
+
+            | member/revoked | The machine has been revoked. | Do not start new refunds with this machine. Check its
+            status in the dashboard. |
+
+            | delegation/stale | The current delegation cannot be used. | Approve the delegation again for the current
+            wallet in the dashboard. |
+
+            | store/disabled | New refunds cannot be accepted because the store is inactive. | Check the store's status.
+            Accepted refunds can still be queried and this machine's preparations can still be canceled. |
+
+            | refund/exceeds_delegation_cap | The refund amount exceeds the delegation's per-refund cap. | Query the
+            executable amount again, then reduce the amount or approve a new cap in the dashboard. |
+
+            | refund/not_refundable | A refund cannot be started for this payment. | Query the original payment status
+            and refundable amount. |
+
+            | refund/exceeds_available | The refund amount exceeds the currently refundable amount. | Query the
+            refundable amount again before preparing. |
+
+            | refund/insufficient_funds | The wallet balance is insufficient for this refund. | Check the balance and
+            refundable amount before retrying. |
+
+            | refund/onchain_credit_exceeded | The refund amount exceeds the onchain cap for the payer. | Query the
+            refundable amount again and reduce the amount to within the executable limit. |
+
+            | wallet/operation_in_progress | Another operation is in progress on the merchant wallet. | Wait for the
+            operation to finish, then query the refundable amount again. |
+
+            | wallet/staged_operation_exists | An unconsumed preparation remains. | Check ownStaged and the process that
+            created it. Discard only a preparation you intentionally abandon. |
+
+            | wallet/upgrade_required | A wallet upgrade is required before refunding. | Check the required wallet
+            upgrade in the dashboard. |
+
+            | wallet/not_deployed | The merchant wallet has not been deployed. | Check the wallet's status in the
+            dashboard. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                member_not_active:
+                  summary: The machine delegation is not active.
+                  value:
+                    code: member/not_active
+                    message: machine の委任状が有効になっていません。
+                member_revoked:
+                  summary: The machine has been revoked.
+                  value:
+                    code: member/revoked
+                    message: machine が失効しています。
+                delegation_stale:
+                  summary: The current delegation cannot be used.
+                  value:
+                    code: delegation/stale
+                    message: 現在の委任状を使用できません。
+                store_disabled:
+                  summary: New refunds cannot be accepted because the store is inactive.
+                  value:
+                    code: store/disabled
+                    message: 店舗が無効なため新規の返金を受け付けられません。
+                refund_exceeds_delegation_cap:
+                  summary: The refund amount exceeds the delegation's per-refund cap.
+                  value:
+                    code: refund/exceeds_delegation_cap
+                    message: 返金額が委任状の1件あたりの上限を超えています。
+                refund_not_refundable:
+                  summary: A refund cannot be started for this payment.
+                  value:
+                    code: refund/not_refundable
+                    message: この決済は返金を開始できません。
+                refund_exceeds_available:
+                  summary: The refund amount exceeds the currently refundable amount.
+                  value:
+                    code: refund/exceeds_available
+                    message: 返金額が現在の返金可能額を超えています。
+                refund_insufficient_funds:
+                  summary: The wallet balance is insufficient for this refund.
+                  value:
+                    code: refund/insufficient_funds
+                    message: 返金に必要なウォレット残高が不足しています。
+                refund_onchain_credit_exceeded:
+                  summary: The refund amount exceeds the onchain cap for the payer.
+                  value:
+                    code: refund/onchain_credit_exceeded
+                    message: 返金額が支払人単位のオンチェーン上限を超えています。
+                wallet_operation_in_progress:
+                  summary: Another operation is in progress on the merchant wallet.
+                  value:
+                    code: wallet/operation_in_progress
+                    message: 加盟店ウォレットで別の操作が進行中です。
+                wallet_staged_operation_exists:
+                  summary: An unconsumed preparation remains.
+                  value:
+                    code: wallet/staged_operation_exists
+                    message: 未消費の準備が残っています。
+                wallet_upgrade_required:
+                  summary: A wallet upgrade is required before refunding.
+                  value:
+                    code: wallet/upgrade_required
+                    message: 返金の前にウォレット更新が必要です。
+                wallet_not_deployed:
+                  summary: The merchant wallet has not been deployed.
+                  value:
+                    code: wallet/not_deployed
+                    message: 加盟店ウォレットが未デプロイです。
+        '419':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/clock_skew | The HTTP signature timestamp is outside the allowed clock skew. | Correct the clock
+            offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_clock_skew:
+                  summary: The HTTP signature timestamp is outside the allowed clock skew.
+                  value:
+                    code: auth/clock_skew
+                    message: HTTP 署名の時刻が許容時刻差を外れています。
+                    details:
+                      serverTime: 1794787200000
+        '500':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_internal:
+                  summary: The request could not be processed.
+                  value:
+                    code: common/internal
+                    message: 要求を処理できませんでした。
+        '503':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | wallet/state_unavailable | The wallet state could not be checked. | Do not proceed with an estimated
+            amount. Wait and query the refundable amount again. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                wallet_state_unavailable:
+                  summary: The wallet state could not be checked.
+                  value:
+                    code: wallet/state_unavailable
+                    message: ウォレットの状態を確認できません。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MachinePrepareRequest'
+            examples:
+              default:
+                summary: Prepare 1,000 JPY
+                value:
+                  amountJpy: '1000'
+  /payment_intents/{paymentIntentId}/refunds/submit:
+    post:
+      operationId: submitMachineRefund
+      tags:
+        - Refunds
+      summary: Sign and submit a refund
+      description: >-
+        HTTP 202 means the refund was accepted, not completed. It contains no tx hash. Save refundId and query the
+        result. assertion signs the challenge and is separate from the HTTP signature. assertion.signature is
+        base64url-encoded DER; the HTTP signature is 128 hexadecimal characters encoding r‖s. If the response is lost,
+        resend the same stagedOpId and assertion, refreshing only the HTTP nonce, timestamp and signature. If already
+        accepted, the same refundId and walletOperationId are returned. Do not prepare again. Revocation or approval of
+        a new cap does not cancel accepted refunds. See https://stbl-pay.com/docs/en/refunds/signing for the signing
+        procedure.
+      parameters:
+        - name: paymentIntentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/MachineSignature'
+        - $ref: '#/components/parameters/MachineTimestamp'
+        - $ref: '#/components/parameters/MachineNonce'
+      security:
+        - machineSignature: []
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundAccepted'
+              examples:
+                accepted:
+                  summary: Accepted
+                  value:
+                    refundId: rfd_1111111111111111
+                    walletOperationId: wop_1111111111111111
+                    status: queued
+        '400':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/invalid_request | The request format is invalid. | Compare the path, query, headers and body with
+            the API schema. |
+
+            | payment/digest_mismatch | The signed content does not match the prepared signing target. | Check that the
+            assertion uses the challenge for the same stagedOpId. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_invalid_request:
+                  summary: The request format is invalid.
+                  value:
+                    code: common/invalid_request
+                    message: リクエストの形式が不正です。
+                payment_digest_mismatch:
+                  summary: The signed content does not match the prepared signing target.
+                  value:
+                    code: payment/digest_mismatch
+                    message: 署名した内容が準備した署名対象と一致しません。
+        '401':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/api_key_invalid | The API key is invalid. | Check the current API key for the intended purpose. |
+
+            | auth/machine_signature_invalid | The HTTP signature could not be verified. | Check the signing procedure
+            while preserving the raw body and request URL. |
+
+            | auth/replay | The HTTP nonce has already been used. | Retry with a new nonce, timestamp and HTTP
+            signature. |
+
+            | auth/assertion_invalid | The refund assertion could not be verified. | Check the signature for the
+            prepared challenge and rpId, and the assertion format. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_api_key_invalid:
+                  summary: The API key is invalid.
+                  value:
+                    code: auth/api_key_invalid
+                    message: API キーが無効です。
+                auth_machine_signature_invalid:
+                  summary: The HTTP signature could not be verified.
+                  value:
+                    code: auth/machine_signature_invalid
+                    message: HTTP 署名を検証できません。
+                auth_replay:
+                  summary: The HTTP nonce has already been used.
+                  value:
+                    code: auth/replay
+                    message: 同じ HTTP nonce が既に使われています。
+                auth_assertion_invalid:
+                  summary: The refund assertion could not be verified.
+                  value:
+                    code: auth/assertion_invalid
+                    message: 返金の assertion を検証できません。
+        '403':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | merchant/suspended | The merchant is suspended. | Check the merchant's status and stop requests until the
+            suspension is lifted. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                merchant_suspended:
+                  summary: The merchant is suspended.
+                  value:
+                    code: merchant/suspended
+                    message: 加盟店が利用停止中です。
+        '404':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/not_found | The resource was not found. Payments and refunds belonging to another store also return
+            404. | Check the identifier and the store associated with the API key. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_not_found:
+                  summary: The resource was not found. Payments and refunds belonging to another store also return 404.
+                  value:
+                    code: common/not_found
+                    message: 指定した資源が見つかりません。他店舗の決済・返金も404です。
+        '409':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | member/not_active | The machine delegation is not active. | Check the delegation approval status in the
+            dashboard. |
+
+            | member/revoked | The machine has been revoked. | Do not start new refunds with this machine. Check its
+            status in the dashboard. |
+
+            | delegation/stale | The current delegation cannot be used. | Approve the delegation again for the current
+            wallet in the dashboard. |
+
+            | store/disabled | New refunds cannot be accepted because the store is inactive. | Check the store's status.
+            Accepted refunds can still be queried and this machine's preparations can still be canceled. |
+
+            | refund/exceeds_delegation_cap | The refund amount exceeds the delegation's per-refund cap. | Query the
+            executable amount again, then reduce the amount or approve a new cap in the dashboard. |
+
+            | refund/exceeds_available | The refund amount exceeds the currently refundable amount. | Query the
+            refundable amount again before preparing. |
+
+            | wallet/staged_operation_missing | The specified unconsumed preparation was not found. | Query ownStaged
+            and accepted refunds to check the preparation and submission outcomes. |
+
+            | wallet/operation_stale | The preparation has expired or its prerequisites have changed. | Check whether it
+            was accepted. If not, prepare again using the current state. |
+
+            | wallet/operation_in_progress | Another operation is in progress on the merchant wallet. | Wait for the
+            operation to finish, then query the refundable amount again. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                member_not_active:
+                  summary: The machine delegation is not active.
+                  value:
+                    code: member/not_active
+                    message: machine の委任状が有効になっていません。
+                member_revoked:
+                  summary: The machine has been revoked.
+                  value:
+                    code: member/revoked
+                    message: machine が失効しています。
+                delegation_stale:
+                  summary: The current delegation cannot be used.
+                  value:
+                    code: delegation/stale
+                    message: 現在の委任状を使用できません。
+                store_disabled:
+                  summary: New refunds cannot be accepted because the store is inactive.
+                  value:
+                    code: store/disabled
+                    message: 店舗が無効なため新規の返金を受け付けられません。
+                refund_exceeds_delegation_cap:
+                  summary: The refund amount exceeds the delegation's per-refund cap.
+                  value:
+                    code: refund/exceeds_delegation_cap
+                    message: 返金額が委任状の1件あたりの上限を超えています。
+                refund_exceeds_available:
+                  summary: The refund amount exceeds the currently refundable amount.
+                  value:
+                    code: refund/exceeds_available
+                    message: 返金額が現在の返金可能額を超えています。
+                wallet_staged_operation_missing:
+                  summary: The specified unconsumed preparation was not found.
+                  value:
+                    code: wallet/staged_operation_missing
+                    message: 指定した未消費の準備が見つかりません。
+                wallet_operation_stale:
+                  summary: The preparation has expired or its prerequisites have changed.
+                  value:
+                    code: wallet/operation_stale
+                    message: 準備の有効期限または前提が変わっています。
+                wallet_operation_in_progress:
+                  summary: Another operation is in progress on the merchant wallet.
+                  value:
+                    code: wallet/operation_in_progress
+                    message: 加盟店ウォレットで別の操作が進行中です。
+        '419':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/clock_skew | The HTTP signature timestamp is outside the allowed clock skew. | Correct the clock
+            offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_clock_skew:
+                  summary: The HTTP signature timestamp is outside the allowed clock skew.
+                  value:
+                    code: auth/clock_skew
+                    message: HTTP 署名の時刻が許容時刻差を外れています。
+                    details:
+                      serverTime: 1794787200000
+        '500':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_internal:
+                  summary: The request could not be processed.
+                  value:
+                    code: common/internal
+                    message: 要求を処理できませんでした。
+        '503':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | wallet/state_unavailable | The wallet state could not be checked. | Do not proceed with an estimated
+            amount. Wait and query the refundable amount again. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                wallet_state_unavailable:
+                  summary: The wallet state could not be checked.
+                  value:
+                    code: wallet/state_unavailable
+                    message: ウォレットの状態を確認できません。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MachineSubmitRequest'
+            examples:
+              default:
+                summary: Sign and submit a preparation (dummy signature values for illustration)
+                value:
+                  stagedOpId: stg_1111111111111111
+                  assertion:
+                    clientDataJSON: >-
+                      eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRSIsIm9yaWdpbiI6InN0YmwtcGF5Om1hY2hpbmUiLCJjcm9zc09yaWdpbiI6ZmFsc2V9
+                    authenticatorData: ZeJO0hZxnSLfzfABSrh6FRPGR-WrXXF9rvqBsH3Xfo4BAAAAAA
+                    signature: MAYCAQECAQE
+  /refunds/{refundId}:
+    get:
+      operationId: getMachineRefund
+      tags:
+        - Refunds
+      summary: Look up a refund
+      description: >-
+        Refunds accepted by the owner or another machine in the same store can also be queried. Refunds belonging to
+        another store return 404. After acceptance, query by refundId: confirmed indicates confirmation and failed
+        indicates failure. Treat unknown states as unconfirmed. The original payment remains settled.
+      parameters:
+        - name: refundId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/MachineSignature'
+        - $ref: '#/components/parameters/MachineTimestamp'
+        - $ref: '#/components/parameters/MachineNonce'
+      security:
+        - machineSignature: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundView'
+              examples:
+                pending:
+                  summary: In progress
+                  value:
+                    actor:
+                      kind: machine
+                      memberId: mem_1111111111111111
+                      label: null
+                    refundId: rfd_1111111111111111
+                    walletOperationId: wop_1111111111111111
+                    amountJpy: '1000'
+                    status: queued
+                    includesUpgrade: false
+                    txHash: null
+                    failureReason: null
+                    acceptedAt: '2026-11-16T00:00:00.000Z'
+                    settledAt: null
+                confirmed:
+                  summary: Confirmed refund
+                  value:
+                    actor:
+                      kind: machine
+                      memberId: mem_1111111111111111
+                      label: null
+                    refundId: rfd_1111111111111111
+                    walletOperationId: wop_1111111111111111
+                    amountJpy: '1000'
+                    status: confirmed
+                    includesUpgrade: false
+                    txHash: '0x1111111111111111111111111111111111111111111111111111111111111111'
+                    failureReason: null
+                    acceptedAt: '2026-11-16T00:00:00.000Z'
+                    settledAt: '2026-11-16T00:00:00.000Z'
+                failed:
+                  summary: Failed refund
+                  value:
+                    actor:
+                      kind: machine
+                      memberId: mem_1111111111111111
+                      label: null
+                    refundId: rfd_1111111111111111
+                    walletOperationId: wop_1111111111111111
+                    amountJpy: '1000'
+                    status: failed
+                    includesUpgrade: false
+                    txHash: null
+                    failureReason: 返金を実行できませんでした
+                    acceptedAt: '2026-11-16T00:00:00.000Z'
+                    settledAt: '2026-11-16T00:00:00.000Z'
+        '400':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/invalid_request | The request format is invalid. | Compare the path, query, headers and body with
+            the API schema. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_invalid_request:
+                  summary: The request format is invalid.
+                  value:
+                    code: common/invalid_request
+                    message: リクエストの形式が不正です。
+        '401':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/api_key_invalid | The API key is invalid. | Check the current API key for the intended purpose. |
+
+            | auth/machine_signature_invalid | The HTTP signature could not be verified. | Check the signing procedure
+            while preserving the raw body and request URL. |
+
+            | auth/replay | The HTTP nonce has already been used. | Retry with a new nonce, timestamp and HTTP
+            signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_api_key_invalid:
+                  summary: The API key is invalid.
+                  value:
+                    code: auth/api_key_invalid
+                    message: API キーが無効です。
+                auth_machine_signature_invalid:
+                  summary: The HTTP signature could not be verified.
+                  value:
+                    code: auth/machine_signature_invalid
+                    message: HTTP 署名を検証できません。
+                auth_replay:
+                  summary: The HTTP nonce has already been used.
+                  value:
+                    code: auth/replay
+                    message: 同じ HTTP nonce が既に使われています。
+        '403':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | merchant/suspended | The merchant is suspended. | Check the merchant's status and stop requests until the
+            suspension is lifted. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                merchant_suspended:
+                  summary: The merchant is suspended.
+                  value:
+                    code: merchant/suspended
+                    message: 加盟店が利用停止中です。
+        '404':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/not_found | The resource was not found. Payments and refunds belonging to another store also return
+            404. | Check the identifier and the store associated with the API key. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_not_found:
+                  summary: The resource was not found. Payments and refunds belonging to another store also return 404.
+                  value:
+                    code: common/not_found
+                    message: 指定した資源が見つかりません。他店舗の決済・返金も404です。
+        '409':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | member/not_active | The machine delegation is not active. | Check the delegation approval status in the
+            dashboard. |
+
+            | member/revoked | The machine has been revoked. | Do not start new refunds with this machine. Check its
+            status in the dashboard. |
+
+            | delegation/stale | The current delegation cannot be used. | Approve the delegation again for the current
+            wallet in the dashboard. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                member_not_active:
+                  summary: The machine delegation is not active.
+                  value:
+                    code: member/not_active
+                    message: machine の委任状が有効になっていません。
+                member_revoked:
+                  summary: The machine has been revoked.
+                  value:
+                    code: member/revoked
+                    message: machine が失効しています。
+                delegation_stale:
+                  summary: The current delegation cannot be used.
+                  value:
+                    code: delegation/stale
+                    message: 現在の委任状を使用できません。
+        '419':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/clock_skew | The HTTP signature timestamp is outside the allowed clock skew. | Correct the clock
+            offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_clock_skew:
+                  summary: The HTTP signature timestamp is outside the allowed clock skew.
+                  value:
+                    code: auth/clock_skew
+                    message: HTTP 署名の時刻が許容時刻差を外れています。
+                    details:
+                      serverTime: 1794787200000
+        '500':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_internal:
+                  summary: The request could not be processed.
+                  value:
+                    code: common/internal
+                    message: 要求を処理できませんでした。
   /payment_intents/{paymentIntentId}/refunds:
     get:
+      operationId: listMachinePaymentRefunds
+      tags:
+        - Refunds
+      summary: List refunds for a payment
+      description: >-
+        Queries refunds for a payment, including those accepted by the owner or another machine in the same store.
+        Payments belonging to another store return 404. Only this machine's unconsumed preparations are returned in
+        staged. Fetch the next page only when nextCursor is a string, passing it unchanged as cursor. If it is null or
+        omitted, this is the last page.
       parameters:
         - name: paymentIntentId
           in: path
@@ -637,6 +1613,8 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+            description: Number of records per page. Default 20, maximum 100.
+          description: Number of records per page. Default 20, maximum 100.
         - name: cursor
           in: query
           required: false
@@ -644,30 +1622,13 @@ paths:
             type: string
             minLength: 1
             maxLength: 200
-        - name: x-stbl-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
-        - name: x-stbl-signature
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9a-f]{128}$
-        - name: x-stbl-timestamp
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9]+$
-        - name: x-stbl-nonce
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^0x[0-9a-f]{64}$
+            description: nextCursor from the previous response. Pass it without interpreting its contents.
+          description: nextCursor from the previous response. Pass it without interpreting its contents.
+        - $ref: '#/components/parameters/MachineSignature'
+        - $ref: '#/components/parameters/MachineTimestamp'
+        - $ref: '#/components/parameters/MachineNonce'
+      security:
+        - machineSignature: []
       responses:
         '200':
           description: Success
@@ -679,498 +1640,403 @@ paths:
                   refunds:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        actor:
-                          oneOf:
-                            - type: object
-                              properties:
-                                kind:
-                                  const: owner
-                                  type: string
-                              required:
-                                - kind
-                              additionalProperties: true
-                            - type: object
-                              properties:
-                                kind:
-                                  const: machine
-                                  type: string
-                                memberId:
-                                  type: string
-                                  pattern: ^mem_[0-9a-f]{8,32}$
-                                label:
-                                  anyOf:
-                                    - type: string
-                                    - type: 'null'
-                              required:
-                                - kind
-                                - memberId
-                                - label
-                              additionalProperties: true
-                        refundId:
-                          type: string
-                          pattern: ^rfd_[0-9a-f]{8,32}$
-                        walletOperationId:
-                          type: string
-                          pattern: ^wop_[0-9a-f]{8,32}$
-                        amountJpy:
-                          type: string
-                          pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                        status:
-                          type: string
-                          enum:
-                            - queued
-                            - submitted
-                            - confirmed
-                            - failed
-                            - indeterminate
-                        includesUpgrade:
-                          type: boolean
-                        txHash:
-                          anyOf:
-                            - type: string
-                              pattern: ^0x[0-9a-f]{64}$
-                            - type: 'null'
-                        failureReason:
-                          anyOf:
-                            - type: string
-                            - type: 'null'
-                        acceptedAt:
-                          type: string
-                          format: date-time
-                        settledAt:
-                          anyOf:
-                            - type: string
-                              format: date-time
-                            - type: 'null'
-                      required:
-                        - refundId
-                        - walletOperationId
-                        - amountJpy
-                        - status
-                        - includesUpgrade
-                        - txHash
-                        - failureReason
-                        - acceptedAt
-                        - settledAt
-                      additionalProperties: true
+                      $ref: '#/components/schemas/RefundView'
+                    description: Accepted refunds in the same store.
                   nextCursor:
                     anyOf:
                       - type: string
                       - type: 'null'
+                    description: >-
+                      Cursor for the next page. Pass it as cursor for the next page only when it is a string. null or
+                      omitted on the last page.
                   staged:
                     anyOf:
-                      - type: object
-                        properties:
-                          stagedOpId:
-                            type: string
-                            pattern: ^stg_[0-9a-f]{8,32}$
-                          amountJpy:
-                            type: string
-                            pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                          includesUpgrade:
-                            type: boolean
-                          expiresAt:
-                            type: string
-                            format: date-time
-                        required:
-                          - stagedOpId
-                          - amountJpy
-                          - includesUpgrade
-                          - expiresAt
-                        additionalProperties: true
+                      - $ref: '#/components/schemas/StagedRefundView'
                       - type: 'null'
+                    description: This machine's unconsumed preparation, or null if none.
                 required:
                   - refunds
                   - staged
                 additionalProperties: true
-      x-auth-scheme: machine-signature
-      description: >-
-        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
-        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
-        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
-      operationId: getMachinepaymentintentspaymentIntentIdrefunds
-  /payment_intents/{paymentIntentId}/refunds/prepare:
-    post:
-      parameters:
-        - name: paymentIntentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: x-stbl-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
-        - name: x-stbl-signature
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9a-f]{128}$
-        - name: x-stbl-timestamp
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9]+$
-        - name: x-stbl-nonce
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^0x[0-9a-f]{64}$
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  challenge:
-                    type: string
-                    pattern: ^0x[0-9a-f]{64}$
-                  rpId:
-                    type: string
-                  serverTime:
-                    type: integer
-                  validUntil:
-                    type: string
-                    format: date-time
-                  stagedOpId:
-                    type: string
-                    pattern: ^stg_[0-9a-f]{8,32}$
-                  wallet:
-                    type: string
-                    pattern: ^0x[0-9a-f]{40}$
-                  paymentIntentId:
-                    type: string
-                    pattern: ^pi_[0-9a-f]{8,32}$
-                  amountJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  upgrade:
-                    type: object
-                    properties:
-                      included:
-                        type: boolean
-                    required:
-                      - included
-                    additionalProperties: true
-                required:
-                  - challenge
-                  - rpId
-                  - serverTime
-                  - validUntil
-                  - stagedOpId
-                  - wallet
-                  - paymentIntentId
-                  - amountJpy
-                  - upgrade
-                additionalProperties: true
-      x-auth-scheme: machine-signature
-      description: >-
-        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
-        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
-        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                amountJpy:
-                  type: string
-                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
-              required:
-                - amountJpy
-              additionalProperties: false
-      operationId: postMachinepaymentintentspaymentIntentIdrefundsprepare
-  /payment_intents/{paymentIntentId}/refunds/submit:
-    post:
-      parameters:
-        - name: paymentIntentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: x-stbl-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
-        - name: x-stbl-signature
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9a-f]{128}$
-        - name: x-stbl-timestamp
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^[0-9]+$
-        - name: x-stbl-nonce
-          in: header
-          required: true
-          schema:
-            type: string
-            pattern: ^0x[0-9a-f]{64}$
-      responses:
-        '202':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  refundId:
-                    type: string
-                    pattern: ^rfd_[0-9a-f]{8,32}$
-                  walletOperationId:
-                    type: string
-                    pattern: ^wop_[0-9a-f]{8,32}$
-                  status:
-                    type: string
-                    enum:
-                      - queued
-                      - submitted
-                      - confirmed
-                      - failed
-                      - indeterminate
-                required:
-                  - refundId
-                  - walletOperationId
-                  - status
-                additionalProperties: true
-      x-auth-scheme: machine-signature
-      description: >-
-        Draft: P-256/SHA-256 signature of METHOD + newline + originalUrl including query + newline + sha256hex(rawBody)
-        + newline + timestamp + newline + nonce. Empty bytes for absent body. Signature: raw r||s hex128. Timestamp:
-        milliseconds (±60000ms). Nonce: lowercase 0x + 32 bytes. No Authorization header.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                stagedOpId:
-                  type: string
-                  pattern: ^stg_[0-9a-f]{8,32}$
-                assertion:
-                  type: object
-                  properties:
-                    clientDataJSON:
-                      type: string
-                      minLength: 1
-                      pattern: ^[A-Za-z0-9_-]+$
-                    authenticatorData:
-                      type: string
-                      minLength: 1
-                      pattern: ^[A-Za-z0-9_-]+$
-                    signature:
-                      type: string
-                      minLength: 1
-                      pattern: ^[A-Za-z0-9_-]+$
-                  required:
-                    - clientDataJSON
-                    - authenticatorData
-                    - signature
-                  additionalProperties: true
-              required:
-                - stagedOpId
-                - assertion
-              additionalProperties: false
-      operationId: postMachinepaymentintentspaymentIntentIdrefundssubmit
-  /payments/{paymentIntentId}:
-    get:
-      parameters:
-        - name: paymentIntentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: x-stbl-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  paymentIntentId:
-                    type: string
-                    pattern: ^pi_[0-9a-f]{8,32}$
-                  orderId:
-                    anyOf:
-                      - type: string
-                      - type: 'null'
-                  status:
-                    type: string
-                    enum:
-                      - created
-                      - signed
-                      - issue_pending
-                      - deposit_seen
-                      - deposit_confirmed
-                      - deploying
-                      - executing
-                      - settled
-                      - canceled
-                      - expired
-                      - failed
-                      - nonce_conflict
-                  amountJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  feeJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  netAmountJpy:
-                    type: string
-                    pattern: ^(0|[1-9]\d*)(\.\d+)?$
-                  txHash:
-                    anyOf:
-                      - type: string
-                        pattern: ^0x[0-9a-f]{64}$
-                      - type: 'null'
-                  settledAt:
-                    anyOf:
-                      - type: string
-                        format: date-time
-                      - type: 'null'
-                  failedReason:
-                    anyOf:
-                      - type: string
-                      - type: 'null'
-                  payerAddress:
-                    anyOf:
-                      - type: string
-                        pattern: ^0x[0-9a-f]{40}$
-                      - type: 'null'
-                  netAmountDestination:
-                    anyOf:
-                      - type: string
-                        pattern: ^0x[0-9a-f]{40}$
-                      - type: 'null'
-                  createdAt:
-                    type: string
-                    format: date-time
-                required:
-                  - paymentIntentId
-                  - orderId
-                  - status
-                  - amountJpy
-                  - feeJpy
-                  - netAmountJpy
-                  - txHash
-                  - settledAt
-                  - failedReason
-                  - payerAddress
-                  - netAmountDestination
-                  - createdAt
-                additionalProperties: true
+              examples:
+                oneRefund:
+                  summary: One refund exists
+                  value:
+                    refunds:
+                      - actor:
+                          kind: machine
+                          memberId: mem_1111111111111111
+                          label: null
+                        refundId: rfd_1111111111111111
+                        walletOperationId: wop_1111111111111111
+                        amountJpy: '1000'
+                        status: queued
+                        includesUpgrade: false
+                        txHash: null
+                        failureReason: null
+                        acceptedAt: '2026-11-16T00:00:00.000Z'
+                        settledAt: null
+                    nextCursor: null
+                    staged: null
         '400':
-          description: common/invalid_request
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/invalid_request | The request format is invalid. | Compare the path, query, headers and body with
+            the API schema. |
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    const: common/invalid_request
-                    type: string
-                  details:
-                    type: object
-                    additionalProperties: {}
-                required:
-                  - code
-                additionalProperties: true
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_invalid_request:
+                  summary: The request format is invalid.
+                  value:
+                    code: common/invalid_request
+                    message: リクエストの形式が不正です。
         '401':
-          description: auth/api_key_invalid
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/api_key_invalid | The API key is invalid. | Check the current API key for the intended purpose. |
+
+            | auth/machine_signature_invalid | The HTTP signature could not be verified. | Check the signing procedure
+            while preserving the raw body and request URL. |
+
+            | auth/replay | The HTTP nonce has already been used. | Retry with a new nonce, timestamp and HTTP
+            signature. |
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    const: auth/api_key_invalid
-                    type: string
-                  details:
-                    type: object
-                    additionalProperties: {}
-                required:
-                  - code
-                additionalProperties: true
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_api_key_invalid:
+                  summary: The API key is invalid.
+                  value:
+                    code: auth/api_key_invalid
+                    message: API キーが無効です。
+                auth_machine_signature_invalid:
+                  summary: The HTTP signature could not be verified.
+                  value:
+                    code: auth/machine_signature_invalid
+                    message: HTTP 署名を検証できません。
+                auth_replay:
+                  summary: The HTTP nonce has already been used.
+                  value:
+                    code: auth/replay
+                    message: 同じ HTTP nonce が既に使われています。
+        '403':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | merchant/suspended | The merchant is suspended. | Check the merchant's status and stop requests until the
+            suspension is lifted. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                merchant_suspended:
+                  summary: The merchant is suspended.
+                  value:
+                    code: merchant/suspended
+                    message: 加盟店が利用停止中です。
         '404':
-          description: common/not_found
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/not_found | The resource was not found. Payments and refunds belonging to another store also return
+            404. | Check the identifier and the store associated with the API key. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_not_found:
+                  summary: The resource was not found. Payments and refunds belonging to another store also return 404.
+                  value:
+                    code: common/not_found
+                    message: 指定した資源が見つかりません。他店舗の決済・返金も404です。
+        '409':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | member/not_active | The machine delegation is not active. | Check the delegation approval status in the
+            dashboard. |
+
+            | member/revoked | The machine has been revoked. | Do not start new refunds with this machine. Check its
+            status in the dashboard. |
+
+            | delegation/stale | The current delegation cannot be used. | Approve the delegation again for the current
+            wallet in the dashboard. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                member_not_active:
+                  summary: The machine delegation is not active.
+                  value:
+                    code: member/not_active
+                    message: machine の委任状が有効になっていません。
+                member_revoked:
+                  summary: The machine has been revoked.
+                  value:
+                    code: member/revoked
+                    message: machine が失効しています。
+                delegation_stale:
+                  summary: The current delegation cannot be used.
+                  value:
+                    code: delegation/stale
+                    message: 現在の委任状を使用できません。
+        '419':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/clock_skew | The HTTP signature timestamp is outside the allowed clock skew. | Correct the clock
+            offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_clock_skew:
+                  summary: The HTTP signature timestamp is outside the allowed clock skew.
+                  value:
+                    code: auth/clock_skew
+                    message: HTTP 署名の時刻が許容時刻差を外れています。
+                    details:
+                      serverTime: 1794787200000
+        '500':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_internal:
+                  summary: The request could not be processed.
+                  value:
+                    code: common/internal
+                    message: 要求を処理できませんでした。
+  /staged_operations/{stagedOpId}:
+    delete:
+      operationId: discardMachineStagedOperation
+      tags:
+        - Refunds
+      summary: Discard a preparation
+      description: >-
+        Discards only this machine's unconsumed preparation. Accepted refunds cannot be canceled. If the preparation
+        response was lost, check ownStaged and the process that created it. Discard only a preparation you intentionally
+        abandon before preparing again.
+      parameters:
+        - name: stagedOpId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/MachineSignature'
+        - $ref: '#/components/parameters/MachineTimestamp'
+        - $ref: '#/components/parameters/MachineNonce'
+      security:
+        - machineSignature: []
+      responses:
+        '200':
+          description: Success
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  code:
-                    const: common/not_found
-                    type: string
-                  details:
-                    type: object
-                    additionalProperties: {}
+                  ok:
+                    const: true
+                    type: boolean
+                    description: Indicates that the preparation was discarded successfully.
                 required:
-                  - code
+                  - ok
                 additionalProperties: true
-        '429':
-          description: common/rate_limited
+              examples:
+                discarded:
+                  summary: Preparation discarded
+                  value:
+                    ok: true
+        '400':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/invalid_request | The request format is invalid. | Compare the path, query, headers and body with
+            the API schema. |
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    const: common/rate_limited
-                    type: string
-                  details:
-                    type: object
-                    additionalProperties: {}
-                required:
-                  - code
-                additionalProperties: true
-          headers:
-            Retry-After:
-              description: Seconds to wait before retrying (positive integer)
-              schema:
-                type: integer
-                minimum: 1
-        '503':
-          description: common/service_unavailable
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_invalid_request:
+                  summary: The request format is invalid.
+                  value:
+                    code: common/invalid_request
+                    message: リクエストの形式が不正です。
+        '401':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/api_key_invalid | The API key is invalid. | Check the current API key for the intended purpose. |
+
+            | auth/machine_signature_invalid | The HTTP signature could not be verified. | Check the signing procedure
+            while preserving the raw body and request URL. |
+
+            | auth/replay | The HTTP nonce has already been used. | Retry with a new nonce, timestamp and HTTP
+            signature. |
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    const: common/service_unavailable
-                    type: string
-                  details:
-                    type: object
-                    additionalProperties: {}
-                required:
-                  - code
-                additionalProperties: true
-      x-auth-scheme: api-key
-      operationId: getPayment
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_api_key_invalid:
+                  summary: The API key is invalid.
+                  value:
+                    code: auth/api_key_invalid
+                    message: API キーが無効です。
+                auth_machine_signature_invalid:
+                  summary: The HTTP signature could not be verified.
+                  value:
+                    code: auth/machine_signature_invalid
+                    message: HTTP 署名を検証できません。
+                auth_replay:
+                  summary: The HTTP nonce has already been used.
+                  value:
+                    code: auth/replay
+                    message: 同じ HTTP nonce が既に使われています。
+        '403':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | merchant/suspended | The merchant is suspended. | Check the merchant's status and stop requests until the
+            suspension is lifted. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                merchant_suspended:
+                  summary: The merchant is suspended.
+                  value:
+                    code: merchant/suspended
+                    message: 加盟店が利用停止中です。
+        '404':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/not_found | The resource was not found. Payments and refunds belonging to another store also return
+            404. | Check the identifier and the store associated with the API key. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_not_found:
+                  summary: The resource was not found. Payments and refunds belonging to another store also return 404.
+                  value:
+                    code: common/not_found
+                    message: 指定した資源が見つかりません。他店舗の決済・返金も404です。
+        '409':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | member/not_active | The machine delegation is not active. | Check the delegation approval status in the
+            dashboard. |
+
+            | member/revoked | The machine has been revoked. | Do not start new refunds with this machine. Check its
+            status in the dashboard. |
+
+            | delegation/stale | The current delegation cannot be used. | Approve the delegation again for the current
+            wallet in the dashboard. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                member_not_active:
+                  summary: The machine delegation is not active.
+                  value:
+                    code: member/not_active
+                    message: machine の委任状が有効になっていません。
+                member_revoked:
+                  summary: The machine has been revoked.
+                  value:
+                    code: member/revoked
+                    message: machine が失効しています。
+                delegation_stale:
+                  summary: The current delegation cannot be used.
+                  value:
+                    code: delegation/stale
+                    message: 現在の委任状を使用できません。
+        '419':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | auth/clock_skew | The HTTP signature timestamp is outside the allowed clock skew. | Correct the clock
+            offset using details.serverTime and retry once with a new nonce, timestamp and HTTP signature. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                auth_clock_skew:
+                  summary: The HTTP signature timestamp is outside the allowed clock skew.
+                  value:
+                    code: auth/clock_skew
+                    message: HTTP 署名の時刻が許容時刻差を外れています。
+                    details:
+                      serverTime: 1794787200000
+        '500':
+          description: >-
+            | code | meaning | action |
+
+            | --- | --- | --- |
+
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                common_internal:
+                  summary: The request could not be processed.
+                  value:
+                    code: common/internal
+                    message: 要求を処理できませんでした。
 webhooks:
   paymentEvent:
     post:
@@ -1339,145 +2205,7 @@ webhooks:
         default:
           description: Anything other than 2xx is treated as a failure and resent
 components:
-  securitySchemes:
-    apiKey:
-      type: apiKey
-      in: header
-      name: x-stbl-api-key
-      description: >
-        An API key issued per store in the merchant console. Its format is `stblpay_` followed by 43 characters of
-        base64url.
-
-        The `Authorization` header is not used.
-  responses:
-    TooManyRequests:
-      description: >
-        Rate limited. Retry after a pause.
-
-        Payment creation and status lookup have no application-level rate limit. However, the network layer in front may
-        apply rate limiting, and the body in that case does not contain a `code`
   schemas:
-    PaymentIntentId:
-      type: string
-      pattern: ^pi_[0-9a-f]{8,32}$
-      description: The payment ID. `pi_` followed by 8 to 32 lowercase hex digits
-      examples:
-        - pi_0123456789abcdef0123456789abcdef
-    AmountJpy:
-      type: string
-      pattern: ^(0|[1-9][0-9]*)(\.[0-9]+)?$
-      description: >-
-        An amount in yen. A string of a decimal number, with no leading zeros in the integer part. In responses,
-        trailing zeros in the fractional part are dropped (`"1.50"` becomes `"1.5"`, and `"4980.0"` becomes `"4980"`)
-      examples:
-        - '4980'
-        - '49.8'
-    DateTime:
-      type: string
-      pattern: ^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?Z$
-      description: >-
-        An ISO 8601 date-time in UTC, ending with `Z`. Values with an offset such as `+09:00`, and dates that do not
-        exist on the calendar (such as February 30), are not accepted. In requests, seconds and milliseconds can be
-        omitted. Responses include milliseconds
-      examples:
-        - '2026-10-20T03:00:00.000Z'
-    PaymentStatus:
-      type: string
-      examples:
-        - created
-        - settled
-      description: >
-        The payment status. Only `settled` means the payment succeeded; base delivery of goods and recording of deposits
-        on this status.
-
-
-        | Value | Category | Meaning |
-
-        |---|---|---|
-
-        | `created` | In progress | The payment was created. It is waiting for a signature |
-
-        | `signed` | In progress | The buyer's signature is done |
-
-        | `issue_pending` | In progress | The buyer proceeded to the JPYC EX procedure. This does not mean the procedure
-        is complete |
-
-        | `deposit_confirmed` | In progress | The deposit (or the balance) was confirmed. The payment has not been
-        executed yet |
-
-        | `deploying` | In progress | Creating the required wallets (the buyer's wallet and the merchant's receiving
-        wallet) |
-
-        | `executing` | In progress | Execution of the payment has started. The result is being confirmed |
-
-        | `settled` | Succeeded | The payment succeeded and the funds were transferred to the merchant |
-
-        | `canceled` | Did not succeed | The payment was canceled |
-
-        | `expired` | Did not succeed | The payment ended because a deadline passed |
-
-        | `failed` | Did not succeed | The payment failed. The reason is in `failedReason` |
-
-        | `nonce_conflict` | Needs review | The outcome could not be determined. Do not treat it as either success or
-        failure; hold it and refer it for investigation |
-
-
-        `deposit_seen` is defined but is not returned now. If you receive an unknown value, do not deliver goods or
-        charge again; treat the payment as under review.
-    FailedReason:
-      type:
-        - string
-        - 'null'
-      description: >
-        The failure classification code. It is set when `status` is `failed` or `nonce_conflict`, and null otherwise.
-
-        Codes may be added, so do not validate strictly against an enumeration; **fall back to treating an unknown value
-        as a failure.**
-
-        Raw blockchain error strings and the issuer's reasons for a transaction decision are not included.
-
-
-        | Code | Meaning |
-
-        |---|---|
-
-        | `userop_expired` | The deposit or a sufficient balance was confirmed, but the time when the payment could be
-        executed had passed. The money has arrived |
-
-        | `deposit_recipient_mismatch` | The recipient of the deposit differs from the recipient expected for the
-        payment |
-
-        | `wallet_deploy_failed` | Creating a required wallet (the buyer's wallet or the merchant's receiving wallet)
-        failed |
-
-        | `missing_signed_userop` | The signed operation required for execution was missing |
-
-        | `insufficient_balance` | The payer's balance is insufficient |
-
-        | `policy_violation` | The amount limit or frequency limit of the payer's wallet was hit |
-
-        | `not_pay_call` / `not_allowed_call` | The operation was not an allowed form of payment operation |
-
-        | `fee_amount_mismatch` | The fee amount does not match |
-
-        | `fee_not_collected` | The fee was not collected |
-
-        | `merchant_wallet_outdated` | The merchant's receiving wallet implementation is outdated and the grace period
-        has passed |
-
-        | `unexpected_implementation` | The wallet implementation differs from what was expected |
-
-        | `userop_reverted` | A payment operation failure that matches none of the above |
-
-        | `nonce_conflict` | The outcome could not be determined (`status` is also `nonce_conflict`). It is not included
-        in the Webhook |
-
-        | `merchant_suspended` | A payment that had not started submission was moved to a terminal state because of a
-        merchant suspension |
-
-        | `unclassified` | A failure that has not been classified yet |
-      examples:
-        - insufficient_balance
     CreatePaymentIntentRequest:
       type: object
       required:
@@ -1595,6 +2323,37 @@ components:
         createdAt:
           $ref: '#/components/schemas/DateTime'
           description: The date-time the payment was created
+    Error:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: The error code. Fall back to your common error handling for unknown codes
+          examples:
+            - common/invalid_request
+        details:
+          type: object
+          additionalProperties: true
+          description: >
+            Additional information for each code. It may be absent. The server does not return display text, so the
+            merchant decides it.
+
+
+            - `common/invalid_request` (body format violation): `issues` is an array of violations. In each element,
+            `path` is an array pointing to the field, and `message` is the reason
+
+            - `payment/expires_at_too_soon`: `minSeconds` is the minimum number of seconds required from the time of
+            creation
+
+            - `payment/order_terminated`: the existing payment's `paymentIntentId`, `status`, and `failedReason`
+    PaymentIntentId:
+      type: string
+      pattern: ^pi_[0-9a-f]{8,32}$
+      description: The payment ID. `pi_` followed by 8 to 32 lowercase hex digits
+      examples:
+        - pi_0123456789abcdef0123456789abcdef
     PaymentStatusView:
       type: object
       required:
@@ -1628,211 +2387,6 @@ components:
             - $ref: '#/components/schemas/DateTime'
             - type: 'null'
           description: The date-time the payment succeeded. null for any status other than `settled`
-    Error:
-      type: object
-      required:
-        - code
-      properties:
-        code:
-          type: string
-          description: The error code. Fall back to your common error handling for unknown codes
-          examples:
-            - common/invalid_request
-        details:
-          type: object
-          additionalProperties: true
-          description: >
-            Additional information for each code. It may be absent. The server does not return display text, so the
-            merchant decides it.
-
-
-            - `common/invalid_request` (body format violation): `issues` is an array of violations. In each element,
-            `path` is an array pointing to the field, and `message` is the reason
-
-            - `payment/expires_at_too_soon`: `minSeconds` is the minimum number of seconds required from the time of
-            creation
-
-            - `payment/order_terminated`: the existing payment's `paymentIntentId`, `status`, and `failedReason`
-    WebhookPaymentData:
-      type: object
-      required:
-        - payment_intent_id
-        - order_id
-        - status
-        - merchant_id
-        - payout
-        - amount_jpy
-        - fee_jpy
-        - net_received_jpy
-        - tx_hash
-        - settled_at
-        - failed_reason
-      properties:
-        payment_intent_id:
-          $ref: '#/components/schemas/PaymentIntentId'
-        order_id:
-          type:
-            - string
-            - 'null'
-          description: The `orderId` you passed when creating the payment. null if you did not pass one
-        status:
-          type: string
-          enum:
-            - settled
-            - failed
-            - canceled
-            - expired
-          description: The terminal state that corresponds to the event (`payment.settled` corresponds to `settled`, and so on)
-        merchant_id:
-          type: string
-          pattern: ^m_[0-9a-f]{8,32}$
-          description: The merchant ID
-        payout:
-          type: string
-          pattern: ^0x[0-9a-f]{40}$
-          description: The address of the merchant's receiving wallet (lowercase)
-        amount_jpy:
-          $ref: '#/components/schemas/AmountJpy'
-          description: The order amount. It stays the order amount in every event
-        fee_jpy:
-          $ref: '#/components/schemas/AmountJpy'
-          description: >-
-            In `payment.settled`, the fee actually deducted on-chain (only when it could not be obtained from the
-            execution result, a value calculated from the estimate made at creation). In other events, `"0"`
-        net_received_jpy:
-          $ref: '#/components/schemas/AmountJpy'
-          description: >-
-            In `payment.settled`, the amount the merchant actually receives (only when it could not be obtained from the
-            execution result, a value calculated from the estimate made at creation). In other events, `"0"`. Use this
-            value to record deposits
-        tx_hash:
-          type:
-            - string
-            - 'null'
-          pattern: ^0x[0-9a-f]{64}$
-          description: The transfer transaction. null for canceled and expired. For failed, it is set if execution had started
-        settled_at:
-          oneOf:
-            - $ref: '#/components/schemas/DateTime'
-            - type: 'null'
-          description: The date-time the payment succeeded. null for any event other than `payment.settled`
-        failed_reason:
-          $ref: '#/components/schemas/FailedReason'
-          description: >-
-            The reason classification code for `payment.failed` (the same set as `failedReason` in the status lookup;
-            `nonce_conflict` is not included). null for other events
-        payer_address:
-          anyOf:
-            - type: string
-              pattern: ^0x[0-9a-f]{40}$
-            - type: 'null'
-        net_amount_destination:
-          anyOf:
-            - type: string
-              pattern: ^0x[0-9a-f]{40}$
-            - type: 'null'
-    WebhookEvent:
-      type: object
-      required:
-        - id
-        - type
-        - created_at
-        - data
-      properties:
-        id:
-          type: string
-          pattern: ^evt_[0-9a-f]{8,32}$
-          description: The event ID. It does not change on a resend. Use it to remove duplicates
-        type:
-          type: string
-          examples:
-            - payment.settled
-            - payment.failed
-            - payment.canceled
-            - payment.expired
-          description: The event type. Types may be added, so ignore an unknown type by returning 2xx
-        created_at:
-          $ref: '#/components/schemas/DateTime'
-          description: The date-time the event was created. It differs from `t` in the signature header (the time of sending)
-        data:
-          $ref: '#/components/schemas/WebhookPaymentData'
-    TestWebhookEvent:
-      type: object
-      description: >-
-        A test notification sent from the merchant console. `test` is `true`, and it does not point to a real payment or
-        order. It is sent only once to the saved URL and is not resent
-      required:
-        - id
-        - type
-        - created_at
-        - test
-        - data
-      properties:
-        id:
-          type: string
-          pattern: ^evt_test_[0-9a-f]{24}$
-        type:
-          const: payment.settled
-        created_at:
-          $ref: '#/components/schemas/DateTime'
-          description: The date-time it was sent
-        test:
-          const: true
-        data:
-          type: object
-          required:
-            - payment_intent_id
-            - order_id
-            - status
-            - merchant_id
-            - payout
-            - amount_jpy
-            - fee_jpy
-            - net_received_jpy
-            - tx_hash
-            - settled_at
-            - failed_reason
-            - payer_address
-            - net_amount_destination
-          properties:
-            payment_intent_id:
-              type: string
-              pattern: ^pi_test_[0-9a-f]{24}$
-            order_id:
-              type: string
-              pattern: ^test_[0-9a-f]{24}$
-            status:
-              const: settled
-            merchant_id:
-              type: string
-              pattern: ^m_[0-9a-f]{8,32}$
-              description: Your own merchant ID
-            payout:
-              type: string
-              pattern: ^0x[0-9a-f]{40}$
-              description: The address of your registered receiving wallet
-            amount_jpy:
-              $ref: '#/components/schemas/AmountJpy'
-              description: '`"1000"`'
-            fee_jpy:
-              $ref: '#/components/schemas/AmountJpy'
-              description: '`"0"`'
-            net_received_jpy:
-              $ref: '#/components/schemas/AmountJpy'
-              description: '`"1000"`'
-            tx_hash:
-              type: 'null'
-            settled_at:
-              $ref: '#/components/schemas/DateTime'
-              description: The date-time it was sent
-            failed_reason:
-              type: 'null'
-            payer_address:
-              const: '0x1111111111111111111111111111111111111111'
-              type: string
-            net_amount_destination:
-              const: '0x2222222222222222222222222222222222222222'
-              type: string
     WebhookEventPayload:
       oneOf:
         - type: object
@@ -2331,3 +2885,823 @@ components:
             - type
             - data
           additionalProperties: true
+    TestWebhookEvent:
+      type: object
+      description: >-
+        A test notification sent from the merchant console. `test` is `true`, and it does not point to a real payment or
+        order. It is sent only once to the saved URL and is not resent
+      required:
+        - id
+        - type
+        - created_at
+        - test
+        - data
+      properties:
+        id:
+          type: string
+          pattern: ^evt_test_[0-9a-f]{24}$
+        type:
+          const: payment.settled
+        created_at:
+          $ref: '#/components/schemas/DateTime'
+          description: The date-time it was sent
+        test:
+          const: true
+        data:
+          type: object
+          required:
+            - payment_intent_id
+            - order_id
+            - status
+            - merchant_id
+            - payout
+            - amount_jpy
+            - fee_jpy
+            - net_received_jpy
+            - tx_hash
+            - settled_at
+            - failed_reason
+            - payer_address
+            - net_amount_destination
+          properties:
+            payment_intent_id:
+              type: string
+              pattern: ^pi_test_[0-9a-f]{24}$
+            order_id:
+              type: string
+              pattern: ^test_[0-9a-f]{24}$
+            status:
+              const: settled
+            merchant_id:
+              type: string
+              pattern: ^m_[0-9a-f]{8,32}$
+              description: Your own merchant ID
+            payout:
+              type: string
+              pattern: ^0x[0-9a-f]{40}$
+              description: The address of your registered receiving wallet
+            amount_jpy:
+              $ref: '#/components/schemas/AmountJpy'
+              description: '`"1000"`'
+            fee_jpy:
+              $ref: '#/components/schemas/AmountJpy'
+              description: '`"0"`'
+            net_received_jpy:
+              $ref: '#/components/schemas/AmountJpy'
+              description: '`"1000"`'
+            tx_hash:
+              type: 'null'
+            settled_at:
+              $ref: '#/components/schemas/DateTime'
+              description: The date-time it was sent
+            failed_reason:
+              type: 'null'
+            payer_address:
+              const: '0x1111111111111111111111111111111111111111'
+              type: string
+            net_amount_destination:
+              const: '0x2222222222222222222222222222222222222222'
+              type: string
+    DateTime:
+      type: string
+      pattern: ^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?Z$
+      description: >-
+        An ISO 8601 date-time in UTC, ending with `Z`. Values with an offset such as `+09:00`, and dates that do not
+        exist on the calendar (such as February 30), are not accepted. In requests, seconds and milliseconds can be
+        omitted. Responses include milliseconds
+      examples:
+        - '2026-10-20T03:00:00.000Z'
+    PaymentStatus:
+      type: string
+      examples:
+        - created
+        - settled
+      description: >
+        The payment status. Only `settled` means the payment succeeded; base delivery of goods and recording of deposits
+        on this status.
+
+
+        | Value | Category | Meaning |
+
+        |---|---|---|
+
+        | `created` | In progress | The payment was created. It is waiting for a signature |
+
+        | `signed` | In progress | The buyer's signature is done |
+
+        | `issue_pending` | In progress | The buyer proceeded to the JPYC EX procedure. This does not mean the procedure
+        is complete |
+
+        | `deposit_confirmed` | In progress | The deposit (or the balance) was confirmed. The payment has not been
+        executed yet |
+
+        | `deploying` | In progress | Creating the required wallets (the buyer's wallet and the merchant's receiving
+        wallet) |
+
+        | `executing` | In progress | Execution of the payment has started. The result is being confirmed |
+
+        | `settled` | Succeeded | The payment succeeded and the funds were transferred to the merchant |
+
+        | `canceled` | Did not succeed | The payment was canceled |
+
+        | `expired` | Did not succeed | The payment ended because a deadline passed |
+
+        | `failed` | Did not succeed | The payment failed. The reason is in `failedReason` |
+
+        | `nonce_conflict` | Needs review | The outcome could not be determined. Do not treat it as either success or
+        failure; hold it and refer it for investigation |
+
+
+        `deposit_seen` is defined but is not returned now. If you receive an unknown value, do not deliver goods or
+        charge again; treat the payment as under review.
+    AmountJpy:
+      type: string
+      pattern: ^(0|[1-9][0-9]*)(\.[0-9]+)?$
+      description: >-
+        An amount in yen. A string of a decimal number, with no leading zeros in the integer part. In responses,
+        trailing zeros in the fractional part are dropped (`"1.50"` becomes `"1.5"`, and `"4980.0"` becomes `"4980"`)
+      examples:
+        - '4980'
+        - '49.8'
+    FailedReason:
+      type:
+        - string
+        - 'null'
+      description: >
+        The failure classification code. It is set when `status` is `failed` or `nonce_conflict`, and null otherwise.
+
+        Codes may be added, so do not validate strictly against an enumeration; **fall back to treating an unknown value
+        as a failure.**
+
+        Raw blockchain error strings and the issuer's reasons for a transaction decision are not included.
+
+
+        | Code | Meaning |
+
+        |---|---|
+
+        | `userop_expired` | The deposit or a sufficient balance was confirmed, but the time when the payment could be
+        executed had passed. The money has arrived |
+
+        | `deposit_recipient_mismatch` | The recipient of the deposit differs from the recipient expected for the
+        payment |
+
+        | `wallet_deploy_failed` | Creating a required wallet (the buyer's wallet or the merchant's receiving wallet)
+        failed |
+
+        | `missing_signed_userop` | The signed operation required for execution was missing |
+
+        | `insufficient_balance` | The payer's balance is insufficient |
+
+        | `policy_violation` | The amount limit or frequency limit of the payer's wallet was hit |
+
+        | `not_pay_call` / `not_allowed_call` | The operation was not an allowed form of payment operation |
+
+        | `fee_amount_mismatch` | The fee amount does not match |
+
+        | `fee_not_collected` | The fee was not collected |
+
+        | `merchant_wallet_outdated` | The merchant's receiving wallet implementation is outdated and the grace period
+        has passed |
+
+        | `unexpected_implementation` | The wallet implementation differs from what was expected |
+
+        | `userop_reverted` | A payment operation failure that matches none of the above |
+
+        | `nonce_conflict` | The outcome could not be determined (`status` is also `nonce_conflict`). It is not included
+        in the Webhook |
+
+        | `merchant_suspended` | A payment that had not started submission was moved to a terminal state because of a
+        merchant suspension |
+
+        | `unclassified` | A failure that has not been classified yet |
+      examples:
+        - insufficient_balance
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code. Handle unknown codes with a common fallback.
+        details:
+          type: object
+          additionalProperties: {}
+      required:
+        - code
+      additionalProperties: true
+    Hash32:
+      type: string
+      pattern: ^0x[0-9a-f]{64}$
+      description: Lowercase 32-byte hash with a 0x prefix.
+    IsoDateTime:
+      type: string
+      format: date-time
+      description: UTC ISO 8601 timestamp.
+    Address:
+      type: string
+      pattern: ^0x[0-9a-f]{40}$
+      description: Lowercase EVM wallet address.
+    PaymentLookupResponse:
+      type: object
+      properties:
+        paymentIntentId:
+          type: string
+          pattern: ^pi_[0-9a-f]{8,32}$
+          description: Identifier of a payment belonging to the store's API key.
+        orderId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Merchant order ID, or null if not set.
+        status:
+          type: string
+          examples:
+            - created
+            - signed
+            - issue_pending
+            - deposit_seen
+            - deposit_confirmed
+            - deploying
+            - executing
+            - settled
+            - canceled
+            - expired
+            - failed
+            - nonce_conflict
+          description: >-
+            Payment status. Treat unknown values as unsupported states and do not infer settlement.
+
+
+            Known values: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing,
+            settled, canceled, expired, failed, nonce_conflict.
+        amountJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Original payment amount. An estimate for unsettled payments.
+        feeJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Fee amount. An estimate for unsettled payments.
+        netAmountJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Merchant net amount. An estimate for unsettled payments.
+        txHash:
+          anyOf:
+            - $ref: '#/components/schemas/Hash32'
+            - type: 'null'
+          description: >-
+            Payment tx hash, or null if unavailable. A submitted but unconfirmed payment may already have a value.
+            Determine settlement from status being settled.
+        settledAt:
+          anyOf:
+            - $ref: '#/components/schemas/IsoDateTime'
+            - type: 'null'
+          description: Payment settlement timestamp, or null if unsettled.
+        failedReason:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Failure reason, or null if the payment has not failed.
+        payerAddress:
+          anyOf:
+            - $ref: '#/components/schemas/Address'
+            - type: 'null'
+          description: Original payer's wallet address, or null if unconfirmed.
+        netAmountDestination:
+          anyOf:
+            - $ref: '#/components/schemas/Address'
+            - type: 'null'
+          description: Destination address for the merchant net amount, or null if unconfirmed.
+        createdAt:
+          type: string
+          format: date-time
+          description: Payment creation timestamp.
+      required:
+        - paymentIntentId
+        - orderId
+        - status
+        - amountJpy
+        - feeJpy
+        - netAmountJpy
+        - txHash
+        - settledAt
+        - failedReason
+        - payerAddress
+        - netAmountDestination
+        - createdAt
+      additionalProperties: true
+    MachineSignatureHeaders:
+      type: object
+      properties:
+        x-stbl-api-key:
+          type: string
+          pattern: ^stblpay_machine_[A-Za-z0-9_-]{43}$
+          description: Refund API key. It is not interchangeable with the payment API key.
+        x-stbl-signature:
+          type: string
+          pattern: ^[0-9a-f]{128}$
+          description: >-
+            Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See
+            https://stbl-pay.com/docs/en/refunds/signing for the procedure.
+        x-stbl-timestamp:
+          type: string
+          pattern: ^[0-9]+$
+          description: 'Signing timestamp as a string of epoch milliseconds. Allowed clock skew: ±60,000 ms.'
+        x-stbl-nonce:
+          type: string
+          pattern: ^0x[0-9a-f]{64}$
+          description: A fresh 32-byte nonce for each request.
+      required:
+        - x-stbl-api-key
+        - x-stbl-signature
+        - x-stbl-timestamp
+        - x-stbl-nonce
+      additionalProperties: true
+    Jpy:
+      type: string
+      pattern: ^(0|[1-9]\d*)(\.\d+)?$
+      description: Non-negative JPY amount as a decimal string. Do not convert to floating point.
+    RefundLimitReason:
+      type: string
+      examples:
+        - onchain_credit
+        - wallet_balance
+      description: |-
+        Kind of constraint reducing the refundable amount. Treat unknown values as unsupported constraints.
+
+        Known values: onchain_credit, wallet_balance.
+    RefundBlocker:
+      type: string
+      examples:
+        - payment_not_settled
+        - payer_unknown
+        - nothing_refundable
+        - operation_in_progress
+        - staged_operation_exists
+        - wallet_not_deployed
+        - state_unavailable
+      description: >-
+        Reason blocking refund preparation. Do not proceed with preparation for unknown values.
+
+
+        Known values: payment_not_settled, payer_unknown, nothing_refundable, operation_in_progress,
+        staged_operation_exists, wallet_not_deployed, state_unavailable.
+    MachineRefundableView:
+      type: object
+      properties:
+        paymentIntentId:
+          type: string
+          pattern: ^pi_[0-9a-f]{8,32}$
+          description: Original payment identifier.
+        paymentStatus:
+          type: string
+          examples:
+            - created
+            - signed
+            - issue_pending
+            - deposit_seen
+            - deposit_confirmed
+            - deploying
+            - executing
+            - settled
+            - canceled
+            - expired
+            - failed
+            - nonce_conflict
+          description: >-
+            Original payment status. Do not infer refund eligibility for unknown values.
+
+
+            Known values: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing,
+            settled, canceled, expired, failed, nonce_conflict.
+        amountJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Original payment amount before fee deduction, used as the refund basis.
+        confirmedRefundedJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Total confirmed refund amount.
+        reservedJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Amount reserved by accepted but unconfirmed refunds and valid unconsumed preparations.
+        refundableJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: 'Refundable amount: payment amount minus confirmed refunds and reserved amounts.'
+        refundableNowJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: The minimum of the payment's refundable amount, onchain cap and wallet balance.
+        onchainCreditJpy:
+          anyOf:
+            - $ref: '#/components/schemas/Jpy'
+            - type: 'null'
+          description: Onchain refund cap per payer, or null if unobservable.
+        walletBalanceJpy:
+          anyOf:
+            - $ref: '#/components/schemas/Jpy'
+            - type: 'null'
+          description: Merchant wallet JPYC balance, or null if unobservable.
+        limitedBy:
+          type: array
+          items:
+            $ref: '#/components/schemas/RefundLimitReason'
+          description: Factors reducing the executable amount. Treat unknown values as unsupported constraints.
+        blockedBy:
+          anyOf:
+            - $ref: '#/components/schemas/RefundBlocker'
+            - type: 'null'
+          description: >-
+            Reason preparation is blocked. null means it can start. Do not proceed for unknown values or use estimated
+            amounts for state_unavailable.
+        checkedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the refundable amount was checked.
+        delegationCapJpy:
+          anyOf:
+            - $ref: '#/components/schemas/Jpy'
+            - type: 'null'
+          description: Delegation's per-refund cap. null means no cap; 0 prohibits refunds.
+        executableJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: >-
+            Amount this machine can execute now: the minimum of refundableNowJpy and delegationCapJpy, or 0 when
+            blockedBy is present.
+        ownStaged:
+          anyOf:
+            - type: object
+              properties:
+                stagedOpId:
+                  type: string
+                  pattern: ^stg_[0-9a-f]{8,32}$
+                  description: Unconsumed preparation identifier.
+                amountJpy:
+                  type: string
+                  pattern: ^(0|[1-9]\d*)(\.\d+)?$
+                  description: Refund amount reserved by the preparation.
+                includesUpgrade:
+                  type: boolean
+                  description: Whether the preparation includes a wallet upgrade.
+                expiresAt:
+                  type: string
+                  format: date-time
+                  description: Preparation expiry timestamp.
+                paymentIntentId:
+                  type: string
+                  pattern: ^pi_[0-9a-f]{8,32}$
+                  description: Original payment for this preparation. It may differ from the payment being queried.
+              required:
+                - stagedOpId
+                - amountJpy
+                - includesUpgrade
+                - expiresAt
+                - paymentIntentId
+              additionalProperties: true
+            - type: 'null'
+          description: This machine's unconsumed preparation, including preparations for other payments; null if none.
+      required:
+        - paymentIntentId
+        - paymentStatus
+        - amountJpy
+        - confirmedRefundedJpy
+        - reservedJpy
+        - refundableJpy
+        - refundableNowJpy
+        - onchainCreditJpy
+        - walletBalanceJpy
+        - limitedBy
+        - blockedBy
+        - checkedAt
+        - delegationCapJpy
+        - executableJpy
+        - ownStaged
+      additionalProperties: true
+    MachinePrepareResponse:
+      type: object
+      properties:
+        challenge:
+          type: string
+          pattern: ^0x[0-9a-f]{64}$
+          description: 32-byte digest to sign. For refunds this is keccak256(userOpHash ‖ validUntil), not a random value.
+        rpId:
+          type: string
+          description: RP ID used to construct assertion authenticatorData.
+        serverTime:
+          type: integer
+          description: Server time in epoch milliseconds for correcting clock offset.
+        validUntil:
+          type: string
+          format: date-time
+          description: UserOperation expiry timestamp.
+        stagedOpId:
+          type: string
+          pattern: ^stg_[0-9a-f]{8,32}$
+          description: Unconsumed preparation identifier, used for submission or discard.
+        wallet:
+          type: string
+          pattern: ^0x[0-9a-f]{40}$
+          description: Merchant wallet funding the refund.
+        paymentIntentId:
+          type: string
+          pattern: ^pi_[0-9a-f]{8,32}$
+          description: Original payment identifier.
+        amountJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Refund amount reserved during preparation.
+        upgrade:
+          type: object
+          properties:
+            included:
+              type: boolean
+              description: Whether this refund includes a wallet upgrade.
+          required:
+            - included
+          additionalProperties: true
+          description: Wallet upgrade included with the refund.
+      required:
+        - challenge
+        - rpId
+        - serverTime
+        - validUntil
+        - stagedOpId
+        - wallet
+        - paymentIntentId
+        - amountJpy
+        - upgrade
+      additionalProperties: true
+    MachinePrepareRequest:
+      type: object
+      properties:
+        amountJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: >-
+            Refund amount, as a decimal string in yen with up to 6 decimal places. Values with 7 or more decimal places
+            are rejected with common/invalid_request. Do not convert it to a floating-point number.
+      required:
+        - amountJpy
+      additionalProperties: false
+    RefundAccepted:
+      type: object
+      properties:
+        refundId:
+          type: string
+          pattern: ^rfd_[0-9a-f]{8,32}$
+          description: Accepted refund identifier. Save it to query the result.
+        walletOperationId:
+          type: string
+          pattern: ^wop_[0-9a-f]{8,32}$
+          description: Wallet operation tracking ID.
+        status:
+          type: string
+          examples:
+            - queued
+            - submitted
+            - confirmed
+            - failed
+            - indeterminate
+          description: |-
+            Wallet operation status. Acceptance does not mean completion. Treat unknown values as unconfirmed.
+
+            Known values: queued, submitted, confirmed, failed, indeterminate.
+      required:
+        - refundId
+        - walletOperationId
+        - status
+      additionalProperties: true
+    StagedOpId:
+      type: string
+      pattern: ^stg_[0-9a-f]{8,32}$
+      description: Unconsumed preparation identifier.
+    MachineSubmitRequest:
+      type: object
+      properties:
+        stagedOpId:
+          $ref: '#/components/schemas/StagedOpId'
+        assertion:
+          type: object
+          properties:
+            clientDataJSON:
+              type: string
+              minLength: 1
+              pattern: ^[A-Za-z0-9_-]+$
+              description: Base64url-encoded clientDataJSON containing the challenge.
+            authenticatorData:
+              type: string
+              minLength: 1
+              pattern: ^[A-Za-z0-9_-]+$
+              description: Base64url-encoded authenticatorData.
+            signature:
+              type: string
+              minLength: 1
+              pattern: ^[A-Za-z0-9_-]+$
+              description: >-
+                P-256 assertion signature as base64url-encoded DER. This differs from the HTTP signature's 128
+                hexadecimal characters encoding r‖s.
+          required:
+            - clientDataJSON
+            - authenticatorData
+            - signature
+          additionalProperties: true
+          description: Machine signature for the challenge, created separately from the HTTP signature.
+      required:
+        - stagedOpId
+        - assertion
+      additionalProperties: false
+    RefundActor:
+      oneOf:
+        - type: object
+          properties:
+            kind:
+              const: owner
+              type: string
+              description: Kind of actor that initiated the refund. Treat unknown values as unsupported.
+          required:
+            - kind
+          additionalProperties: true
+        - type: object
+          properties:
+            kind:
+              const: machine
+              type: string
+              description: Kind of actor that initiated the refund. Treat unknown values as unsupported.
+            memberId:
+              type: string
+              pattern: ^mem_[0-9a-f]{8,32}$
+              description: Identifier of the machine that initiated the refund.
+            label:
+              anyOf:
+                - type: string
+                - type: 'null'
+              description: Machine display name, or null if not set.
+          required:
+            - kind
+            - memberId
+            - label
+          additionalProperties: true
+    RefundView:
+      type: object
+      properties:
+        actor:
+          $ref: '#/components/schemas/RefundActor'
+          description: Signing actor that initiated the refund. May be omitted in older responses.
+        refundId:
+          type: string
+          pattern: ^rfd_[0-9a-f]{8,32}$
+          description: Accepted refund identifier.
+        walletOperationId:
+          type: string
+          pattern: ^wop_[0-9a-f]{8,32}$
+          description: Wallet operation tracking ID.
+        amountJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Refund amount.
+        status:
+          type: string
+          examples:
+            - queued
+            - submitted
+            - confirmed
+            - failed
+            - indeterminate
+          description: |-
+            Refund progress status. Treat unknown values as unconfirmed.
+
+            Known values: queued, submitted, confirmed, failed, indeterminate.
+        includesUpgrade:
+          type: boolean
+          description: Whether a wallet upgrade is included with the refund.
+        txHash:
+          anyOf:
+            - $ref: '#/components/schemas/Hash32'
+            - type: 'null'
+          description: >-
+            Refund tx hash, or null if unavailable. A submitted but unconfirmed refund may already have a value.
+            Determine refund success from status being confirmed.
+        failureReason:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Refund failure reason, or null if it has not failed.
+        acceptedAt:
+          type: string
+          format: date-time
+          description: Refund acceptance timestamp.
+        settledAt:
+          anyOf:
+            - $ref: '#/components/schemas/IsoDateTime'
+            - type: 'null'
+          description: Timestamp when refund success or failure was finalized. null if unconfirmed.
+      required:
+        - refundId
+        - walletOperationId
+        - amountJpy
+        - status
+        - includesUpgrade
+        - txHash
+        - failureReason
+        - acceptedAt
+        - settledAt
+      additionalProperties: true
+    PageQuery:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of records per page. Default 20, maximum 100.
+        cursor:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: nextCursor from the previous response. Pass it without interpreting its contents.
+      additionalProperties: true
+    StagedRefundView:
+      type: object
+      properties:
+        stagedOpId:
+          type: string
+          pattern: ^stg_[0-9a-f]{8,32}$
+          description: Unconsumed preparation identifier.
+        amountJpy:
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: Refund amount reserved by the preparation.
+        includesUpgrade:
+          type: boolean
+          description: Whether the preparation includes a wallet upgrade.
+        expiresAt:
+          type: string
+          format: date-time
+          description: Preparation expiry timestamp.
+      required:
+        - stagedOpId
+        - amountJpy
+        - includesUpgrade
+        - expiresAt
+      additionalProperties: true
+  responses:
+    TooManyRequests:
+      description: >
+        Rate limited. Retry after a pause.
+
+        Payment creation and status lookup have no application-level rate limit. However, the network layer in front may
+        apply rate limiting, and the body in that case does not contain a `code`
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-stbl-api-key
+      description: >
+        An API key issued per store in the merchant console. Its format is `stblpay_` followed by 43 characters of
+        base64url.
+
+        The `Authorization` header is not used.
+    machineSignature:
+      type: apiKey
+      in: header
+      name: x-stbl-api-key
+      description: >-
+        Requires a refund API key and a per-request HTTP signature. It is not interchangeable with the payment API key.
+        The signature covers the HTTP method, URL, raw body, timestamp and nonce. See
+        https://stbl-pay.com/docs/en/refunds/signing for the signing procedure and reference implementation.
+  parameters:
+    MachineSignature:
+      name: x-stbl-signature
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: ^[0-9a-f]{128}$
+        description: >-
+          Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See
+          https://stbl-pay.com/docs/en/refunds/signing for the procedure.
+      description: >-
+        Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See
+        https://stbl-pay.com/docs/en/refunds/signing for the procedure.
+    MachineTimestamp:
+      name: x-stbl-timestamp
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: ^[0-9]+$
+        description: 'Signing timestamp as a string of epoch milliseconds. Allowed clock skew: ±60,000 ms.'
+      description: 'Signing timestamp as a string of epoch milliseconds. Allowed clock skew: ±60,000 ms.'
+    MachineNonce:
+      name: x-stbl-nonce
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: ^0x[0-9a-f]{64}$
+        description: A fresh 32-byte nonce for each request.
+      description: A fresh 32-byte nonce for each request.

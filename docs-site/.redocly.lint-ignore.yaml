@@ -1,0 +1,6 @@
+static/openapi.yaml:
+  operation-tag-defined:
+    - '#/webhooks/paymentEvent/post'
+i18n/en/openapi.yaml:
+  operation-tag-defined:
+    - '#/webhooks/paymentEvent/post'
