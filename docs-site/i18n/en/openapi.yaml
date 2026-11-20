@@ -78,8 +78,9 @@ tags:
       signature. |
 
 
-      See [Refunds from a merchant server](https://stbl-pay.com/docs/refunds/machine-api) for the flow, and [Refund API
-      signatures](https://stbl-pay.com/docs/refunds/signing) for the signing procedure and reference implementation.
+      See [Refunds from a merchant server](https://stbl-pay.com/docs/en/refunds/machine-api) for the flow, and [Refund
+      API signatures](https://stbl-pay.com/docs/en/refunds/signing) for the signing procedure and reference
+      implementation.
 paths:
   /payment_intents:
     post:
@@ -1068,7 +1069,7 @@ paths:
         base64url-encoded DER; the HTTP signature is 128 hexadecimal characters encoding r‖s. If the response is lost,
         resend the same stagedOpId and assertion, refreshing only the HTTP nonce, timestamp and signature. If already
         accepted, the same refundId and walletOperationId are returned. Do not prepare again. Revocation or approval of
-        a new cap does not cancel accepted refunds. See https://stbl-pay.com/docs/refunds/signing for the signing
+        a new cap does not cancel accepted refunds. See https://stbl-pay.com/docs/en/refunds/signing for the signing
         procedure.
       parameters:
         - name: paymentIntentId
@@ -3199,7 +3200,7 @@ components:
           pattern: ^[0-9a-f]{128}$
           description: >-
             Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See
-            https://stbl-pay.com/docs/refunds/signing for the procedure.
+            https://stbl-pay.com/docs/en/refunds/signing for the procedure.
         x-stbl-timestamp:
           type: string
           pattern: ^[0-9]+$
@@ -3664,7 +3665,7 @@ components:
       description: >-
         Requires a refund API key and a per-request HTTP signature. It is not interchangeable with the payment API key.
         The signature covers the HTTP method, URL, raw body, timestamp and nonce. See
-        https://stbl-pay.com/docs/refunds/signing for the signing procedure and reference implementation.
+        https://stbl-pay.com/docs/en/refunds/signing for the signing procedure and reference implementation.
   parameters:
     MachineSignature:
       name: x-stbl-signature
@@ -3675,10 +3676,10 @@ components:
         pattern: ^[0-9a-f]{128}$
         description: >-
           Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See
-          https://stbl-pay.com/docs/refunds/signing for the procedure.
+          https://stbl-pay.com/docs/en/refunds/signing for the procedure.
       description: >-
         Per-request P-256 HTTP signature: 128 lowercase hexadecimal characters encoding r‖s. See
-        https://stbl-pay.com/docs/refunds/signing for the procedure.
+        https://stbl-pay.com/docs/en/refunds/signing for the procedure.
     MachineTimestamp:
       name: x-stbl-timestamp
       in: header
