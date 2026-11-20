@@ -558,9 +558,15 @@ test("計測：AI の回答から来た閲覧、一覧のカード・関連欄�
 
   await page.goto("https://stbl-pay.com/learn/chargeback/");
   expect((await events()).some(([n]) => n === "ai_referral"), "AI 以外から来たときは送らない").toBe(false);
+  // 関連欄もカード（.learn-cards）だが、一覧（learn_hub）とは分けて数える
   await clickStay(".learn-related a");
   expect(await events()).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_related" })]);
   await page.locator("button.learn-fig-toggle").first().click();
   expect(await events()).toContainEqual(["figure_toggle", expect.objectContaining({ stopped: true })]);
+
+  // LP の「決済を学ぶ」のカードから選んだ記事
+  await page.goto("https://stbl-pay.com/");
+  await clickStay("#learn .learn-cards a[href='/learn/payment-fees/']");
+  expect(await events()).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_lp", item_id: "/learn/payment-fees/" })]);
   await page.unrouteAll({ behavior: "ignoreErrors" }); // まだ転送中の要求があると route.fetch が「Test ended」で落ちる
 });
