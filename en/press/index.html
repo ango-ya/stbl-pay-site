@@ -99,7 +99,7 @@
       "name": "STBLpay Press Kit",
       "description": "Boilerplate text, a fact sheet, logos (SVG and PNG) with usage rules, an official button and mark for merchants, brand colors, how to write the name, characters and videos for STBLpay (すてぶるペイ).",
       "inLanguage": "en",
-      "dateModified": "2026-11-16",
+      "dateModified": "2026-11-19",
       "isPartOf": { "@id": "https://stbl-pay.com/#website" },
       "publisher": { "@id": "https://stbl-pay.com/#org-angoya" },
       "about": { "@id": "https://stbl-pay.com/#service" },
@@ -149,14 +149,14 @@
 
           <h1>Press kit</h1>
           <p class="learn-lead">Text, logos and images you can use when you write about STBLpay, for media, bloggers and partners. There is also an <a href="#merchant-kit">official button and mark</a> for merchant sites. When you introduce the service in an article, please use the materials on this page as they are.</p>
-          <p class="learn-meta">Updated: <time datetime="2026-11-16">November 16, 2026</time> · By Ango-ya LLC</p>
+          <p class="learn-meta">Updated: <time datetime="2026-11-19">November 19, 2026</time> · By Ango-ya LLC</p>
 
-          <h2 id="status">Current status (as of November 16, 2026)</h2>
+          <h2 id="status">Current status (as of November 19, 2026)</h2>
           <ul>
             <li>STBLpay is under development. The launch date has not been set.</li>
             <li>A Sandbox for trying the integration, merchant docs and an API specification (OpenAPI 3.1) are public.</li>
             <li>Integration works like this: your server creates a payment through the API and sends the buyer to the checkout page. You receive the result through a webhook (the payment-completed notice) and by looking up the payment status. There is no dedicated library you need to add to your site.</li>
-            <li>Fees are under consideration. No rate has been published.</li>
+            <li>The fee is 5% (a single flat rate for all merchants; nothing added for buyers).</li>
           </ul>
           <p>Some articles from around the July 2026 announcement describe the timing or the integration method differently from today. When you write about STBLpay, please cite this page and the <a class="text-link" href="/docs/en/">merchant docs</a>.</p>
 
@@ -167,7 +167,7 @@
           </div>
           <p class="press-label">Long (about 120 words)</p>
           <div class="press-copy">
-            <p>STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu pei") is a payment service under development by Ango-ya LLC of Fukuoka, Japan. Buyers pay in yen, and merchants receive JPYC, a stablecoin pegged to the Japanese yen. Buyers approve each payment with a passkey (face or fingerprint). When their JPYC balance is enough, no bank transfer is needed; when it is not, they issue JPYC with a Japanese-yen bank transfer and pay with it. Merchants receive sales in JPYC without relying on card companies' credit screening. The design is non-custodial: the provider holds no funds or private keys of buyers or merchants. Fees are under consideration, with a single flat rate for all merchants planned and nothing added for buyers. A Sandbox, merchant docs and an OpenAPI 3.1 specification are public.</p>
+            <p>STBLpay (pronounced "stable pay"; in Japanese すてぶるペイ, read "suteburu pei") is a payment service under development by Ango-ya LLC of Fukuoka, Japan. Buyers pay in yen, and merchants receive JPYC, a stablecoin pegged to the Japanese yen. Buyers approve each payment with a passkey (face or fingerprint). When their JPYC balance is enough, no bank transfer is needed; when it is not, they issue JPYC with a Japanese-yen bank transfer and pay with it. Merchants receive sales in JPYC without relying on card companies' credit screening. The design is non-custodial: the provider holds no funds or private keys of buyers or merchants. The fee is 5%, a single flat rate for all merchants, with nothing added for buyers. A Sandbox, merchant docs and an OpenAPI 3.1 specification are public.</p>
           </div>
 
           <h2 id="facts">Fact sheet</h2>
@@ -179,7 +179,7 @@
             <div><dt>Location</dt><dd>Fukuoka City, Japan</dd></div>
             <div><dt>Status</dt><dd>Under development (as of November 2026). The launch date has not been set.</dd></div>
             <div><dt>Integration</dt><dd>Your server creates a payment through the API and sends the buyer to the checkout page. Results arrive through a webhook and by looking up the payment status.</dd></div>
-            <div><dt>How to describe fees</dt><dd>Please write "under consideration (a single flat rate for all merchants is planned; nothing added for buyers)". No rate has been published.</dd></div>
+            <div><dt>How to describe fees</dt><dd>Please write "5% (a single flat rate for all merchants; nothing added for buyers)". For details, see our <a href="/fees/" hreflang="ja">fee page (in Japanese)</a>.</dd></div>
             <div><dt>How it works</dt><dd>Buyers approve payments with a passkey (face or fingerprint). If their JPYC balance is not enough, they issue JPYC with a Japanese-yen bank transfer and pay with it (no transfer when the balance is enough). Merchants receive sales in JPYC. The design is non-custodial: the provider holds no funds or private keys.</dd></div>
             <div><dt>Public resources</dt><dd>A Sandbox for trying the integration, merchant docs, an API specification (OpenAPI 3.1) and how-to videos (eight episodes plus an extra)</dd></div>
           </dl>

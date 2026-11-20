@@ -21,8 +21,8 @@ if (args.includes("--all")) {
   if (files.includes("en/index.html")) urls.add(`https://${HOST}/en/`);
   // 解説（learn/…/index.html と en/learn/…/index.html）とプレスキット（press/index.html と en/press/index.html）と表現に関する方針（policy/expression/index.html）は、置き場所がそのまま URL になる
   for (const f of files) if (/^((en\/)?(learn\/([a-z-]+\/)?|press\/)|policy\/expression\/)index\.html$/.test(f)) urls.add(`https://${HOST}/${f.replace(/index\.html$/, "")}`);
-  // 法務のページ：プライバシーポリシーと開示等の請求の手続（privacy/）、利用規約（terms/）、運営会社（company/）
-  for (const f of files) if (/^(privacy\/(requests\/)?|terms\/((users|merchants)\/)?|company\/)index\.html$/.test(f)) urls.add(`https://${HOST}/${f.replace(/index\.html$/, "")}`);
+  // 法務のページ：プライバシーポリシーと開示等の請求の手続（privacy/）、利用規約（terms/）、運営会社（company/）、手数料（fees/）
+  for (const f of files) if (/^(privacy\/(requests\/)?|terms\/((users|merchants)\/)?|company\/|fees\/)index\.html$/.test(f)) urls.add(`https://${HOST}/${f.replace(/index\.html$/, "")}`);
   // docs はどの原稿がどの URL になるかを辿らず、docs-site が変わったら docs の全 URL を送る（いまは日英 76 件）
   if (files.some((f) => f.startsWith("docs-site/"))) {
     for (const path of ["docs/sitemap.xml", "docs/en/sitemap.xml"]) locs(path).forEach((u) => urls.add(u));

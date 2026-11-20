@@ -2632,3 +2632,89 @@ sup.fn a:hover {
   text-align: left;
   vertical-align: top;
 }
+
+/* 手数料のページの、比較の解説への導線（カード全体が 1 つのリンク） */
+.legal .fees-guide {
+  display: flex;
+  align-items: stretch;
+  max-width: none;
+  margin: 28px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.legal .fees-guide:hover {
+  border-color: var(--accent);
+}
+
+.legal .fees-guide:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.legal .fees-guide img {
+  flex: 0 0 45%;
+  width: 45%;
+  height: auto;
+  align-self: center;
+  display: block;
+}
+
+.legal .fees-guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  padding: 24px 28px;
+  background: var(--paper-dim);
+}
+
+.legal .fees-guide-kicker {
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.legal .fees-guide-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.legal .fees-guide-desc {
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.legal .fees-guide-cta {
+  margin-top: auto;
+  /* 薄い背景の上で 4.5:1 を満たす濃い青（--link は 4.37:1 で足りない） */
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .legal .fees-guide {
+    flex-direction: column;
+  }
+
+  .legal .fees-guide img {
+    flex: none;
+    width: 100%;
+  }
+
+  .legal .fees-guide-body {
+    padding: 18px 18px 20px;
+  }
+
+  .legal .fees-guide-title {
+    font-size: 18px;
+  }
+}
