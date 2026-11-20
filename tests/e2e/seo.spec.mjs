@@ -188,8 +188,8 @@ test("llms.txt が docs と解説とプレスキットの主なページと現�
 });
 
 for (const [path, og] of [
-  ["/docs/getting-started/quickstart/", /og-stblpay-generative-1200x630\.png/],
-  ["/docs/en/getting-started/quickstart/", /og-stblpay-generative-en-1200x630\.png/],
+  ["/docs/getting-started/quickstart/", /og-stblpay-docs-1200x630\.png/],
+  ["/docs/en/getting-started/quickstart/", /og-stblpay-docs-en-1200x630\.png/],
 ]) {
   test(`docs のページは canonical と言語に合う OGP 画像を持つ（${path}）`, async ({ page }) => {
     await page.goto(path);

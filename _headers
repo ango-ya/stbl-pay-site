@@ -27,6 +27,12 @@
 /assets/og-stblpay-generative-en-1200x630.png
   ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
+/assets/og-stblpay-docs-1200x630.png
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+/assets/og-stblpay-docs-en-1200x630.png
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
 
 # デモ画面（架空のお店・決済ページ・JPYC EX の画面のモック）は検索結果に出さない。
 # 特に /jpyc-ex は JPYC EX の画面をまねているので、検索から本物と間違えて来られないようにする。

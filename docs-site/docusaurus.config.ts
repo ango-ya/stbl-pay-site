@@ -72,8 +72,8 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // SNS で共有したときの画像は LP と同じもの
-    image: en ? 'https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png' : 'https://stbl-pay.com/assets/og-stblpay-generative-1200x630.png?v=2',
+    // SNS で共有したときの画像は docs 用のもの（LP と同じ背景とロゴに、題名だけ。scripts/make-og-image.mjs docs [en]）
+    image: en ? 'https://stbl-pay.com/assets/og-stblpay-docs-en-1200x630.png' : 'https://stbl-pay.com/assets/og-stblpay-docs-1200x630.png',
     colorMode: {
       respectPrefersColorScheme: true,
       // 切り替えのボタンは出さない（ヘッダーを LP と同じ並びにするため）。ライト／ダークは OS の設定に従う

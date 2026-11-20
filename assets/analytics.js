@@ -90,7 +90,8 @@
       }
       // 解説：一覧の「困りごとから探す」・カード、記事の関連欄から、どの記事へ進んだか。item_id は # 以降を外したパス（節へのリンクも記事単位で数える）
       const articlePath = (h) => h.split("#")[0];
-      const learnFrom = link.closest(".learn-needs") ? "learn_needs" : link.closest(".learn-cards") ? "learn_hub" : link.closest(".learn-related") ? "learn_related" : "";
+      // 一覧の末尾の箱（.learn-about）のカードは記事でなく出口（LP・docs・方針）なので、下の cta_click で送る
+      const learnFrom = link.closest(".learn-about") ? "" : link.closest(".learn-needs") ? "learn_needs" : link.closest(".learn-cards") ? "learn_hub" : link.closest(".learn-related") ? "learn_related" : "";
       if (learnFrom) {
         event("select_content", { content_type: learnFrom, item_id: articlePath(href) });
         return;
@@ -113,7 +114,8 @@
         }
         if (exitType) {
           event("cta_click", {
-            cta_label: (link.textContent || "").trim().slice(0, 80),
+            // カードのリンクは題名（h3）だけをラベルにする（説明文まで入れない）
+            cta_label: ((link.querySelector("h3") || link).textContent || "").trim().slice(0, 80),
             cta_destination: href,
             cta_location: where,
             exit_type: exitType,

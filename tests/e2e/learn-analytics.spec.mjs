@@ -82,6 +82,12 @@ test("計測：select_content の item_id は # 以降を外したパスで送�
   expect(ev).toContainEqual(["select_content", expect.objectContaining({ content_type: "learn_needs", item_id: "/learn/payment-fees/" })]);
   expect(ev.some(([, p]) => p.content_type === "learn_hub"), "困りごとのリンクは learn_hub にしない").toBe(false);
   expect(JSON.stringify(ev), "節の # は item_id に残さない").not.toContain("#calc");
+  // 末尾の箱のカード（LP・方針・docs）は記事でなく出口：learn_hub にせず、cta_click で行き先の種類と題名（h3）を送る
+  for (const [href, exit, label] of [["/", "lp", "サービスの紹介"], ["/policy/expression/", "policy", "表現に関するすてぶるペイの方針"], ["/docs/", "docs", "加盟店向けドキュメント"]]) {
+    await clickStay(`.learn-about .learn-cards a[href='${href}']`);
+    expect(await events(page)).toContainEqual(["cta_click", expect.objectContaining({ cta_label: label, cta_destination: href, cta_location: "learn_about", exit_type: exit, page_path: "/learn/" })]);
+  }
+  expect((await events(page)).some(([, p]) => p.content_type === "learn_hub"), "末尾の箱のカードは learn_hub にしない").toBe(false);
 
   await page.goto("https://stbl-pay.com/learn/chargeback/");
   await page.evaluate(() => {
