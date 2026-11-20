@@ -22,7 +22,8 @@
   - そこで上限に届いた。上限は日付ではなく、直近 24 時間の回数で数えているらしい。
   - 夜の時点で bank-transfer-payments と /en/learn/ は、もう登録済みだった。
   - sitemap.xml を送り直した（前回の読み込みは 11/13）。
-- 残りの 10 本は 11/17 にリクエストする。日本語は accept-credit-cards、online-payment-methods、glossary、/policy/expression/。英語は /en/learn/ の下の 6 本。
+- 残りの 10 本は 11/17 の 14:58〜15:15 にリクエストした（昼の 13 本からちょうど 24 時間後で、上限には当たらなかった）。日本語は accept-credit-cards、online-payment-methods、glossary、/policy/expression/。英語は /en/learn/ の下の 6 本。これで解説と方針は、すべてリクエスト済みか登録済みになった。
+  - 検査の時点で、10 本とも未登録だった。英語の japan-payment-methods、high-risk-merchant-account、stablecoin-payments-japan の 3 本は「URL が Google に認識されていません」だった。3 本とも本番の sitemap.xml には載っているので、送り直したサイトマップをまだ読み終えていないだけと見ている。
 - 検索の数字（28 日）：Google は表示 230・クリック 1（ほぼ名前の検索）。Bing は表示 5・クリック 2。Bing の AI の回答での引用は 0。
 - GA4（11/10〜15）：訪問 29。成果につながった操作は 0。
 - Cloudflare：AI のクローラーからのリクエストは 7 日で約 3,300。本物の Googlebot は /learn/ と /learn/chargeback/ を読みに来ている。404 の大半は、Googlebot や AI のクローラーを名乗って `.env` などを探す、攻撃用の探索。https://www.stbl-pay.com/ は 521（オリジンにつながらない）を返していた。
@@ -30,6 +31,59 @@
   - 11/16 に Cloudflare の Redirect Rules で、www を stbl-pay.com へ 301 で転送するようにした。パスとクエリは保つ。
 - 第三者の記事の「2026年8月に提供開始予定」「SDK を組み込むだけ」は、2026-07-10 の発表のころの説明。プレスキット・LP の FAQ・llms.txt に、日付つきで今の状況を書いた。
 - 週次点検のルーチン（trig_018nBcrRPGuh2wjZw4TZFKiJ）は、ユーザーの判断で 11/16 に止めた。
+
+### 2026-11-19 の点検（登録依頼の効果）
+
+- Google の表示回数は、11/15 まで 1 日 10〜20 回だった。依頼した 11/16 に 163 回、11/17 に 320 回へ増えた。データは 11/17 まで（Search Console は 2 日ほど遅れる）。
+- 直近 7 日（11/11〜17）：表示 569・クリック 8・平均掲載順位 7.7。表示のあったページは 41 で、解説と方針は全部入っている。
+  - 表示が多いのは、card-expression-restrictions 52、payment-reconciliation 50、en/japan-payment-methods 40、chargeback 39。
+  - 検索語は 92 で、ほとんどが名前以外の検索。チャージバック（泣き寝入り・いつまで）、カードの表現規制、審査なしのカード決済、high risk merchant account、銀行振込決済、japan payment methods、ステーブルコイン・JPYC などで、6〜15 位に出ている。
+- 生成 AI の機能（AI による概要など）での表示：11 月に 137 回、26 ページ。多いのは LP、en/japan-payment-methods、en/、reconciliation-automation、card-expression-restrictions。
+- 「ページ」の登録数（77）は 11/13 のデータのままで、まだ増えていない。表示があるので、解説はもう登録されていると見ている。
+- 本番の点検で新しい NG：11/19 に出した法務の 6 ページ（/privacy/、/privacy/requests/、/terms/、/terms/users/、/terms/merchants/、/company/）に og:image がない。
+
+### 2026-11-19 の改善：検索結果に出る題と説明文
+
+クリックを増やすため、10 ページの `<title>` と、そのうち 6 ページの meta description を書き換えた。H1・og:title・構造化データの headline・共有欄の題は変えていない。
+
+- 根拠は Search Console のページ別の検索語と順位（28 日間、〜11/17）。ただし表示の大半は、Google が伏せている細かい検索語から来ていて、検索語まで分かるのは各ページの 1〜3 割だった。
+- 直し方：
+  - 検索された言葉を題の先頭に置き、ブランド名の前を 32 字ほどに縮めた（例：期限、消し込み、導入、審査なしで…導入できる、メリット）。Google は H1 なども使って題を作り、表示の幅で省くので、この題がそのまま出るとは限らない。
+  - 説明文の最初の 60 字ほどに答えを置いた（例：名義人の申し立ては通常 120 日以内、英語では reconciliation、金融検閲）。説明文も、Google が本文から作り直すことがある。
+- 本文はすでに、検索された疑問に答えていた。チャージバックの期限、消込の英語、金融検閲、審査に通りやすいか、などである。
+- 仮説：平均 7〜11 位では、題を直してもクリックの伸びは小さい。大きく増やすには順位を上げる必要がある（外部リンク・発信。§5）。順位ごとのクリック率の目安は、このサイトのデータでは確かめていない。
+
+基準の数字（28 日間、〜11/17、検索タイプはウェブ。クリック率は合計クリック ÷ 合計表示）：
+
+| ページ | 変えたもの | 表示 | クリック | 平均順位 |
+|---|---|---|---|---|
+| card-expression-restrictions | 題・説明 | 52 | 1 | 5.3 |
+| payment-reconciliation | 題・説明 | 50 | 0 | 9.4 |
+| en/japan-payment-methods | 題 | 40 | 0 | 9.2 |
+| chargeback | 題・説明 | 39 | 1 | 8.4 |
+| bank-transfer-payments | 題・説明 | 32 | 0 | 10.7 |
+| no-screening-payments | 題・説明 | 27 | 0 | 7.3 |
+| en/high-risk-merchant-account | 題・説明 | 24 | 0 | 11.4 |
+| reconciliation-automation | 題 | 21 | 0 | 5.0 |
+| what-is-stablecoin | 題 | 19 | 0 | 5.3 |
+| jpyc-payments | 題 | 12 | 0 | 8.8 |
+| **変えた 10 ページの合計** | | **316** | **2** | クリック率 0.6% |
+| **変えていない解説の合計**（11 ページ。下に列挙） | | **123** | **1** | クリック率 0.8% |
+| /learn/ 全体（参考） | | 446 | 4 | 0.9%・7.9 位 |
+| サイト全体（参考） | | 742 | 8 | 1.1%・7.4 位 |
+
+- 比べる群（前後で同じ URL の集まりを使う）：
+  - 変えた 10 ページ：上の表のとおり。
+  - 変えていない 11 ページ：card-merchant-screening 28、payment-fees 15、payment-gateway 14、stablecoin-payments 11、glossary 4、accept-credit-cards 0、online-payment-methods 0、en/jpy-stablecoin 33（クリック 1）、en/konbini-payment 11、en/accept-stablecoin-payments 5、en/stablecoin-payments-japan 2（数字は表示）。accept-credit-cards と online-payment-methods は、基準の期間に表示が無かった。
+  - 一覧（/learn/・/en/learn/）と /policy/expression/ は、解説と役割が違うので、どちらの群にも入れない。
+
+確かめ方：
+
+- 反映した日から 28 日間の数字を、同じ条件（検索タイプ・期間の長さ）で取り直す。
+- 変えた 10 ページと、変えていない 11 ページの、それぞれの前後の変化を比べる。変えた後の数字だけを並べない。日英・端末・検索語の混ざり方の変化にも注意する。
+- 平均掲載順位も取り直す。群ごとに順位が動いていたら、同じくらいの順位のページどうしでクリック率を比べる。データが足りなければ未判定とする。
+- 基準のクリックは 2 件しかない。4 週間後は途中の確認とし、クリックが数件のままなら「効果は未判定、観測を続ける」とする。11/16 の登録依頼で表示が急に増えた直後なので、題の変更が原因だとは言い切らない。
+- 代表の検索語（チャージバック 泣き寝入り、銀行振込決済とは、high risk merchant accounts など）で、新しい題が実際に出ているかも見る。出ていなければ、題をさらに直す前に、Google が何を使っているかを確かめる。
 
 ## 2. 誰に、どの言葉で届けるか
 

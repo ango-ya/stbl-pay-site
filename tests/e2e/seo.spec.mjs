@@ -1,8 +1,10 @@
 // 検索エンジンと AI の検索・回答が読む部分（canonical・構造化データ・サイトマップ・robots・llms.txt）が崩れていないこと。
 // 本番の応答（ヘッダー・404・クローラーごとの状態）は scripts/seo-live-check.sh で見る。
 import { test, expect } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execFileSync, spawnSync } from "node:child_process";
 
 const LPS = [
   { path: "/", url: "https://stbl-pay.com/", lang: "ja", og: "og-stblpay-generative-1200x630.png" },
@@ -197,6 +199,62 @@ for (const [path, og] of [
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", og);
   });
 }
+
+test("404 以外のすべてのページが OGP を持ち、og:url は canonical と同じで、og:image は配る画像を指す。英語のページの OGP に日本語はない", async ({ page }) => {
+  const dist = new URL("../../dist/", import.meta.url);
+  const files = readdirSync(dist, { recursive: true }).filter((f) => f.endsWith(".html") && !f.endsWith("404.html"));
+  expect(files.length).toBeGreaterThan(100);
+  // 属性の順序・引用符の有無・コメントの扱いを正規表現で真似ず、ブラウザの HTML パーサーで読む（スクリプトは動かない）
+  const heads = await page.evaluate(
+    (docs) =>
+      docs.map(([file, html]) => {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const meta = {};
+        for (const m of doc.querySelectorAll("meta[property^='og:'], meta[name^='twitter:']")) {
+          meta[m.getAttribute("property") ?? m.getAttribute("name")] ??= m.getAttribute("content");
+        }
+        return { file, meta, canonical: doc.querySelector("link[rel='canonical']")?.getAttribute("href") ?? null };
+      }),
+    files.map((f) => [f, readFileSync(new URL(f, dist), "utf8")]),
+  );
+  for (const { file, meta, canonical } of heads) {
+    for (const key of ["og:title", "og:description", "og:image", "twitter:card"]) expect(meta[key], `${file} の ${key}`).toBeTruthy();
+    if (canonical) expect(meta["og:url"], `${file} の og:url`).toBe(canonical);
+    const img = new URL(meta["og:image"]).pathname.slice(1);
+    expect(existsSync(new URL(img, dist)), `${file} の og:image（${img}）`).toBe(true);
+    if (/^(docs\/)?en\//.test(file)) {
+      for (const [key, value] of Object.entries(meta)) expect(value, `${file} の ${key}`).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+    }
+  }
+});
+
+test("英語版の仕様書のビューアに日本語の OGP が残ると、組み立てが止まる（属性の順序・引用符を変えても）", () => {
+  const viewer = readFileSync(new URL("../../docs-site/static/openapi/index.html", import.meta.url), "utf8");
+  const ogTitle = viewer.match(/^.*property="og:title".*$/m)[0];
+  // 組み立ての結果を { status, html, stderr } で返す（失敗の理由まで確かめるため、例外をまとめて成功扱いにしない）
+  const build = (html) => {
+    const dist = mkdtempSync(join(tmpdir(), "openapi-en-"));
+    try {
+      mkdirSync(join(dist, "docs/en/openapi"), { recursive: true });
+      writeFileSync(join(dist, "docs/en/openapi/index.html"), html);
+      const r = spawnSync("node", ["scripts/openapi-en.mjs", dist], { encoding: "utf8" });
+      return { status: r.status, stderr: r.stderr, html: readFileSync(join(dist, "docs/en/openapi/index.html"), "utf8") };
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
+  };
+  const ok = build(viewer);
+  expect(ok.status, ok.stderr).toBe(0);
+  expect(ok.html).toContain('property="og:locale" content="en_US"');
+  for (const variant of [
+    `  <meta content="STBLpay API の仕様書" property="og:title">`,
+    `  <meta property='og:title' content='STBLpay API の仕様書'>`,
+  ]) {
+    const r = build(viewer.replace(ogTitle, variant));
+    expect(r.status, variant).toBe(1);
+    expect(r.stderr, variant).toContain("<head> に日本語が残っている");
+  }
+});
 
 test("IndexNow の鍵ファイルが、スクリプトの鍵と同じ中身で配信される", async ({ request }) => {
   const key = readFileSync(new URL("../../scripts/indexnow.mjs", import.meta.url), "utf8").match(/const KEY = "([0-9a-f]+)"/)[1];
