@@ -190,13 +190,26 @@ test("llms.txt が docs と解説とプレスキットの主なページと現�
 });
 
 for (const [path, og] of [
-  ["/docs/getting-started/quickstart/", /og-stblpay-generative-1200x630\.png/],
-  ["/docs/en/getting-started/quickstart/", /og-stblpay-generative-en-1200x630\.png/],
+  ["/docs/getting-started/quickstart/", /og-stblpay-docs-1200x630\.png/],
+  ["/docs/en/getting-started/quickstart/", /og-stblpay-docs-en-1200x630\.png/],
 ]) {
   test(`docs のページは canonical と言語に合う OGP 画像を持つ（${path}）`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://stbl-pay.com${path}`);
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", og);
+  });
+}
+
+// 仕様書のビューアは手書きの HTML（docusaurus.config.ts の image が効かない）なので、docs と同じ絵かを別に見る
+for (const [path, og] of [
+  ["/docs/openapi/", "og-stblpay-docs-1200x630.png"],
+  ["/docs/en/openapi/", "og-stblpay-docs-en-1200x630.png"],
+]) {
+  test(`仕様書のビューアの OGP 画像は、docs のほかのページと同じ（${path}）`, async ({ page }) => {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+    for (const meta of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
+      await expect(page.locator(meta)).toHaveAttribute("content", `https://stbl-pay.com/assets/${og}`);
+    }
   });
 }
 

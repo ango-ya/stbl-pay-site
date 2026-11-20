@@ -93,7 +93,8 @@ test("記事の「関連する解説」は、どのカードもリンク先の�
 });
 
 test("末尾の箱（すてぶるペイについて・取材）のリンクは、どれもカードで、相談だけを主な行き先として示す", async ({ page }) => {
-  const boxes = PAGES.filter((file) => read(file).includes('class="learn-about"'));
+  // 一覧（/learn/・/en/learn/）の箱は、行き先ごとに絵があるので絵つきのカード（learn.spec.mjs が見る）。ここでは外す
+  const boxes = PAGES.filter((file) => read(file).includes('class="learn-about"') && !/^(en\/)?learn\/index\.html$/.test(file));
   expect(boxes.length).toBeGreaterThan(20);
   for (const file of boxes) {
     const box = read(file).match(/<aside class="learn-about"[\s\S]*?<\/aside>/)[0];

@@ -2,6 +2,8 @@
 <!--
   OGP 画像（assets/og-stblpay-generative-1200x630.png）の元。scripts/make-og-image.mjs が 1200×630 で撮る。
   ブラウザで直接開いても同じ絵が見える。?lang=en を付けると英語版（assets/og-stblpay-generative-en-1200x630.png の元）になる。
+  ?page=docs を付けると docs（加盟店向けドキュメント）の絵（assets/og-stblpay-docs-1200x630.png。&lang=en で英語版）になる。
+  docs の絵は、同じ背景とロゴに題名だけを置く（キャラクターは出さない）
   - 背景の模様は LP のヒーロー（assets/lp.js の hero-art）と同じ式を、時刻を止めて 1 枚だけ描く
   - ロゴは正の SVG（Google Drive の STBLpay_japanese_logo.svg を写したもの）。英語版は英語版 LP と同じワードマーク
   - キャラクターは素材集 stbl-pay-characters の kun/poses/kun_pose_wave と chan/thigh/chan_thigh_reach_wink
@@ -73,6 +75,11 @@
     letter-spacing: 0.14em;
     white-space: nowrap;
   }
+  /* docs の絵：ロゴを小さくして、題名を主役にする */
+  .docs .inner { top: 150px; }
+  .docs .logo { width: 330px; }
+  .docs h1 { margin-top: 44px; font-size: 84px; letter-spacing: 0.02em; }
+  .docs .sub { margin-top: 20px; font-size: 27px; }
   .ticker span + span::before {
     content: "◆";
     margin: 0 20px;
@@ -95,7 +102,9 @@
   <div class="ticker"><span>JPYステーブルコイン決済</span><span>支払いは日本円の銀行振込で</span><span>与信審査 なし</span><span>決済と同時に着金</span></div>
 </div>
 <script>
-  if (new URLSearchParams(location.search).get("lang") === "en") {
+  const query = new URLSearchParams(location.search);
+  const en = query.get("lang") === "en", docs = query.get("page") === "docs";
+  if (en) {
     document.documentElement.lang = "en";
     const logo = document.querySelector(".logo");
     logo.src = "../../assets/logo-wordmark-stblpay-black.png";
@@ -107,6 +116,20 @@
     document.querySelector(".sub").textContent = "Toward a new way to pay, not tied to payment processors.";
     document.querySelector(".ticker").innerHTML =
       "<span>JPY stablecoin payments</span><span>Pay by bank transfer in yen</span><span>No credit screening</span><span>Funds arrive at payment</span>";
+  }
+  if (docs) {
+    document.getElementById("og").classList.add("docs");
+    document.querySelectorAll(".kun, .chan").forEach((img) => img.remove());
+    const logo = document.querySelector(".logo");
+    logo.style.width = en ? "270px" : "";
+    const h1 = document.querySelector("h1");
+    h1.textContent = en ? "Merchant Docs" : "加盟店向けドキュメント";
+    h1.style.fontSize = "";
+    document.querySelector(".sub").textContent = en ? "Integration steps and API specifications" : "導入の手順と API の仕様";
+    // 節の名前は docs のサイドバー（docs-site/sidebars.ts）にあるもの
+    document.querySelector(".ticker").innerHTML = en
+      ? "<span>Quick Start</span><span>Add to your store</span><span>Webhooks</span><span>Sandbox</span>"
+      : "<span>Quick Start</span><span>EC サイトへの組み込み</span><span>Webhooks</span><span>Sandbox</span>";
   }
   // assets/lp.js の hero-art と同じ定数・同じ式（バーストとポインターは除く）
   const W = 1200, H = 630, GRID = 22, CELL_W = 12, CELL_H = 12, SHEAR = 4.4, SLANT = 2.6;

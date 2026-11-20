@@ -365,7 +365,7 @@ test("サムネイルを持つ英語のページ（EN_THUMBS）は、すべて�
 for (const [hub, ext] of [["/learn/", "thumb.webp"], ["/en/learn/", "thumb-en.webp"]]) {
   test(`${hub} の一覧：どのカードも、リンク先の記事のサムネイル（${ext}）を頭に出し、絵が読める`, async ({ page }) => {
     await page.goto(hub);
-    const cards = page.locator(".learn-cards a");
+    const cards = page.locator(".learn-group .learn-cards a");
     expect(await cards.count()).toBeGreaterThan(0);
     for (const a of await cards.all()) {
       const href = await a.getAttribute("href");
@@ -377,6 +377,32 @@ for (const [hub, ext] of [["/learn/", "thumb.webp"], ["/en/learn/", "thumb-en.we
       await img.scrollIntoViewIfNeeded();
       await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth > 0)).toBe(true);
     }
+  });
+}
+
+// 一覧の末尾の箱（すてぶるペイについて）：LP・docs・方針へのリンクは、行き先のカバー画像を頭に出したカードにする
+// （LP と docs はそれぞれの OGP 画像の WebP、方針は記事と同じ thumb.webp）。記事のカードと同じ見た目（箱のリンクの下線は付けない）。
+// /fees/ は OGP の絵が LP と同じなので、文字のリンクのまま（seo.spec.mjs が、一覧から /fees/ へのリンクを見る）。
+// ほかのページの箱は、絵のない文字のカード（.about-cards。nav-cards.spec.mjs が見る）
+const ABOUT_CARDS = {
+  "/learn/": { "/": "/assets/og-stblpay-generative-1200x630.webp", "/policy/expression/": "/assets/learn/policy-expression/thumb.webp", "/docs/": "/assets/og-stblpay-docs-1200x630.webp" },
+  "/en/learn/": { "/en/": "/assets/og-stblpay-generative-en-1200x630.webp", "/docs/en/": "/assets/og-stblpay-docs-en-1200x630.webp" },
+};
+for (const [hub, want] of Object.entries(ABOUT_CARDS)) {
+  test(`${hub} の末尾の箱：LP・docs・方針へのリンクはカードで、行き先のカバー画像を頭に出し、絵が読める`, async ({ page }) => {
+    await page.goto(hub);
+    const cards = page.locator(".learn-about .learn-cards a");
+    const got = {};
+    for (const a of await cards.all()) {
+      const img = a.locator("img.learn-card-thumb");
+      got[await a.getAttribute("href")] = await img.getAttribute("src");
+      await expect(img).toHaveAttribute("alt", ""); // 題名は h3 にある
+      await expect(a.locator("h3")).not.toBeEmpty();
+      await expect(a).toHaveCSS("text-decoration-line", "none");
+      await img.scrollIntoViewIfNeeded();
+      await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth > 0)).toBe(true);
+    }
+    expect(got).toEqual(want);
   });
 }
 
