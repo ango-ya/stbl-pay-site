@@ -51,7 +51,8 @@ test("計測：解説の本文と末尾の箱から LP・相談・docs・Sandbox
   // 本物の末尾の箱のリンク（LP・docs）も送る
   await page.evaluate(() => document.querySelectorAll(".learn-about a").forEach((a) => a.addEventListener("click", (e) => e.preventDefault())));
   await page.locator(".learn-about a[href='/docs/']").click();
-  expect(await events(page)).toContainEqual(["cta_click", expect.objectContaining({ cta_location: "learn_about", exit_type: "docs", page_path: "/learn/chargeback/" })]);
+  // ラベルはカードの題だけ（説明文は入れない。カードにする前の値と比べられるように）
+  expect(await events(page)).toContainEqual(["cta_click", expect.objectContaining({ cta_location: "learn_about", exit_type: "docs", page_path: "/learn/chargeback/", cta_label: "加盟店向けドキュメント" })]);
 });
 
 test("計測：ヘッダーの相談ボタン・出口でないリンクは、解説の出口として送らない。本文から別の解説へ進んだことは select_content で送る", async ({ page }) => {

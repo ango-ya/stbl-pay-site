@@ -41,6 +41,26 @@
 })();
 
 (function () {
+  // モバイルのメニュー（<details class="nav-menu">）。開閉は HTML だけで動く。
+  // ここでは閉じるだけ：メニューの中のリンク（ページ内リンクは同じページに残る）・メニューの外を押したとき、Esc を押したとき
+  const menu = document.querySelector(".nav-menu");
+  if (!menu) {
+    return;
+  }
+  document.addEventListener("click", (event) => {
+    if (menu.open && event.target instanceof Element && !event.target.closest(".nav-menu summary")) {
+      menu.open = false;
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (menu.open && event.key === "Escape") {
+      menu.open = false;
+      menu.querySelector("summary").focus();
+    }
+  });
+})();
+
+(function () {
   // ヒーロー背景「フリップドット・ボード」（Canvas 2D・依存ゼロ・CSP/Trusted Types内）。
   // ロゴと同じ前傾角の平行四辺形セルを敷き詰めた機械式掲示板。
   // 明度は5段階に量子化（機械の実直さ）。ロゴのスリット模様と同じ斜めストライプ波が

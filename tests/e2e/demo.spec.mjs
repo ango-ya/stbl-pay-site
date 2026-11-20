@@ -11,7 +11,7 @@ test.describe("GA4 の送信先の制限", () => {
     // 本番のホスト名で開くため、stbl-pay.com への通信を手元のサーバーに向ける
     if (prod) await page.route("https://stbl-pay.com/**", async (route) => {
       const u = new URL(route.request().url());
-      const r = await page.request.get(`http://127.0.0.1:4173${u.pathname}${u.search}`);
+      const r = await page.request.get(`${u.pathname}${u.search}`); // baseURL（手元のサーバー）に向く。ポートを直書きしない
       route.fulfill({ status: r.status(), headers: r.headers(), body: await r.body() });
     });
     if (!webdriver) await page.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));

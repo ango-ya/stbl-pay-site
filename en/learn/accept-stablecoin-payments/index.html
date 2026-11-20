@@ -169,6 +169,18 @@
           <a href="/learn/" lang="ja" hreflang="ja">日本語</a>
         </nav>
         <a class="header-cta" href="/en/#early-access">Talk to us about integrating</a>
+        <details class="nav-menu">
+          <summary><span class="nav-menu-icon" aria-hidden="true"></span><span class="sr-only">Menu</span></summary>
+          <nav class="nav-menu-panel" aria-label="Menu">
+            <a href="/en/#comparison">Fees</a>
+            <a href="/en/#flow">How it works</a>
+            <a href="/en/#videos">Video</a>
+            <a href="/en/#faq">FAQ</a>
+            <a href="/en/learn/">Guides</a>
+            <a href="/docs/en/">Docs</a>
+            <a href="/learn/" lang="ja" hreflang="ja">日本語</a>
+          </nav>
+        </details>
       </div>
     </header>
 
@@ -347,22 +359,26 @@
             </ul>
           </nav>
 
-          <section class="learn-related" aria-labelledby="related-title">
-            <h2 id="related-title">Related guides</h2>
-            <ul>
-              <li><a href="/en/learn/high-risk-merchant-account/">What is a high-risk merchant account?</a></li>
-              <li><a href="/en/learn/stablecoin-payments-japan/">Stablecoin payments in Japan: accepting a yen stablecoin</a></li>
-              <li><a href="/en/learn/japan-payment-methods/">Payment methods in Japan</a></li>
-              <li><a href="/en/learn/konbini-payment/">Konbini payment in Japan</a></li>
-              <li><a href="/en/learn/jpy-stablecoin/">What is a yen stablecoin?</a></li>
-            </ul>
-          </section>
-
           <aside class="learn-about" aria-labelledby="about-title">
             <h2 id="about-title">About STBLpay</h2>
             <p>STBLpay is a payment service in which buyers pay in yen and merchants receive JPYC (under development). Buyers pay by Japanese-yen bank transfer and approve with a passkey. Merchants receive sales without relying on card companies' credit screening.</p>
-            <p><a href="/en/">See the service overview</a>　<a href="/docs/en/">Merchant docs</a></p>
+            <ul class="about-cards">
+              <li><a class="about-card is-primary" href="/en/#early-access"><span class="about-card-title">Talk to us about integrating</span><span class="about-card-desc">Ask whether it fits your business. This is not a pass/fail decision based on screening.</span></a></li>
+              <li><a class="about-card" href="/en/"><span class="about-card-title">See the service overview</span><span class="about-card-desc">How it works, fees, videos and FAQ.</span></a></li>
+              <li><a class="about-card" href="/docs/en/"><span class="about-card-title">Merchant docs</span><span class="about-card-desc">Integration steps and the API reference. Try it in the Sandbox.</span></a></li>
+            </ul>
           </aside>
+
+          <section class="learn-related" aria-labelledby="related-title">
+            <h2 id="related-title">Related guides</h2>
+            <ul class="learn-cards is-compact">
+              <li><a href="/en/learn/high-risk-merchant-account/"><img class="learn-card-thumb" src="/assets/learn/high-risk-merchant-account/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>What is a high-risk merchant account?</h3></a></li>
+              <li><a href="/en/learn/stablecoin-payments-japan/"><img class="learn-card-thumb" src="/assets/learn/stablecoin-payments-japan/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>Stablecoin payments in Japan: accepting a yen stablecoin</h3></a></li>
+              <li><a href="/en/learn/japan-payment-methods/"><img class="learn-card-thumb" src="/assets/learn/japan-payment-methods/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>Payment methods in Japan</h3></a></li>
+              <li><a href="/en/learn/konbini-payment/"><img class="learn-card-thumb" src="/assets/learn/konbini-payment/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>Konbini payment in Japan</h3></a></li>
+              <li><a href="/en/learn/jpy-stablecoin/"><img class="learn-card-thumb" src="/assets/learn/jpy-stablecoin/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>What is a yen stablecoin?</h3></a></li>
+            </ul>
+          </section>
         </article>
       </div>
     </main>
