@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: STBLpay API
-  version: 0.39.0
+  version: 0.40.0
   summary: The API your merchant server calls, and the Webhook your merchant server receives
   description: >-
     The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server
@@ -469,8 +469,8 @@ paths:
 
             | --- | --- | --- |
 
-            | common/internal | The request could not be processed. | If the submission outcome is unknown, recover
-            using the same stagedOpId and assertion. Do not prepare again. |
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
           content:
             application/json:
               schema:
@@ -733,8 +733,8 @@ paths:
 
             | --- | --- | --- |
 
-            | common/internal | The request could not be processed. | If the submission outcome is unknown, recover
-            using the same stagedOpId and assertion. Do not prepare again. |
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
           content:
             application/json:
               schema:
@@ -1016,8 +1016,8 @@ paths:
 
             | --- | --- | --- |
 
-            | common/internal | The request could not be processed. | If the submission outcome is unknown, recover
-            using the same stagedOpId and assertion. Do not prepare again. |
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
           content:
             application/json:
               schema:
@@ -1307,8 +1307,8 @@ paths:
 
             | --- | --- | --- |
 
-            | common/internal | The request could not be processed. | If the submission outcome is unknown, recover
-            using the same stagedOpId and assertion. Do not prepare again. |
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
           content:
             application/json:
               schema:
@@ -1577,8 +1577,8 @@ paths:
 
             | --- | --- | --- |
 
-            | common/internal | The request could not be processed. | If the submission outcome is unknown, recover
-            using the same stagedOpId and assertion. Do not prepare again. |
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
           content:
             application/json:
               schema:
@@ -1598,7 +1598,8 @@ paths:
       description: >-
         Queries refunds for a payment, including those accepted by the owner or another machine in the same store.
         Payments belonging to another store return 404. Only this machine's unconsumed preparations are returned in
-        staged. If nextCursor is present, pass it unchanged as cursor.
+        staged. Fetch the next page only when nextCursor is a string, passing it unchanged as cursor. If it is null or
+        omitted, this is the last page.
       parameters:
         - name: paymentIntentId
           in: path
@@ -1645,7 +1646,9 @@ paths:
                     anyOf:
                       - type: string
                       - type: 'null'
-                    description: Cursor for the next page. null or omitted at the end.
+                    description: >-
+                      Cursor for the next page. Pass it as cursor for the next page only when it is a string. null or
+                      omitted on the last page.
                   staged:
                     anyOf:
                       - $ref: '#/components/schemas/StagedRefundView'
@@ -1822,8 +1825,8 @@ paths:
 
             | --- | --- | --- |
 
-            | common/internal | The request could not be processed. | If the submission outcome is unknown, recover
-            using the same stagedOpId and assertion. Do not prepare again. |
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
           content:
             application/json:
               schema:
@@ -2022,8 +2025,8 @@ paths:
 
             | --- | --- | --- |
 
-            | common/internal | The request could not be processed. | If the submission outcome is unknown, recover
-            using the same stagedOpId and assertion. Do not prepare again. |
+            | common/internal | The request could not be processed. | Retry after a while. If you lost the response to a
+            refund preparation or submission, follow the recovery table under the Refunds tag. |
           content:
             application/json:
               schema:
@@ -3436,7 +3439,11 @@ components:
       type: object
       properties:
         amountJpy:
-          $ref: '#/components/schemas/Jpy'
+          type: string
+          pattern: ^(0|[1-9]\d*)(\.\d+)?$
+          description: >-
+            Refund amount, as a decimal string in yen with up to 6 decimal places. Values with 7 or more decimal places
+            are rejected with common/invalid_request. Do not convert it to a floating-point number.
       required:
         - amountJpy
       additionalProperties: false

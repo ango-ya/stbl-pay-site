@@ -76,8 +76,8 @@
     "translation": "The request could not be processed."
   },
   "errors.common/internal.action": {
-    "source": "送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。",
-    "translation": "If the submission outcome is unknown, recover using the same stagedOpId and assertion. Do not prepare again."
+    "source": "時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。",
+    "translation": "Retry after a while. If you lost the response to a refund preparation or submission, follow the recovery table under the Refunds tag."
   },
   "operations.getPayment/responses/500/content/application~1json/examples/common_internal/summary": {
     "source": "要求を処理できませんでした。",
@@ -620,8 +620,8 @@
     "translation": "List refunds for a payment"
   },
   "operations.listMachinePaymentRefunds.description": {
-    "source": "同じ店舗の owner・別の machine の受付済み返金を含め、決済ごとに照会します。他店舗の決済は404です。未消費の準備 staged は本人のものだけを返します。nextCursor があれば cursor にそのまま渡してください。",
-    "translation": "Queries refunds for a payment, including those accepted by the owner or another machine in the same store. Payments belonging to another store return 404. Only this machine's unconsumed preparations are returned in staged. If nextCursor is present, pass it unchanged as cursor."
+    "source": "同じ店舗の owner・別の machine の受付済み返金を含め、決済ごとに照会します。他店舗の決済は404です。未消費の準備 staged は本人のものだけを返します。nextCursor が文字列のときだけ、cursor にそのまま渡して次のページを取得してください。null または省略なら最後のページです。",
+    "translation": "Queries refunds for a payment, including those accepted by the owner or another machine in the same store. Payments belonging to another store return 404. Only this machine's unconsumed preparations are returned in staged. Fetch the next page only when nextCursor is a string, passing it unchanged as cursor. If it is null or omitted, this is the last page."
   },
   "operations.listMachinePaymentRefunds/parameters/1/schema/description": {
     "source": "1ページの件数。省略時20、最大100。",
@@ -648,8 +648,8 @@
     "translation": "Accepted refunds in the same store."
   },
   "operations.listMachinePaymentRefunds/responses/200/content/application~1json/schema/properties/nextCursor/description": {
-    "source": "続きの cursor。末尾では null または省略。",
-    "translation": "Cursor for the next page. null or omitted at the end."
+    "source": "続きの cursor。文字列のときだけ次のページの cursor に渡します。最後のページでは null または省略。",
+    "translation": "Cursor for the next page. Pass it as cursor for the next page only when it is a string. null or omitted on the last page."
   },
   "operations.listMachinePaymentRefunds/responses/200/content/application~1json/schema/properties/staged/description": {
     "source": "本人の未消費の準備。無ければ null。",
@@ -966,6 +966,10 @@
   "schemas.MachinePrepareResponse.paymentIntentId.description": {
     "source": "元の決済の識別子。",
     "translation": "Original payment identifier."
+  },
+  "schemas.MachinePrepareRequest.amountJpy.description": {
+    "source": "返金額。円建ての10進文字列で、小数6桁までです。7桁以上は common/invalid_request で拒否します。浮動小数へ変換しません。",
+    "translation": "Refund amount, as a decimal string in yen with up to 6 decimal places. Values with 7 or more decimal places are rejected with common/invalid_request. Do not convert it to a floating-point number."
   },
   "schemas.MachinePrepareResponse.amountJpy.description": {
     "source": "準備で確保した返金額。",

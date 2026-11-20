@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "STBL Pay 加盟店 API",
-    "version": "0.39.0"
+    "version": "0.40.0"
   },
   "tags": [
     {
@@ -170,7 +170,7 @@
             }
           },
           "500": {
-            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。 |",
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
             "content": {
               "application/json": {
                 "schema": {
@@ -467,7 +467,7 @@
             }
           },
           "500": {
-            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。 |",
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
             "content": {
               "application/json": {
                 "schema": {
@@ -765,7 +765,7 @@
             }
           },
           "500": {
-            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。 |",
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
             "content": {
               "application/json": {
                 "schema": {
@@ -1078,7 +1078,7 @@
             }
           },
           "500": {
-            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。 |",
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
             "content": {
               "application/json": {
                 "schema": {
@@ -1389,7 +1389,7 @@
             }
           },
           "500": {
-            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。 |",
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
             "content": {
               "application/json": {
                 "schema": {
@@ -1417,7 +1417,7 @@
           "返金"
         ],
         "summary": "決済ごとの返金を一覧する",
-        "description": "同じ店舗の owner・別の machine の受付済み返金を含め、決済ごとに照会します。他店舗の決済は404です。未消費の準備 staged は本人のものだけを返します。nextCursor があれば cursor にそのまま渡してください。",
+        "description": "同じ店舗の owner・別の machine の受付済み返金を含め、決済ごとに照会します。他店舗の決済は404です。未消費の準備 staged は本人のものだけを返します。nextCursor が文字列のときだけ、cursor にそのまま渡して次のページを取得してください。null または省略なら最後のページです。",
         "parameters": [
           {
             "name": "paymentIntentId",
@@ -1490,7 +1490,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "続きの cursor。末尾では null または省略。"
+                      "description": "続きの cursor。文字列のときだけ次のページの cursor に渡します。最後のページでは null または省略。"
                     },
                     "staged": {
                       "anyOf": [
@@ -1686,7 +1686,7 @@
             }
           },
           "500": {
-            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。 |",
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
             "content": {
               "application/json": {
                 "schema": {
@@ -1915,7 +1915,7 @@
             }
           },
           "500": {
-            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 送信結果が不明なら同じ stagedOpId と assertion で回復し、新しく準備しないでください。 |",
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
             "content": {
               "application/json": {
                 "schema": {
@@ -2408,7 +2408,9 @@
         "type": "object",
         "properties": {
           "amountJpy": {
-            "$ref": "#/components/schemas/Jpy"
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "返金額。円建ての10進文字列で、小数6桁までです。7桁以上は common/invalid_request で拒否します。浮動小数へ変換しません。"
           }
         },
         "required": [
