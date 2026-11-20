@@ -200,6 +200,19 @@ for (const [path, og] of [
   });
 }
 
+// 仕様書のビューアは手書きの HTML（docusaurus.config.ts の image が効かない）なので、docs と同じ絵かを別に見る
+for (const [path, og] of [
+  ["/docs/openapi/", "og-stblpay-docs-1200x630.png"],
+  ["/docs/en/openapi/", "og-stblpay-docs-en-1200x630.png"],
+]) {
+  test(`仕様書のビューアの OGP 画像は、docs のほかのページと同じ（${path}）`, async ({ page }) => {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+    for (const meta of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
+      await expect(page.locator(meta)).toHaveAttribute("content", `https://stbl-pay.com/assets/${og}`);
+    }
+  });
+}
+
 test("404 以外のすべてのページが OGP を持ち、og:url は canonical と同じで、og:image は配る画像を指す。英語のページの OGP に日本語はない", async ({ page }) => {
   const dist = new URL("../../dist/", import.meta.url);
   const files = readdirSync(dist, { recursive: true }).filter((f) => f.endsWith(".html") && !f.endsWith("404.html"));

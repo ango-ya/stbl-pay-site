@@ -42,8 +42,8 @@ const OGP_EN = [
   ['content="すてぶるペイ / STBLpay"', 'content="STBLpay"'],
   ["STBLpay API（OpenAPI）", "STBLpay API (OpenAPI)"],
   ["STBLpay API の仕様書（OpenAPI 3.1）です。プログラムや AI エージェントは、本体の openapi.yaml を読めます。", "STBLpay API specification (OpenAPI 3.1). Programs and AI agents can read the source openapi.yaml."],
-  ["og-stblpay-generative-1200x630.png?v=2", "og-stblpay-generative-en-1200x630.png"],
-  ["すてぶるペイ — 円を使って、ステーブルで払う。", "STBLpay — Pay in yen. Settle in stablecoin."],
+  ["og-stblpay-docs-1200x630.png", "og-stblpay-docs-en-1200x630.png"],
+  ["すてぶるペイ — 加盟店向けドキュメント", "STBLpay — Merchant Docs"],
 ];
 let html = readFileSync(viewer, "utf8");
 for (const [ja, en] of OGP_EN) {

@@ -156,7 +156,7 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
 
 ## 検索と AI 向け（SEO・LLMO）
 
-- **OGP 画像**：日本語版 `assets/og-stblpay-generative-1200x630.png`、英語版 `assets/og-stblpay-generative-en-1200x630.png`（英語版 LP で使う）。docs は専用の `assets/og-stblpay-docs-1200x630.png`・`assets/og-stblpay-docs-en-1200x630.png`（同じ背景とロゴに題名だけ。`node scripts/make-og-image.mjs docs [en]`）。元は `scripts/og/og-image.html`（ロゴは正の SVG、背景はヒーローと同じ式。`?lang=en` で英語版）で、`node scripts/make-og-image.mjs [en]` で書き出し直す（同じ絵の `.webp` も書き出す。`/learn/`・`/en/learn/` の末尾のカードに出す）。絵を変えたら、SNS が前の画像を覚えているので `index.html`・`en/index.html`（docs の絵なら `docusaurus.config.ts` の `image`）の `?v=` を上げる
+- **OGP 画像**：日本語版 `assets/og-stblpay-generative-1200x630.png`、英語版 `assets/og-stblpay-generative-en-1200x630.png`（英語版 LP で使う）。docs は専用の `assets/og-stblpay-docs-1200x630.png`・`assets/og-stblpay-docs-en-1200x630.png`（同じ背景とロゴに題名だけ。`node scripts/make-og-image.mjs docs [en]`）。元は `scripts/og/og-image.html`（ロゴは正の SVG、背景はヒーローと同じ式。`?lang=en` で英語版）で、`node scripts/make-og-image.mjs [en]` で書き出し直す（同じ絵の `.webp` も書き出す。`/learn/`・`/en/learn/` の末尾のカードに出す）。絵を変えたら、SNS が前の画像を覚えているので `index.html`・`en/index.html`（docs の絵なら `docusaurus.config.ts` の `image` と、仕様書のビューア `docs-site/static/openapi/index.html`）の `?v=` を上げる
 - **canonical・構造化データ**：LP の head。`WebPage` の `dateModified` は、本文を直したら日付を上げる。「現在の状況」（`2026年11月時点` など）は LP の導入の節と `llms.txt` の両方にあるので、状況が変わったらそろえて直す
 - **サイトマップ**：LP は `sitemap.xml`（手で書く。ページを足したら足す）、docs は Docusaurus が言語ごとに作る（`/docs/sitemap.xml`・`/docs/en/sitemap.xml`。robots.txt に 3 本とも書く）。docs は `trailingSlash: true`（配信先が末尾にスラッシュを付けて飛ばすので、canonical をそろえる）
 - **noindex**：デモ画面（`/demo`・`/pay`・`/jpyc-ex`）は `_headers` の `X-Robots-Tag`。`404.html` があるので、存在しない URL は 404 になる（無いと Cloudflare Pages は LP を 200 で返す）
