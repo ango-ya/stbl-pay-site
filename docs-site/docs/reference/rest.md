@@ -16,7 +16,7 @@ sidebar_position: 2
 | メソッド | パス | 認証 | 用途 |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API キー（`x-stbl-api-key`） | [決済を作成する](#決済作成) |
-| `GET` | `/payments/:paymentIntentId` | API キー（`x-stbl-api-key`） | [決済を照会する](pathname:///openapi/#operation/getPayment) |
+| `GET` | `/payments/:paymentIntentId` | API キー（`x-stbl-api-key`） | [決済を照会する](pathname:///openapi/#operation/getPayment)（公開準備中。配備までは[状態確認](/server/retrieve-payment)を使う） |
 | `GET` | `/payment_status/:paymentIntentId` | なし | 決済ページの状態確認 |
 | `GET` | `/payment_intents/:paymentIntentId` | なし | 決済ページの表示情報 |
 | `GET` | `/payment_intents/{paymentIntentId}/refundable` | 返金 API キー＋HTTP 署名 | [返金できる額を確かめる](pathname:///openapi/#operation/getMachineRefundable)（公開準備中） |

@@ -23,7 +23,7 @@ owner が店舗の詳細（ネットショップは「組み込みの準備」�
 
 1. [`GET /payment_intents/{paymentIntentId}/refundable`](pathname:///openapi/#operation/getMachineRefundable) で実行可能額とblockerを確認する。
 2. [`POST /payment_intents/{paymentIntentId}/refunds/prepare`](pathname:///openapi/#operation/prepareMachineRefund) に `{"amountJpy":"100"}` を送る。
-3. 応答の `challenge` と `rpId` を署名し、[`POST /payment_intents/{paymentIntentId}/refunds/submit`](pathname:///openapi/#operation/submitMachineRefund) に `stagedOpId` と `assertion` を送る。
+3. 応答の `challenge` は署名するダイジェストで、`rpId` は `authenticatorData` の組み立てに使う。手順は[返金 challenge の署名](/refunds/signing#返金-challenge-の署名)に従って署名し、[`POST /payment_intents/{paymentIntentId}/refunds/submit`](pathname:///openapi/#operation/submitMachineRefund) に `stagedOpId` と `assertion` を送る。
 4. 受付応答の `refundId` を保存し、[`GET /refunds/{refundId}`](pathname:///openapi/#operation/getMachineRefund) または [`GET /payment_intents/{paymentIntentId}/refunds`](pathname:///openapi/#operation/listMachinePaymentRefunds) で照会する。受付は完了ではなく、受付応答にはtx hashがありません。
 
 返金先は元の支払人に固定され、prepareは宛先を返しません。ownerとすべてのmachineは加盟店ウォレットの直列枠を共有します。別店舗の操作や償還も枠を使用するため、並行実行で枠を増やせません。他店舗の記録は404です。同店舗の受理済み返金は照会でき、未消費の準備は本人のものだけを取得・取消できます。

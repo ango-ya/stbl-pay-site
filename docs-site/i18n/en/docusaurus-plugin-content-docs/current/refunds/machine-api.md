@@ -21,7 +21,7 @@ Attach an [HTTP signature](/refunds/signing) to each request. `amountJpy` is a d
 
 1. Check [`GET /payment_intents/{paymentIntentId}/refundable`](pathname:///openapi/#operation/getMachineRefundable) for executable amount and blockers.
 2. Send `{"amountJpy":"100"}` to [`POST /payment_intents/{paymentIntentId}/refunds/prepare`](pathname:///openapi/#operation/prepareMachineRefund).
-3. Sign the returned `challenge` and `rpId`. Send `stagedOpId` and `assertion` to [`POST /payment_intents/{paymentIntentId}/refunds/submit`](pathname:///openapi/#operation/submitMachineRefund).
+3. The returned `challenge` is the digest to sign, and `rpId` is used to build `authenticatorData`. Sign it following [Challenge signature](/refunds/signing#challenge-signature), then send `stagedOpId` and `assertion` to [`POST /payment_intents/{paymentIntentId}/refunds/submit`](pathname:///openapi/#operation/submitMachineRefund).
 4. Save the accepted `refundId`. Query [`GET /refunds/{refundId}`](pathname:///openapi/#operation/getMachineRefund) or [`GET /payment_intents/{paymentIntentId}/refunds`](pathname:///openapi/#operation/listMachinePaymentRefunds). Acceptance is not completion and carries no transaction hash.
 
 The recipient is fixed to the original payer and is omitted from prepare. The owner and all machines share one serial operation slot per merchant wallet, including operations from other stores and redemption. Other stores' resources return 404. Accepted refunds within the same store are readable; unconsumed preparations are visible and cancelable only by their machine.
