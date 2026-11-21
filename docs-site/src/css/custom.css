@@ -726,3 +726,62 @@ div[class*="codeBlockTitle_"] {
   color: var(--gray);
   font-size: 13px;
 }
+
+/* ---------- REST のエンドポイント一覧：スマホ幅では行ごとのカード（用途のリンクを先に出す） ---------- */
+
+@media (max-width: 600px) {
+  .endpoint-table table,
+  .endpoint-table tbody {
+    display: block;
+    overflow-x: visible;
+  }
+
+  .endpoint-table table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .endpoint-table table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .endpoint-table table tbody td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .endpoint-table table tbody td:nth-child(4) {
+    order: -1;
+    width: 100%;
+    font-weight: 600;
+  }
+
+  .endpoint-table table tbody td:nth-child(2) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .endpoint-table table tbody td:nth-child(3) {
+    width: 100%;
+    color: var(--gray);
+    font-size: 12.5px;
+  }
+
+  html[lang="ja"] .endpoint-table table tbody td:nth-child(3)::before {
+    content: "認証：";
+  }
+
+  html[lang="en"] .endpoint-table table tbody td:nth-child(3)::before {
+    content: "Auth: ";
+  }
+}

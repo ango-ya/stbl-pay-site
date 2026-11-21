@@ -428,3 +428,39 @@ for (const locale of ["ja", "en"]) {
     }
   });
 }
+
+test.describe("REST リファレンスのエンドポイント一覧", () => {
+  const pages = [
+    { path: "/docs/reference/rest/", link: "決済を照会する" },
+    { path: "/docs/en/reference/rest/", link: "Look up a payment" },
+  ];
+
+  for (const { path, link } of pages) {
+    test(`${path}: iPhone 幅では横スクロールせず、用途のリンクが先に見える`, async ({ page }) => {
+      await page.setViewportSize({ width: 393, height: 852 });
+      await page.goto(path);
+      const table = page.locator(".endpoint-table table");
+      const { scrollWidth, clientWidth } = await table.evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+
+      const box = await page.locator(".endpoint-table").getByRole("link", { name: link }).boundingBox();
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(393);
+
+      const first = table.locator("tbody tr").first();
+      const purposeTop = (await first.locator("td").nth(3).boundingBox()).y;
+      const methodTop = (await first.locator("td").nth(0).boundingBox()).y;
+      expect(purposeTop).toBeLessThan(methodTop);
+    });
+
+    test(`${path}: PC 幅では見出しがあり 1 行に 4 列が並ぶ`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(path);
+      const table = page.locator(".endpoint-table table");
+      await expect(table.locator("thead")).toBeVisible();
+      const tops = await table.locator("tbody tr").first().locator("td").evaluateAll((tds) => tds.map((td) => Math.round(td.getBoundingClientRect().top)));
+      expect(tops).toHaveLength(4);
+      expect(new Set(tops).size).toBe(1);
+    });
+  }
+});
