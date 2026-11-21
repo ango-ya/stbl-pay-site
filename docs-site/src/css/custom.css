@@ -767,6 +767,7 @@ div[class*="codeBlockTitle_"] {
   }
 
   .endpoint-table table tbody td:nth-child(2) {
+    flex: 1 1 0;
     min-width: 0;
     overflow-wrap: anywhere;
   }
@@ -779,9 +780,11 @@ div[class*="codeBlockTitle_"] {
 
   html[lang="ja"] .endpoint-table table tbody td:nth-child(3)::before {
     content: "認証：";
+    content: "認証：" / "";
   }
 
   html[lang="en"] .endpoint-table table tbody td:nth-child(3)::before {
     content: "Auth: ";
+    content: "Auth: " / "";
   }
 }
