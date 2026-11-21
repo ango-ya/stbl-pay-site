@@ -63,12 +63,6 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payments/$PAYMENT_INTENT_ID" \
   --header "x-stbl-api-key: $STBL_PAY_API_KEY"
 ```
 
-**`GET /payments/:paymentIntentId` は Sandbox への配備前です（2026年11月17日時点）。** 配備までは、認証なしの次の API で状態を確かめてください。
-
-```bash
-curl --fail-with-body "$STBL_PAY_BACKEND/payment_status/$PAYMENT_INTENT_ID"
-```
-
 `status` が `settled` であれば成立です。`signed` や `deposit_confirmed` は処理途中です。照会失敗を決済失敗として扱わないでください。
 
 ## 8. Webhook を設定する

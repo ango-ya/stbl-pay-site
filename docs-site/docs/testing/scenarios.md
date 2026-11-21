@@ -28,8 +28,6 @@ sidebar_position: 2
 
 ## 状態の照会
 
-`GET /payments/:paymentIntentId` は Sandbox への配備前です（2026年11月17日時点）。配備までは、この節の項目を未検証として記録してください（[決済状態を照会する](/server/retrieve-payment)）。
-
 - [ ] 店舗 API キーを `x-stbl-api-key` に付けて `GET /payments/:paymentIntentId` を呼んだとき、金額・手数料・アドレスを含む[状態照会の応答の項目](/reference/rest#状態照会)が返る
 - [ ] API キーを付けない、または無効・失効した API キーで呼んだとき、401 `auth/api_key_invalid` で拒否される
 - [ ] 別の店舗の決済 ID、または存在しない決済 ID で呼んだとき、どちらも同じ 404 `common/not_found` が返る

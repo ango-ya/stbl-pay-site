@@ -9,8 +9,6 @@ sidebar_position: 3
 
 加盟店サーバーから、保存済みの `paymentIntentId` で現在の状態を[照会](/reference/glossary)します。店舗 API キーを `x-stbl-api-key` ヘッダーで送ります。
 
-**この API は公開準備中で、Sandbox への配備前です（2026年11月17日時点）。** 配備までは呼び出せません。配備の時期は[問い合わせ先](/support/troubleshooting#問い合わせ先)へ確認してください。配備までは、認証なしの `GET /payment_status/:paymentIntentId` で状態を確かめられます。この応答が返すのは状態で、金額・手数料・アドレスは含みません。
-
 ```js
 const response = await fetch(
   `${process.env.STBL_PAY_BACKEND}/payments/${encodeURIComponent(paymentIntentId)}`,

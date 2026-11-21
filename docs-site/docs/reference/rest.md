@@ -16,7 +16,7 @@ sidebar_position: 2
 | メソッド | パス | 認証 | 用途 |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API キー（`x-stbl-api-key`） | [決済を作成する](#決済作成) |
-| `GET` | `/payments/:paymentIntentId` | API キー（`x-stbl-api-key`） | [決済を照会する](pathname:///openapi/#operation/getPayment)（公開準備中。配備までは[状態確認](/server/retrieve-payment)を使う） |
+| `GET` | `/payments/:paymentIntentId` | API キー（`x-stbl-api-key`） | [決済を照会する](pathname:///openapi/#operation/getPayment) |
 | `GET` | `/payment_status/:paymentIntentId` | なし | 決済ページの状態確認 |
 | `GET` | `/payment_intents/:paymentIntentId` | なし | 決済ページの表示情報 |
 | `GET` | `/payment_intents/{paymentIntentId}/refundable` | 返金 API キー＋HTTP 署名 | [返金できる額を確かめる](pathname:///openapi/#operation/getMachineRefundable)（公開準備中） |
@@ -42,8 +42,6 @@ sidebar_position: 2
 ## 状態照会
 
 `GET /payments/:paymentIntentId` を加盟店サーバーから呼び、店舗 API キーを `x-stbl-api-key` に送ります。[OpenAPI 仕様書](pathname:///openapi/#operation/getPayment)と[実装例](/server/retrieve-payment)を参照してください。リクエスト本文はありません。
-
-**この API は公開準備中で、Sandbox への配備前です（2026年11月17日時点）。** 配備までは、認証なしの `GET /payment_status/:paymentIntentId` で状態を確かめてください。
 
 12項目はすべて必須キーです。`paymentIntentId`、`orderId`、`status`、`amountJpy`、`feeJpy`、`netAmountJpy`、`txHash`、`settledAt`、`failedReason`、`payerAddress`、`netAmountDestination`、`createdAt` を返します。`orderId`、`txHash`、`settledAt`、`failedReason`、`payerAddress`、`netAmountDestination` は null を取り得ます。未知キーは無視してください。
 
