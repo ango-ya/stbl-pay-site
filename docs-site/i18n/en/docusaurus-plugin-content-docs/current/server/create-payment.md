@@ -31,7 +31,7 @@ const response = await fetch(`${process.env.STBL_PAY_BACKEND}/payment_intents`, 
   body: JSON.stringify({
     amountJpy: order.totalJpy, // decimal string
     orderId: attempt.id, // same value when you resend the request
-    returnUrl: `https://shop.example.com/orders/${encodeURIComponent(order.id)}/return`,
+    returnUrl: `https://shop.example.com/orders/${encodeURIComponent(order.id)}/return`, // build it from the server-side order, not from external input
   }),
 });
 if (!response.ok) throw new Error(`Payment creation failed: HTTP ${response.status}`);
@@ -60,6 +60,6 @@ To create an EC payment, you must have registered a domain in the merchant conso
 
 Check the operation deadline in `checkoutExpiresAt` in the response. The optional `merchantExpiresAt` acts as an upper limit on the **deposit deadline**, and the operation deadline does not become shorter (you can only specify a time more than 3 days after creation, and the operation deadline is shorter than that). It also does not extend the deadline of an existing payment. For details, see [State transitions and deadlines](/lifecycle/transitions).
 
-Make `returnUrl` an HTTPS URL on a registered domain, and do not include secret information (for requirements and examples, see [Domain registration](/security/domain#returnurl-requirements)). A return is not proof that the payment succeeded.
+Make `returnUrl` an HTTPS URL, and do not include secret information. It does not have to be on the registered domain, but the merchant is responsible for deciding the return destination. Do not build it from external input (for the requirements and the scope of your responsibility, see [Domain registration](/security/domain#returnurl-requirements)). A return is not proof that the payment succeeded.
 
 For the complete field definitions, see the primary source in the [REST reference](/reference/rest).

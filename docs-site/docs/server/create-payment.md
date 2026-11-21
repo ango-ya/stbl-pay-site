@@ -31,7 +31,7 @@ const response = await fetch(`${process.env.STBL_PAY_BACKEND}/payment_intents`, 
   body: JSON.stringify({
     amountJpy: order.totalJpy, // 10進文字列
     orderId: attempt.id, // 通信の再送では同じ値
-    returnUrl: `https://shop.example.com/orders/${encodeURIComponent(order.id)}/return`,
+    returnUrl: `https://shop.example.com/orders/${encodeURIComponent(order.id)}/return`, // 外部からの入力ではなく、サーバー側の注文から組み立てる
   }),
 });
 if (!response.ok) throw new Error(`決済作成失敗: HTTP ${response.status}`);
@@ -60,6 +60,6 @@ EC の決済を作成するには、加盟店コンソールでドメインを�
 
 操作期限は応答の `checkoutExpiresAt` で確認します。任意の `merchantExpiresAt` は**着金期限**の上限として効き、操作期限は短くなりません（指定できるのは作成から 3 日より先だけで、操作期限はそれより短いため）。既存決済の期限を延長することもありません。詳細は [状態遷移と期限](/lifecycle/transitions)にあります。
 
-`returnUrl` は登録ドメインの HTTPS URL にし、秘密情報を含めないでください（条件と例は[ドメイン登録](/security/domain#returnurl-の条件)）。復帰は決済成立の証明ではありません。
+`returnUrl` は HTTPS の URL にし、秘密情報を含めないでください。登録したドメインに限る必要はありませんが、復帰先を決める責任は加盟店にあります。外部からの入力で組み立てないでください（条件と責任の範囲は[ドメイン登録](/security/domain#returnurl-の条件)）。復帰は決済成立の証明ではありません。
 
 完全なフィールド定義は [REST リファレンス](/reference/rest)から一次情報を参照してください。

@@ -30,11 +30,11 @@ Keep the key out of the browser and Git, and use it only on your server (see [Ma
 
 ## 4. Register your domain
 
-In the domain section of the same tab, register the host name of the page buyers return to after payment (for example, `shop.example.com`). **You cannot create payments until a domain is registered** (409 `merchant/domain_required`). To try this from a local environment, see [Multiple environments and local development](/testing/sandbox#multiple-environments).
+In the domain section of the same tab, register the host name of your shop's site (for example, `shop.example.com`). **You cannot create payments until a domain is registered** (409 `merchant/domain_required`). To try this from a local environment, see [Multiple environments and local development](/testing/sandbox#multiple-environments).
 
 ## 5. Create a payment from the server
 
-Replace `returnUrl` with a URL on your registered domain (see [requirements](/security/domain#returnurl-requirements)).
+Replace `returnUrl` with the `https://` URL of the page you send buyers back to after payment (see [requirements](/security/domain#returnurl-requirements)).
 
 ```bash
 curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \

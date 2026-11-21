@@ -13,6 +13,7 @@ sidebar_position: 2
 - **API keys and the Webhook signing secret**: store them only on the server
 - **Deciding whether to provide the goods**: base the decision on a verified notification or a server-to-server lookup
 - **Query of the return URL**: use it only as a hint for display. Do not use it to finalize an order
+- **Return destination (`returnUrl`)**: the merchant server decides it. It is not checked against the registered domain, so do not build it from external input
 - **Viewing your own orders**: authorize with your own login and an ownership check
 
 The payment ID is not a secret. Do not build an endpoint that returns order contents to anyone who knows the ID.

@@ -33,8 +33,8 @@ sidebar_position: 4
 - **origin**：URL のうち、通信方式・ホスト名・ポートの組（例：`https://shop.example.com`、`https://shop.example.com:8443`）。このどれか 1 つでも違えば、別の origin として扱われます。ポートを省略した URL は既定のポート（`https` なら 443）として比べるので、`https://shop.example.com` と `https://shop.example.com:443` は同じ origin です。
 - **専用決済ページ**：STBLpay が提供する、利用者がパスキーで署名するページです。`checkoutUrl` で開きます。
 - **トップレベル遷移**：ブラウザの画面全体を別の URL へ移すこと。例：`window.location.assign(checkoutUrl)`。iframe・ポップアップ・モーダルに専用決済ページを埋め込むことは、トップレベル遷移ではありません。
-- **`returnUrl`**：決済後に利用者が戻るページの URL。登録したドメインの `https://` のページを指定します。条件と例は[ドメイン登録](/security/domain#returnurl-の条件)にあります。
-- **オープンリダイレクト**：信頼されたサイトが、利用者を任意の URL へ移せてしまうこと。偽サイトへの誘導に悪用されます。STBLpay が `returnUrl` を登録ドメインに限るのは、これを防ぐためです。
+- **`returnUrl`**：決済後に利用者が戻るページの URL。`https://` のページを指定します。登録したドメインに限りません。条件と例は[ドメイン登録](/security/domain#returnurl-の条件)にあります。
+- **オープンリダイレクト**：信頼されたサイトが、利用者を任意の URL へ移せてしまうこと。偽サイトへの誘導に悪用されます。`returnUrl` は API キーで認証された加盟店のサーバーだけが指定でき、決済ページは利用者が戻るリンクを押したときだけ移します。復帰先を決める責任は加盟店にあります。
 - **userinfo**：URL に含められるユーザー名とパスワード（`https://user:pass@example.com/` の `user:pass@` の部分）。`returnUrl` や Webhook の送信先には使えません。
 
 ## 通知

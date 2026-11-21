@@ -1,19 +1,19 @@
 ---
 title: Domain registration
-description: "Explains the role of the domains registered in the merchant console, which are used to validate the returnUrl, and how the two domain settings differ."
+description: "Explains the role of the domains registered in the merchant console: registration, which e-commerce payments require, versus optional proof of ownership, plus the returnUrl requirements and the merchant's responsibility."
 sidebar_label: Domain registration
 sidebar_position: 4
 ---
 
 # Domain registration
 
-STBLpay uses the domain you register in the merchant console to validate `returnUrl`, the destination after payment.
+Once you register a domain in the merchant console, you can create payments from your e-commerce site. `returnUrl`, the page the buyer returns to after payment, is not limited to the registered domain (see [Requirements for `returnUrl`](#returnurl-requirements)).
 
 There are two domain settings, and they are treated differently.
 
 | Setting | Status | Used for |
 |---|---|---|
-| [Registering a domain](#registering-a-domain) | **Required for e-commerce payments** | Checking `returnUrl`. Without it, you cannot create payments |
+| [Registering a domain](#registering-a-domain) | **Required for e-commerce payments** | Lets you create payments from your e-commerce site. Without it, you cannot create payments |
 | [Proof of ownership](#proof-of-ownership) | Optional | Showing a verified indicator on the checkout screen |
 
 Registering is enough to start accepting payments. Proof of ownership is an additional setting that shows buyers that you control the registered domain, and you can set it up at any time.
@@ -22,27 +22,34 @@ Pass the browser the `checkoutUrl` returned when you create the payment, and mov
 
 ## Requirements for `returnUrl` {/* #returnurl-requirements */}
 
-`returnUrl` is the URL of the page the buyer returns to after payment. Specify a page that meets all of these conditions:
+`returnUrl` is the URL of the page the buyer returns to after payment. Specify a URL that meets all of these conditions:
 
 - It starts with `https://`.
-- It has no port number and no [userinfo](/reference/glossary) (`user:pass@`).
-- Its host name exactly matches the domain registered in the merchant console (case-insensitive; subdomains are not allowed).
+- It has no [userinfo](/reference/glossary) (`user:pass@`).
 
-You cannot use `localhost`.
+The host name does not have to match the domain registered in the merchant console. You can specify a site other than the registered domain, or a subdomain. However, you cannot specify `returnUrl` unless you have registered a domain (for an e-commerce payment, an unregistered domain gives 409 `merchant/domain_required`; see [Registering a domain](#registering-a-domain)). You cannot use an `http://` URL, including development URLs such as `http://localhost`.
+
+If `returnUrl` does not meet the requirements, the payment is not created. The response codes are listed under `POST /payment_intents` in the [OpenAPI specification](pathname:///openapi/#operation/createPaymentIntent).
 
 Examples when the registered domain is `shop.example.com`:
 
 - OK: `https://shop.example.com/orders/123/return`
+- OK: `https://www.shop.example.com/…` (subdomain)
+- OK: `https://other.example.com/…` (a site other than the registered domain)
+- OK: `https://shop.example.com:8443/…` (has a port)
 - NG: `http://shop.example.com/…` (not `https`)
-- NG: `https://other.example.com/…` (a different domain)
-- NG: `https://shop.example.com:8443/…` (has a port)
-- NG: `https://www.shop.example.com/…` (subdomain)
 - NG: `https://user:pass@shop.example.com/…` (has userinfo)
-- NG: `https://localhost/…`
 
-The STBLpay checkout page is what sends the buyer to `returnUrl`. Without these requirements, someone could create a payment whose return destination is a fake site's URL. To the buyer, the destination is "where STBLpay's screen sent me," so they would trust even a fake site ([open redirect](/reference/glossary)). Limiting the return destination to the registered domain prevents this.
+**The merchant is responsible for deciding the return destination.** STBLpay does not check the host name of `returnUrl` against the registered domain. Only the merchant's server, authenticated with an API key, can specify `returnUrl`. The checkout page sends the buyer to `returnUrl` only when the buyer clicks the link back. In addition, follow these rules:
 
-You are responsible for authorizing the return page. Do not decide that a payment succeeded just because the buyer came back to the registered domain.
+- Manage the API key only on the server, and never expose it to the browser or Git ([API keys](/security/api-keys)).
+- Do not build `returnUrl` directly from external input such as a query or form value. Specify only a URL that your own server decided (for example, one built from the ID of the server-side order).
+
+To the buyer, `returnUrl` is "where STBLpay's screen sent me." If a fake site's URL were specified, the buyer would trust even a fake site ([open redirect](/reference/glossary)). Because there is no check against the registered domain, preventing this depends on how the merchant manages it.
+
+When [proof of ownership](#proof-of-ownership) succeeds, the checkout screen shows a verified indicator. What this indicator shows is ownership of the registered domain. It does not show that `returnUrl` is on that domain.
+
+You are responsible for authorizing the return page. Do not treat the buyer coming back, or the values in the query when they come back, as evidence that the payment succeeded. Confirm success with a Webhook or a status lookup ([What counts as a completed payment](/lifecycle/completion)).
 
 ## Registering a domain {/* #registering-a-domain */}
 
@@ -62,7 +69,7 @@ STBLpay does not access your site when you register a domain. You can register a
 1. Enter the new host name in New domain (host name) (新しいドメイン（ホスト名）).
 2. Click Change (変更する), then click Change (変更する) again in the confirmation dialog.
 
-Changing the domain revokes the proof of ownership. To prove ownership again, place and verify a new token. The return destinations of payments you already created do not change. STBLpay checks new e-commerce payments against the changed domain.
+Changing the domain revokes the proof of ownership. To prove ownership again, place and verify a new token. The return destinations of payments you already created do not change.
 
 **Remove**
 
@@ -89,7 +96,7 @@ The token differs for each merchant, so check it in the merchant console. For th
 
 This section cannot be used until you register a domain. The result appears just below the collapsible section that contains the Verify the placed value (設置した値を確認する) button. On success, "Proof of ownership succeeded" (所有の証明が成立しました) appears, and "Ownership proven" (所有を証明済み) appears next to the registered domain. On failure, the reason appears there.
 
-When the proof succeeds, the checkout screen shows a verified indicator. **This indicator shows that ownership of the domain has been proven. It does not mean STBLpay has reviewed or endorsed the merchant, and it is not a guarantee of the safety of the payment.** STBLpay does not show a negative indicator for merchants that have not proven ownership.
+When the proof succeeds, the checkout screen shows a verified indicator. **This indicator shows that ownership of the domain has been proven. It does not mean STBLpay has reviewed or endorsed the merchant, and it is not a guarantee of the safety of the payment. It also does not show that the return destination after payment (`returnUrl`) is on that domain.** STBLpay does not show a negative indicator for merchants that have not proven ownership.
 
 The proof is not finished once it succeeds. STBLpay re-verifies it periodically (every 24 hours). **The periodic re-verification checks only the method that last succeeded.** If you change the placement method (for example, from DNS to a meta tag), place the value with the new method and click Verify the placed value (設置した値を確認する) again. If you remove the previous placement without clicking it again, STBLpay withdraws the proof at the next re-verification.
 
