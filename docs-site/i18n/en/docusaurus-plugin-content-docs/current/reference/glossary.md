@@ -33,8 +33,8 @@ Terms used in the guide, grouped by theme. For more on the blockchain side, see 
 - **origin**: The combination of scheme, hostname, and port in a URL (examples: `https://shop.example.com`, `https://shop.example.com:8443`). If any one of these differs, it is treated as a different origin. A URL with the port omitted is compared as the default port (443 for `https`), so `https://shop.example.com` and `https://shop.example.com:443` are the same origin.
 - **Checkout page**: The page provided by STBLpay where the buyer signs with a passkey. You open it with `checkoutUrl`.
 - **Top-level navigation**: Moving the whole browser window to another URL. Example: `window.location.assign(checkoutUrl)`. Embedding the checkout page in an iframe, popup, or modal is not a top-level navigation.
-- **`returnUrl`**: The URL of the page the buyer returns to after payment. Specify an `https://` page on a registered domain. Conditions and examples are in [Domain registration](/security/domain#returnurl-requirements).
-- **Open redirect**: A trusted site being able to send a user to an arbitrary URL. It is abused to lead users to fake sites. STBLpay limits `returnUrl` to registered domains to prevent this.
+- **`returnUrl`**: The URL of the page the buyer returns to after payment. Specify an `https://` page. It is not limited to the registered domain. Conditions and examples are in [Domain registration](/security/domain#returnurl-requirements).
+- **Open redirect**: A trusted site being able to send a user to an arbitrary URL. It is abused to lead users to fake sites. Only the merchant's server, authenticated with an API key, can specify `returnUrl`, and the checkout page sends the buyer there only when the buyer clicks the link back. The merchant is responsible for deciding the return destination.
 - **userinfo**: The username and password that a URL can contain (the `user:pass@` part of `https://user:pass@example.com/`). It cannot be used in `returnUrl` or in a Webhook destination.
 
 ## Notifications

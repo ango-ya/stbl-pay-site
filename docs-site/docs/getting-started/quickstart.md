@@ -30,11 +30,11 @@ export STBL_PAY_API_KEY=stblpay_...   # 発行したキー
 
 ## 4. ドメインを登録する
 
-同じタブのドメインの区画で、決済後に戻るページのホスト名（例：`shop.example.com`）を登録します。**未登録だと決済を作れません**（409 `merchant/domain_required`）。ローカル環境で試すときは [複数の環境とローカル開発](/testing/sandbox#複数の環境とローカル開発)を参照してください。
+同じタブのドメインの区画で、お店のサイトのホスト名（例：`shop.example.com`）を登録します。**未登録だと決済を作れません**（409 `merchant/domain_required`）。ローカル環境で試すときは [複数の環境とローカル開発](/testing/sandbox#複数の環境とローカル開発)を参照してください。
 
 ## 5. サーバーから決済を作成する
 
-`returnUrl` は、登録したドメインの URL に置き換えます（[条件](/security/domain#returnurl-の条件)）。
+`returnUrl` は、決済後に利用者を戻すページの `https://` の URL に置き換えます（[条件](/security/domain#returnurl-の条件)）。
 
 ```bash
 curl --fail-with-body "$STBL_PAY_BACKEND/payment_intents" \
