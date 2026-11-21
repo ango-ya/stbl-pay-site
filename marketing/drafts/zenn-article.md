@@ -206,7 +206,7 @@ CREATE TABLE stbl_pay_inbox (
 
 ### 試すときの注意
 
-- `returnUrl` には、`localhost` や `http://` の URL は使えません。ローカルで戻りまで試すには、トンネルなどで公開した URL のホスト名をドメインに登録します
+- `returnUrl` には、`http://` の URL は使えません（`localhost` でも同じ）。ローカルで戻りまで試すには、トンネルなどで公開した `https://` の URL を指定します
 - 復帰 URL のクエリを、支払い済みの判定に使わないでください
 
 ### まとめ

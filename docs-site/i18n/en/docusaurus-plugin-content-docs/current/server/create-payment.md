@@ -60,6 +60,6 @@ To create an EC payment, you must have registered a domain in the merchant conso
 
 Check the operation deadline in `checkoutExpiresAt` in the response. The optional `merchantExpiresAt` acts as an upper limit on the **deposit deadline**, and the operation deadline does not become shorter (you can only specify a time more than 3 days after creation, and the operation deadline is shorter than that). It also does not extend the deadline of an existing payment. For details, see [State transitions and deadlines](/lifecycle/transitions).
 
-Make `returnUrl` an HTTPS URL on a registered domain, and do not include secret information (for requirements and examples, see [Domain registration](/security/domain#returnurl-requirements)). A return is not proof that the payment succeeded.
+Make `returnUrl` an HTTPS URL, and do not include secret information. Decide the value on the server, and do not use a value sent from the browser as it is (for requirements and examples, see [Domain registration](/security/domain#returnurl-requirements)). A return is not proof that the payment succeeded.
 
 For the complete field definitions, see the primary source in the [REST reference](/reference/rest).

@@ -17,7 +17,7 @@ sidebar_position: 3
 |---|---|
 | API のベース URL（[環境と URL](/#環境と-url)） | サーバー間の決済作成・状態照会 |
 | 加盟店の API キー | 決済作成・照会の `x-stbl-api-key` ヘッダ。店舗ごとに、加盟店コンソールで発行する |
-| 加盟店の登録ドメイン（ホスト名。例：`shop.example.com`。[ドメイン登録](/security/domain)） | EC 決済の作成に必須（未登録だと 409 `merchant/domain_required`）。`returnUrl` のホスト名の照合にも使う |
+| 加盟店の登録ドメイン（ホスト名。例：`shop.example.com`。[ドメイン登録](/security/domain)） | EC 決済の作成に必須（未登録だと 409 `merchant/domain_required`）。`returnUrl` のホスト名と一致させる必要はない |
 | Webhook 受信先と署名鍵 | サーバーでの結果通知受信。EC サイトでは通常設定する。理由があって使わない場合は、状態照会で `settled` を確かめてから注文を確定する |
 
 ブラウザへ API キーを渡さないでください。試すときは [Sandbox](/testing/sandbox) を使えます。決済ページの URL は作成応答から取得します。

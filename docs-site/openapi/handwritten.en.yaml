@@ -150,7 +150,8 @@ paths:
             - `merchant/suspended`: The merchant is suspended. A payment cannot be created. Wait for the suspension to
             be lifted
 
-            - `merchant/origin_mismatch`: `returnUrl` does not meet the registered-domain conditions
+            - `merchant/origin_mismatch`: `returnUrl` does not meet the conditions (an `http` loopback URL such as
+            `http://localhost`, a URL with userinfo, or a `returnUrl` from a merchant that has not registered a domain)
           content:
             application/json:
               schema:
@@ -507,17 +508,20 @@ components:
 
             - The scheme is `https` (`http` is not allowed, including development URLs such as `http://localhost`)
 
-            - No port number (`:443` is accepted)
-
             - No userinfo such as `user:pass@`
 
-            - The hostname exactly matches a domain registered in the merchant console (case-insensitive; a subdomain is
-            a different domain)
+
+            There are no restrictions on the hostname or the port number. It does not need to match the domain registered
+            in the merchant console. However, a merchant that has not registered a domain cannot specify `returnUrl`.
 
 
             A URL that is not `https` gives 400 `common/invalid_request`. However, `http://localhost`,
-            `http://127.0.0.1`, and `http://[::1]` give 403 `merchant/origin_mismatch`. An `https` URL that fails the
-            other conditions also gives 403 `merchant/origin_mismatch`.
+            `http://127.0.0.1`, and `http://[::1]` give 403 `merchant/origin_mismatch`. A URL that contains userinfo, and
+            a URL specified by a merchant that has not registered a domain, also give 403 `merchant/origin_mismatch` (for
+            an EC store with no registered domain, 409 `merchant/domain_required` is returned before that).
+
+
+            Decide the value on the merchant's server, and do not use a value sent from the browser as it is.
 
             There are no restrictions on the path and query. When the buyer returns, a `stbl_pay_intent` query parameter
             (whose value is the payment ID) is appended.

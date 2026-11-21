@@ -138,7 +138,7 @@ paths:
         '403':
           description: |
             - `merchant/suspended`：加盟店が利用停止中。決済を作成できない。再開を待つ
-            - `merchant/origin_mismatch`：`returnUrl` が登録ドメインの条件に合わない
+            - `merchant/origin_mismatch`：`returnUrl` が条件に合わない（`http://localhost` などのループバックの `http`、userinfo つき、ドメインを登録していない加盟店の指定）
           content:
             application/json:
               schema:
@@ -452,15 +452,18 @@ components:
 
             - スキームは `https`（`http` は `http://localhost` のような開発用の URL も不可）
 
-            - ポート番号を付けない（`:443` は付けても通る）
-
             - `user:pass@` のような userinfo を含めない
 
-            - ホスト名が、加盟店コンソールで登録したドメインと完全に一致する（大文字小文字は区別しない。サブドメインは別のドメイン）
+
+            ホスト名とポート番号に制限はありません。加盟店コンソールで登録したドメインと一致していなくてもかまいません。ただし、ドメインを登録していない加盟店は `returnUrl` を指定できません。
 
 
             `https` でない URL は 400 `common/invalid_request` です。ただし `http://localhost`・`http://127.0.0.1`・`http://[::1]` は
-            403 `merchant/origin_mismatch` です。`https` で、ほかの条件に合わないときも 403 `merchant/origin_mismatch` です。
+            403 `merchant/origin_mismatch` です。userinfo を含むときと、ドメインを登録していない加盟店が指定したときも 403 `merchant/origin_mismatch` です（EC
+            の店舗でドメインが未登録のときは、その前に 409 `merchant/domain_required`）。
+
+
+            値は加盟店のサーバーで決め、ブラウザから送られてきた値をそのまま使わないでください。
 
             パスとクエリに制限はありません。利用者が戻るときは、`stbl_pay_intent` クエリ（値は決済 ID）が付きます。
           examples:
