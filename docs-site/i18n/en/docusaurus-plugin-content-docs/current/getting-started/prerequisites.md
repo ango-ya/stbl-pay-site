@@ -17,7 +17,7 @@ This guide targets an environment that behaves as the guide describes. Before yo
 |---|---|
 | API base URL ([Environments and URLs](/#environments-and-urls)) | Server-to-server payment creation and status lookup |
 | Merchant API key | The `x-stbl-api-key` header for payment creation. Issued per store in the merchant console |
-| Merchant's registered domain (host name, for example `shop.example.com`; see [Domain registration](/security/domain)) | Required to create an EC payment (409 `merchant/domain_required` if not registered). Also used to match the host name of `returnUrl` |
+| Merchant's registered domain (host name, for example `shop.example.com`; see [Domain registration](/security/domain)) | Required to create an EC payment (409 `merchant/domain_required` if not registered). The host name of `returnUrl` does not need to match it |
 | Webhook endpoint and signing secret | Receiving result notifications on the server. E-commerce sites normally set this up. If you have a reason not to use Webhooks, confirm `settled` with a status lookup before finalizing the order |
 
 Do not pass the API key to the browser. To try things out, you can use the [Sandbox](/testing/sandbox). Get the checkout page URL from the creation response.

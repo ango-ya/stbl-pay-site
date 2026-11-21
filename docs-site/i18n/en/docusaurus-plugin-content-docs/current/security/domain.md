@@ -1,19 +1,19 @@
 ---
 title: Domain registration
-description: "Explains the role of the domains registered in the merchant console, which are used to validate the returnUrl, and how the two domain settings differ."
+description: "Explains the role of the domain registered in the merchant console and the requirements for returnUrl, the destination after payment. Shows how the registration required for e-commerce payments differs from the optional proof of ownership."
 sidebar_label: Domain registration
 sidebar_position: 4
 ---
 
 # Domain registration
 
-STBLpay uses the domain you register in the merchant console to validate `returnUrl`, the destination after payment.
+The domain you register in the merchant console is a prerequisite for creating e-commerce payments, and it is the subject of the proof of ownership. STBLpay does not check it against `returnUrl`, the destination after payment.
 
 There are two domain settings, and they are treated differently.
 
 | Setting | Status | Used for |
 |---|---|---|
-| [Registering a domain](#registering-a-domain) | **Required for e-commerce payments** | Checking `returnUrl`. Without it, you cannot create payments |
+| [Registering a domain](#registering-a-domain) | **Required for e-commerce payments** | Without it, you cannot create payments. It is the subject of the proof of ownership |
 | [Proof of ownership](#proof-of-ownership) | Optional | Showing a verified indicator on the checkout screen |
 
 Registering is enough to start accepting payments. Proof of ownership is an additional setting that shows buyers that you control the registered domain, and you can set it up at any time.
@@ -22,27 +22,23 @@ Pass the browser the `checkoutUrl` returned when you create the payment, and mov
 
 ## Requirements for `returnUrl` {/* #returnurl-requirements */}
 
-`returnUrl` is the URL of the page the buyer returns to after payment. Specify a page that meets all of these conditions:
-
-- It starts with `https://`.
-- It has no port number and no [userinfo](/reference/glossary) (`user:pass@`).
-- Its host name exactly matches the domain registered in the merchant console (case-insensitive; subdomains are not allowed).
-
-You cannot use `localhost`.
+`returnUrl` is the URL of the page the buyer returns to after payment. Specify a URL that starts with `https://` and does not contain [userinfo](/reference/glossary) (`user:pass@`). There are no restrictions on the host name or the port number. It does not need to match the domain registered in the merchant console, and you can specify a page on a subdomain or on a different domain.
 
 Examples when the registered domain is `shop.example.com`:
 
 - OK: `https://shop.example.com/orders/123/return`
+- OK: `https://www.shop.example.com/…` (subdomain)
+- OK: `https://other.example.com/…` (a different domain)
+- OK: `https://shop.example.com:8443/…` (has a port)
 - NG: `http://shop.example.com/…` (not `https`)
-- NG: `https://other.example.com/…` (a different domain)
-- NG: `https://shop.example.com:8443/…` (has a port)
-- NG: `https://www.shop.example.com/…` (subdomain)
+- NG: `http://localhost:3000/…` (not `https`; `localhost` cannot be used either)
 - NG: `https://user:pass@shop.example.com/…` (has userinfo)
-- NG: `https://localhost/…`
 
-The STBLpay checkout page is what sends the buyer to `returnUrl`. Without these requirements, someone could create a payment whose return destination is a fake site's URL. To the buyer, the destination is "where STBLpay's screen sent me," so they would trust even a fake site ([open redirect](/reference/glossary)). Limiting the return destination to the registered domain prevents this.
+Only merchants that have registered a domain can specify `returnUrl`.
 
-You are responsible for authorizing the return page. Do not decide that a payment succeeded just because the buyer came back to the registered domain.
+**Decide the return destination on your merchant's server.** STBLpay does not check the host name of the return destination. The buyer returns by clicking a link on the STBLpay checkout page, so they take the page they land on to be the merchant's page. Build `returnUrl` from a fixed value kept on the server, or from an allowlist that you decide. If you use a value sent from the browser as it is, a third party can create a payment whose return destination is a fake site ([open redirect](/reference/glossary)). The same thing happens if your API key leaks, so keep the API key only on the server ([API keys](/security/api-keys)).
+
+You are responsible for authorizing the return page. Do not decide that a payment succeeded just because the buyer came back to `returnUrl`.
 
 ## Registering a domain {/* #registering-a-domain */}
 
@@ -62,7 +58,7 @@ STBLpay does not access your site when you register a domain. You can register a
 1. Enter the new host name in New domain (host name) (新しいドメイン（ホスト名）).
 2. Click Change (変更する), then click Change (変更する) again in the confirmation dialog.
 
-Changing the domain revokes the proof of ownership. To prove ownership again, place and verify a new token. The return destinations of payments you already created do not change. STBLpay checks new e-commerce payments against the changed domain.
+Changing the domain revokes the proof of ownership. To prove ownership again, place and verify a new token. The return destinations of payments you already created do not change. Neither does the `returnUrl` you can specify for payments you create from now on.
 
 **Remove**
 
