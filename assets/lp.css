@@ -271,6 +271,74 @@ sup.fn a:hover {
   color: #fff;
 }
 
+/* モバイルのメニュー。幅が狭くて .site-nav を隠すときだけ出す（下の「レスポンシブ」）。
+   <details> なので JS が無くても開閉できる。中のリンクは、同じページの .site-nav と同じ並びにする
+   （tests/e2e/seo.spec.mjs が見る）。LP ではページ内リンクで飛んだあと lp.js が閉じる */
+.nav-menu {
+  display: none;
+}
+
+/* summary は block のまま（古い Safari は summary を flex にできない）。三本線は余白で真ん中に置く */
+.nav-menu summary {
+  display: block;
+  width: 42px;
+  height: 38px;
+  padding: 17px 11px 0;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+}
+
+.nav-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 真ん中の線に、上下の線を足して三本線にする */
+.nav-menu-icon {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--ink);
+  box-shadow: 0 -6px 0 var(--ink), 0 6px 0 var(--ink);
+}
+
+.nav-menu[open] summary {
+  background: var(--ink);
+}
+
+.nav-menu[open] .nav-menu-icon {
+  background: var(--paper);
+  box-shadow: 0 -6px 0 var(--paper), 0 6px 0 var(--paper);
+}
+
+/* ヘッダー（sticky）の下端から、画面の幅いっぱいに開く */
+.nav-menu-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 0 24px 8px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.nav-menu-panel a {
+  display: block;
+  padding: 13px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.nav-menu-panel a + a {
+  border-top: 1px solid var(--line);
+}
+
+.nav-menu-panel a:hover,
+.nav-menu-panel a[aria-current="page"] {
+  color: var(--link);
+}
+
 /* ---------- ヒーロー（ロゴ主役 × ジェネレーティブアート） ---------- */
 
 .hero {
@@ -2262,6 +2330,19 @@ sup.fn a:hover {
     display: none;
   }
 
+  /* ナビの代わりにメニューのボタンを出す。並びは ロゴ ／（空き）／ 相談のボタン・メニュー */
+  .nav-menu {
+    display: block;
+  }
+
+  .header-inner {
+    gap: 10px;
+  }
+
+  .header-cta {
+    margin-left: auto;
+  }
+
   .hero {
     padding: 56px 0 60px;
   }
@@ -2362,6 +2443,23 @@ sup.fn a:hover {
   .header-cta {
     font-size: 12.5px;
     padding: 0 12px;
+    /* 英語の長いラベルは 2 行に折り返す。そのときも高さをメニューのボタンにそろえる */
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  /* 日本語のラベルは折り返さず、幅が足りないぶんはロゴを縮める（幅 320px） */
+  html:lang(ja) .header-cta {
+    white-space: nowrap;
+  }
+
+  .brand-link {
+    min-width: 0;
+  }
+
+  .nav-menu-panel {
+    max-height: calc(100vh - 58px);
+    padding: 0 16px 8px;
   }
 
   .hero h1 {
@@ -2633,11 +2731,17 @@ sup.fn a:hover {
   vertical-align: top;
 }
 
-/* 手数料のページの、比較の解説への導線（カード全体が 1 つのリンク） */
+/* 手数料のページの、比較の解説への導線は、本文の行長にそろえず全幅で出す（カードの形は下の「リンクのカード」） */
 .legal .fees-guide {
+  max-width: none;
+}
+
+/* ---------- リンクのカード（OGP の絵つき。カード全体が 1 つのリンク） ----------
+   手数料のページから解説へ、フッターと /company/ から運営会社のサイトへ。絵は 1200×630。
+   a.link-card と書くのは、.legal a・.footer-inner a（下線・リンクの色）より後ろで同じ強さにして上書きするため */
+a.link-card {
   display: flex;
   align-items: stretch;
-  max-width: none;
   margin: 28px 0 8px;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -2647,16 +2751,17 @@ sup.fn a:hover {
   text-decoration: none;
 }
 
-.legal .fees-guide:hover {
+a.link-card:hover {
   border-color: var(--accent);
+  color: var(--ink);
 }
 
-.legal .fees-guide:focus-visible {
+a.link-card:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
 
-.legal .fees-guide img {
+.link-card img {
   flex: 0 0 45%;
   width: 45%;
   height: auto;
@@ -2664,7 +2769,7 @@ sup.fn a:hover {
   display: block;
 }
 
-.legal .fees-guide-body {
+.link-card-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2673,48 +2778,208 @@ sup.fn a:hover {
   background: var(--paper-dim);
 }
 
-.legal .fees-guide-kicker {
+.link-card-kicker {
   color: var(--accent-dark);
   font-size: 13px;
   font-weight: 700;
 }
 
-.legal .fees-guide-title {
+.link-card-title {
   font-size: 20px;
   font-weight: 700;
   line-height: 1.5;
 }
 
-.legal .fees-guide-desc {
+.link-card-desc {
   color: var(--gray);
   font-size: 14px;
   line-height: 1.7;
 }
 
-.legal .fees-guide-cta {
+.link-card-cta {
   margin-top: auto;
   /* 薄い背景の上で 4.5:1 を満たす濃い青（--link は 4.37:1 で足りない） */
   color: var(--accent-dark);
+  font-size: 15px;
   font-weight: 700;
+  /* URL を書くことがあるので、数字の幅そろえ（ピリオドも数字の幅になる）を切る */
+  font-feature-settings: normal;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
+/* 小さいカード（運営会社。フッターと /company/）。絵（OGP）が欠けないよう、本文を絵の高さに収める：説明文は 2 行で切る。
+   それでも本文のほうが高い幅では、絵を上下いっぱいに敷く（濃い絵の上下に白い帯を出さない） */
+.link-card.is-compact {
+  max-width: 640px;
+  margin: 8px 0 14px;
+}
+
+.link-card.is-compact img {
+  flex-basis: 50%;
+  width: 50%;
+  align-self: stretch;
+  object-fit: cover;
+}
+
+.link-card.is-compact .link-card-body {
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 20px;
+}
+
+.link-card.is-compact .link-card-title {
+  font-size: 18px;
+}
+
+.link-card.is-compact .link-card-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.link-card.is-compact .link-card-cta {
+  margin-top: 0;
+  font-size: 13.5px;
+}
+
 @media (max-width: 640px) {
-  .legal .fees-guide {
+  a.link-card {
     flex-direction: column;
   }
 
-  .legal .fees-guide img {
+  .link-card img,
+  .link-card.is-compact img {
     flex: none;
     width: 100%;
   }
 
-  .legal .fees-guide-body {
+  .link-card-body,
+  .link-card.is-compact .link-card-body {
     padding: 18px 18px 20px;
   }
 
-  .legal .fees-guide-title {
+  /* 縦に積むときは、説明文を切らない */
+  .link-card.is-compact .link-card-desc {
+    display: block;
+  }
+
+  .link-card-title {
     font-size: 18px;
+  }
+}
+
+/* ---------- 解説のカード（サムネイルつき） ----------
+   /learn/ の一覧、記事の「関連する解説」、LP の「決済を学ぶ」で使う。絵は記事の冒頭と同じ thumb.webp（1200×630、OGP と同じ絵柄）。
+   題名が h3 にあるので alt は空。h3 と p は「a の中」と書いて、learn.css の .learn-article h3 より強くする */
+.learn-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learn-cards a {
+  display: block;
+  height: 100%;
+  padding: 20px;
+  border: 1px solid var(--line);
+  transition: border-color 150ms ease;
+}
+
+.learn-cards a:hover {
+  border-color: var(--ink);
+}
+
+.learn-cards a h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.learn-cards a:hover h3 {
+  color: var(--link);
+}
+
+.learn-cards a p {
+  margin: 0;
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.learn-card-thumb {
+  display: block;
+  width: calc(100% + 40px);
+  max-width: none;
+  height: auto;
+  margin: -20px -20px 14px;
+  aspect-ratio: 1200 / 630;
+  border-bottom: 1px solid var(--line);
+}
+
+/* 題名だけの小さいカード（記事の「関連する解説」は 3 列、LP の「決済を学ぶ」は 4 列）。スマホでは 2 列 */
+.learn-cards.is-compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 0;
+}
+
+.section .learn-cards.is-compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.learn-cards.is-compact a {
+  padding: 12px 14px 14px;
+}
+
+.learn-cards.is-compact a h3 {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.learn-cards.is-compact .learn-card-thumb {
+  width: calc(100% + 28px);
+  margin: -12px -14px 10px;
+}
+
+/* LP の「決済を学ぶ」の、一覧への導線 */
+.learn-more {
+  margin: 24px 0 0;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .section .learn-cards.is-compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .learn-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .learn-cards.is-compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .learn-cards.is-compact a {
+    padding: 10px 10px 12px;
+  }
+
+  .learn-cards.is-compact a h3 {
+    font-size: 13.5px;
+  }
+
+  .learn-cards.is-compact .learn-card-thumb {
+    width: calc(100% + 20px);
+    margin: -10px -10px 8px;
   }
 }

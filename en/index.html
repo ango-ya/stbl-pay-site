@@ -95,7 +95,7 @@
       "isPartOf": { "@id": "https://stbl-pay.com/#website" },
       "about": { "@id": "https://stbl-pay.com/#service" },
       "primaryImageOfPage": "https://stbl-pay.com/assets/og-stblpay-generative-en-1200x630.png",
-      "dateModified": "2026-11-19"
+      "dateModified": "2026-11-20"
     },
     {
       "@type": "Service",
@@ -292,6 +292,18 @@
           <a href="/" lang="ja" hreflang="ja">日本語</a>
         </nav>
         <a class="header-cta" href="#early-access">Talk to us about integrating</a>
+        <details class="nav-menu">
+          <summary><span class="nav-menu-icon" aria-hidden="true"></span><span class="sr-only">Menu</span></summary>
+          <nav class="nav-menu-panel" aria-label="Menu">
+            <a href="#comparison">Fees</a>
+            <a href="#flow">How it works</a>
+            <a href="#videos">Video</a>
+            <a href="#faq">FAQ</a>
+            <a href="/en/learn/">Guides</a>
+            <a href="/docs/en/">Docs</a>
+            <a href="/" lang="ja" hreflang="ja">日本語</a>
+          </nav>
+        </details>
       </div>
     </header>
 
@@ -684,6 +696,21 @@
         </div>
       </section>
 
+      <!-- Guides (/en/learn/). Placed after the contact section so it does not pull readers away before the main goal. Same cards as the guides hub (.learn-cards in lp.css) -->
+      <section class="section" id="learn" aria-labelledby="learn-title">
+        <div class="shell">
+          <h2 id="learn-title"><span class="sec-no">GUIDES</span>Learn about payments in Japan</h2>
+          <p class="sec-lead">Guides for overseas shops selling to Japan: how people in Japan pay online, what a yen stablecoin such as JPYC is, and how a business can accept stablecoin payments. Facts come with sources.</p>
+          <ul class="learn-cards is-compact">
+            <li><a href="/en/learn/stablecoin-payments-japan/"><img class="learn-card-thumb" src="/assets/learn/stablecoin-payments-japan/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>Stablecoin payments in Japan: accepting a yen stablecoin</h3></a></li>
+            <li><a href="/en/learn/japan-payment-methods/"><img class="learn-card-thumb" src="/assets/learn/japan-payment-methods/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>Payment methods in Japan</h3></a></li>
+            <li><a href="/en/learn/accept-stablecoin-payments/"><img class="learn-card-thumb" src="/assets/learn/accept-stablecoin-payments/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>How to accept stablecoin payments</h3></a></li>
+            <li><a href="/en/learn/high-risk-merchant-account/"><img class="learn-card-thumb" src="/assets/learn/high-risk-merchant-account/thumb-en.webp" width="1200" height="630" alt="" loading="lazy" decoding="async" /><h3>What is a high-risk merchant account?</h3></a></li>
+          </ul>
+          <p class="learn-more"><a class="text-link" href="/en/learn/">See all guides →</a></p>
+        </div>
+      </section>
+
       <!-- Notes -->
       <section class="footnotes" aria-labelledby="footnotes-title">
         <div class="shell">
@@ -707,8 +734,18 @@
       <div class="shell footer-inner">
         <div>
           <img src="/assets/logo-wordmark-stblpay-black.png" alt="STBLpay" class="footer-logo" loading="lazy" />
-          <p>Operated by <a href="https://www.ango-ya.org/" target="_blank" rel="noreferrer">Ango-ya LLC</a></p>
           <p><a href="/docs/en/">Merchant docs</a>　<a href="/en/learn/">Guides</a>　<a href="/en/press/">Press kit</a></p>
+          <!-- The operator's website, shown as a card with that site's own OGP (title, description, image). Checked 2026-11-20.
+               The image is a copy of https://www.ango-ya.org/ogp.png (img-src is 'self' in our CSP, so we serve it ourselves). -->
+          <a class="link-card is-compact" href="https://www.ango-ya.org/en/" target="_blank" rel="noreferrer">
+            <img src="/assets/img/ango-ya-ogp.webp" alt="" width="1200" height="630" loading="lazy" decoding="async" />
+            <span class="link-card-body">
+              <span class="link-card-kicker">Operated by</span>
+              <span class="link-card-title">Ango-ya LLC</span>
+              <span class="link-card-desc">Ango-ya is a technical organization created to develop new economic activities and implement them in society through blockchain technology. We are engaged in various projects based in Fukuoka and Tokyo.</span>
+              <span class="link-card-cta">www.ango-ya.org/en/</span>
+            </span>
+          </a>
           <!-- Sources: https://www.ango-ya.org/company/about / https://jp.asteria.com/news/2026031328233/ / https://prtimes.jp/main/html/rd/p/000000030.000062107.html / https://www.city.fukuoka.lg.jp/keizai/kigyo-renkei/mirai/fullsup/saitaitiran/documents/fullsupport_angoya.pdf -->
           <ul class="footer-facts">
             <li>Founded in February 2019, headquartered in Fukuoka City.</li>

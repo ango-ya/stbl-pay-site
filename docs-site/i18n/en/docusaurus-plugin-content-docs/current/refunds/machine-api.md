@@ -19,22 +19,22 @@ Each refund requires both the machine signature and STBL Pay’s co-signature. S
 
 Attach an [HTTP signature](/refunds/signing) to each request. `amountJpy` is a decimal string in yen, with up to six decimal places. Avoid floating-point conversion.
 
-1. Check `GET /payment_intents/{paymentIntentId}/refundable` for executable amount and blockers.
-2. Send `{"amountJpy":"100"}` to `POST /payment_intents/{paymentIntentId}/refunds/prepare`.
-3. Sign the returned `challenge` and `rpId`. Send `stagedOpId` and `assertion` to `POST /payment_intents/{paymentIntentId}/refunds/submit`.
-4. Save the accepted `refundId`. Query `GET /refunds/{refundId}` or `GET /payment_intents/{paymentIntentId}/refunds`. Acceptance is not completion and carries no transaction hash.
+1. Check [`GET /payment_intents/{paymentIntentId}/refundable`](pathname:///openapi/#operation/getMachineRefundable) for executable amount and blockers.
+2. Send `{"amountJpy":"100"}` to [`POST /payment_intents/{paymentIntentId}/refunds/prepare`](pathname:///openapi/#operation/prepareMachineRefund).
+3. The returned `challenge` is the digest to sign, and `rpId` is used to build `authenticatorData`. Sign it following [Challenge signature](/refunds/signing#challenge-signature), then send `stagedOpId` and `assertion` to [`POST /payment_intents/{paymentIntentId}/refunds/submit`](pathname:///openapi/#operation/submitMachineRefund).
+4. Save the accepted `refundId`. Query [`GET /refunds/{refundId}`](pathname:///openapi/#operation/getMachineRefund) or [`GET /payment_intents/{paymentIntentId}/refunds`](pathname:///openapi/#operation/listMachinePaymentRefunds). Acceptance is not completion and carries no transaction hash.
 
 The recipient is fixed to the original payer and is omitted from prepare. The owner and all machines share one serial operation slot per merchant wallet, including operations from other stores and redemption. Other stores' resources return 404. Accepted refunds within the same store are readable; unconsumed preparations are visible and cancelable only by their machine.
 
 ## Recovery
 
-- Lost prepare response: inspect `ownStaged`, which can refer to another payment or process using the same machine. Check its `paymentIntentId`, `stagedOpId` and the process that created it, and coordinate with any process still working on it. Use `DELETE /staged_operations/{stagedOpId}` only for an unconsumed preparation you intentionally abandon, then prepare again.
-- Lost submit response: resend the same `stagedOpId` and assertion with a fresh HTTP nonce, timestamp and signature. If already accepted, the retry returns the same `refundId` and `walletOperationId`. After recovery, query that `refundId` or the payment’s refund list for the result as usual. Do not prepare a new refund.
-- Missing Webhook: reconcile by query. `refund.confirmed` means completion; `refund.failed` means failure. The original payment stays `settled`.
+- Lost prepare response: [check the refundable amount](pathname:///openapi/#operation/getMachineRefundable) and inspect `ownStaged`, which can refer to another payment or process using the same machine. Check its `paymentIntentId`, `stagedOpId` and the process that created it, and coordinate with any process still working on it. Use [`DELETE /staged_operations/{stagedOpId}`](pathname:///openapi/#operation/discardMachineStagedOperation) only for an unconsumed preparation you intentionally abandon, then prepare again.
+- Lost submit response: [resubmit the refund](pathname:///openapi/#operation/submitMachineRefund) using the same `stagedOpId` and assertion with a fresh HTTP nonce, timestamp and signature. If already accepted, the retry returns the same `refundId` and `walletOperationId`. After recovery, query that `refundId` or the payment’s refund list for the result as usual. Do not prepare a new refund.
+- Missing Webhook: reconcile by [looking up the refund](pathname:///openapi/#operation/getMachineRefund). `refund.confirmed` means completion; `refund.failed` means failure. The original payment stays `settled`.
 - HTTP419 `auth/clock_skew`: adjust the clock offset using `details.serverTime` (epoch milliseconds) in the response and retry once with a fresh nonce, timestamp and HTTP signature. Investigate persistent clock errors.
 
 ## Funds and revocation
 
 `refundableNowJpy` is constrained by the ledger, on-chain backing and wallet balance. `executableJpy` is the minimum of that amount and `delegationCapJpy`, or `"0"` when blocked. Unavailable observations are not estimated. See [refund funds](/refunds/funding). Store and payment restrictions are backend checks; the contract does not identify stores or payments.
 
-Revocation prevents new acceptance. Cap replacement and API key rotation apply the new cap or key to subsequent acceptance. **They do not guarantee cancellation of already accepted operations.** On-chain revocation of old delegations is follow-up work (#677). Delegation does not permit redemption, arbitrary recipients, standalone wallet upgrades or human staff access. A disabled store rejects new prepare/submit requests while allowing queries, cancellation of the machine's own preparation, and owner revocation/key rotation.
+Revocation prevents new acceptance. Cap replacement and API key rotation apply the new cap or key to subsequent acceptance. **They do not guarantee cancellation of already accepted operations.** On-chain revocation of old delegations is not supported. Delegation does not permit redemption, arbitrary recipients, standalone wallet upgrades or human staff access. A disabled store rejects new prepare/submit requests while allowing queries, cancellation of the machine's own preparation, and owner revocation/key rotation.

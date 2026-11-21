@@ -154,9 +154,18 @@ PR では GitHub Actions（`ci.yml`）が同じチェックを実行します。
   - 主なブラウザ（Chrome・Edge・Firefox・Safari 14 以降・iOS Safari 14 以降）でそのまま動く範囲に収めます。2D の `transform`・`@keyframes`・`transition` だけを使い、`aspect-ratio`・`inset`・flex の `gap`・個別の transform プロパティ・Web Animations API・Canvas は使いません。JS は ES2017 までです。
 - テストは `tests/e2e/characters-motion.spec.mjs`（素材のそろい・組み立て・並び・会話の再生と仕草・まばたき・上下・生きている間だけ動く・reduce・ヒーローの登場と待機の仕草・手を振る・狭い幅・JS なし・本番ヘッダの CSP）。
 
+## メニューとカード
+
+- **モバイルのメニュー**：幅 900px 以下ではヘッダーのナビ（`.site-nav`）を隠し、`<details class="nav-menu">` のメニューを出します（JS なしで開閉できます。LP では `assets/lp.js` が、ページ内リンクで飛んだあと・外側を押したとき・Esc で閉じます）。中のリンクは、同じページの `.site-nav` と同じ並びにします。ナビを直したら、メニューも直してください。
+- **記事へのリンクはカードで**：解説の記事へのリンクを並べるときは、サムネイル（`assets/learn/<slug>/thumb.webp`。OGP と同じ絵柄）つきのカード（`assets/lp.css` の `.learn-cards`）にします。`/learn/` の一覧は説明文つき、記事の「関連する解説」と LP の「決済を学ぶ」（`#learn`）は題名だけの小さいカード（`.is-compact`）です。文の途中のリンクは、文字のままです。
+- **LP の「決済を学ぶ」**：相談の欄（`#early-access`）のあとに置いています（LP の主目的の手前に、脇道を作らないため）。載せる記事は 4 本です。
+- **末尾の箱のカード**：解説・方針・プレスキットの末尾の箱（`.learn-about`。「すてぶるペイについて」など）のリンクは、題と 1 行の説明のカード（`assets/learn.css` の `.about-cards`）で並べます。相談（`/#early-access`）だけ `.is-primary`（青い地）にします。絵は入れません（相談と LP は OGP の絵が同じなので）。一覧（`/learn/`・`/en/learn/`）の箱だけは、相談がなく、行き先（LP・docs・方針）ごとに絵があるので、記事の一覧と同じ絵つきのカード（`.learn-cards`）にします（`/fees/` は LP と同じ絵なので、文字のリンクのまま）。記事では、箱を「関連する解説」の上に置き、相談のカードを先頭にします（相談・LP への出口を、ほかの記事への出口より先に見せるため）。押された数は GA4 の `cta_click`（`cta_location` が `learn_about`、`exit_type` が consult・lp・docs）で見ます。
+- **運営会社のカード**：LP のフッターと `/company/` で、暗号屋のサイトを、そのサイトの OGP（題・説明文・絵）のカード（`.link-card.is-compact`）で見せます。絵は `https://www.ango-ya.org/ogp.png` を WebP にして `assets/img/ango-ya-ogp.webp` に置いたものです（CSP の `img-src` が `'self'` なので、ほかのサイトの絵は直接読めません）。向こうの OGP が変わったら、写し直します（`cwebp -q 82`）。
+- テストは `tests/e2e/nav-cards.spec.mjs`（メニューとナビの並びの一致・開閉、カードのサムネイル、末尾の箱のカード、運営会社のカードの絵が欠けないこと）。
+
 ## 検索と AI 向け（SEO・LLMO）
 
-- **OGP 画像**：日本語版 `assets/og-stblpay-generative-1200x630.png`、英語版 `assets/og-stblpay-generative-en-1200x630.png`（英語版 LP と英語版 docs で使う）。元は `scripts/og/og-image.html`（ロゴは正の SVG、背景はヒーローと同じ式。`?lang=en` で英語版）で、`node scripts/make-og-image.mjs [en]` で書き出し直す。絵を変えたら、SNS が前の画像を覚えているので `index.html`・`en/index.html`・docs（`docusaurus.config.ts` の `image`）の `?v=` を上げる
+- **OGP 画像**：日本語版 `assets/og-stblpay-generative-1200x630.png`、英語版 `assets/og-stblpay-generative-en-1200x630.png`（英語版 LP で使う）。docs は専用の `assets/og-stblpay-docs-1200x630.png`・`assets/og-stblpay-docs-en-1200x630.png`（同じ背景とロゴに題名だけ。`node scripts/make-og-image.mjs docs [en]`）。元は `scripts/og/og-image.html`（ロゴは正の SVG、背景はヒーローと同じ式。`?lang=en` で英語版）で、`node scripts/make-og-image.mjs [en]` で書き出し直す（同じ絵の `.webp` も書き出す。`/learn/`・`/en/learn/` の末尾のカードに出す）。絵を変えたら、SNS が前の画像を覚えているので `index.html`・`en/index.html`（docs の絵なら `docusaurus.config.ts` の `image` と、仕様書のビューア `docs-site/static/openapi/index.html`）の `?v=` を上げる
 - **canonical・構造化データ**：LP の head。`WebPage` の `dateModified` は、本文を直したら日付を上げる。「現在の状況」（`2026年11月時点` など）は LP の導入の節と `llms.txt` の両方にあるので、状況が変わったらそろえて直す
 - **サイトマップ**：LP は `sitemap.xml`（手で書く。ページを足したら足す）、docs は Docusaurus が言語ごとに作る（`/docs/sitemap.xml`・`/docs/en/sitemap.xml`。robots.txt に 3 本とも書く）。docs は `trailingSlash: true`（配信先が末尾にスラッシュを付けて飛ばすので、canonical をそろえる）
 - **noindex**：デモ画面（`/demo`・`/pay`・`/jpyc-ex`）は `_headers` の `X-Robots-Tag`。`404.html` があるので、存在しない URL は 404 になる（無いと Cloudflare Pages は LP を 200 で返す）

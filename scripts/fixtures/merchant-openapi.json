@@ -1,0 +1,2740 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "STBL Pay 加盟店 API",
+    "version": "0.40.0"
+  },
+  "tags": [
+    {
+      "name": "決済"
+    },
+    {
+      "name": "返金",
+      "description": "machine は加盟店サーバーが保持する署名鍵で返金に署名する主体です。公開準備中の仕様です。署名鍵の登録と委任状の承認は管理画面で行います。\n\n1. getMachineRefundable で実行可能額と blocker を確かめます。\n2. prepareMachineRefund で返金を準備します。サーバーが UserOperation を組み立て、reservedJpy を確保します。\n3. challenge に署名し、submitMachineRefund で送ります。\n4. 202 は受付であり完了ではありません。refundId を保存し、getMachineRefund または listMachinePaymentRefunds で結果を照会します。\n5. 応答を失ったときは下表に従って回復します。取りやめる未消費の準備は discardMachineStagedOperation で破棄します。\n\n準備と送信を分けるのは、サーバーが決めた返金先・額・nonce・更新・期限を含む UserOperation の digest に machine が署名するためです。返金先は元の支払人に固定され、指定できません。加盟店ウォレットの操作は owner と machine を通して1件ずつ直列に進みます。返金と同時にウォレット更新が含まれることがあります。失効や上限の再承認は受付済みの返金を取り消しません。暗号屋は検査により co-sign を拒否できますが、machine の署名なしに資金は動きません。\n\n| 応答を失った操作 | 回復方法 |\n| --- | --- |\n| 準備 | ownStaged を照会し、作成したプロセスと調整します。意図的に取りやめる場合だけ破棄して準備し直します。 |\n| 送信 | 同じ stagedOpId と同じ assertion を再送し、HTTP 署名の nonce・timestamp・署名だけ新しくします。新しく準備しません。 |\n| HTTP 419 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送します。 |\n\n流れは [加盟店サーバーからの返金](https://stbl-pay.com/docs/refunds/machine-api)、署名の手順と参照実装は [返金 API の署名](https://stbl-pay.com/docs/refunds/signing) を参照してください。"
+    }
+  ],
+  "paths": {
+    "/payments/{paymentIntentId}": {
+      "get": {
+        "operationId": "getPayment",
+        "tags": [
+          "決済"
+        ],
+        "summary": "決済を照会する",
+        "description": "店舗の決済 API キーに属する決済1件だけを返します。他店舗の決済は404です。成立していない決済の amountJpy・feeJpy・netAmountJpy は見積りです。API キーごとに既定600回／60秒の毎分固定窓で制限します。HTTP 429 の Retry-After は再試行までの整数秒です。",
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentLookupResponse"
+                },
+                "examples": {
+                  "settled": {
+                    "summary": "成立した決済",
+                    "value": {
+                      "paymentIntentId": "pi_1111111111111111",
+                      "orderId": null,
+                      "status": "settled",
+                      "amountJpy": "1000",
+                      "feeJpy": "10",
+                      "netAmountJpy": "990",
+                      "txHash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+                      "settledAt": "2026-11-16T00:00:00.000Z",
+                      "failedReason": null,
+                      "payerAddress": "0x1111111111111111111111111111111111111111",
+                      "netAmountDestination": "0x2222222222222222222222222222222222222222",
+                      "createdAt": "2026-11-16T00:00:00.000Z"
+                    }
+                  },
+                  "unsettled": {
+                    "summary": "成立前の見積り",
+                    "value": {
+                      "paymentIntentId": "pi_1111111111111111",
+                      "orderId": null,
+                      "status": "created",
+                      "amountJpy": "1000",
+                      "feeJpy": "10",
+                      "netAmountJpy": "990",
+                      "txHash": null,
+                      "settledAt": null,
+                      "failedReason": null,
+                      "payerAddress": null,
+                      "netAmountDestination": null,
+                      "createdAt": "2026-11-16T00:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/invalid_request | リクエストの形式が不正です。 | パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_invalid_request": {
+                    "summary": "リクエストの形式が不正です。",
+                    "value": {
+                      "code": "common/invalid_request",
+                      "message": "リクエストの形式が不正です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/api_key_invalid | API キーが無効です。 | 用途に合う現在の API キーを確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_api_key_invalid": {
+                    "summary": "API キーが無効です。",
+                    "value": {
+                      "code": "auth/api_key_invalid",
+                      "message": "API キーが無効です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/not_found | 指定した資源が見つかりません。他店舗の決済・返金も404です。 | 識別子と API キーの店舗を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_not_found": {
+                    "summary": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+                    "value": {
+                      "code": "common/not_found",
+                      "message": "指定した資源が見つかりません。他店舗の決済・返金も404です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/rate_limited | 呼出回数の制限に達しました。 | Retry-After の整数秒だけ待ってから再試行してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_rate_limited": {
+                    "summary": "呼出回数の制限に達しました。",
+                    "value": {
+                      "code": "common/rate_limited",
+                      "message": "呼出回数の制限に達しました。"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "再試行までの待機時間（整数秒）",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_internal": {
+                    "summary": "要求を処理できませんでした。",
+                    "value": {
+                      "code": "common/internal",
+                      "message": "要求を処理できませんでした。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/service_unavailable | 現在サービスを利用できません。 | 時間を置いて再試行してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_service_unavailable": {
+                    "summary": "現在サービスを利用できません。",
+                    "value": {
+                      "code": "common/service_unavailable",
+                      "message": "現在サービスを利用できません。"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refundable": {
+      "get": {
+        "operationId": "getMachineRefundable",
+        "tags": [
+          "返金"
+        ],
+        "summary": "返金できる額を確かめる",
+        "description": "executableJpy がこの machine の実行可能額で、refundableNowJpy と delegationCapJpy の小さい方です。上限なしは null。blockedBy があれば \"0\" です。state_unavailable では推測した額で進めません。ownStaged は同じ machine が別決済で作った未消費の準備も含みます。準備の応答を失ったら paymentIntentId・stagedOpId と作成したプロセスを確認し、意図的に取りやめる場合だけ破棄して再準備します。",
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/MachineSignature"
+          },
+          {
+            "$ref": "#/components/parameters/MachineTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/MachineNonce"
+          }
+        ],
+        "security": [
+          {
+            "machineSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MachineRefundableView"
+                },
+                "examples": {
+                  "available": {
+                    "summary": "返金を開始できる",
+                    "value": {
+                      "paymentIntentId": "pi_1111111111111111",
+                      "paymentStatus": "settled",
+                      "amountJpy": "1000",
+                      "confirmedRefundedJpy": "0",
+                      "reservedJpy": "0",
+                      "refundableJpy": "1000",
+                      "refundableNowJpy": "1000",
+                      "onchainCreditJpy": "1000",
+                      "walletBalanceJpy": "1000",
+                      "limitedBy": [],
+                      "blockedBy": null,
+                      "checkedAt": "2026-11-16T00:00:00.000Z",
+                      "delegationCapJpy": null,
+                      "executableJpy": "1000",
+                      "ownStaged": null
+                    }
+                  },
+                  "blocked": {
+                    "summary": "状態を観測できず開始できない",
+                    "value": {
+                      "paymentIntentId": "pi_1111111111111111",
+                      "paymentStatus": "settled",
+                      "amountJpy": "1000",
+                      "confirmedRefundedJpy": "0",
+                      "reservedJpy": "0",
+                      "refundableJpy": "1000",
+                      "refundableNowJpy": "0",
+                      "onchainCreditJpy": null,
+                      "walletBalanceJpy": null,
+                      "limitedBy": [],
+                      "blockedBy": "state_unavailable",
+                      "checkedAt": "2026-11-16T00:00:00.000Z",
+                      "delegationCapJpy": null,
+                      "executableJpy": "0",
+                      "ownStaged": null
+                    }
+                  },
+                  "ownStaged": {
+                    "summary": "本人の準備が残っている",
+                    "value": {
+                      "paymentIntentId": "pi_1111111111111111",
+                      "paymentStatus": "settled",
+                      "amountJpy": "1000",
+                      "confirmedRefundedJpy": "0",
+                      "reservedJpy": "1000",
+                      "refundableJpy": "0",
+                      "refundableNowJpy": "0",
+                      "onchainCreditJpy": "1000",
+                      "walletBalanceJpy": "1000",
+                      "limitedBy": [],
+                      "blockedBy": "staged_operation_exists",
+                      "checkedAt": "2026-11-16T00:00:00.000Z",
+                      "delegationCapJpy": null,
+                      "executableJpy": "0",
+                      "ownStaged": {
+                        "stagedOpId": "stg_1111111111111111",
+                        "amountJpy": "1000",
+                        "includesUpgrade": false,
+                        "expiresAt": "2026-11-16T00:00:00.000Z",
+                        "paymentIntentId": "pi_1111111111111111"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/invalid_request | リクエストの形式が不正です。 | パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_invalid_request": {
+                    "summary": "リクエストの形式が不正です。",
+                    "value": {
+                      "code": "common/invalid_request",
+                      "message": "リクエストの形式が不正です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/api_key_invalid | API キーが無効です。 | 用途に合う現在の API キーを確認してください。 |\n| auth/machine_signature_invalid | HTTP 署名を検証できません。 | raw body と送信 URL を保ったまま、署名の手順を確認してください。 |\n| auth/replay | 同じ HTTP nonce が既に使われています。 | 新しい nonce・timestamp・HTTP 署名で再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_api_key_invalid": {
+                    "summary": "API キーが無効です。",
+                    "value": {
+                      "code": "auth/api_key_invalid",
+                      "message": "API キーが無効です。"
+                    }
+                  },
+                  "auth_machine_signature_invalid": {
+                    "summary": "HTTP 署名を検証できません。",
+                    "value": {
+                      "code": "auth/machine_signature_invalid",
+                      "message": "HTTP 署名を検証できません。"
+                    }
+                  },
+                  "auth_replay": {
+                    "summary": "同じ HTTP nonce が既に使われています。",
+                    "value": {
+                      "code": "auth/replay",
+                      "message": "同じ HTTP nonce が既に使われています。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| merchant/suspended | 加盟店が利用停止中です。 | 利用状況を確認し、停止が解消するまで要求を止めてください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "merchant_suspended": {
+                    "summary": "加盟店が利用停止中です。",
+                    "value": {
+                      "code": "merchant/suspended",
+                      "message": "加盟店が利用停止中です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/not_found | 指定した資源が見つかりません。他店舗の決済・返金も404です。 | 識別子と API キーの店舗を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_not_found": {
+                    "summary": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+                    "value": {
+                      "code": "common/not_found",
+                      "message": "指定した資源が見つかりません。他店舗の決済・返金も404です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| member/not_active | machine の委任状が有効になっていません。 | 管理画面で委任状の承認状況を確認してください。 |\n| member/revoked | machine が失効しています。 | この machine で新規の返金を開始せず、管理画面で状態を確認してください。 |\n| delegation/stale | 現在の委任状を使用できません。 | 管理画面で現行のウォレットに対する委任状を再承認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "member_not_active": {
+                    "summary": "machine の委任状が有効になっていません。",
+                    "value": {
+                      "code": "member/not_active",
+                      "message": "machine の委任状が有効になっていません。"
+                    }
+                  },
+                  "member_revoked": {
+                    "summary": "machine が失効しています。",
+                    "value": {
+                      "code": "member/revoked",
+                      "message": "machine が失効しています。"
+                    }
+                  },
+                  "delegation_stale": {
+                    "summary": "現在の委任状を使用できません。",
+                    "value": {
+                      "code": "delegation/stale",
+                      "message": "現在の委任状を使用できません。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "419": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/clock_skew | HTTP 署名の時刻が許容時刻差を外れています。 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_clock_skew": {
+                    "summary": "HTTP 署名の時刻が許容時刻差を外れています。",
+                    "value": {
+                      "code": "auth/clock_skew",
+                      "message": "HTTP 署名の時刻が許容時刻差を外れています。",
+                      "details": {
+                        "serverTime": 1794787200000
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_internal": {
+                    "summary": "要求を処理できませんでした。",
+                    "value": {
+                      "code": "common/internal",
+                      "message": "要求を処理できませんでした。"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refunds/prepare": {
+      "post": {
+        "operationId": "prepareMachineRefund",
+        "tags": [
+          "返金"
+        ],
+        "summary": "返金を準備する",
+        "description": "返金額を reservedJpy として確保し、サーバーが UserOperation を組み立てます。challenge は乱数ではなく keccak256(userOpHash ‖ validUntil) の digest です。返金先・額・ウォレットの nonce・更新・期限を決めた後に machine が署名するため、準備と送信が分かれます。返金先は元の支払人に固定で指定できず、応答にも含みません。upgrade.included は返金と同時のウォレット更新を示します。加盟店ウォレットの操作は1件ずつ直列に進みます。",
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/MachineSignature"
+          },
+          {
+            "$ref": "#/components/parameters/MachineTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/MachineNonce"
+          }
+        ],
+        "security": [
+          {
+            "machineSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MachinePrepareResponse"
+                },
+                "examples": {
+                  "default": {
+                    "summary": "署名対象と準備の識別子",
+                    "value": {
+                      "challenge": "0x1111111111111111111111111111111111111111111111111111111111111111",
+                      "rpId": "stbl-pay.com",
+                      "serverTime": 1794787200000,
+                      "validUntil": "2026-11-16T00:00:00.000Z",
+                      "stagedOpId": "stg_1111111111111111",
+                      "wallet": "0x1111111111111111111111111111111111111111",
+                      "paymentIntentId": "pi_1111111111111111",
+                      "amountJpy": "1000",
+                      "upgrade": {
+                        "included": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/invalid_request | リクエストの形式が不正です。 | パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_invalid_request": {
+                    "summary": "リクエストの形式が不正です。",
+                    "value": {
+                      "code": "common/invalid_request",
+                      "message": "リクエストの形式が不正です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/api_key_invalid | API キーが無効です。 | 用途に合う現在の API キーを確認してください。 |\n| auth/machine_signature_invalid | HTTP 署名を検証できません。 | raw body と送信 URL を保ったまま、署名の手順を確認してください。 |\n| auth/replay | 同じ HTTP nonce が既に使われています。 | 新しい nonce・timestamp・HTTP 署名で再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_api_key_invalid": {
+                    "summary": "API キーが無効です。",
+                    "value": {
+                      "code": "auth/api_key_invalid",
+                      "message": "API キーが無効です。"
+                    }
+                  },
+                  "auth_machine_signature_invalid": {
+                    "summary": "HTTP 署名を検証できません。",
+                    "value": {
+                      "code": "auth/machine_signature_invalid",
+                      "message": "HTTP 署名を検証できません。"
+                    }
+                  },
+                  "auth_replay": {
+                    "summary": "同じ HTTP nonce が既に使われています。",
+                    "value": {
+                      "code": "auth/replay",
+                      "message": "同じ HTTP nonce が既に使われています。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| merchant/suspended | 加盟店が利用停止中です。 | 利用状況を確認し、停止が解消するまで要求を止めてください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "merchant_suspended": {
+                    "summary": "加盟店が利用停止中です。",
+                    "value": {
+                      "code": "merchant/suspended",
+                      "message": "加盟店が利用停止中です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/not_found | 指定した資源が見つかりません。他店舗の決済・返金も404です。 | 識別子と API キーの店舗を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_not_found": {
+                    "summary": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+                    "value": {
+                      "code": "common/not_found",
+                      "message": "指定した資源が見つかりません。他店舗の決済・返金も404です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| member/not_active | machine の委任状が有効になっていません。 | 管理画面で委任状の承認状況を確認してください。 |\n| member/revoked | machine が失効しています。 | この machine で新規の返金を開始せず、管理画面で状態を確認してください。 |\n| delegation/stale | 現在の委任状を使用できません。 | 管理画面で現行のウォレットに対する委任状を再承認してください。 |\n| store/disabled | 店舗が無効なため新規の返金を受け付けられません。 | 店舗の状態を確認してください。受付済みの照会と本人の準備の取消は可能です。 |\n| refund/exceeds_delegation_cap | 返金額が委任状の1件あたりの上限を超えています。 | 実行可能額を再照会し、額を下げるか管理画面で上限を再承認してください。 |\n| refund/not_refundable | この決済は返金を開始できません。 | 元決済の状態と返金可能額を照会してください。 |\n| refund/exceeds_available | 返金額が現在の返金可能額を超えています。 | 返金可能額を再照会してから準備してください。 |\n| refund/insufficient_funds | 返金に必要なウォレット残高が不足しています。 | 残高と返金可能額を確認してから再試行してください。 |\n| refund/onchain_credit_exceeded | 返金額が支払人単位のオンチェーン上限を超えています。 | 返金可能額を再照会し、実行可能額の範囲に下げてください。 |\n| wallet/operation_in_progress | 加盟店ウォレットで別の操作が進行中です。 | 操作が終わってから返金可能額を再照会してください。 |\n| wallet/staged_operation_exists | 未消費の準備が残っています。 | ownStaged と作成したプロセスを確認し、意図的に取りやめる準備だけを破棄してください。 |\n| wallet/upgrade_required | 返金の前にウォレット更新が必要です。 | 管理画面で必要なウォレット更新を確認してください。 |\n| wallet/not_deployed | 加盟店ウォレットが未デプロイです。 | 管理画面でウォレットの状態を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "member_not_active": {
+                    "summary": "machine の委任状が有効になっていません。",
+                    "value": {
+                      "code": "member/not_active",
+                      "message": "machine の委任状が有効になっていません。"
+                    }
+                  },
+                  "member_revoked": {
+                    "summary": "machine が失効しています。",
+                    "value": {
+                      "code": "member/revoked",
+                      "message": "machine が失効しています。"
+                    }
+                  },
+                  "delegation_stale": {
+                    "summary": "現在の委任状を使用できません。",
+                    "value": {
+                      "code": "delegation/stale",
+                      "message": "現在の委任状を使用できません。"
+                    }
+                  },
+                  "store_disabled": {
+                    "summary": "店舗が無効なため新規の返金を受け付けられません。",
+                    "value": {
+                      "code": "store/disabled",
+                      "message": "店舗が無効なため新規の返金を受け付けられません。"
+                    }
+                  },
+                  "refund_exceeds_delegation_cap": {
+                    "summary": "返金額が委任状の1件あたりの上限を超えています。",
+                    "value": {
+                      "code": "refund/exceeds_delegation_cap",
+                      "message": "返金額が委任状の1件あたりの上限を超えています。"
+                    }
+                  },
+                  "refund_not_refundable": {
+                    "summary": "この決済は返金を開始できません。",
+                    "value": {
+                      "code": "refund/not_refundable",
+                      "message": "この決済は返金を開始できません。"
+                    }
+                  },
+                  "refund_exceeds_available": {
+                    "summary": "返金額が現在の返金可能額を超えています。",
+                    "value": {
+                      "code": "refund/exceeds_available",
+                      "message": "返金額が現在の返金可能額を超えています。"
+                    }
+                  },
+                  "refund_insufficient_funds": {
+                    "summary": "返金に必要なウォレット残高が不足しています。",
+                    "value": {
+                      "code": "refund/insufficient_funds",
+                      "message": "返金に必要なウォレット残高が不足しています。"
+                    }
+                  },
+                  "refund_onchain_credit_exceeded": {
+                    "summary": "返金額が支払人単位のオンチェーン上限を超えています。",
+                    "value": {
+                      "code": "refund/onchain_credit_exceeded",
+                      "message": "返金額が支払人単位のオンチェーン上限を超えています。"
+                    }
+                  },
+                  "wallet_operation_in_progress": {
+                    "summary": "加盟店ウォレットで別の操作が進行中です。",
+                    "value": {
+                      "code": "wallet/operation_in_progress",
+                      "message": "加盟店ウォレットで別の操作が進行中です。"
+                    }
+                  },
+                  "wallet_staged_operation_exists": {
+                    "summary": "未消費の準備が残っています。",
+                    "value": {
+                      "code": "wallet/staged_operation_exists",
+                      "message": "未消費の準備が残っています。"
+                    }
+                  },
+                  "wallet_upgrade_required": {
+                    "summary": "返金の前にウォレット更新が必要です。",
+                    "value": {
+                      "code": "wallet/upgrade_required",
+                      "message": "返金の前にウォレット更新が必要です。"
+                    }
+                  },
+                  "wallet_not_deployed": {
+                    "summary": "加盟店ウォレットが未デプロイです。",
+                    "value": {
+                      "code": "wallet/not_deployed",
+                      "message": "加盟店ウォレットが未デプロイです。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "419": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/clock_skew | HTTP 署名の時刻が許容時刻差を外れています。 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_clock_skew": {
+                    "summary": "HTTP 署名の時刻が許容時刻差を外れています。",
+                    "value": {
+                      "code": "auth/clock_skew",
+                      "message": "HTTP 署名の時刻が許容時刻差を外れています。",
+                      "details": {
+                        "serverTime": 1794787200000
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_internal": {
+                    "summary": "要求を処理できませんでした。",
+                    "value": {
+                      "code": "common/internal",
+                      "message": "要求を処理できませんでした。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| wallet/state_unavailable | ウォレットの状態を確認できません。 | 推測した額で進めず、時間を置いて返金可能額を再照会してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "wallet_state_unavailable": {
+                    "summary": "ウォレットの状態を確認できません。",
+                    "value": {
+                      "code": "wallet/state_unavailable",
+                      "message": "ウォレットの状態を確認できません。"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MachinePrepareRequest"
+              },
+              "examples": {
+                "default": {
+                  "summary": "1000円を準備する",
+                  "value": {
+                    "amountJpy": "1000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refunds/submit": {
+      "post": {
+        "operationId": "submitMachineRefund",
+        "tags": [
+          "返金"
+        ],
+        "summary": "返金に署名して送る",
+        "description": "HTTP 202 は返金の受付であり完了ではありません。tx hash は含みません。refundId を保存し、結果を照会してください。assertion は challenge への署名で、HTTP 署名とは別です。assertion.signature は DER の base64url、HTTP 署名は r‖s の16進128桁です。応答を失ったら同じ stagedOpId と同じ assertion を再送し、HTTP の nonce・timestamp・署名だけ新しくします。受付済みなら同じ refundId と walletOperationId を返します。新しく準備し直しません。失効や上限の再承認は受付済みの返金を取り消しません。署名の手順は https://stbl-pay.com/docs/refunds/signing を参照してください。",
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/MachineSignature"
+          },
+          {
+            "$ref": "#/components/parameters/MachineTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/MachineNonce"
+          }
+        ],
+        "security": [
+          {
+            "machineSignature": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundAccepted"
+                },
+                "examples": {
+                  "accepted": {
+                    "summary": "受付済み",
+                    "value": {
+                      "refundId": "rfd_1111111111111111",
+                      "walletOperationId": "wop_1111111111111111",
+                      "status": "queued"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/invalid_request | リクエストの形式が不正です。 | パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。 |\n| payment/digest_mismatch | 署名した内容が準備した署名対象と一致しません。 | 同じ stagedOpId の challenge を使った assertion か確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_invalid_request": {
+                    "summary": "リクエストの形式が不正です。",
+                    "value": {
+                      "code": "common/invalid_request",
+                      "message": "リクエストの形式が不正です。"
+                    }
+                  },
+                  "payment_digest_mismatch": {
+                    "summary": "署名した内容が準備した署名対象と一致しません。",
+                    "value": {
+                      "code": "payment/digest_mismatch",
+                      "message": "署名した内容が準備した署名対象と一致しません。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/api_key_invalid | API キーが無効です。 | 用途に合う現在の API キーを確認してください。 |\n| auth/machine_signature_invalid | HTTP 署名を検証できません。 | raw body と送信 URL を保ったまま、署名の手順を確認してください。 |\n| auth/replay | 同じ HTTP nonce が既に使われています。 | 新しい nonce・timestamp・HTTP 署名で再送してください。 |\n| auth/assertion_invalid | 返金の assertion を検証できません。 | 準備の challenge と rpId に対する署名と assertion の形式を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_api_key_invalid": {
+                    "summary": "API キーが無効です。",
+                    "value": {
+                      "code": "auth/api_key_invalid",
+                      "message": "API キーが無効です。"
+                    }
+                  },
+                  "auth_machine_signature_invalid": {
+                    "summary": "HTTP 署名を検証できません。",
+                    "value": {
+                      "code": "auth/machine_signature_invalid",
+                      "message": "HTTP 署名を検証できません。"
+                    }
+                  },
+                  "auth_replay": {
+                    "summary": "同じ HTTP nonce が既に使われています。",
+                    "value": {
+                      "code": "auth/replay",
+                      "message": "同じ HTTP nonce が既に使われています。"
+                    }
+                  },
+                  "auth_assertion_invalid": {
+                    "summary": "返金の assertion を検証できません。",
+                    "value": {
+                      "code": "auth/assertion_invalid",
+                      "message": "返金の assertion を検証できません。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| merchant/suspended | 加盟店が利用停止中です。 | 利用状況を確認し、停止が解消するまで要求を止めてください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "merchant_suspended": {
+                    "summary": "加盟店が利用停止中です。",
+                    "value": {
+                      "code": "merchant/suspended",
+                      "message": "加盟店が利用停止中です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/not_found | 指定した資源が見つかりません。他店舗の決済・返金も404です。 | 識別子と API キーの店舗を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_not_found": {
+                    "summary": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+                    "value": {
+                      "code": "common/not_found",
+                      "message": "指定した資源が見つかりません。他店舗の決済・返金も404です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| member/not_active | machine の委任状が有効になっていません。 | 管理画面で委任状の承認状況を確認してください。 |\n| member/revoked | machine が失効しています。 | この machine で新規の返金を開始せず、管理画面で状態を確認してください。 |\n| delegation/stale | 現在の委任状を使用できません。 | 管理画面で現行のウォレットに対する委任状を再承認してください。 |\n| store/disabled | 店舗が無効なため新規の返金を受け付けられません。 | 店舗の状態を確認してください。受付済みの照会と本人の準備の取消は可能です。 |\n| refund/exceeds_delegation_cap | 返金額が委任状の1件あたりの上限を超えています。 | 実行可能額を再照会し、額を下げるか管理画面で上限を再承認してください。 |\n| refund/exceeds_available | 返金額が現在の返金可能額を超えています。 | 返金可能額を再照会してから準備してください。 |\n| wallet/staged_operation_missing | 指定した未消費の準備が見つかりません。 | ownStaged と受付済み返金を照会し、準備と送信の結果を確認してください。 |\n| wallet/operation_stale | 準備の有効期限または前提が変わっています。 | 受付済みかを照会してから、未受付なら現在の状態で準備し直してください。 |\n| wallet/operation_in_progress | 加盟店ウォレットで別の操作が進行中です。 | 操作が終わってから返金可能額を再照会してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "member_not_active": {
+                    "summary": "machine の委任状が有効になっていません。",
+                    "value": {
+                      "code": "member/not_active",
+                      "message": "machine の委任状が有効になっていません。"
+                    }
+                  },
+                  "member_revoked": {
+                    "summary": "machine が失効しています。",
+                    "value": {
+                      "code": "member/revoked",
+                      "message": "machine が失効しています。"
+                    }
+                  },
+                  "delegation_stale": {
+                    "summary": "現在の委任状を使用できません。",
+                    "value": {
+                      "code": "delegation/stale",
+                      "message": "現在の委任状を使用できません。"
+                    }
+                  },
+                  "store_disabled": {
+                    "summary": "店舗が無効なため新規の返金を受け付けられません。",
+                    "value": {
+                      "code": "store/disabled",
+                      "message": "店舗が無効なため新規の返金を受け付けられません。"
+                    }
+                  },
+                  "refund_exceeds_delegation_cap": {
+                    "summary": "返金額が委任状の1件あたりの上限を超えています。",
+                    "value": {
+                      "code": "refund/exceeds_delegation_cap",
+                      "message": "返金額が委任状の1件あたりの上限を超えています。"
+                    }
+                  },
+                  "refund_exceeds_available": {
+                    "summary": "返金額が現在の返金可能額を超えています。",
+                    "value": {
+                      "code": "refund/exceeds_available",
+                      "message": "返金額が現在の返金可能額を超えています。"
+                    }
+                  },
+                  "wallet_staged_operation_missing": {
+                    "summary": "指定した未消費の準備が見つかりません。",
+                    "value": {
+                      "code": "wallet/staged_operation_missing",
+                      "message": "指定した未消費の準備が見つかりません。"
+                    }
+                  },
+                  "wallet_operation_stale": {
+                    "summary": "準備の有効期限または前提が変わっています。",
+                    "value": {
+                      "code": "wallet/operation_stale",
+                      "message": "準備の有効期限または前提が変わっています。"
+                    }
+                  },
+                  "wallet_operation_in_progress": {
+                    "summary": "加盟店ウォレットで別の操作が進行中です。",
+                    "value": {
+                      "code": "wallet/operation_in_progress",
+                      "message": "加盟店ウォレットで別の操作が進行中です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "419": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/clock_skew | HTTP 署名の時刻が許容時刻差を外れています。 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_clock_skew": {
+                    "summary": "HTTP 署名の時刻が許容時刻差を外れています。",
+                    "value": {
+                      "code": "auth/clock_skew",
+                      "message": "HTTP 署名の時刻が許容時刻差を外れています。",
+                      "details": {
+                        "serverTime": 1794787200000
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_internal": {
+                    "summary": "要求を処理できませんでした。",
+                    "value": {
+                      "code": "common/internal",
+                      "message": "要求を処理できませんでした。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| wallet/state_unavailable | ウォレットの状態を確認できません。 | 推測した額で進めず、時間を置いて返金可能額を再照会してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "wallet_state_unavailable": {
+                    "summary": "ウォレットの状態を確認できません。",
+                    "value": {
+                      "code": "wallet/state_unavailable",
+                      "message": "ウォレットの状態を確認できません。"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MachineSubmitRequest"
+              },
+              "examples": {
+                "default": {
+                  "summary": "準備に署名して送る（署名値は説明用のダミー）",
+                  "value": {
+                    "stagedOpId": "stg_1111111111111111",
+                    "assertion": {
+                      "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRVJFUkVSRSIsIm9yaWdpbiI6InN0YmwtcGF5Om1hY2hpbmUiLCJjcm9zc09yaWdpbiI6ZmFsc2V9",
+                      "authenticatorData": "ZeJO0hZxnSLfzfABSrh6FRPGR-WrXXF9rvqBsH3Xfo4BAAAAAA",
+                      "signature": "MAYCAQECAQE"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/refunds/{refundId}": {
+      "get": {
+        "operationId": "getMachineRefund",
+        "tags": [
+          "返金"
+        ],
+        "summary": "返金を照会する",
+        "description": "同じ店舗の owner・別の machine が受付した返金も照会できます。他店舗の返金は404です。受付後は refundId で照会し、confirmed で確定、failed で失敗を判断します。未知の状態は未確定として扱ってください。元決済の状態は settled のままです。",
+        "parameters": [
+          {
+            "name": "refundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/MachineSignature"
+          },
+          {
+            "$ref": "#/components/parameters/MachineTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/MachineNonce"
+          }
+        ],
+        "security": [
+          {
+            "machineSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundView"
+                },
+                "examples": {
+                  "pending": {
+                    "summary": "処理中",
+                    "value": {
+                      "actor": {
+                        "kind": "machine",
+                        "memberId": "mem_1111111111111111",
+                        "label": null
+                      },
+                      "refundId": "rfd_1111111111111111",
+                      "walletOperationId": "wop_1111111111111111",
+                      "amountJpy": "1000",
+                      "status": "queued",
+                      "includesUpgrade": false,
+                      "txHash": null,
+                      "failureReason": null,
+                      "acceptedAt": "2026-11-16T00:00:00.000Z",
+                      "settledAt": null
+                    }
+                  },
+                  "confirmed": {
+                    "summary": "確定した返金",
+                    "value": {
+                      "actor": {
+                        "kind": "machine",
+                        "memberId": "mem_1111111111111111",
+                        "label": null
+                      },
+                      "refundId": "rfd_1111111111111111",
+                      "walletOperationId": "wop_1111111111111111",
+                      "amountJpy": "1000",
+                      "status": "confirmed",
+                      "includesUpgrade": false,
+                      "txHash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+                      "failureReason": null,
+                      "acceptedAt": "2026-11-16T00:00:00.000Z",
+                      "settledAt": "2026-11-16T00:00:00.000Z"
+                    }
+                  },
+                  "failed": {
+                    "summary": "失敗した返金",
+                    "value": {
+                      "actor": {
+                        "kind": "machine",
+                        "memberId": "mem_1111111111111111",
+                        "label": null
+                      },
+                      "refundId": "rfd_1111111111111111",
+                      "walletOperationId": "wop_1111111111111111",
+                      "amountJpy": "1000",
+                      "status": "failed",
+                      "includesUpgrade": false,
+                      "txHash": null,
+                      "failureReason": "返金を実行できませんでした",
+                      "acceptedAt": "2026-11-16T00:00:00.000Z",
+                      "settledAt": "2026-11-16T00:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/invalid_request | リクエストの形式が不正です。 | パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_invalid_request": {
+                    "summary": "リクエストの形式が不正です。",
+                    "value": {
+                      "code": "common/invalid_request",
+                      "message": "リクエストの形式が不正です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/api_key_invalid | API キーが無効です。 | 用途に合う現在の API キーを確認してください。 |\n| auth/machine_signature_invalid | HTTP 署名を検証できません。 | raw body と送信 URL を保ったまま、署名の手順を確認してください。 |\n| auth/replay | 同じ HTTP nonce が既に使われています。 | 新しい nonce・timestamp・HTTP 署名で再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_api_key_invalid": {
+                    "summary": "API キーが無効です。",
+                    "value": {
+                      "code": "auth/api_key_invalid",
+                      "message": "API キーが無効です。"
+                    }
+                  },
+                  "auth_machine_signature_invalid": {
+                    "summary": "HTTP 署名を検証できません。",
+                    "value": {
+                      "code": "auth/machine_signature_invalid",
+                      "message": "HTTP 署名を検証できません。"
+                    }
+                  },
+                  "auth_replay": {
+                    "summary": "同じ HTTP nonce が既に使われています。",
+                    "value": {
+                      "code": "auth/replay",
+                      "message": "同じ HTTP nonce が既に使われています。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| merchant/suspended | 加盟店が利用停止中です。 | 利用状況を確認し、停止が解消するまで要求を止めてください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "merchant_suspended": {
+                    "summary": "加盟店が利用停止中です。",
+                    "value": {
+                      "code": "merchant/suspended",
+                      "message": "加盟店が利用停止中です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/not_found | 指定した資源が見つかりません。他店舗の決済・返金も404です。 | 識別子と API キーの店舗を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_not_found": {
+                    "summary": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+                    "value": {
+                      "code": "common/not_found",
+                      "message": "指定した資源が見つかりません。他店舗の決済・返金も404です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| member/not_active | machine の委任状が有効になっていません。 | 管理画面で委任状の承認状況を確認してください。 |\n| member/revoked | machine が失効しています。 | この machine で新規の返金を開始せず、管理画面で状態を確認してください。 |\n| delegation/stale | 現在の委任状を使用できません。 | 管理画面で現行のウォレットに対する委任状を再承認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "member_not_active": {
+                    "summary": "machine の委任状が有効になっていません。",
+                    "value": {
+                      "code": "member/not_active",
+                      "message": "machine の委任状が有効になっていません。"
+                    }
+                  },
+                  "member_revoked": {
+                    "summary": "machine が失効しています。",
+                    "value": {
+                      "code": "member/revoked",
+                      "message": "machine が失効しています。"
+                    }
+                  },
+                  "delegation_stale": {
+                    "summary": "現在の委任状を使用できません。",
+                    "value": {
+                      "code": "delegation/stale",
+                      "message": "現在の委任状を使用できません。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "419": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/clock_skew | HTTP 署名の時刻が許容時刻差を外れています。 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_clock_skew": {
+                    "summary": "HTTP 署名の時刻が許容時刻差を外れています。",
+                    "value": {
+                      "code": "auth/clock_skew",
+                      "message": "HTTP 署名の時刻が許容時刻差を外れています。",
+                      "details": {
+                        "serverTime": 1794787200000
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_internal": {
+                    "summary": "要求を処理できませんでした。",
+                    "value": {
+                      "code": "common/internal",
+                      "message": "要求を処理できませんでした。"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment_intents/{paymentIntentId}/refunds": {
+      "get": {
+        "operationId": "listMachinePaymentRefunds",
+        "tags": [
+          "返金"
+        ],
+        "summary": "決済ごとの返金を一覧する",
+        "description": "同じ店舗の owner・別の machine の受付済み返金を含め、決済ごとに照会します。他店舗の決済は404です。未消費の準備 staged は本人のものだけを返します。nextCursor が文字列のときだけ、cursor にそのまま渡して次のページを取得してください。null または省略なら最後のページです。",
+        "parameters": [
+          {
+            "name": "paymentIntentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "1ページの件数。省略時20、最大100。"
+            },
+            "description": "1ページの件数。省略時20、最大100。"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "前の応答の nextCursor。中身を解釈せず渡してください。"
+            },
+            "description": "前の応答の nextCursor。中身を解釈せず渡してください。"
+          },
+          {
+            "$ref": "#/components/parameters/MachineSignature"
+          },
+          {
+            "$ref": "#/components/parameters/MachineTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/MachineNonce"
+          }
+        ],
+        "security": [
+          {
+            "machineSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "refunds": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RefundView"
+                      },
+                      "description": "同じ店舗の受付済み返金の一覧。"
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "続きの cursor。文字列のときだけ次のページの cursor に渡します。最後のページでは null または省略。"
+                    },
+                    "staged": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/StagedRefundView"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "本人の未消費の準備。無ければ null。"
+                    }
+                  },
+                  "required": [
+                    "refunds",
+                    "staged"
+                  ],
+                  "additionalProperties": true
+                },
+                "examples": {
+                  "oneRefund": {
+                    "summary": "返金が1件ある",
+                    "value": {
+                      "refunds": [
+                        {
+                          "actor": {
+                            "kind": "machine",
+                            "memberId": "mem_1111111111111111",
+                            "label": null
+                          },
+                          "refundId": "rfd_1111111111111111",
+                          "walletOperationId": "wop_1111111111111111",
+                          "amountJpy": "1000",
+                          "status": "queued",
+                          "includesUpgrade": false,
+                          "txHash": null,
+                          "failureReason": null,
+                          "acceptedAt": "2026-11-16T00:00:00.000Z",
+                          "settledAt": null
+                        }
+                      ],
+                      "nextCursor": null,
+                      "staged": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/invalid_request | リクエストの形式が不正です。 | パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_invalid_request": {
+                    "summary": "リクエストの形式が不正です。",
+                    "value": {
+                      "code": "common/invalid_request",
+                      "message": "リクエストの形式が不正です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/api_key_invalid | API キーが無効です。 | 用途に合う現在の API キーを確認してください。 |\n| auth/machine_signature_invalid | HTTP 署名を検証できません。 | raw body と送信 URL を保ったまま、署名の手順を確認してください。 |\n| auth/replay | 同じ HTTP nonce が既に使われています。 | 新しい nonce・timestamp・HTTP 署名で再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_api_key_invalid": {
+                    "summary": "API キーが無効です。",
+                    "value": {
+                      "code": "auth/api_key_invalid",
+                      "message": "API キーが無効です。"
+                    }
+                  },
+                  "auth_machine_signature_invalid": {
+                    "summary": "HTTP 署名を検証できません。",
+                    "value": {
+                      "code": "auth/machine_signature_invalid",
+                      "message": "HTTP 署名を検証できません。"
+                    }
+                  },
+                  "auth_replay": {
+                    "summary": "同じ HTTP nonce が既に使われています。",
+                    "value": {
+                      "code": "auth/replay",
+                      "message": "同じ HTTP nonce が既に使われています。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| merchant/suspended | 加盟店が利用停止中です。 | 利用状況を確認し、停止が解消するまで要求を止めてください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "merchant_suspended": {
+                    "summary": "加盟店が利用停止中です。",
+                    "value": {
+                      "code": "merchant/suspended",
+                      "message": "加盟店が利用停止中です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/not_found | 指定した資源が見つかりません。他店舗の決済・返金も404です。 | 識別子と API キーの店舗を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_not_found": {
+                    "summary": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+                    "value": {
+                      "code": "common/not_found",
+                      "message": "指定した資源が見つかりません。他店舗の決済・返金も404です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| member/not_active | machine の委任状が有効になっていません。 | 管理画面で委任状の承認状況を確認してください。 |\n| member/revoked | machine が失効しています。 | この machine で新規の返金を開始せず、管理画面で状態を確認してください。 |\n| delegation/stale | 現在の委任状を使用できません。 | 管理画面で現行のウォレットに対する委任状を再承認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "member_not_active": {
+                    "summary": "machine の委任状が有効になっていません。",
+                    "value": {
+                      "code": "member/not_active",
+                      "message": "machine の委任状が有効になっていません。"
+                    }
+                  },
+                  "member_revoked": {
+                    "summary": "machine が失効しています。",
+                    "value": {
+                      "code": "member/revoked",
+                      "message": "machine が失効しています。"
+                    }
+                  },
+                  "delegation_stale": {
+                    "summary": "現在の委任状を使用できません。",
+                    "value": {
+                      "code": "delegation/stale",
+                      "message": "現在の委任状を使用できません。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "419": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/clock_skew | HTTP 署名の時刻が許容時刻差を外れています。 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_clock_skew": {
+                    "summary": "HTTP 署名の時刻が許容時刻差を外れています。",
+                    "value": {
+                      "code": "auth/clock_skew",
+                      "message": "HTTP 署名の時刻が許容時刻差を外れています。",
+                      "details": {
+                        "serverTime": 1794787200000
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_internal": {
+                    "summary": "要求を処理できませんでした。",
+                    "value": {
+                      "code": "common/internal",
+                      "message": "要求を処理できませんでした。"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/staged_operations/{stagedOpId}": {
+      "delete": {
+        "operationId": "discardMachineStagedOperation",
+        "tags": [
+          "返金"
+        ],
+        "summary": "準備を破棄する",
+        "description": "本人の未消費の準備だけを破棄します。受付済みの返金は取り消せません。準備の応答を失った場合は ownStaged と作成したプロセスを確認し、意図的に取りやめる準備だけを破棄してから再準備してください。",
+        "parameters": [
+          {
+            "name": "stagedOpId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/MachineSignature"
+          },
+          {
+            "$ref": "#/components/parameters/MachineTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/MachineNonce"
+          }
+        ],
+        "security": [
+          {
+            "machineSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "const": true,
+                      "type": "boolean",
+                      "description": "準備の破棄に成功したことを示します。"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": true
+                },
+                "examples": {
+                  "discarded": {
+                    "summary": "準備を破棄した",
+                    "value": {
+                      "ok": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/invalid_request | リクエストの形式が不正です。 | パス・クエリ・ヘッダー・ボディを API スキーマと照合してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_invalid_request": {
+                    "summary": "リクエストの形式が不正です。",
+                    "value": {
+                      "code": "common/invalid_request",
+                      "message": "リクエストの形式が不正です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/api_key_invalid | API キーが無効です。 | 用途に合う現在の API キーを確認してください。 |\n| auth/machine_signature_invalid | HTTP 署名を検証できません。 | raw body と送信 URL を保ったまま、署名の手順を確認してください。 |\n| auth/replay | 同じ HTTP nonce が既に使われています。 | 新しい nonce・timestamp・HTTP 署名で再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_api_key_invalid": {
+                    "summary": "API キーが無効です。",
+                    "value": {
+                      "code": "auth/api_key_invalid",
+                      "message": "API キーが無効です。"
+                    }
+                  },
+                  "auth_machine_signature_invalid": {
+                    "summary": "HTTP 署名を検証できません。",
+                    "value": {
+                      "code": "auth/machine_signature_invalid",
+                      "message": "HTTP 署名を検証できません。"
+                    }
+                  },
+                  "auth_replay": {
+                    "summary": "同じ HTTP nonce が既に使われています。",
+                    "value": {
+                      "code": "auth/replay",
+                      "message": "同じ HTTP nonce が既に使われています。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| merchant/suspended | 加盟店が利用停止中です。 | 利用状況を確認し、停止が解消するまで要求を止めてください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "merchant_suspended": {
+                    "summary": "加盟店が利用停止中です。",
+                    "value": {
+                      "code": "merchant/suspended",
+                      "message": "加盟店が利用停止中です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/not_found | 指定した資源が見つかりません。他店舗の決済・返金も404です。 | 識別子と API キーの店舗を確認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_not_found": {
+                    "summary": "指定した資源が見つかりません。他店舗の決済・返金も404です。",
+                    "value": {
+                      "code": "common/not_found",
+                      "message": "指定した資源が見つかりません。他店舗の決済・返金も404です。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| member/not_active | machine の委任状が有効になっていません。 | 管理画面で委任状の承認状況を確認してください。 |\n| member/revoked | machine が失効しています。 | この machine で新規の返金を開始せず、管理画面で状態を確認してください。 |\n| delegation/stale | 現在の委任状を使用できません。 | 管理画面で現行のウォレットに対する委任状を再承認してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "member_not_active": {
+                    "summary": "machine の委任状が有効になっていません。",
+                    "value": {
+                      "code": "member/not_active",
+                      "message": "machine の委任状が有効になっていません。"
+                    }
+                  },
+                  "member_revoked": {
+                    "summary": "machine が失効しています。",
+                    "value": {
+                      "code": "member/revoked",
+                      "message": "machine が失効しています。"
+                    }
+                  },
+                  "delegation_stale": {
+                    "summary": "現在の委任状を使用できません。",
+                    "value": {
+                      "code": "delegation/stale",
+                      "message": "現在の委任状を使用できません。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "419": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| auth/clock_skew | HTTP 署名の時刻が許容時刻差を外れています。 | details.serverTime で時計の差分を補正し、新しい nonce・timestamp・HTTP 署名で1回だけ再送してください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "auth_clock_skew": {
+                    "summary": "HTTP 署名の時刻が許容時刻差を外れています。",
+                    "value": {
+                      "code": "auth/clock_skew",
+                      "message": "HTTP 署名の時刻が許容時刻差を外れています。",
+                      "details": {
+                        "serverTime": 1794787200000
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "| code | meaning | action |\n| --- | --- | --- |\n| common/internal | 要求を処理できませんでした。 | 時間を置いて再試行してください。返金の準備・送信で応答を失った場合は、タグ「返金」の回復の表に従ってください。 |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "common_internal": {
+                    "summary": "要求を処理できませんでした。",
+                    "value": {
+                      "code": "common/internal",
+                      "message": "要求を処理できませんでした。"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "エラーコード。未知のコードは共通のフォールバックで扱ってください。"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "additionalProperties": true
+      },
+      "Hash32": {
+        "type": "string",
+        "pattern": "^0x[0-9a-f]{64}$",
+        "description": "0x 付き32バイトの小文字ハッシュ。"
+      },
+      "IsoDateTime": {
+        "type": "string",
+        "format": "date-time",
+        "description": "UTC の ISO 8601 日時。"
+      },
+      "Address": {
+        "type": "string",
+        "pattern": "^0x[0-9a-f]{40}$",
+        "description": "小文字の EVM ウォレットアドレス。"
+      },
+      "PaymentLookupResponse": {
+        "type": "object",
+        "properties": {
+          "paymentIntentId": {
+            "type": "string",
+            "pattern": "^pi_[0-9a-f]{8,32}$",
+            "description": "店舗の API キーに属する決済の識別子。"
+          },
+          "orderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "加盟店の注文 ID。未設定なら null。"
+          },
+          "status": {
+            "type": "string",
+            "examples": [
+              "created",
+              "signed",
+              "issue_pending",
+              "deposit_seen",
+              "deposit_confirmed",
+              "deploying",
+              "executing",
+              "settled",
+              "canceled",
+              "expired",
+              "failed",
+              "nonce_conflict"
+            ],
+            "description": "決済の状態。未知の値は未対応の状態として扱い、成立と判断しないでください。\n\n既知の値: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing, settled, canceled, expired, failed, nonce_conflict。"
+          },
+          "amountJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "元の決済額。未成立の決済では見積り。"
+          },
+          "feeJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "手数料額。未成立の決済では見積り。"
+          },
+          "netAmountJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "加盟店受取額。未成立の決済では見積り。"
+          },
+          "txHash": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Hash32"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "決済の tx hash。取得できない場合は null。送信済み・未確定でも値を持つことがあります。決済の成立は status が settled であることで判断してください。"
+          },
+          "settledAt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IsoDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "決済の成立日時。未成立なら null。"
+          },
+          "failedReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "失敗理由。失敗していなければ null。"
+          },
+          "payerAddress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Address"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "元の支払人のウォレットアドレス。未確定なら null。"
+          },
+          "netAmountDestination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Address"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "加盟店受取額の送信先アドレス。未確定なら null。"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "決済の作成日時。"
+          }
+        },
+        "required": [
+          "paymentIntentId",
+          "orderId",
+          "status",
+          "amountJpy",
+          "feeJpy",
+          "netAmountJpy",
+          "txHash",
+          "settledAt",
+          "failedReason",
+          "payerAddress",
+          "netAmountDestination",
+          "createdAt"
+        ],
+        "additionalProperties": true
+      },
+      "MachineSignatureHeaders": {
+        "type": "object",
+        "properties": {
+          "x-stbl-api-key": {
+            "type": "string",
+            "pattern": "^stblpay_machine_[A-Za-z0-9_-]{43}$",
+            "description": "返金 API キー。決済の API キーとは相互に使用できません。"
+          },
+          "x-stbl-signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$",
+            "description": "リクエストごとの P-256 HTTP 署名。r‖s の小文字16進128桁。手順は https://stbl-pay.com/docs/refunds/signing を参照してください。"
+          },
+          "x-stbl-timestamp": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "署名時刻。epoch ミリ秒の文字列。許容時刻差は ±60,000 ms。"
+          },
+          "x-stbl-nonce": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$",
+            "description": "リクエストごとに新しくする32バイトの単回値。"
+          }
+        },
+        "required": [
+          "x-stbl-api-key",
+          "x-stbl-signature",
+          "x-stbl-timestamp",
+          "x-stbl-nonce"
+        ],
+        "additionalProperties": true
+      },
+      "Jpy": {
+        "type": "string",
+        "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+        "description": "円建ての非負金額の10進文字列。浮動小数へ変換しません。"
+      },
+      "RefundLimitReason": {
+        "type": "string",
+        "examples": [
+          "onchain_credit",
+          "wallet_balance"
+        ],
+        "description": "返金可能額を下げた制限の種別。未知の値は未対応の制限として扱ってください。\n\n既知の値: onchain_credit, wallet_balance。"
+      },
+      "RefundBlocker": {
+        "type": "string",
+        "examples": [
+          "payment_not_settled",
+          "payer_unknown",
+          "nothing_refundable",
+          "operation_in_progress",
+          "staged_operation_exists",
+          "wallet_not_deployed",
+          "state_unavailable"
+        ],
+        "description": "返金の準備を妨げる理由。未知の値でも準備を進めないでください。\n\n既知の値: payment_not_settled, payer_unknown, nothing_refundable, operation_in_progress, staged_operation_exists, wallet_not_deployed, state_unavailable。"
+      },
+      "MachineRefundableView": {
+        "type": "object",
+        "properties": {
+          "paymentIntentId": {
+            "type": "string",
+            "pattern": "^pi_[0-9a-f]{8,32}$",
+            "description": "元の決済の識別子。"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "examples": [
+              "created",
+              "signed",
+              "issue_pending",
+              "deposit_seen",
+              "deposit_confirmed",
+              "deploying",
+              "executing",
+              "settled",
+              "canceled",
+              "expired",
+              "failed",
+              "nonce_conflict"
+            ],
+            "description": "元の決済の状態。未知の値では返金可能と判断しないでください。\n\n既知の値: created, signed, issue_pending, deposit_seen, deposit_confirmed, deploying, executing, settled, canceled, expired, failed, nonce_conflict。"
+          },
+          "amountJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "元決済額。手数料控除前の返金の基準額。"
+          },
+          "confirmedRefundedJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "確定した返金額の合計。"
+          },
+          "reservedJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "受付済み未確定の返金と、有効な未消費の準備で確保している額。"
+          },
+          "refundableJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "決済額から確定返金額と確保中の額を引いた返金可能額。"
+          },
+          "refundableNowJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "決済単位の返金可能額、オンチェーン上限、ウォレット残高の最小値。"
+          },
+          "onchainCreditJpy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Jpy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "支払人単位のオンチェーン返金上限。観測不能なら null。"
+          },
+          "walletBalanceJpy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Jpy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "加盟店ウォレットの JPYC 残高。観測不能なら null。"
+          },
+          "limitedBy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundLimitReason"
+            },
+            "description": "実行可能額を下げた要因。未知の値は未対応の制限として扱ってください。"
+          },
+          "blockedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RefundBlocker"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "準備できない理由。null なら開始可能。未知の値でも進めず、state_unavailable では推測した額で進めないでください。"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "返金可能額を確認した日時。"
+          },
+          "delegationCapJpy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Jpy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "委任状の1件あたりの返金上限。null は上限なし、0 は返金不可。"
+          },
+          "executableJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "この machine がいま実行できる額。refundableNowJpy と delegationCapJpy の最小値。blockedBy があれば0。"
+          },
+          "ownStaged": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "stagedOpId": {
+                    "type": "string",
+                    "pattern": "^stg_[0-9a-f]{8,32}$",
+                    "description": "未消費の準備の識別子。"
+                  },
+                  "amountJpy": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+                    "description": "準備で確保している返金額。"
+                  },
+                  "includesUpgrade": {
+                    "type": "boolean",
+                    "description": "準備にウォレット更新が含まれるか。"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "準備の有効期限。"
+                  },
+                  "paymentIntentId": {
+                    "type": "string",
+                    "pattern": "^pi_[0-9a-f]{8,32}$",
+                    "description": "この準備の元決済。照会中とは別の決済の場合もあります。"
+                  }
+                },
+                "required": [
+                  "stagedOpId",
+                  "amountJpy",
+                  "includesUpgrade",
+                  "expiresAt",
+                  "paymentIntentId"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "本人の未消費の準備。別決済の準備も含み、無ければ null。"
+          }
+        },
+        "required": [
+          "paymentIntentId",
+          "paymentStatus",
+          "amountJpy",
+          "confirmedRefundedJpy",
+          "reservedJpy",
+          "refundableJpy",
+          "refundableNowJpy",
+          "onchainCreditJpy",
+          "walletBalanceJpy",
+          "limitedBy",
+          "blockedBy",
+          "checkedAt",
+          "delegationCapJpy",
+          "executableJpy",
+          "ownStaged"
+        ],
+        "additionalProperties": true
+      },
+      "MachinePrepareResponse": {
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$",
+            "description": "署名する32バイトの digest。返金では keccak256(userOpHash ‖ validUntil) であり、乱数ではありません。"
+          },
+          "rpId": {
+            "type": "string",
+            "description": "assertion の authenticatorData を組み立てる RP ID。"
+          },
+          "serverTime": {
+            "type": "integer",
+            "description": "時計の差分補正に使うサーバー時刻。epoch ミリ秒。"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UserOperation の有効期限。"
+          },
+          "stagedOpId": {
+            "type": "string",
+            "pattern": "^stg_[0-9a-f]{8,32}$",
+            "description": "未消費の準備の識別子。送信または破棄に使います。"
+          },
+          "wallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{40}$",
+            "description": "返金元の加盟店ウォレット。"
+          },
+          "paymentIntentId": {
+            "type": "string",
+            "pattern": "^pi_[0-9a-f]{8,32}$",
+            "description": "元の決済の識別子。"
+          },
+          "amountJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "準備で確保した返金額。"
+          },
+          "upgrade": {
+            "type": "object",
+            "properties": {
+              "included": {
+                "type": "boolean",
+                "description": "この返金と同時にウォレット更新が含まれるか。"
+              }
+            },
+            "required": [
+              "included"
+            ],
+            "additionalProperties": true,
+            "description": "返金に含まれるウォレット更新。"
+          }
+        },
+        "required": [
+          "challenge",
+          "rpId",
+          "serverTime",
+          "validUntil",
+          "stagedOpId",
+          "wallet",
+          "paymentIntentId",
+          "amountJpy",
+          "upgrade"
+        ],
+        "additionalProperties": true
+      },
+      "MachinePrepareRequest": {
+        "type": "object",
+        "properties": {
+          "amountJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "返金額。円建ての10進文字列で、小数6桁までです。7桁以上は common/invalid_request で拒否します。浮動小数へ変換しません。"
+          }
+        },
+        "required": [
+          "amountJpy"
+        ],
+        "additionalProperties": false
+      },
+      "RefundAccepted": {
+        "type": "object",
+        "properties": {
+          "refundId": {
+            "type": "string",
+            "pattern": "^rfd_[0-9a-f]{8,32}$",
+            "description": "受付済み返金の識別子。保存し、結果の照会に使ってください。"
+          },
+          "walletOperationId": {
+            "type": "string",
+            "pattern": "^wop_[0-9a-f]{8,32}$",
+            "description": "ウォレット操作の追跡 ID。"
+          },
+          "status": {
+            "type": "string",
+            "examples": [
+              "queued",
+              "submitted",
+              "confirmed",
+              "failed",
+              "indeterminate"
+            ],
+            "description": "ウォレット操作の状態。受付は完了ではありません。未知の値は未確定として扱ってください。\n\n既知の値: queued, submitted, confirmed, failed, indeterminate。"
+          }
+        },
+        "required": [
+          "refundId",
+          "walletOperationId",
+          "status"
+        ],
+        "additionalProperties": true
+      },
+      "StagedOpId": {
+        "type": "string",
+        "pattern": "^stg_[0-9a-f]{8,32}$",
+        "description": "未消費の準備の識別子。"
+      },
+      "MachineSubmitRequest": {
+        "type": "object",
+        "properties": {
+          "stagedOpId": {
+            "$ref": "#/components/schemas/StagedOpId"
+          },
+          "assertion": {
+            "type": "object",
+            "properties": {
+              "clientDataJSON": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "description": "challenge を含む clientDataJSON の base64url。"
+              },
+              "authenticatorData": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "description": "authenticatorData の base64url。"
+              },
+              "signature": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "description": "assertion の P-256 署名。DER の base64url。HTTP 署名の r‖s 16進128桁とは形式が異なります。"
+              }
+            },
+            "required": [
+              "clientDataJSON",
+              "authenticatorData",
+              "signature"
+            ],
+            "additionalProperties": true,
+            "description": "challenge に対する machine の署名。HTTP 署名とは別に作成します。"
+          }
+        },
+        "required": [
+          "stagedOpId",
+          "assertion"
+        ],
+        "additionalProperties": false
+      },
+      "RefundActor": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "owner",
+                "type": "string",
+                "description": "返金を開始した主体の種別。未知の値は未対応として扱ってください。"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "machine",
+                "type": "string",
+                "description": "返金を開始した主体の種別。未知の値は未対応として扱ってください。"
+              },
+              "memberId": {
+                "type": "string",
+                "pattern": "^mem_[0-9a-f]{8,32}$",
+                "description": "返金を開始した machine の識別子。"
+              },
+              "label": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "machine の表示名。未設定なら null。"
+              }
+            },
+            "required": [
+              "kind",
+              "memberId",
+              "label"
+            ],
+            "additionalProperties": true
+          }
+        ]
+      },
+      "RefundView": {
+        "type": "object",
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/RefundActor",
+            "description": "返金を開始した署名主体。旧応答では省略されることがあります。"
+          },
+          "refundId": {
+            "type": "string",
+            "pattern": "^rfd_[0-9a-f]{8,32}$",
+            "description": "受付済み返金の識別子。"
+          },
+          "walletOperationId": {
+            "type": "string",
+            "pattern": "^wop_[0-9a-f]{8,32}$",
+            "description": "ウォレット操作の追跡 ID。"
+          },
+          "amountJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "返金額。"
+          },
+          "status": {
+            "type": "string",
+            "examples": [
+              "queued",
+              "submitted",
+              "confirmed",
+              "failed",
+              "indeterminate"
+            ],
+            "description": "返金の進行状態。未知の値は未確定として扱ってください。\n\n既知の値: queued, submitted, confirmed, failed, indeterminate。"
+          },
+          "includesUpgrade": {
+            "type": "boolean",
+            "description": "返金と同時にウォレット更新が含まれるか。"
+          },
+          "txHash": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Hash32"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "返金の tx hash。取得できない場合は null。送信済み・未確定でも値を持つことがあります。返金の成功は status が confirmed であることで判断してください。"
+          },
+          "failureReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "返金の失敗理由。失敗していなければ null。"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "返金の受付日時。"
+          },
+          "settledAt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IsoDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "返金の成功または失敗が確定した日時。未確定なら null。"
+          }
+        },
+        "required": [
+          "refundId",
+          "walletOperationId",
+          "amountJpy",
+          "status",
+          "includesUpgrade",
+          "txHash",
+          "failureReason",
+          "acceptedAt",
+          "settledAt"
+        ],
+        "additionalProperties": true
+      },
+      "PageQuery": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "1ページの件数。省略時20、最大100。"
+          },
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "前の応答の nextCursor。中身を解釈せず渡してください。"
+          }
+        },
+        "additionalProperties": true
+      },
+      "StagedRefundView": {
+        "type": "object",
+        "properties": {
+          "stagedOpId": {
+            "type": "string",
+            "pattern": "^stg_[0-9a-f]{8,32}$",
+            "description": "未消費の準備の識別子。"
+          },
+          "amountJpy": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)(\\.\\d+)?$",
+            "description": "準備で確保している返金額。"
+          },
+          "includesUpgrade": {
+            "type": "boolean",
+            "description": "準備にウォレット更新が含まれるか。"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "準備の有効期限。"
+          }
+        },
+        "required": [
+          "stagedOpId",
+          "amountJpy",
+          "includesUpgrade",
+          "expiresAt"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "parameters": {
+      "MachineSignature": {
+        "name": "x-stbl-signature",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$",
+          "description": "リクエストごとの P-256 HTTP 署名。r‖s の小文字16進128桁。手順は https://stbl-pay.com/docs/refunds/signing を参照してください。"
+        },
+        "description": "リクエストごとの P-256 HTTP 署名。r‖s の小文字16進128桁。手順は https://stbl-pay.com/docs/refunds/signing を参照してください。"
+      },
+      "MachineTimestamp": {
+        "name": "x-stbl-timestamp",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "署名時刻。epoch ミリ秒の文字列。許容時刻差は ±60,000 ms。"
+        },
+        "description": "署名時刻。epoch ミリ秒の文字列。許容時刻差は ±60,000 ms。"
+      },
+      "MachineNonce": {
+        "name": "x-stbl-nonce",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^0x[0-9a-f]{64}$",
+          "description": "リクエストごとに新しくする32バイトの単回値。"
+        },
+        "description": "リクエストごとに新しくする32バイトの単回値。"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-stbl-api-key",
+        "description": "店舗の決済 API キー。返金 API キーとは相互に使用できません。"
+      },
+      "machineSignature": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-stbl-api-key",
+        "description": "返金 API キーとリクエストごとの HTTP 署名が必要です。決済の API キーとは相互に使用できません。HTTP メソッド・URL・raw body・時刻・nonce が署名対象です。署名の手順と参照実装は https://stbl-pay.com/docs/refunds/signing を参照してください。"
+      }
+    }
+  }
+}

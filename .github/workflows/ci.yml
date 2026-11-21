@@ -28,6 +28,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install docs dependencies
+        run: npm --prefix docs-site ci
+
+      - name: Check generated OpenAPI and translation parity
+        run: npm run openapi:check
+
+      - name: Test OpenAPI generation
+        run: npm run test:machine-openapi
+
+      - name: Test refund signing
+        run: npm run test:refund-signer
+
+      - name: Lint bilingual OpenAPI
+        run: npm run lint:openapi
+
       - name: Run acceptance checks
         run: ./scripts/check-acceptance.sh
 
@@ -35,7 +50,7 @@ jobs:
         run: ./scripts/check-lr006-terms.sh
 
       - name: Assemble dist/ (docs のビルドを含む)
-        run: ./scripts/build-dist.sh
+        run: npm run build:docs
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium

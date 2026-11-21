@@ -100,7 +100,6 @@
 
 .learn-body a,
 .learn-sources a,
-.learn-related a,
 .learn-about a {
   color: var(--link);
   text-decoration: underline;
@@ -109,7 +108,6 @@
 
 .learn-body a:hover,
 .learn-sources a:hover,
-.learn-related a:hover,
 .learn-about a:hover {
   text-decoration-thickness: 2px;
 }
@@ -185,21 +183,10 @@
   margin-top: 6px;
 }
 
-.learn-related ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--line-strong);
-}
-
-.learn-related li {
-  border-bottom: 1px solid var(--line);
-}
-
-.learn-related a {
-  display: block;
-  padding: 12px 0;
-  font-weight: 600;
+/* 関連する解説はカード（lp.css の .learn-cards.is-compact）。カードにならないリンクは下に 1 行で添える */
+.learn-related p {
+  margin: 16px 0 0;
+  font-size: 14.5px;
 }
 
 .learn-share {
@@ -275,45 +262,65 @@
   margin-bottom: 0;
 }
 
-/* ---------- ハブ（/learn/）のカード ---------- */
-
-.learn-cards {
+/* 末尾の箱のリンクは、1 枚が 1 つのリンクのカードで並べる（行き先と、そこにあるものを 1 行で）。
+   相談（.is-primary）だけ地を青にして、主な行き先を示す。絵は入れない（相談と LP は OGP の絵が同じなので、並べても見分けにならない）。
+   一覧（/learn/・/en/learn/）の箱だけは、行き先ごとに絵があるので、絵つきのカード（下の .learn-about .learn-cards） */
+.about-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin: 32px 0 0;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.learn-cards a {
+.learn-about .about-card {
   display: block;
   height: 100%;
-  padding: 20px;
-  border: 1px solid var(--line);
-  transition: border-color 150ms ease;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
-.learn-cards a:hover {
-  border-color: var(--ink);
+.learn-about .about-card:hover {
+  background: var(--paper-dim);
 }
 
-.learn-cards h2 {
-  margin: 0 0 6px;
-  font-size: 17px;
+.about-card-title {
+  display: block;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.5;
 }
 
-.learn-cards a:hover h2 {
-  color: var(--link);
+.about-card-title::after {
+  content: " →";
+  content: " →" / "";
 }
 
-.learn-cards p {
-  margin: 0;
+.about-card-desc {
+  display: block;
+  margin-top: 4px;
   color: var(--gray);
-  font-size: 14px;
-  line-height: 1.75;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.learn-about .about-card.is-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.learn-about .about-card.is-primary:hover {
+  border-color: var(--accent-dark);
+  background: var(--accent-dark);
+}
+
+.about-card.is-primary .about-card-desc {
+  color: #fff;
 }
 
 /* ---------- スマホ ---------- */
@@ -337,12 +344,12 @@
     font-size: 19px;
   }
 
-  .learn-cards {
-    grid-template-columns: 1fr;
-  }
-
   .learn-about {
     padding: 18px;
+  }
+
+  .about-cards {
+    grid-template-columns: 1fr;
   }
 
   .learn-table thead {
@@ -400,30 +407,15 @@
   line-height: 1.5;
 }
 
-.learn-group .learn-cards {
+.learn-group .learn-cards,
+.learn-about .learn-cards {
   margin-top: 16px;
 }
 
-.learn-cards h3 {
-  margin: 0 0 6px;
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.learn-cards a:hover h3 {
-  color: var(--link);
-}
-
-/* カードの頭のサムネイル（記事の冒頭の画像と同じ thumb.webp）。題名が h3 にあるので alt は空 */
-.learn-card-thumb {
-  display: block;
-  width: calc(100% + 40px);
-  max-width: none;
-  height: auto;
-  margin: -20px -20px 14px;
-  aspect-ratio: 1200 / 630;
-  border-bottom: 1px solid var(--line);
+/* 一覧の末尾の箱の絵つきのカード（LP・方針・docs）。箱の中のリンクの色と下線を、カードでは外す */
+.learn-about .learn-cards a {
+  color: inherit;
+  text-decoration: none;
 }
 
 /* ---------- 冒頭のサムネイル・3 行でわかる・図・会話（scripts/learn-thumbs/ と scripts/figures/ が書き出す絵を使う） ---------- */
