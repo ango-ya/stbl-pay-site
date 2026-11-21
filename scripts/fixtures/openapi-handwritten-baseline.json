@@ -348,7 +348,7 @@
         "post": {
           "operationId": "receivePaymentEvent",
           "summary": "決済の結果を受け取る（加盟店のサーバーが実装する）",
-          "description": "決済が終端に着くと、加盟店コンソールで登録した URL へ STBLpay が `POST` します。\n送信先の URL と署名鍵は加盟店ごとに 1 組で、どのネットショップの決済の通知も同じ URL に届きます。\n種類は本文の `type` で区別します（`payment.settled`・`payment.failed`・`payment.canceled`・`payment.expired`）。未知の種類は 2xx を返して無視できるようにしてください。\n結末を特定できなかった決済（`nonce_conflict`）の通知はありません。状態照会で確かめます。\n\n**受け取ったら、次の順に処理してください。**\n\n1. 署名を検証する。`Stbl-Pay-Signature` の `t` と、JSON パーサーを通す前の本文のバイト列から `\"<t>.<本文>\"` を作り、署名鍵で HMAC-SHA256 を計算して小文字の 16 進にする。`v1` のいずれかと一致すれば受理する。`t` と現在時刻のずれの許容は 300 秒を初期値にする\n2. 本文を `JSON.parse` した値の `test` が `true` なら、加盟店コンソールから送ったテスト通知。注文や決済の状態を更新せずに 2xx を返す\n3. 既知イベントのスキーマで検証する前に、`type` の文字列で処理を分ける。未知の種別は注文を変えずに 2xx を返して無視する。 処理対象の既知の種別だけ、その種別に対応する本文と `data` の形を検証する\n4. 署名を検証した本文の `id` で重複を除きながら、イベントを耐久性のある DB またはキューへ保存する。再送でも `id` と本文は変わらない\n5. 保存してから 2xx を返す。先に応答すると、直後の停止で通知を失っても再送されない\n6. 保存したイベントから業務の処理をする。入金の計上は `payment.settled` の `net_received_jpy` を根拠にする\n\n**配信と再送**\n\n- 2xx の応答を成功とします。応答の本文は読みません\n- 2xx 以外（3xx・4xx・5xx）、タイムアウト、接続や TLS の失敗は、すべて失敗として再送します。リダイレクトは追いません\n- タイムアウトは、現在の設定で 10 秒です。イベントを保存したら 2xx を返し、時間のかかる処理は後に回してください\n- 失敗後の間隔は 3 秒 → 10 秒 → 30 秒 → 120 秒 → 600 秒です。初回と合わせて 6 回試行し、以降は打ち切ります\n- 再送では本文と `id` を保ち、`t` と署名を試行ごとに作り直します。到着の順序は保証しません\n\n詳しくは[署名検証](https://stbl-pay.com/docs/webhooks/signature)、[再送ポリシー](https://stbl-pay.com/docs/webhooks/retry)、[冪等性](https://stbl-pay.com/docs/webhooks/idempotency)を参照してください。\n公開準備中の仕様でrefund.confirmedとrefund.failedを追加します。専用の返金dataを決済dataとして検証しないでください。",
+          "description": "決済が終端に着くと、加盟店コンソールで登録した URL へ STBLpay が `POST` します。\n送信先の URL と署名鍵は加盟店ごとに 1 組で、どのネットショップの決済の通知も同じ URL に届きます。\n種類は本文の `type` で区別します（`payment.settled`・`payment.failed`・`payment.canceled`・`payment.expired`）。未知の種類は 2xx を返して無視できるようにしてください。\n結末を特定できなかった決済（`nonce_conflict`）の通知はありません。状態照会で確かめます。\n\n**受け取ったら、次の順に処理してください。**\n\n1. 署名を検証する。`Stbl-Pay-Signature` の `t` と、JSON パーサーを通す前の本文のバイト列から `\"<t>.<本文>\"` を作り、署名鍵で HMAC-SHA256 を計算して小文字の 16 進にする。`v1` のいずれかと一致すれば受理する。`t` と現在時刻のずれの許容は 300 秒を初期値にする\n2. 本文を `JSON.parse` した値の `test` が `true` なら、加盟店コンソールから送ったテスト通知。注文や決済の状態を更新せずに 2xx を返す\n3. 既知イベントのスキーマで検証する前に、`type` の文字列で処理を分ける。未知の種別は注文を変えずに 2xx を返して無視する。 処理対象の既知の種別だけ、その種別に対応する本文と `data` の形を検証する\n4. 署名を検証した本文の `id` で重複を除きながら、イベントを耐久性のある DB またはキューへ保存する。再送でも `id` と本文は変わらない\n5. 保存してから 2xx を返す。先に応答すると、直後の停止で通知を失っても再送されない\n6. 保存したイベントから業務の処理をする。入金の計上は `payment.settled` の `net_received_jpy` を根拠にする\n\n**配信と再送**\n\n- 2xx の応答を成功とします。応答の本文は読みません\n- 2xx 以外（3xx・4xx・5xx）、タイムアウト、接続や TLS の失敗は、すべて失敗として再送します。リダイレクトは追いません\n- タイムアウトは、現在の設定で 10 秒です。イベントを保存したら 2xx を返し、時間のかかる処理は後に回してください\n- 失敗後の間隔は 3 秒 → 10 秒 → 30 秒 → 120 秒 → 600 秒です。初回と合わせて 6 回試行し、以降は打ち切ります\n- 再送では本文と `id` を保ち、`t` と署名を試行ごとに作り直します。到着の順序は保証しません\n- 再送は通常の通知だけです。加盟店コンソールから送るテスト通知は、保存した URL へ 1 回だけ送り、失敗しても再送しません\n\n詳しくは[署名検証](https://stbl-pay.com/docs/webhooks/signature)、[再送ポリシー](https://stbl-pay.com/docs/webhooks/retry)、[冪等性](https://stbl-pay.com/docs/webhooks/idempotency)を参照してください。\n公開準備中の仕様でrefund.confirmedとrefund.failedを追加します。専用の返金dataを決済dataとして検証しないでください。",
           "security": [],
           "parameters": [
             {
@@ -483,10 +483,7 @@
             "amountJpy": {
               "type": "string",
               "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
-              "not": {
-                "pattern": "^0(\\.0+)?$"
-              },
-              "description": "請求額（円）。10 進の数の文字列で、整数部に先頭のゼロは付けない（例：`\"4980\"`、`\"0.5\"`）。\n0 を超える金額にする（`\"0\"` は 400 `common/invalid_request`）。小数部は 6 桁まで。\nこの API は金額の上限と下限を独自にはかけていません。支払い時に、利用者のウォレットの金額上限・頻度上限に触れて成立しないことがあります（`failedReason` は `policy_violation`）\n",
+              "description": "請求額（円）。10 進の数の文字列で、整数部に先頭のゼロは付けない（例：`\"4980\"`、`\"0.5\"`）。\n新しい決済を作るときは 0 を超える金額にする（`\"0\"` は 400 `common/invalid_request`）。この金額の検査は新規作成のときだけで、同じ店舗と `orderId` の既存の決済があるときは検査しません。小数部は 6 桁まで。\nこの API は金額の上限と下限を独自にはかけていません。支払い時に、利用者のウォレットの金額上限・頻度上限に触れて成立しないことがあります（`failedReason` は `policy_violation`）\n",
               "examples": [
                 "4980"
               ]
@@ -698,21 +695,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "settled",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",
@@ -846,21 +830,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "failed",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",
@@ -994,21 +965,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "canceled",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",
@@ -1142,21 +1100,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "expired",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",
@@ -1931,7 +1876,7 @@
         "post": {
           "operationId": "receivePaymentEvent",
           "summary": "Receive the payment result (implemented by the merchant's server)",
-          "description": "When a payment reaches a terminal state, STBLpay sends a `POST` to the URL registered in the merchant console.\nThere is one destination URL and one signing secret per merchant, and notifications for payments from every online shop arrive at the same URL.\nTell the types apart by `type` in the body (`payment.settled`, `payment.failed`, `payment.canceled`, `payment.expired`). Make sure an unknown type can be ignored by returning 2xx.\nThere is no notification for a payment whose outcome could not be determined (`nonce_conflict`). Confirm it with a status lookup.\n\n**When you receive a notification, process it in this order.**\n\n1. Verify the signature. Build `\"<t>.<body>\"` from the `t` in `Stbl-Pay-Signature` and the byte string of the body before it goes through a JSON parser, compute HMAC-SHA256 with the signing secret, and encode it as lowercase hex. Accept it if it matches any `v1`. Use 300 seconds as the initial tolerance for the difference between `t` and the current time\n2. If `test` in the body parsed with `JSON.parse` is `true`, it is a test notification sent from the merchant console. Return 2xx without updating any order or payment state\n3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return 2xx without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape\n4. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a resend, the `id` and the body do not change\n5. Return 2xx after saving. If you respond first and then stop right after, you lose the notification and it is not resent\n6. Run business processing from the saved event. Base the deposit recording on `net_received_jpy` in `payment.settled`\n\n**Delivery and resends**\n\n- A 2xx response is a success. The response body is not read\n- A non-2xx response (3xx, 4xx, 5xx), a timeout, and a connection or TLS failure are all treated as failures and resent. Redirects are not followed\n- The timeout is 10 seconds in the current configuration. Return 2xx once you have saved the event, and defer time-consuming work\n- The intervals after a failure are 3 seconds, 10 seconds, 30 seconds, 120 seconds, and 600 seconds. Together with the first attempt there are 6 attempts in total, after which delivery is abandoned\n- A resend keeps the body and `id`, and regenerates `t` and the signature for each attempt. The order of arrival is not guaranteed\n\nFor details, see [Signature verification](https://stbl-pay.com/docs/en/webhooks/signature), [Retry policy](https://stbl-pay.com/docs/en/webhooks/retry), and [Idempotency and ordering](https://stbl-pay.com/docs/en/webhooks/idempotency).\nDraft preview adds refund.confirmed and refund.failed with dedicated refund data; do not parse these as payment data.",
+          "description": "When a payment reaches a terminal state, STBLpay sends a `POST` to the URL registered in the merchant console.\nThere is one destination URL and one signing secret per merchant, and notifications for payments from every online shop arrive at the same URL.\nTell the types apart by `type` in the body (`payment.settled`, `payment.failed`, `payment.canceled`, `payment.expired`). Make sure an unknown type can be ignored by returning 2xx.\nThere is no notification for a payment whose outcome could not be determined (`nonce_conflict`). Confirm it with a status lookup.\n\n**When you receive a notification, process it in this order.**\n\n1. Verify the signature. Build `\"<t>.<body>\"` from the `t` in `Stbl-Pay-Signature` and the byte string of the body before it goes through a JSON parser, compute HMAC-SHA256 with the signing secret, and encode it as lowercase hex. Accept it if it matches any `v1`. Use 300 seconds as the initial tolerance for the difference between `t` and the current time\n2. If `test` in the body parsed with `JSON.parse` is `true`, it is a test notification sent from the merchant console. Return 2xx without updating any order or payment state\n3. Dispatch on the `type` string before validating against a known-event schema. For an unknown type, return 2xx without changing any order. Only for a known type you handle, validate the corresponding body and `data` shape\n4. Save the event to a durable DB or queue, removing duplicates by the `id` of the signature-verified body. On a resend, the `id` and the body do not change\n5. Return 2xx after saving. If you respond first and then stop right after, you lose the notification and it is not resent\n6. Run business processing from the saved event. Base the deposit recording on `net_received_jpy` in `payment.settled`\n\n**Delivery and resends**\n\n- A 2xx response is a success. The response body is not read\n- A non-2xx response (3xx, 4xx, 5xx), a timeout, and a connection or TLS failure are all treated as failures and resent. Redirects are not followed\n- The timeout is 10 seconds in the current configuration. Return 2xx once you have saved the event, and defer time-consuming work\n- The intervals after a failure are 3 seconds, 10 seconds, 30 seconds, 120 seconds, and 600 seconds. Together with the first attempt there are 6 attempts in total, after which delivery is abandoned\n- A resend keeps the body and `id`, and regenerates `t` and the signature for each attempt. The order of arrival is not guaranteed\n- Resends apply to normal notifications only. A test notification sent from the merchant console is sent only once to the saved URL and is not resent, even if it fails\n\nFor details, see [Signature verification](https://stbl-pay.com/docs/en/webhooks/signature), [Retry policy](https://stbl-pay.com/docs/en/webhooks/retry), and [Idempotency and ordering](https://stbl-pay.com/docs/en/webhooks/idempotency).\nDraft preview adds refund.confirmed and refund.failed with dedicated refund data; do not parse these as payment data.",
           "security": [],
           "parameters": [
             {
@@ -2066,10 +2011,7 @@
             "amountJpy": {
               "type": "string",
               "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
-              "not": {
-                "pattern": "^0(\\.0+)?$"
-              },
-              "description": "The amount to charge (yen). A string of a decimal number, with no leading zeros in the integer part (examples: `\"4980\"`, `\"0.5\"`).\nThe amount must be greater than 0 (`\"0\"` gives 400 `common/invalid_request`). The fractional part can have up to 6 digits.\nThis API does not impose its own upper or lower limit on the amount. At payment time, the amount limit or frequency limit of the buyer's wallet may be hit and the payment may not succeed (`failedReason` is `policy_violation`)\n",
+              "description": "The amount to charge (yen). A string of a decimal number, with no leading zeros in the integer part (examples: `\"4980\"`, `\"0.5\"`).\nWhen creating a new payment, the amount must be greater than 0 (`\"0\"` gives 400 `common/invalid_request`). This amount check applies only at new creation; it is not applied when a payment already exists for the same store and `orderId`. The fractional part can have up to 6 digits.\nThis API does not impose its own upper or lower limit on the amount. At payment time, the amount limit or frequency limit of the buyer's wallet may be hit and the payment may not succeed (`failedReason` is `policy_violation`)\n",
               "examples": [
                 "4980"
               ]
@@ -2281,21 +2223,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "settled",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",
@@ -2429,21 +2358,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "failed",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",
@@ -2577,21 +2493,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "canceled",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",
@@ -2725,21 +2628,8 @@
                       ]
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "created",
-                        "signed",
-                        "issue_pending",
-                        "deposit_seen",
-                        "deposit_confirmed",
-                        "deploying",
-                        "executing",
-                        "settled",
-                        "canceled",
-                        "expired",
-                        "failed",
-                        "nonce_conflict"
-                      ]
+                      "const": "expired",
+                      "type": "string"
                     },
                     "merchant_id": {
                       "type": "string",

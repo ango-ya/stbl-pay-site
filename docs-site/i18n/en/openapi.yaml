@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: STBLpay API
-  version: 0.40.0
+  version: 0.42.0
   summary: The API your merchant server calls, and the Webhook your merchant server receives
   description: >-
     The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server
@@ -2096,6 +2096,9 @@ webhooks:
         - A resend keeps the body and `id`, and regenerates `t` and the signature for each attempt. The order of arrival
         is not guaranteed
 
+        - Resends apply to normal notifications only. A test notification sent from the merchant console is sent only
+        once to the saved URL and is not resent, even if it fails
+
 
         For details, see [Signature verification](https://stbl-pay.com/docs/en/webhooks/signature), [Retry
         policy](https://stbl-pay.com/docs/en/webhooks/retry), and [Idempotency and
@@ -2214,14 +2217,13 @@ components:
         amountJpy:
           type: string
           pattern: ^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$
-          not:
-            pattern: ^0(\.0+)?$
           description: >
             The amount to charge (yen). A string of a decimal number, with no leading zeros in the integer part
             (examples: `"4980"`, `"0.5"`).
 
-            The amount must be greater than 0 (`"0"` gives 400 `common/invalid_request`). The fractional part can have
-            up to 6 digits.
+            When creating a new payment, the amount must be greater than 0 (`"0"` gives 400 `common/invalid_request`).
+            This amount check applies only at new creation; it is not applied when a payment already exists for the same
+            store and `orderId`. The fractional part can have up to 6 digits.
 
             This API does not impose its own upper or lower limit on the amount. At payment time, the amount limit or
             frequency limit of the buyer's wallet may be hit and the payment may not succeed (`failedReason` is
@@ -2421,20 +2423,8 @@ components:
                     - type: string
                     - type: 'null'
                 status:
+                  const: settled
                   type: string
-                  enum:
-                    - created
-                    - signed
-                    - issue_pending
-                    - deposit_seen
-                    - deposit_confirmed
-                    - deploying
-                    - executing
-                    - settled
-                    - canceled
-                    - expired
-                    - failed
-                    - nonce_conflict
                 merchant_id:
                   type: string
                   pattern: ^m_[0-9a-f]{8,32}$
@@ -2515,20 +2505,8 @@ components:
                     - type: string
                     - type: 'null'
                 status:
+                  const: failed
                   type: string
-                  enum:
-                    - created
-                    - signed
-                    - issue_pending
-                    - deposit_seen
-                    - deposit_confirmed
-                    - deploying
-                    - executing
-                    - settled
-                    - canceled
-                    - expired
-                    - failed
-                    - nonce_conflict
                 merchant_id:
                   type: string
                   pattern: ^m_[0-9a-f]{8,32}$
@@ -2609,20 +2587,8 @@ components:
                     - type: string
                     - type: 'null'
                 status:
+                  const: canceled
                   type: string
-                  enum:
-                    - created
-                    - signed
-                    - issue_pending
-                    - deposit_seen
-                    - deposit_confirmed
-                    - deploying
-                    - executing
-                    - settled
-                    - canceled
-                    - expired
-                    - failed
-                    - nonce_conflict
                 merchant_id:
                   type: string
                   pattern: ^m_[0-9a-f]{8,32}$
@@ -2703,20 +2669,8 @@ components:
                     - type: string
                     - type: 'null'
                 status:
+                  const: expired
                   type: string
-                  enum:
-                    - created
-                    - signed
-                    - issue_pending
-                    - deposit_seen
-                    - deposit_confirmed
-                    - deploying
-                    - executing
-                    - settled
-                    - canceled
-                    - expired
-                    - failed
-                    - nonce_conflict
                 merchant_id:
                   type: string
                   pattern: ^m_[0-9a-f]{8,32}$
