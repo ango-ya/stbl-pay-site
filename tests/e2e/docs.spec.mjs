@@ -428,3 +428,66 @@ for (const locale of ["ja", "en"]) {
     }
   });
 }
+
+test.describe("REST リファレンスのエンドポイント一覧", () => {
+  const pages = [
+    { path: "/docs/reference/rest/", link: "決済を照会する" },
+    { path: "/docs/en/reference/rest/", link: "Look up a payment" },
+  ];
+  const top = async (loc) => (await loc.boundingBox()).y;
+
+  for (const { path, link } of pages) {
+    test(`${path}: iPhone 幅では横スクロールせず、用途のリンクが先に見える`, async ({ page }) => {
+      await page.setViewportSize({ width: 393, height: 852 });
+      await page.goto(path);
+      const table = page.locator(".endpoint-table table");
+      await table.scrollIntoViewIfNeeded();
+      const { scrollWidth, clientWidth } = await table.evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+
+      const a = page.locator(".endpoint-table").getByRole("link", { name: link });
+      await a.scrollIntoViewIfNeeded();
+      await expect(a).toBeInViewport({ ratio: 1 });
+      const box = await a.boundingBox();
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(393);
+
+      const rows = table.locator("tbody tr");
+      for (let i = 0; i < (await rows.count()); i++) {
+        const row = rows.nth(i);
+        expect(await top(row.locator("td").nth(3)), `行 ${i}`).toBeLessThan(await top(row.locator("td").nth(0)));
+      }
+
+      // 最長のパスの行：メソッドとパスが同じ行に並ぶ
+      const longest = await rows.evaluateAll((trs) => trs.map((tr) => tr.children[1].textContent.length).reduce((m, n, i, a) => (n > a[m] ? i : m), 0));
+      const lr = rows.nth(longest);
+      await lr.scrollIntoViewIfNeeded();
+      expect(Math.abs((await top(lr.locator("td").nth(0))) - (await top(lr.locator("td").nth(1))))).toBeLessThan(6);
+    });
+
+    test(`${path}: 幅 600 はカード、601 は表`, async ({ page }) => {
+      const table = page.locator(".endpoint-table table");
+      await page.setViewportSize({ width: 600, height: 900 });
+      await page.goto(path);
+      const m = await table.evaluate((el) => ({ sw: el.scrollWidth, cw: el.clientWidth }));
+      expect(m.sw).toBeLessThanOrEqual(m.cw);
+      expect((await table.locator("thead").boundingBox()).height).toBeLessThanOrEqual(1);
+
+      await page.setViewportSize({ width: 601, height: 900 });
+      expect((await table.locator("thead").boundingBox()).height).toBeGreaterThan(1);
+      const tops = await table.locator("tbody tr").first().locator("td").evaluateAll((tds) => tds.map((td) => Math.round(td.getBoundingClientRect().top)));
+      expect(new Set(tops).size).toBe(1);
+    });
+
+    test(`${path}: PC 幅では見出しがあり 1 行に 4 列が並ぶ`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(path);
+      const table = page.locator(".endpoint-table table");
+      await expect(table.locator("thead")).toBeVisible();
+      expect((await table.locator("thead").boundingBox()).height).toBeGreaterThan(1);
+      const tops = await table.locator("tbody tr").first().locator("td").evaluateAll((tds) => tds.map((td) => Math.round(td.getBoundingClientRect().top)));
+      expect(tops).toHaveLength(4);
+      expect(new Set(tops).size).toBe(1);
+    });
+  }
+});

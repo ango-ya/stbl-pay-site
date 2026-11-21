@@ -13,6 +13,8 @@ The type, format, and constraints of each field, the list of errors, and request
 
 ## Endpoint list
 
+<div className="endpoint-table">
+
 | Method | Path | Authentication | Purpose |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API key (`x-stbl-api-key`) | [Create a payment](#create-payment) |
@@ -25,6 +27,8 @@ The type, format, and constraints of each field, the list of errors, and request
 | `GET` | `/refunds/{refundId}` | Refund API key + HTTP signature | [Look up a refund](pathname:///openapi/#operation/getMachineRefund) (In preparation for release) |
 | `GET` | `/payment_intents/{paymentIntentId}/refunds` | Refund API key + HTTP signature | [List refunds for a payment](pathname:///openapi/#operation/listMachinePaymentRefunds) (In preparation for release) |
 | `DELETE` | `/staged_operations/{stagedOpId}` | Refund API key + HTTP signature | [Discard a preparation](pathname:///openapi/#operation/discardMachineStagedOperation) (In preparation for release) |
+
+</div>
 
 Request and response bodies are JSON, and the fields are camelCase.
 

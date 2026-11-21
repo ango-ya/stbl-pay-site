@@ -13,6 +13,8 @@ sidebar_position: 2
 
 ## エンドポイント一覧
 
+<div className="endpoint-table">
+
 | メソッド | パス | 認証 | 用途 |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API キー（`x-stbl-api-key`） | [決済を作成する](#決済作成) |
@@ -25,6 +27,8 @@ sidebar_position: 2
 | `GET` | `/refunds/{refundId}` | 返金 API キー＋HTTP 署名 | [返金を照会する](pathname:///openapi/#operation/getMachineRefund)（公開準備中） |
 | `GET` | `/payment_intents/{paymentIntentId}/refunds` | 返金 API キー＋HTTP 署名 | [決済ごとの返金を一覧する](pathname:///openapi/#operation/listMachinePaymentRefunds)（公開準備中） |
 | `DELETE` | `/staged_operations/{stagedOpId}` | 返金 API キー＋HTTP 署名 | [準備を破棄する](pathname:///openapi/#operation/discardMachineStagedOperation)（公開準備中） |
+
+</div>
 
 リクエストとレスポンスの本文は JSON で、フィールドは camelCase です。
 
