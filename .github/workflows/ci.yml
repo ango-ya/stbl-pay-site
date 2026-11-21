@@ -26,10 +26,10 @@ jobs:
         run: npm install --global npm@11.16.0 --ignore-scripts
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install docs dependencies
-        run: npm --prefix docs-site ci
+        run: npm --prefix docs-site ci --ignore-scripts
 
       - name: Check generated OpenAPI and translation parity
         run: npm run openapi:check
