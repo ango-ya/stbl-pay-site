@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: STBLpay API
-  version: 0.40.0
+  version: 0.42.0
   summary: The API your merchant server calls, and the Webhook your merchant server receives
   description: >-
     The specification of the API that a merchant's (EC site's) server calls, and the Webhook that the merchant's server
