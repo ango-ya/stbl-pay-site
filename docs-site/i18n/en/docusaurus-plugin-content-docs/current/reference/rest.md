@@ -16,7 +16,7 @@ The type, format, and constraints of each field, the list of errors, and request
 | Method | Path | Authentication | Purpose |
 |---|---|---|---|
 | `POST` | `/payment_intents` | API key (`x-stbl-api-key`) | [Create a payment](#create-payment) |
-| `GET` | `/payments/:paymentIntentId` | API key (`x-stbl-api-key`) | [Look up a payment](pathname:///openapi/#operation/getPayment) (In preparation for release; until then, use the [status check](/server/retrieve-payment)) |
+| `GET` | `/payments/:paymentIntentId` | API key (`x-stbl-api-key`) | [Look up a payment](pathname:///openapi/#operation/getPayment) |
 | `GET` | `/payment_status/:paymentIntentId` | None | Checkout-page status |
 | `GET` | `/payment_intents/:paymentIntentId` | None | Checkout-page display information |
 | `GET` | `/payment_intents/{paymentIntentId}/refundable` | Refund API key + HTTP signature | [Check the refundable amount](pathname:///openapi/#operation/getMachineRefundable) (In preparation for release) |
@@ -42,8 +42,6 @@ Request and response bodies are JSON, and the fields are camelCase.
 ## Retrieve payment status {/* #retrieve-payment */}
 
 Call `GET /payments/:paymentIntentId` from your server with the store API key in `x-stbl-api-key`. See the [OpenAPI specification](pathname:///openapi/#operation/getPayment) and [implementation example](/server/retrieve-payment). There is no request body.
-
-**This API is being prepared for release and is not yet deployed to Sandbox (as of November 17, 2026).** Until it is deployed, check the status with the unauthenticated `GET /payment_status/:paymentIntentId`.
 
 All twelve keys are required: `paymentIntentId`, `orderId`, `status`, `amountJpy`, `feeJpy`, `netAmountJpy`, `txHash`, `settledAt`, `failedReason`, `payerAddress`, `netAmountDestination`, and `createdAt`. `orderId`, `txHash`, `settledAt`, `failedReason`, `payerAddress`, and `netAmountDestination` can be null. Ignore unknown keys.
 

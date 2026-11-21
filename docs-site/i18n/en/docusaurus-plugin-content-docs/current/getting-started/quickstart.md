@@ -63,12 +63,6 @@ curl --fail-with-body "$STBL_PAY_BACKEND/payments/$PAYMENT_INTENT_ID" \
   --header "x-stbl-api-key: $STBL_PAY_API_KEY"
 ```
 
-**`GET /payments/:paymentIntentId` is not yet deployed to Sandbox (as of November 17, 2026).** Until it is deployed, check the status with the following unauthenticated API.
-
-```bash
-curl --fail-with-body "$STBL_PAY_BACKEND/payment_status/$PAYMENT_INTENT_ID"
-```
-
 If `status` is `settled`, the payment has succeeded. `signed` and `deposit_confirmed` are in progress. Do not treat a failed lookup as a failed payment.
 
 ## 8. Set up a Webhook

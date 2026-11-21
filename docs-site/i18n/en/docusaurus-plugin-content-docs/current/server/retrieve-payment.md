@@ -9,8 +9,6 @@ sidebar_position: 3
 
 From the merchant server, [look up](/reference/glossary) the current status using the saved `paymentIntentId`. Send the store API key in the `x-stbl-api-key` header.
 
-**This API is being prepared for release and is not yet deployed to Sandbox (as of November 17, 2026).** You cannot call it until it is deployed. Ask your [contact](/support/troubleshooting#contact) about the timing. Until then, you can check the status with the unauthenticated `GET /payment_status/:paymentIntentId`. That response returns the status and does not include amounts, fees, or addresses.
-
 ```js
 const response = await fetch(
   `${process.env.STBL_PAY_BACKEND}/payments/${encodeURIComponent(paymentIntentId)}`,

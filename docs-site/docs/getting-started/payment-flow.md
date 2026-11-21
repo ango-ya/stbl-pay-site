@@ -42,8 +42,6 @@ sequenceDiagram
     end
 ```
 
-`GET /payments/:paymentIntentId` は Sandbox への配備前です（2026年11月17日時点）。配備までは、図の状態照会に認証なしの `GET /payment_status/:paymentIntentId` を使ってください（[決済状態を照会する](/server/retrieve-payment)）。
-
 ## 支払いの経路
 
 残高が足りる場合は、`signed`（利用者の署名が済んだ）から `deposit_confirmed`（着金または残高を確認した）へ進みます。振込を伴う場合は発行体での手続き後、着金の検知と、着金が取り消されない状態になるまでの確認を経て進みます。`issue_pending` は、決済ページから予約開始の通知を STBLpay が受けたことを表します。JPYC EX での手続きが済んだかは確かめていないので、利用者が途中でやめてもこの状態になります。

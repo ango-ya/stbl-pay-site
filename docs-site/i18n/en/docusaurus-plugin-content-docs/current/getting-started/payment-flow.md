@@ -42,8 +42,6 @@ sequenceDiagram
     end
 ```
 
-`GET /payments/:paymentIntentId` is not yet deployed to Sandbox (as of November 17, 2026). Until it is deployed, use the unauthenticated `GET /payment_status/:paymentIntentId` for the status lookup in the diagram (see [Retrieve payment status](/server/retrieve-payment)).
-
 ## Payment paths
 
 If the balance is sufficient, the payment moves from `signed` (the buyer has signed) to `deposit_confirmed` (the deposit or balance has been confirmed). If a bank transfer is needed, the payment moves forward after the buyer completes the procedure at the issuer, STBLpay detects the deposit, and the deposit can no longer be reversed. `issue_pending` means STBLpay received a reservation-start notification from the checkout page. STBLpay does not verify whether the procedure at JPYC EX was completed, so the payment also enters this status if the buyer abandons midway.

@@ -314,20 +314,26 @@ for (const locale of ['', 'en/']) {
   await expect(page.locator('article')).toContainText('net_amount_destination');
  });
 
- // backend が Sandbox に出る前に、この案内だけが先に公開された（stbl-pay#699）。
- // 配備前であることと、それまでの代わりの確認手段を、読者が試す 3 ページすべてに出す。
- test(`payment lookup pages state Sandbox availability (${locale || 'ja'})`, async ({page}) => {
+ // GET /payments（backend#228）は 2026-11-21 に dev で 200 を確かめ、Sandbox でも存在しない経路が
+ // 404 common/not_found のところ /payments は 401 auth/api_key_invalid（経路が登録済み）だった。
+ // 配備前の注記と、代わりに認証なしの照会を使う案内を、照会のページから消す。
+ // Webhook の 2 キーの注記は、通知の中身をまだ確かめていないので残す。
+ test(`payment lookup pages no longer say GET /payments is undeployed (${locale || 'ja'})`, async ({page}) => {
   const notice = locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前';
   await page.goto(`/docs/${locale}server/retrieve-payment/`);
-  await expect(page.locator('article')).toContainText(notice);
-  await expect(page.locator('article')).toContainText('/payment_status/');
-  // 公開 OpenAPI に無い内部のスキーマ名を、読者の探し先として書かない。
+  await expect(page.locator('article')).not.toContainText(notice);
+  // スキーマ名（PaymentLookupResponse）を本文の探し先にせず、OpenAPI の 200 応答へ案内する
   await expect(page.locator('article')).not.toContainText('PaymentLookupResponse');
   await page.goto(`/docs/${locale}getting-started/quickstart/`);
-  await expect(page.locator('article')).toContainText(notice);
-  await expect(page.locator('article')).toContainText('/payment_status/');
+  await expect(page.locator('article')).not.toContainText(notice);
+  await expect(page.locator('article')).not.toContainText('/payment_status/');
   await page.goto(`/docs/${locale}reference/rest/`);
-  await expect(page.locator('article')).toContainText(notice);
+  await expect(page.locator('article')).not.toContainText(notice);
+  // 照会の行と「状態照会」の節は getPayment を指す
+  await expect(page.locator('a[href$="#operation/getPayment"]')).toHaveCount(2);
+  // 状態の値の一覧と failedReason の分類コードの表は getPaymentStatus の応答（PaymentStatusView）にだけあるので、
+  // その 2 つのリンクは getPaymentStatus を指したままにする（getPayment の応答には表が無い）
+  await expect(page.locator('a[href$="#operation/getPaymentStatus"]')).toHaveCount(2);
   await page.goto(`/docs/${locale}reference/webhook-events/`);
   await expect(page.locator('article')).toContainText(notice);
  });
@@ -339,10 +345,10 @@ for (const locale of ['', 'en/']) {
   await page.goto(`/docs/${locale}getting-started/payment-flow/`);
   // シーケンス図（Mermaid の SVG）の中の文字列も article に含まれる。
   await expect(page.locator('article')).toContainText('GET /payments/{paymentIntentId}');
-  // 図の中に旧い照会先を描かない。配備前の代わりの手段は、図の下の注記に出す。
+  // 図の中にも図の下にも、旧い照会先を描かない（GET /payments は Sandbox に配備済み）
   await expect(page.locator('article svg').first()).not.toContainText('payment_status');
-  await expect(page.locator('article')).toContainText(locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前');
-  await expect(page.locator('article')).toContainText('/payment_status/');
+  await expect(page.locator('article')).not.toContainText(locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前');
+  await expect(page.locator('article')).not.toContainText('/payment_status/');
 
   await page.goto(`/docs/${locale}lifecycle/completion/`);
   await expect(page.locator('article')).toContainText('GET /payments/');
@@ -361,8 +367,8 @@ for (const locale of ['', 'en/']) {
   await expect(scenarios).toContainText('auth/api_key_invalid');
   await expect(scenarios).toContainText('common/not_found');
   await expect(scenarios).not.toContainText(locale ? 'without an authentication header' : '認証ヘッダなし');
-  // 読者がその場で呼んで確かめる項目なので、配備前であることをこのページにも出す。
-  await expect(scenarios).toContainText(locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前');
+  // GET /payments は Sandbox に配備済みなので、この節の項目を未検証として記録させる注記は出さない
+  await expect(scenarios).not.toContainText(locale ? 'not yet deployed to Sandbox' : 'Sandbox への配備前');
  });
 }
 
