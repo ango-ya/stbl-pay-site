@@ -127,7 +127,7 @@ test('ref siblingも通常のschema比較と同じキー順と集合順を許容
  const root=loadJson('../package.json');
  const workflow=yaml.load(readFileSync('.github/workflows/ci.yml','utf8'));
  const runs=workflow.jobs.test.steps.map(step=>step.run).filter(Boolean);
- const commands=['npm ci','npm --prefix docs-site ci','npm run openapi:check','npm run test:machine-openapi','npm run test:refund-signer','npm run lint:openapi','npm run build:docs','npm run test:e2e'];
+ const commands=['npm ci --ignore-scripts','npm --prefix docs-site ci --ignore-scripts','npm run openapi:check','npm run test:machine-openapi','npm run test:refund-signer','npm run lint:openapi','npm run build:docs','npm run test:e2e'];
  let previous=-1;
  for(const command of commands){const index=runs.indexOf(command);assert.ok(index>previous,`Missing or misplaced ${command}`);previous=index;}
  assert.equal(root.scripts['test:machine-openapi'],'node --test scripts/machine-openapi.test.mjs');
