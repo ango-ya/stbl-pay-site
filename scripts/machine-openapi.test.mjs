@@ -25,6 +25,21 @@ test('手書きの2 operationとWebhookと到達定義を日英とも保持す�
  for(const tag of expected.tags)assert.deepEqual(actual.tags.find(value=>value.name===tag.name),tag);
  }
 });
+test('金額0は新規作成時だけの検査で、再送の金額を弾かず、テスト通知は再送しない旨とpayment variantのstatus固定を日英とも持つ',()=>{
+ for(const locale of ['ja','en']){
+ const actual=buildOpenApi(handwritten(locale),generated,locale,translations);
+ const amount=actual.components.schemas.CreatePaymentIntentRequest.properties.amountJpy;
+ assert.ok(amount.pattern);assert.equal('not' in amount,false);
+ const webhook=actual.webhooks.paymentEvent.post;
+ const rules=webhook.description.split('\n').filter(line=>line.startsWith('- '));
+ assert.ok(rules.some(line=>(locale==='ja'?/テスト通知/.test(line)&&/1 回だけ/.test(line)&&/再送しません/.test(line):/test notification/i.test(line)&&/not (re)?(sent|retried)|no retr/i.test(line))),'テスト通知を再送しない箇条書き');
+ const statuses={'payment.settled':'settled','payment.failed':'failed','payment.canceled':'canceled','payment.expired':'expired'};
+ for(const [type,status] of Object.entries(statuses)){
+ const variant=actual.components.schemas.WebhookEventPayload.oneOf.find(value=>value.properties.type.const===type);
+ assert.deepEqual(variant.properties.data.properties.status,{const:status,type:'string'},type);
+ }
+ }
+});
 test('注釈差とrequired/enum順を許容し構造差は拒否する',()=>{
  assert.doesNotThrow(()=>assertCompatibleDefinition('PaymentStatus',{type:'string',description:'手書き',examples:['created']},{type:'string',description:'生成',examples:['created','settled']}));
  assert.doesNotThrow(()=>assertCompatibleDefinition('X',{type:'object',required:['a','b']},{required:['b','a'],type:'object'}));
